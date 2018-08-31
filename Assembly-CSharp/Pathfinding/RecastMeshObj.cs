@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[AddComponentMenu("Pathfinding/Navmesh/RecastMeshObj")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_recast_mesh_obj.php")]
+	[AddComponentMenu("Pathfinding/Navmesh/RecastMeshObj")]
 	public class RecastMeshObj : VersionedMonoBehaviour
 	{
 		public static void GetAllInBounds(List<RecastMeshObj> buffer, Bounds bounds)

@@ -662,8 +662,8 @@ public class Streamer : MonoBehaviour
 
 	public SceneSplit[] splits;
 
-	[Tooltip("Distance in grid elements that you want hold loaded.")]
 	[Header("Ranges")]
+	[Tooltip("Distance in grid elements that you want hold loaded.")]
 	public Vector3 loadingRange = new Vector3(3f, 3f, 3f);
 
 	[Tooltip("Enables ring streaming.")]

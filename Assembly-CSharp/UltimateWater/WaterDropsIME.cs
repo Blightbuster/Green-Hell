@@ -119,8 +119,8 @@ namespace UltimateWater
 			return text;
 		}
 
-		[Tooltip("How slow the effects disappear")]
 		[Range(0.95f, 1f)]
+		[Tooltip("How slow the effects disappear")]
 		public float Fade = 1f;
 
 		public WaterDropsIME.BlurModule Blur;

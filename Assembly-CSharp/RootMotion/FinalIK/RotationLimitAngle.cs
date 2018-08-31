@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Angle")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page12.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Angle")]
 	public class RotationLimitAngle : RotationLimit
 	{
 		[ContextMenu("User Manual")]

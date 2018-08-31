@@ -267,8 +267,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Offset vector for the associated effector when doing recoil.")]
 			public Vector3 offset;
 
-			[Range(0f, 1f)]
 			[Tooltip("When firing before the last recoil has faded, how much of the current recoil offset will be maintained?")]
+			[Range(0f, 1f)]
 			public float additivity = 1f;
 
 			[Tooltip("Max additive recoil for automatic fire.")]

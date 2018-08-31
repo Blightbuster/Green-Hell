@@ -626,12 +626,12 @@ public class HBAO : MonoBehaviour
 
 	public Shader hbaoShader;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.Presets m_Presets = HBAO.Presets.defaultPresets;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.GeneralSettings m_GeneralSettings = HBAO.GeneralSettings.defaultSettings;
 
 	[HBAO.SettingsGroup]
@@ -795,8 +795,8 @@ public class HBAO : MonoBehaviour
 			}
 		}
 
-		[Tooltip("The quality of the AO.")]
 		[Space(6f)]
+		[Tooltip("The quality of the AO.")]
 		public HBAO.Quality quality;
 
 		[Tooltip("The deinterleaving factor.")]
@@ -805,8 +805,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The resolution at which the AO is calculated.")]
 		public HBAO.Resolution resolution;
 
-		[Tooltip("The type of noise to use.")]
 		[Space(10f)]
+		[Tooltip("The type of noise to use.")]
 		public HBAO.NoiseType noiseType;
 
 		[Space(10f)]
@@ -838,24 +838,24 @@ public class HBAO : MonoBehaviour
 		}
 
 		[Range(0f, 2f)]
-		[Tooltip("AO radius: this is the distance outside which occluders are ignored.")]
 		[Space(6f)]
+		[Tooltip("AO radius: this is the distance outside which occluders are ignored.")]
 		public float radius;
 
-		[Tooltip("Maximum radius in pixels: this prevents the radius to grow too much with close-up object and impact on performances.")]
 		[Range(32f, 256f)]
+		[Tooltip("Maximum radius in pixels: this prevents the radius to grow too much with close-up object and impact on performances.")]
 		public float maxRadiusPixels;
 
 		[Range(0f, 0.5f)]
 		[Tooltip("For low-tessellated geometry, occlusion variations tend to appear at creases and ridges, which betray the underlying tessellation. To remove these artifacts, we use an angle bias parameter which restricts the hemisphere.")]
 		public float bias;
 
-		[Tooltip("This value allows to scale up the ambient occlusion values.")]
 		[Range(0f, 10f)]
+		[Tooltip("This value allows to scale up the ambient occlusion values.")]
 		public float intensity;
 
-		[Range(0f, 1f)]
 		[Tooltip("This value allows to attenuate ambient occlusion depending on final color luminance.")]
+		[Range(0f, 1f)]
 		public float luminanceInfluence;
 
 		[Tooltip("The max distance to display AO.")]
@@ -864,12 +864,12 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The distance before max distance at which AO start to decrease.")]
 		public float distanceFalloff;
 
-		[Space(10f)]
 		[Tooltip("The type of per pixel normals to use.")]
+		[Space(10f)]
 		public HBAO.PerPixelNormals perPixelNormals;
 
-		[Space(10f)]
 		[Tooltip("This setting allow you to set the base color if the AO, the alpha channel value is unused.")]
+		[Space(10f)]
 		public Color baseColor;
 	}
 
@@ -893,9 +893,9 @@ public class HBAO : MonoBehaviour
 		[Space(6f)]
 		public bool enabled;
 
-		[Tooltip("This value allows to control the saturation of the color bleeding.")]
-		[Space(10f)]
 		[Range(0f, 4f)]
+		[Space(10f)]
+		[Tooltip("This value allows to control the saturation of the color bleeding.")]
 		public float saturation;
 
 		[Tooltip("This value allows to scale the contribution of the color bleeding samples.")]
@@ -925,8 +925,8 @@ public class HBAO : MonoBehaviour
 		public HBAO.Blur amount;
 
 		[Range(0f, 16f)]
-		[Tooltip("This parameter controls the depth-dependent weight of the bilateral filter, to avoid bleeding across edges. A zero sharpness is a pure Gaussian blur. Increasing the blur sharpness removes bleeding by using lower weights for samples with large depth delta from the current pixel.")]
 		[Space(10f)]
+		[Tooltip("This parameter controls the depth-dependent weight of the bilateral filter, to avoid bleeding across edges. A zero sharpness is a pure Gaussian blur. Increasing the blur sharpness removes bleeding by using lower weights for samples with large depth delta from the current pixel.")]
 		public float sharpness;
 
 		[Tooltip("Is the blur downsampled.")]

@@ -4,8 +4,8 @@ using UnityEngine;
 [Serializable]
 public class TOD_WorldParameters
 {
-	[Range(-90f, 90f)]
 	[Tooltip("Latitude of the current location in degrees.")]
+	[Range(-90f, 90f)]
 	public float Latitude;
 
 	[Range(-180f, 180f)]

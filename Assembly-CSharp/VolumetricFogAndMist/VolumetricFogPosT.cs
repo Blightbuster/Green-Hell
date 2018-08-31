@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace VolumetricFogAndMist
 {
-	[ExecuteInEditMode]
 	[RequireComponent(typeof(Camera), typeof(VolumetricFog))]
+	[ExecuteInEditMode]
 	public class VolumetricFogPosT : MonoBehaviour, IVolumetricFogRenderComponent
 	{
 		public VolumetricFog fog { get; set; }

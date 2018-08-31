@@ -146,8 +146,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The offset of the character's position relative to the trigger in XZ plane. Y position of the character is unlimited as long as it is contact with the collider.")]
 			public Vector2 offset;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Angle offset from the default forward direction.")]
+			[Range(-180f, 180f)]
 			public float angleOffset;
 
 			[Range(0f, 180f)]
@@ -261,12 +261,12 @@ namespace RootMotion.FinalIK
 				return true;
 			}
 
-			[HideInInspector]
 			[SerializeField]
+			[HideInInspector]
 			public string name;
 
-			[HideInInspector]
 			[SerializeField]
+			[HideInInspector]
 			public bool show = true;
 
 			[Tooltip("The range for the character's position and rotation.")]

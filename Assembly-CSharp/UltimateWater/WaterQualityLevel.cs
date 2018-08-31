@@ -25,8 +25,8 @@ namespace UltimateWater
 		[FormerlySerializedAs("name")]
 		public string Name;
 
-		[FormerlySerializedAs("maxSpectrumResolution")]
 		[Tooltip("All simulations will be performed at most with this resolution")]
+		[FormerlySerializedAs("maxSpectrumResolution")]
 		public int MaxSpectrumResolution;
 
 		[FormerlySerializedAs("allowHighPrecisionTextures")]
@@ -45,12 +45,12 @@ namespace UltimateWater
 		[FormerlySerializedAs("allowSpray")]
 		public bool AllowSpray;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("foamQuality")]
+		[Range(0f, 1f)]
 		public float FoamQuality;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("maxTesselationFactor")]
+		[Range(0f, 1f)]
 		public float MaxTesselationFactor;
 
 		[FormerlySerializedAs("maxVertexCount")]

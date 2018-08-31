@@ -27,10 +27,13 @@ public class GreenHellGame : MonoBehaviour
 		this.InitAudioMixer();
 		this.m_Settings = base.gameObject.AddComponent<GameSettings>();
 		this.m_Settings.LoadSettings();
-		GreenHellGame.ROADSHOW_DEMO = File.Exists(Application.dataPath + "/Resources/scripts/Debug/ROADSHOW_DEMO");
-		GreenHellGame.DEBUG = File.Exists(Application.dataPath + "/Resources/scripts/Debug/DEBUG");
-		GreenHellGame.TWITCH_DEMO = File.Exists(Application.dataPath + "/Resources/scripts/Debug/TWITCH_DEMO");
-		GreenHellGame.FORCE_SURVIVAL = File.Exists(Application.dataPath + "/Resources/scripts/Debug/FORCE_SURVIVAL");
+		if (Debug.isDebugBuild)
+		{
+			GreenHellGame.ROADSHOW_DEMO = File.Exists(Application.dataPath + "/Resources/scripts/Debug/ROADSHOW_DEMO");
+			GreenHellGame.DEBUG = File.Exists(Application.dataPath + "/Resources/scripts/Debug/DEBUG");
+			GreenHellGame.TWITCH_DEMO = File.Exists(Application.dataPath + "/Resources/scripts/Debug/TWITCH_DEMO");
+			GreenHellGame.FORCE_SURVIVAL = File.Exists(Application.dataPath + "/Resources/scripts/Debug/FORCE_SURVIVAL");
+		}
 		this.SetMaxDeltaTime();
 		this.InitMusic();
 		this.InitPrefabsMap();

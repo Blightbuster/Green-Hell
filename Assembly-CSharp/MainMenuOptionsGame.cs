@@ -158,6 +158,7 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			GreenHellGame.Instance.m_Settings.SaveSettings();
 			GreenHellGame.Instance.m_Settings.ApplySettings();
 			this.ApplyLocalization();
+			GreenHellGame.GetYesNoDialog().ApplyLanguage();
 		}
 	}
 

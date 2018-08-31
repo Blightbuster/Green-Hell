@@ -6,9 +6,9 @@ using UnityEngine.XR;
 namespace DynamicFogAndMist
 {
 	[HelpURL("http://kronnect.com/taptapgo")]
-	[RequireComponent(typeof(Camera))]
-	[ExecuteInEditMode]
 	[ImageEffectAllowedInSceneView]
+	[ExecuteInEditMode]
+	[RequireComponent(typeof(Camera))]
 	public class DynamicFog : MonoBehaviour
 	{
 		public FOG_TYPE effectType
@@ -1540,20 +1540,20 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private Color _color2 = Color.gray;
 
-		[Range(0f, 500f)]
 		[SerializeField]
+		[Range(0f, 500f)]
 		private float _skyHaze = 50f;
 
 		[Range(0f, 1f)]
 		[SerializeField]
 		private float _skySpeed = 0.3f;
 
-		[SerializeField]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _skyNoiseStrength = 0.1f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _skyAlpha = 1f;
 
 		[SerializeField]

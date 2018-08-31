@@ -60,8 +60,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _StartIntensity = 1f;
 
-		[FormerlySerializedAs("startVelocity")]
 		[SerializeField]
+		[FormerlySerializedAs("startVelocity")]
 		private float _StartVelocity = 1f;
 
 		[FormerlySerializedAs("lifetime")]

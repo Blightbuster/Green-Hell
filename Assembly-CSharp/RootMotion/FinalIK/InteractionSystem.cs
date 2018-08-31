@@ -840,13 +840,13 @@ namespace RootMotion.FinalIK
 		[Tooltip("If > 0, lerps all the FBBIK channels used by the Interaction System back to their default or initial values when not in interaction.")]
 		public float resetToDefaultsSpeed = 1f;
 
-		[Header("Triggering")]
-		[Tooltip("The collider that registers OnTriggerEnter and OnTriggerExit events with InteractionTriggers.")]
 		[FormerlySerializedAs("collider")]
+		[Tooltip("The collider that registers OnTriggerEnter and OnTriggerExit events with InteractionTriggers.")]
+		[Header("Triggering")]
 		public Collider characterCollider;
 
-		[Tooltip("Will be used by Interaction Triggers that need the camera's position. Assign the first person view character camera.")]
 		[FormerlySerializedAs("camera")]
+		[Tooltip("Will be used by Interaction Triggers that need the camera's position. Assign the first person view character camera.")]
 		public Transform FPSCamera;
 
 		[Tooltip("The layers that will be raycasted from the camera (along camera.forward). All InteractionTrigger look at target colliders should be included.")]

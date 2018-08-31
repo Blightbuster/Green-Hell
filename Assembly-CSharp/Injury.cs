@@ -662,7 +662,7 @@ public class Injury
 
 	public GameObject m_Bandage;
 
-	public static float s_LeechCooldownInMinutes = 610f;
+	public static float s_LeechCooldownInMinutes = 1098f;
 
 	public static float s_PoisonAutoDebufTime = 60f;
 

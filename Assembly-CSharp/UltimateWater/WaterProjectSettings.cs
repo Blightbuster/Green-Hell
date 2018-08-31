@@ -166,40 +166,40 @@ namespace UltimateWater
 		[SerializeField]
 		private float _SerializedVersion = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("waterLayer")]
+		[SerializeField]
 		private int _WaterLayer = 4;
 
-		[SerializeField]
 		[FormerlySerializedAs("waterTempLayer")]
 		[Tooltip("Used for some camera effects. Has to be unused. You don't need to mask it on your cameras.")]
+		[SerializeField]
 		private int _WaterTempLayer = 22;
 
 		[FormerlySerializedAs("waterCollidersLayer")]
-		[Tooltip("UltimateWater internally uses colliders to detect camera entering into subtractive volumes etc. You will have to ignore this layer in your scripting raycasts.")]
 		[SerializeField]
+		[Tooltip("UltimateWater internally uses colliders to detect camera entering into subtractive volumes etc. You will have to ignore this layer in your scripting raycasts.")]
 		private int _WaterCollidersLayer = 1;
 
-		[Tooltip("More threads increase physics precision under stress, but also decrease overall performance a bit.")]
-		[SerializeField]
 		[FormerlySerializedAs("physicsThreads")]
+		[SerializeField]
+		[Tooltip("More threads increase physics precision under stress, but also decrease overall performance a bit.")]
 		private int _PhysicsThreads = 1;
 
-		[FormerlySerializedAs("physicsThreadsPriority")]
 		[SerializeField]
+		[FormerlySerializedAs("physicsThreadsPriority")]
 		private System.Threading.ThreadPriority _PhysicsThreadsPriority = System.Threading.ThreadPriority.BelowNormal;
 
 		[SerializeField]
 		[FormerlySerializedAs("allowCpuFFT")]
 		private bool _AllowCpuFFT = true;
 
-		[FormerlySerializedAs("allowFloatingPointMipMaps")]
 		[SerializeField]
 		[Tooltip("Some hardware doesn't support floating point mip maps correctly and they are forcefully disabled. You may simulate how the water would look like on such hardware by disabling this option. Most notably fp mip maps don't work correctly on most AMD graphic cards (for now).")]
+		[FormerlySerializedAs("allowFloatingPointMipMaps")]
 		private bool _AllowFloatingPointMipMapsOverride = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("debugPhysics")]
+		[SerializeField]
 		private bool _DebugPhysics;
 
 		[FormerlySerializedAs("askForWaterCameras")]

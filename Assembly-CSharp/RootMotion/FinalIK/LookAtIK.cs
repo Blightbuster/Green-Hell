@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Look At IK")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page8.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Look At IK")]
 	public class LookAtIK : IK
 	{
 		[ContextMenu("User Manual")]

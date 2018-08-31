@@ -638,10 +638,10 @@ namespace UltimateWater
 			}
 		}
 
-		[FormerlySerializedAs("sampleCount")]
-		[Range(1f, 30f)]
-		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
 		[SerializeField]
+		[FormerlySerializedAs("sampleCount")]
+		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
+		[Range(1f, 30f)]
 		private int _SampleCount = 20;
 
 		[Range(0f, 6f)]

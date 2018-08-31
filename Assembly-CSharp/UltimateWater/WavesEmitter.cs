@@ -79,8 +79,8 @@ namespace UltimateWater
 			return new Vector2(vector3.x, vector3.z);
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("water")]
+		[SerializeField]
 		private WaveParticlesSystemGPU _Water;
 
 		[FormerlySerializedAs("amplitude")]
@@ -111,8 +111,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _EmissionInterval = 0.15f;
 
-		[FormerlySerializedAs("trailCalming")]
 		[SerializeField]
+		[FormerlySerializedAs("trailCalming")]
 		[Range(0f, 1f)]
 		private float _TrailCalming = 1f;
 

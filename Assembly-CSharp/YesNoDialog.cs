@@ -21,6 +21,13 @@ public class YesNoDialog : MonoBehaviour
 		base.gameObject.SetActive(false);
 	}
 
+	public void ApplyLanguage()
+	{
+		this.m_DW.m_Button1Text.text = GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Yes");
+		this.m_DW.m_Button2Text.text = GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_No");
+		this.m_DW.m_Button3Text.text = GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_OK");
+	}
+
 	private void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.Escape))

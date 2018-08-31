@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
+[RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
 [AddComponentMenu("Image Effects/Sonic Ether/SE Natural Bloom and Dirty Lens")]
-[RequireComponent(typeof(Camera))]
 public class SENaturalBloomAndDirtyLens : MonoBehaviour
 {
 	private void Start()

@@ -78,8 +78,8 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private Water _Water;
 
-		[FormerlySerializedAs("renderQueuePriority")]
 		[SerializeField]
+		[FormerlySerializedAs("renderQueuePriority")]
 		private int _RenderQueuePriority;
 
 		private const string _WaterIdName = "_WaterId";

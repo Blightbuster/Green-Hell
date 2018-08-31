@@ -58,8 +58,8 @@ namespace UltimateWater
 		[SerializeField]
 		private LayerMask _StaticDepthMask;
 
-		[SerializeField]
 		[Tooltip("How many simulation steps are performed per frame, the more iterations, the faster the water waves are, but it's expensive")]
+		[SerializeField]
 		private int _Iterations = 1;
 
 		[Tooltip("Simulation data (only R channel is used)")]

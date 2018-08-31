@@ -158,12 +158,12 @@ namespace UltimateWater
 			}
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("initialProfile")]
+		[SerializeField]
 		private WaterProfile _InitialProfile;
 
-		[SerializeField]
 		[FormerlySerializedAs("changed")]
+		[SerializeField]
 		private Water.WaterEvent _Changed = new Water.WaterEvent();
 
 		private Water _Water;

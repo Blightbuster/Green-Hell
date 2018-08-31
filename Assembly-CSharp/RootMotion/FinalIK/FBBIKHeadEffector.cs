@@ -332,9 +332,9 @@ namespace RootMotion.FinalIK
 		[Tooltip("Reference to the FBBIK component.")]
 		public FullBodyBipedIK ik;
 
+		[LargeHeader("Position")]
 		[Tooltip("Master weight for positioning the head.")]
 		[Range(0f, 1f)]
-		[LargeHeader("Position")]
 		public float positionWeight = 1f;
 
 		[Tooltip("The weight of moving the body along with the head")]
@@ -348,21 +348,21 @@ namespace RootMotion.FinalIK
 		[Tooltip("If false, hands will not pull the head away if they are too far. Disabling this will improve performance significantly.")]
 		public bool handsPullBody = true;
 
-		[LargeHeader("Rotation")]
-		[Range(0f, 1f)]
 		[Tooltip("The weight of rotating the head bone after solving")]
+		[Range(0f, 1f)]
+		[LargeHeader("Rotation")]
 		public float rotationWeight;
 
-		[Range(0f, 1f)]
 		[Tooltip("Clamping the rotation of the body")]
+		[Range(0f, 1f)]
 		public float bodyClampWeight = 0.5f;
 
 		[Range(0f, 1f)]
 		[Tooltip("Clamping the rotation of the head")]
 		public float headClampWeight = 0.5f;
 
-		[Tooltip("The master weight of bending/twisting the spine to the rotation of the head effector. This is similar to CCD, but uses the rotation of the head effector not the position.")]
 		[Range(0f, 1f)]
+		[Tooltip("The master weight of bending/twisting the spine to the rotation of the head effector. This is similar to CCD, but uses the rotation of the head effector not the position.")]
 		public float bendWeight = 1f;
 
 		[Tooltip("The bones to use for bending.")]
@@ -384,9 +384,9 @@ namespace RootMotion.FinalIK
 		[Tooltip("Bones to use for the CCD pass. Assign spine and/or neck bones.")]
 		public Transform[] CCDBones = new Transform[0];
 
+		[LargeHeader("Stretching")]
 		[Range(0f, 1f)]
 		[Tooltip("Stretching the spine/neck to help reach the target. This is useful for making sure the head stays locked relative to the VR headset. NB! Stretching is done after FBBIK has solved so if you have the hand effectors pinned and spine bones included in the 'Stretch Bones', the hands might become offset from their target positions.")]
-		[LargeHeader("Stretching")]
 		public float postStretchWeight = 1f;
 
 		[Tooltip("Stretch magnitude limit.")]

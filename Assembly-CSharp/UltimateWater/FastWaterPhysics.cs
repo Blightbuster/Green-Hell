@@ -158,13 +158,13 @@ namespace UltimateWater
 		[Tooltip("Adjust buoyancy proportionally, if your collider is bigger or smaller than the actual object. Lowering this may fix some weird behavior of objects with extremely low density like beach balls or baloons.")]
 		private float _BuoyancyIntensity = 1f;
 
-		[Tooltip("Controls drag force. Determined experimentally in wind tunnels. Example values:\n https://en.wikipedia.org/wiki/Drag_coefficient#General")]
-		[Range(0f, 3f)]
 		[SerializeField]
+		[Range(0f, 3f)]
+		[Tooltip("Controls drag force. Determined experimentally in wind tunnels. Example values:\n https://en.wikipedia.org/wiki/Drag_coefficient#General")]
 		private float _DragCoefficient = 0.9f;
 
-		[Tooltip("Horizontal flow force intensity.")]
 		[SerializeField]
+		[Tooltip("Horizontal flow force intensity.")]
 		private float _FlowIntensity = 1f;
 
 		private Rigidbody _RigidBody;

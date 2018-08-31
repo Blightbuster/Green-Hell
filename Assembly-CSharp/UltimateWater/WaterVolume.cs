@@ -178,8 +178,8 @@ namespace UltimateWater
 		{
 		}
 
-		[SerializeField]
 		[Tooltip("Makes water volume be infinite in horizontal directions and infinitely deep. It is still reduced by subtractive colliders tho. Check that if this is an ocean, sea or if this water spans through most of the scene. If you will uncheck this, you will need to add some child colliders to define where water should display.")]
+		[SerializeField]
 		private bool _Boundless = true;
 
 		private bool _CollidersAdded;

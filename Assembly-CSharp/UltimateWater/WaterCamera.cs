@@ -1139,14 +1139,14 @@ namespace UltimateWater
 		[HideInInspector]
 		public Camera ReflectionCamera;
 
-		[SerializeField]
 		[HideInInspector]
 		[FormerlySerializedAs("depthBlitCopyShader")]
+		[SerializeField]
 		private Shader _DepthBlitCopyShader;
 
-		[FormerlySerializedAs("shadowEnforcerShader")]
 		[SerializeField]
 		[HideInInspector]
+		[FormerlySerializedAs("shadowEnforcerShader")]
 		private Shader _ShadowEnforcerShader;
 
 		[FormerlySerializedAs("gbuffer0MixShader")]
@@ -1154,9 +1154,9 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _Gbuffer0MixShader;
 
-		[SerializeField]
 		[HideInInspector]
 		[FormerlySerializedAs("gbuffer123MixShader")]
+		[SerializeField]
 		private Shader _Gbuffer123MixShader;
 
 		[FormerlySerializedAs("finalColorMixShader")]
@@ -1213,8 +1213,8 @@ namespace UltimateWater
 		[SerializeField]
 		private int _ForcedVertexCount;
 
-		[SerializeField]
 		[FormerlySerializedAs("submersionStateChanged")]
+		[SerializeField]
 		private WaterCamera.WaterCameraEvent _SubmersionStateChanged;
 
 		[Tooltip("Optional. Deferred rendering mode will try to match profile parameters of this water object as well as possible. It affects only some minor parameters and you may generally ignore this setting. May be removed in the future.")]

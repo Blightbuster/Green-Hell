@@ -892,14 +892,14 @@ namespace UltimateWater
 		[SerializeField]
 		private Gradient _AbsorptionColorByDepthFlatGradient;
 
-		[ColorUsage(false, true, 0f, 10f, 0f, 10f)]
 		[FormerlySerializedAs("diffuseColor")]
 		[SerializeField]
+		[ColorUsage(false, true, 0f, 10f, 0f, 10f)]
 		private Color _DiffuseColor = new Color(0.1176f, 0.2196f, 0.2666f);
 
 		[SerializeField]
-		[ColorUsage(false)]
 		[FormerlySerializedAs("specularColor")]
+		[ColorUsage(false)]
 		private Color _SpecularColor = new Color(0.0353f, 0.0471f, 0.0549f);
 
 		[SerializeField]
@@ -917,18 +917,18 @@ namespace UltimateWater
 		[FormerlySerializedAs("reflectionColor")]
 		private Color _ReflectionColor = new Color(1f, 1f, 1f);
 
-		[SerializeField]
 		[Range(0f, 1f)]
 		[FormerlySerializedAs("smoothness")]
+		[SerializeField]
 		private float _Smoothness = 0.94f;
 
-		[SerializeField]
 		[FormerlySerializedAs("customAmbientSmoothness")]
+		[SerializeField]
 		private bool _CustomAmbientSmoothness;
 
 		[FormerlySerializedAs("ambientSmoothness")]
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _AmbientSmoothness = 0.94f;
 
 		[FormerlySerializedAs("isotropicScatteringIntensity")]
@@ -1029,8 +1029,8 @@ namespace UltimateWater
 		[Range(1f, 64f)]
 		private float _DynamicSmoothnessIntensity = 1f;
 
-		[FormerlySerializedAs("normalMapAnimation1")]
 		[SerializeField]
+		[FormerlySerializedAs("normalMapAnimation1")]
 		private NormalMapAnimation _NormalMapAnimation1 = new NormalMapAnimation(1f, -10f, 1f, new Vector2(1f, 1f));
 
 		[FormerlySerializedAs("normalMapAnimation2")]
@@ -1075,18 +1075,18 @@ namespace UltimateWater
 		private Color _FoamDiffuseColor = new Color(0.8f, 0.8f, 0.8f);
 
 		[FormerlySerializedAs("foamSpecularColor")]
-		[Tooltip("Alpha component is PBR smoothness.")]
 		[SerializeField]
+		[Tooltip("Alpha component is PBR smoothness.")]
 		private Color _FoamSpecularColor = new Color(1f, 1f, 1f, 0f);
 
 		[FormerlySerializedAs("sprayThreshold")]
-		[SerializeField]
 		[Range(0f, 4f)]
+		[SerializeField]
 		private float _SprayThreshold = 1f;
 
-		[Range(0f, 0.999f)]
 		[FormerlySerializedAs("spraySkipRatio")]
 		[SerializeField]
+		[Range(0f, 0.999f)]
 		private float _SpraySkipRatio = 0.9f;
 
 		[Range(0.25f, 4f)]
@@ -1094,8 +1094,8 @@ namespace UltimateWater
 		[FormerlySerializedAs("spraySize")]
 		private float _SpraySize = 1f;
 
-		[FormerlySerializedAs("foamDiffuseMap")]
 		[SerializeField]
+		[FormerlySerializedAs("foamDiffuseMap")]
 		private Texture2D _FoamDiffuseMap;
 
 		[SerializeField]
@@ -1106,8 +1106,8 @@ namespace UltimateWater
 		[FormerlySerializedAs("foamTiling")]
 		private Vector2 _FoamTiling = new Vector2(5.4f, 5.4f);
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private WaterProfile _Template;
 
 		private WaterWavesSpectrum _Spectrum;

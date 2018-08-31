@@ -307,8 +307,8 @@ namespace UltimateWater
 			return index >= 0 && index < num;
 		}
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Cubemap _CubeMap;
 
 		[Header("Settings")]
@@ -367,8 +367,8 @@ namespace UltimateWater
 		[Serializable]
 		public class FadeModule
 		{
-			[Tooltip("1 - no fade, 0 - instant fade")]
 			[Range(0.5f, 1f)]
+			[Tooltip("1 - no fade, 0 - instant fade")]
 			public float Intensity = 0.99f;
 
 			[Tooltip("Additional texture based fade")]
@@ -420,8 +420,8 @@ namespace UltimateWater
 				this._PreviousPosition = vector;
 			}
 
-			[Header("Force multipliers")]
 			[SerializeField]
+			[Header("Force multipliers")]
 			private float _Translation;
 
 			[SerializeField]

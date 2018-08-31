@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Time of Day/Camera Main Script")]
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
+[AddComponentMenu("Time of Day/Camera Main Script")]
 public class TOD_Camera : MonoBehaviour
 {
 	public bool HDR

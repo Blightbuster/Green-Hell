@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 [AddComponentMenu("Time of Day/Camera God Rays")]
 public class TOD_Rays : TOD_ImageEffect
 {

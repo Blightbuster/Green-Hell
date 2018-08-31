@@ -57,8 +57,8 @@ namespace UltimateWater
 			return new NormalMapAnimation(a._Speed + b._Speed, a._Deviation + b._Deviation, a._Intensity + b._Intensity, a._Tiling + b._Tiling);
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("speed")]
+		[SerializeField]
 		private float _Speed;
 
 		[SerializeField]
@@ -66,9 +66,9 @@ namespace UltimateWater
 		[FormerlySerializedAs("deviation")]
 		private float _Deviation;
 
-		[Range(0f, 4f)]
 		[FormerlySerializedAs("intensity")]
 		[SerializeField]
+		[Range(0f, 4f)]
 		private float _Intensity;
 
 		[SerializeField]

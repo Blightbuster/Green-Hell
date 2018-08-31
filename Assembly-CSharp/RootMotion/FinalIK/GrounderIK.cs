@@ -239,8 +239,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The root Transform of the character, with the rigidbody and the collider.")]
 		public Transform characterRoot;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of rotating the character root to the ground normal (range: 0 - 1).")]
+		[Range(0f, 1f)]
 		public float rootRotationWeight;
 
 		[Tooltip("The speed of rotating the character root to the ground normal (range: 0 - inf).")]

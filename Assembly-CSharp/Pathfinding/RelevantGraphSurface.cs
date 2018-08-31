@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[AddComponentMenu("Pathfinding/Navmesh/RelevantGraphSurface")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_relevant_graph_surface.php")]
+	[AddComponentMenu("Pathfinding/Navmesh/RelevantGraphSurface")]
 	public class RelevantGraphSurface : VersionedMonoBehaviour
 	{
 		public Vector3 Position

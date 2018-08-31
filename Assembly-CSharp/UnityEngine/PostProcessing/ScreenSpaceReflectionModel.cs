@@ -52,8 +52,8 @@ namespace UnityEngine.PostProcessing
 			[Range(0f, 1f)]
 			public float fresnelFade;
 
-			[Range(0.1f, 10f)]
 			[Tooltip("Higher values correspond to a faster Fresnel fade as the reflection changes from the grazing angle.")]
+			[Range(0.1f, 10f)]
 			public float fresnelFadePower;
 		}
 
@@ -74,12 +74,12 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Max raytracing length.")]
 			public int iterationCount;
 
-			[Tooltip("Log base 2 of ray tracing coarse step size. Higher traces farther, lower gives better quality silhouettes.")]
 			[Range(1f, 16f)]
+			[Tooltip("Log base 2 of ray tracing coarse step size. Higher traces farther, lower gives better quality silhouettes.")]
 			public int stepSize;
 
-			[Tooltip("Typical thickness of columns, walls, furniture, and other objects that reflection rays might pass behind.")]
 			[Range(0.01f, 10f)]
+			[Tooltip("Typical thickness of columns, walls, furniture, and other objects that reflection rays might pass behind.")]
 			public float widthModifier;
 
 			[Range(0.1f, 8f)]

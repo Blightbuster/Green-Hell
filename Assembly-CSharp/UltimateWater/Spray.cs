@@ -497,9 +497,9 @@ namespace UltimateWater
 			this._ResourcesReady = false;
 		}
 
-		[HideInInspector]
 		[FormerlySerializedAs("sprayTiledGeneratorShader")]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _SprayTiledGeneratorShader;
 
 		[HideInInspector]
@@ -512,13 +512,13 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _SprayToFoamShader;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		[FormerlySerializedAs("sprayControllerShader")]
 		private ComputeShader _SprayControllerShader;
 
-		[FormerlySerializedAs("sprayMaterial")]
 		[SerializeField]
+		[FormerlySerializedAs("sprayMaterial")]
 		private Material _SprayMaterial;
 
 		[Range(16f, 327675f)]

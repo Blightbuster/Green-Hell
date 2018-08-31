@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-[AddComponentMenu("Terrain/Ramp Brush")]
 [ExecuteInEditMode]
+[AddComponentMenu("Terrain/Ramp Brush")]
 public class RampBrush : MonoBehaviour
 {
 	public void OnDrawGizmos()

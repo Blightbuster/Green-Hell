@@ -111,12 +111,12 @@ namespace AdvancedTerrainGrass
 		public float Foliage = 1f;
 
 		[Header("Size and Speed")]
-		[Space(4f)]
 		[Range(0.001f, 0.1f)]
+		[Space(4f)]
 		public float size = 0.01f;
 
-		[Space(5f)]
 		[Range(0.0001f, 0.2f)]
+		[Space(5f)]
 		public float speed = 0.02f;
 
 		public float speedLayer0 = 0.476f;
@@ -125,8 +125,8 @@ namespace AdvancedTerrainGrass
 
 		public float speedLayer2 = 2.93f;
 
-		[Space(4f)]
 		[Header("Noise")]
+		[Space(4f)]
 		public int GrassGustTiling = 4;
 
 		public float GrassGustSpeed = 0.278f;

@@ -397,8 +397,8 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _LocalEffectsSupported = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("localEffectsDebug")]
+		[SerializeField]
 		private bool _LocalEffectsDebug;
 
 		[FormerlySerializedAs("foam")]
@@ -432,13 +432,13 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _WavesAlign;
 
-		[FormerlySerializedAs("normalMappingMode")]
 		[SerializeField]
 		[Header("Surface")]
+		[FormerlySerializedAs("normalMappingMode")]
 		private NormalMappingMode _NormalMappingMode = NormalMappingMode.Auto;
 
-		[SerializeField]
 		[FormerlySerializedAs("supportEmission")]
+		[SerializeField]
 		private bool _SupportEmission;
 
 		[FormerlySerializedAs("surfaceShaders")]

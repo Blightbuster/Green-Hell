@@ -20,11 +20,11 @@ public class TOD_AtmosphereParameters
 	[Tooltip("Overall contrast of the atmosphere.")]
 	public float Contrast = 1.5f;
 
-	[Tooltip("Directionality factor that determines the size of the glow around the sun.")]
 	[TOD_Range(0f, 1f)]
+	[Tooltip("Directionality factor that determines the size of the glow around the sun.")]
 	public float Directionality = 0.7f;
 
-	[TOD_Range(0f, 1f)]
 	[Tooltip("Density of the fog covering the sky.")]
+	[TOD_Range(0f, 1f)]
 	public float Fogginess;
 }

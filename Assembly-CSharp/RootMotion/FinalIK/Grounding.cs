@@ -268,8 +268,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("Speed of slerping the feet to their grounded rotations.")]
 		public float footRotationSpeed = 7f;
 
-		[Tooltip("Max Foot Rotation Angle. Max angular offset from the foot's rotation.")]
 		[Range(0f, 90f)]
+		[Tooltip("Max Foot Rotation Angle. Max angular offset from the foot's rotation.")]
 		public float maxFootRotationAngle = 45f;
 
 		[Tooltip("If true, solver will rotate with the character root so the character can be grounded for example to spherical planets. For performance reasons leave this off unless needed.")]
