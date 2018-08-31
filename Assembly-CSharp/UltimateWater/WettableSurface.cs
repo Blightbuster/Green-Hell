@@ -247,8 +247,8 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _WettableUtilShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("wettableUtilNearShader")]
+		[SerializeField]
 		[HideInInspector]
 		private Shader _WettableUtilNearShader;
 
@@ -256,8 +256,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Water _Water;
 
-		[SerializeField]
 		[FormerlySerializedAs("mainCamera")]
+		[SerializeField]
 		[Tooltip("Surface wetting near this camera will be more precise.")]
 		private WaterCamera _MainCamera;
 

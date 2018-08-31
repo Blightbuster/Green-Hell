@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DisallowMultipleComponent]
-	[AddComponentMenu("Cinemachine/CinemachineClearShot")]
-	[DocumentationSorting(12f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DocumentationSorting(12f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("Cinemachine/CinemachineClearShot")]
+	[DisallowMultipleComponent]
 	public class CinemachineClearShot : CinemachineVirtualCameraBase
 	{
 		public override string Description
@@ -326,8 +326,8 @@ namespace Cinemachine
 		public bool m_ShowDebugText;
 
 		[NoSaveDuringPlay]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("Wait this many seconds before activating a new child camera")]
@@ -339,8 +339,8 @@ namespace Cinemachine
 		[Tooltip("If checked, camera choice will be randomized if multiple cameras are equally desirable.  Otherwise, child list order and child camera priority will be used.")]
 		public bool m_RandomizeChoice;
 
-		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
 		[CinemachineBlendDefinitionProperty]
+		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
 
 		[HideInInspector]

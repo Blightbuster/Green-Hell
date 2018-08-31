@@ -251,8 +251,8 @@ namespace Cinemachine
 			this.UpdateVcamPoolStatus();
 		}
 
-		[HideInInspector]
 		[NoSaveDuringPlay]
+		[HideInInspector]
 		public Action CinemachineGUIDebuggerCallback;
 
 		[HideInInspector]

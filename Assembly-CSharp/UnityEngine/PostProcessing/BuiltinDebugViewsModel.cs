@@ -52,8 +52,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Range(0f, 1f)]
 			[Tooltip("Scales the camera far plane before displaying the depth map.")]
+			[Range(0f, 1f)]
 			public float scale;
 		}
 
@@ -76,8 +76,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Range(0f, 1f)]
 			[Tooltip("Opacity of the source render.")]
+			[Range(0f, 1f)]
 			public float sourceOpacity;
 
 			[Tooltip("Opacity of the per-pixel motion vector colors.")]

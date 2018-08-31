@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[AddComponentMenu("Pathfinding/Modifiers/Radius Offset")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_radius_modifier.php")]
+	[AddComponentMenu("Pathfinding/Modifiers/Radius Offset")]
 	public class RadiusModifier : MonoModifier
 	{
 		public override int Order

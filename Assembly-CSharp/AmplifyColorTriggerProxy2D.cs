@@ -2,8 +2,8 @@
 using UnityEngine;
 
 [AddComponentMenu("")]
-[RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(CircleCollider2D))]
+[RequireComponent(typeof(Rigidbody2D))]
 public class AmplifyColorTriggerProxy2D : AmplifyColorTriggerProxyBase
 {
 	private void Start()

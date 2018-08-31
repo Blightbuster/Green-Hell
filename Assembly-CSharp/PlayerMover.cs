@@ -92,8 +92,8 @@ public class PlayerMover : MonoBehaviour
 	[Tooltip("List of streamers objects that should affect loading screen. Drag and drop here all your streamer objects from scene hierarchy which should be used in loading screen.")]
 	public Streamer[] streamers;
 
-	[Tooltip("Drag and drop here, an object that system have to follow during streaming process.")]
 	[Space(10f)]
+	[Tooltip("Drag and drop here, an object that system have to follow during streaming process.")]
 	public Transform player;
 
 	[Tooltip("The player safe position during loading.")]

@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("Relief Terrain/Helpers/MIP solver for standalone shader")]
+[ExecuteInEditMode]
 public class ReliefTerrainVertexBlendTriplanar : MonoBehaviour
 {
 	public void SetupMIPOffsets()

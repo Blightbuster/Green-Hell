@@ -4,8 +4,8 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[DocumentationSorting(21f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	public class CinemachineDollyCart : MonoBehaviour
 	{
 		private void FixedUpdate()
@@ -51,8 +51,8 @@ namespace Cinemachine
 		[FormerlySerializedAs("m_Velocity")]
 		public float m_Speed;
 
-		[Tooltip("The position along the path at which the cart will be placed.  This can be animated directly or, if the velocity is non-zero, will be updated automatically.  The value is interpreted according to the Position Units setting.")]
 		[FormerlySerializedAs("m_CurrentDistance")]
+		[Tooltip("The position along the path at which the cart will be placed.  This can be animated directly or, if the velocity is non-zero, will be updated automatically.  The value is interpreted according to the Position Units setting.")]
 		public float m_Position;
 
 		public enum UpdateMethod

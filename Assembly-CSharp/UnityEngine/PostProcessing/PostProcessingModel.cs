@@ -27,8 +27,8 @@ namespace UnityEngine.PostProcessing
 		{
 		}
 
-		[SerializeField]
 		[GetSet("enabled")]
+		[SerializeField]
 		private bool m_Enabled;
 	}
 }

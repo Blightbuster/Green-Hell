@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Pathfinding.Util
 {
-	public class GraphGizmoHelper : IDisposable, IAstarPooledObject
+	public class GraphGizmoHelper : IAstarPooledObject, IDisposable
 	{
 		public GraphGizmoHelper()
 		{

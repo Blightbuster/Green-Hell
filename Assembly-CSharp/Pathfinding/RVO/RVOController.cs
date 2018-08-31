@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding.RVO
 {
-	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Controller")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_controller.php")]
+	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Controller")]
 	public class RVOController : VersionedMonoBehaviour
 	{
 		[Obsolete("This field is obsolete in version 4.0 and will not affect anything. Use the LegacyRVOController if you need the old behaviour")]
@@ -255,8 +255,8 @@ namespace Pathfinding.RVO
 		[Tooltip("Radius of the agent")]
 		public float radius = 0.5f;
 
-		[HideInInspector]
 		[Tooltip("Height of the agent. In world units")]
+		[HideInInspector]
 		public float height = 2f;
 
 		[Tooltip("A locked unit cannot move. Other units will still avoid it. But avoidance quality is not the best")]
@@ -279,20 +279,20 @@ namespace Pathfinding.RVO
 		[AstarEnumFlag]
 		public RVOLayer collidesWith = (RVOLayer)(-1);
 
-		[HideInInspector]
 		[Obsolete]
+		[HideInInspector]
 		public float wallAvoidForce = 1f;
 
-		[HideInInspector]
 		[Obsolete]
+		[HideInInspector]
 		public float wallAvoidFalloff = 1f;
 
 		[Range(0f, 1f)]
 		[Tooltip("How strongly other agents will avoid this agent")]
 		public float priority = 0.5f;
 
-		[Tooltip("Center of the agent relative to the pivot point of this game object")]
 		[HideInInspector]
+		[Tooltip("Center of the agent relative to the pivot point of this game object")]
 		public float center = 1f;
 
 		protected Transform tr;

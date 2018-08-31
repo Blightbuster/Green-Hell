@@ -17,7 +17,7 @@ public class TOD_ReflectionParameters
 	[Tooltip("Time slicing behaviour to spread out rendering cost over multiple frames.")]
 	public ReflectionProbeTimeSlicingMode TimeSlicing;
 
-	[Tooltip("Refresh interval of the reflection cubemap in seconds.")]
 	[TOD_Min(0f)]
+	[Tooltip("Refresh interval of the reflection cubemap in seconds.")]
 	public float UpdateInterval = 1f;
 }

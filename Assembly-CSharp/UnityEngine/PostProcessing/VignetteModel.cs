@@ -56,8 +56,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Use the \"Classic\" mode for parametric controls. Use the \"Masked\" mode to use your own texture mask.")]
 			public VignetteModel.Mode mode;
 
-			[Tooltip("Vignette color. Use the alpha channel for transparency.")]
 			[ColorUsage(false)]
+			[Tooltip("Vignette color. Use the alpha channel for transparency.")]
 			public Color color;
 
 			[Tooltip("Sets the vignette center point (screen center is [0.5,0.5]).")]
@@ -67,8 +67,8 @@ namespace UnityEngine.PostProcessing
 			[Range(0f, 1f)]
 			public float intensity;
 
-			[Tooltip("Smoothness of the vignette borders.")]
 			[Range(0.01f, 1f)]
+			[Tooltip("Smoothness of the vignette borders.")]
 			public float smoothness;
 
 			[Tooltip("Lower values will make a square-ish vignette.")]

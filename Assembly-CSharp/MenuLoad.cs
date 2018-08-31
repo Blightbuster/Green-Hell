@@ -20,7 +20,7 @@ public class MenuLoad : MenuSaveLoadCommon, IYesNoDialogOwner
 			return;
 		}
 		this.m_SlotIdx = slot_idx;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Warning"), GreenHellGame.Instance.GetLocalization().Get("MenuSaveGame_OverwriteWarning"), false);
+		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Warning"), GreenHellGame.Instance.GetLocalization().Get("MenuLoadGame_Confirm"), false);
 		this.m_WaitingForDecision = true;
 	}
 

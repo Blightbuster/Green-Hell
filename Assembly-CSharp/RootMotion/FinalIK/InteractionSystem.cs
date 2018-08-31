@@ -5,8 +5,8 @@ using UnityEngine.Serialization;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("https://www.youtube.com/watch?v=r5jiZnsDH3M")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction System")]
+	[HelpURL("https://www.youtube.com/watch?v=r5jiZnsDH3M")]
 	public class InteractionSystem : MonoBehaviour
 	{
 		[ContextMenu("TUTORIAL VIDEO (PART 1: BASICS)")]
@@ -840,8 +840,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("If > 0, lerps all the FBBIK channels used by the Interaction System back to their default or initial values when not in interaction.")]
 		public float resetToDefaultsSpeed = 1f;
 
-		[Tooltip("The collider that registers OnTriggerEnter and OnTriggerExit events with InteractionTriggers.")]
 		[Header("Triggering")]
+		[Tooltip("The collider that registers OnTriggerEnter and OnTriggerExit events with InteractionTriggers.")]
 		[FormerlySerializedAs("collider")]
 		public Collider characterCollider;
 
@@ -873,8 +873,8 @@ namespace RootMotion.FinalIK
 
 		public RaycastHit raycastHit;
 
-		[Tooltip("Reference to the FBBIK component.")]
 		[SerializeField]
+		[Tooltip("Reference to the FBBIK component.")]
 		[Space(10f)]
 		private FullBodyBipedIK fullBody;
 

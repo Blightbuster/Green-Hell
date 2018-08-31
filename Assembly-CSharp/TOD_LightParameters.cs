@@ -4,8 +4,8 @@ using UnityEngine;
 [Serializable]
 public class TOD_LightParameters
 {
-	[TOD_Min(0f)]
 	[Tooltip("Refresh interval of the light source position in seconds.")]
+	[TOD_Min(0f)]
 	public float UpdateInterval;
 
 	[TOD_Range(-1f, 1f)]

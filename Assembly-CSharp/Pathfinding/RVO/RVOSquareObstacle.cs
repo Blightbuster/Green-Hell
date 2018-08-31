@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Pathfinding.RVO
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_square_obstacle.php")]
 	[AddComponentMenu("Pathfinding/Local Avoidance/Square Obstacle")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_square_obstacle.php")]
 	public class RVOSquareObstacle : RVOObstacle
 	{
 		protected override bool StaticObstacle

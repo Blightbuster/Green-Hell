@@ -8,6 +8,11 @@ namespace Enums
 		French,
 		Italian,
 		German,
-		Spanish
+		Spanish,
+		ChineseTraditional,
+		ChineseSimplyfied,
+		Portuguese,
+		PortugueseBrazilian,
+		Russian
 	}
 }

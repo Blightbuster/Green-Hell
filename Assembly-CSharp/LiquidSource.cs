@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
-public class LiquidSource : Trigger, IItemSlotParent, ITriggerThrough
+public class LiquidSource : Trigger, ITriggerThrough, IItemSlotParent
 {
 	protected override void Start()
 	{

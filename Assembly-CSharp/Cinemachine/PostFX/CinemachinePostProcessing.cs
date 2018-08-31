@@ -7,10 +7,10 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace Cinemachine.PostFX
 {
-	[DocumentationSorting(101f, DocumentationSortingAttribute.Level.UserRef)]
-	[SaveDuringPlay]
-	[AddComponentMenu("")]
 	[ExecuteInEditMode]
+	[AddComponentMenu("")]
+	[SaveDuringPlay]
+	[DocumentationSorting(101f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachinePostProcessing : CinemachineExtension
 	{
 		public PostProcessProfile Profile

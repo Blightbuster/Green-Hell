@@ -151,6 +151,7 @@ public class PlayerSanityModule : PlayerModule
 					PlayerSanityModule.SanityEventType key2 = (PlayerSanityModule.SanityEventType)Enum.Parse(typeof(PlayerSanityModule.SanityEventType), svalue);
 					this.m_EventsMap[(int)key2].m_SanityChange = key.GetVariable(1).IValue;
 					this.m_EventsMap[(int)key2].m_Interval = key.GetVariable(2).FValue;
+					this.m_EventsMap[(int)key2].m_TextID = key.GetVariable(3).SValue;
 				}
 			}
 			else if (key.GetName() == "StalkerStalkingSanityLevel")
@@ -265,7 +266,7 @@ public class PlayerSanityModule : PlayerModule
 			return;
 		}
 		this.m_Sanity = num;
-		this.OnChangeSanity((float)num2);
+		this.OnChangeSanity((float)num2, string.Empty);
 	}
 
 	public void OnEvent(PlayerSanityModule.SanityEventType evn, int mul = 1)
@@ -290,15 +291,20 @@ public class PlayerSanityModule : PlayerModule
 			}
 			this.m_Sanity = num;
 			sanityEventData.m_LastEventTime = Time.time;
-			this.OnChangeSanity((float)num2);
+			this.OnChangeSanity((float)num2, sanityEventData.m_TextID);
 		}
 	}
 
-	private void OnChangeSanity(float diff)
+	private void OnChangeSanity(float diff, string text_id)
 	{
 		HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
 		string text = GreenHellGame.Instance.GetLocalization().Get("HUD_Sanity") + ((diff <= 0f) ? string.Empty : "+") + diff.ToString();
 		hudmessages.AddMessage(text, null, HUDMessageIcon.None, string.Empty);
+		if (text_id != string.Empty)
+		{
+			text = GreenHellGame.Instance.GetLocalization().Get(text_id);
+			hudmessages.AddMessage(text, null, HUDMessageIcon.None, string.Empty);
+		}
 		if (this.m_Sanity <= this.m_SanityLevelToPlaySounds)
 		{
 			PlayerAudioModule.Get().PlaySanityLossSound(1f);

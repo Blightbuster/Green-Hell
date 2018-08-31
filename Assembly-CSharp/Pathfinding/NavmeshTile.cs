@@ -3,7 +3,7 @@ using Pathfinding.Util;
 
 namespace Pathfinding
 {
-	public class NavmeshTile : INavmesh, INavmeshHolder
+	public class NavmeshTile : INavmeshHolder, INavmesh
 	{
 		public void GetTileCoordinates(int tileIndex, out int x, out int z)
 		{

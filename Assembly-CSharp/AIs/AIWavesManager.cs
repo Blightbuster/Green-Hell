@@ -18,7 +18,7 @@ namespace AIs
 
 		private bool ShouldSpawnWave()
 		{
-			return HumanAIGroupManager.Get() && !this.m_BlockSpawnWaves && BalanceSystem.Get().CanSpawnHumanAIWave();
+			return false;
 		}
 
 		public void Update()

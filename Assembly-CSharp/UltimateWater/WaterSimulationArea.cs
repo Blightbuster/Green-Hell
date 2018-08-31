@@ -7,8 +7,8 @@ using UnityEngine.Rendering;
 
 namespace UltimateWater
 {
-	[AddComponentMenu("Ultimate Water/Dynamic/Water Simulation Area")]
 	[RequireComponent(typeof(MeshFilter))]
+	[AddComponentMenu("Ultimate Water/Dynamic/Water Simulation Area")]
 	public class WaterSimulationArea : MonoBehaviour, ILocalDisplacementRenderer, IDynamicWaterEffects
 	{
 		public WaterRipplesProfile Profile
@@ -519,10 +519,10 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterRipplesProfile _Profile;
 
-		[Tooltip("How many simulation pixels per one unit are used")]
-		[Range(1f, 32f)]
 		[SerializeField]
+		[Range(1f, 32f)]
 		[Header("Settings")]
+		[Tooltip("How many simulation pixels per one unit are used")]
 		private int _PixelsPerUnit = 16;
 
 		[Range(0.125f, 2f)]
@@ -530,8 +530,8 @@ namespace UltimateWater
 		[Tooltip("What resolution is used for dynamic depth rendering")]
 		private float _DepthScale = 0.5f;
 
-		[Tooltip("Does the water can be  stopped by Blocking objects")]
 		[SerializeField]
+		[Tooltip("Does the water can be  stopped by Blocking objects")]
 		private bool _EnableStaticCalculations;
 
 		[Range(0.125f, 2f)]

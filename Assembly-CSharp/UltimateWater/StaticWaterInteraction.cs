@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 
 namespace UltimateWater
 {
-	public sealed class StaticWaterInteraction : MonoBehaviour, ILocalDisplacementMaskRenderer, IWaterShore, IDynamicWaterEffects
+	public sealed class StaticWaterInteraction : MonoBehaviour, IWaterShore, ILocalDisplacementMaskRenderer, IDynamicWaterEffects
 	{
 		public Bounds Bounds
 		{
@@ -472,13 +472,13 @@ namespace UltimateWater
 		[Tooltip("Specifies a distance from the shore over which a water gets one meter deeper (value of 50 means that water has a depth of 1m at a distance of 50m from the shore).")]
 		private float _ShoreSmoothness = 50f;
 
+		[Tooltip("If set to true, geometry that floats above water is correctly ignored.\n\nUse for objects that are closed and have faces at the bottom like basic primitives and most custom meshes, but not terrain.")]
 		[SerializeField]
 		[FormerlySerializedAs("hasBottomFaces")]
-		[Tooltip("If set to true, geometry that floats above water is correctly ignored.\n\nUse for objects that are closed and have faces at the bottom like basic primitives and most custom meshes, but not terrain.")]
 		private bool _HasBottomFaces;
 
-		[FormerlySerializedAs("underwaterAreasMode")]
 		[SerializeField]
+		[FormerlySerializedAs("underwaterAreasMode")]
 		private StaticWaterInteraction.UnderwaterAreasMode _UnderwaterAreasMode;
 
 		[FormerlySerializedAs("mapResolution")]
@@ -494,8 +494,8 @@ namespace UltimateWater
 		private int _MapResolution = 1024;
 
 		[Tooltip("All waves bigger than this (in scene units) will be dampened near the shore.")]
-		[FormerlySerializedAs("waveDampingThreshold")]
 		[SerializeField]
+		[FormerlySerializedAs("waveDampingThreshold")]
 		private float _WaveDampingThreshold = 4f;
 
 		[SerializeField]
@@ -507,14 +507,14 @@ namespace UltimateWater
 		[FormerlySerializedAs("maskGenerateShader")]
 		private Shader _MaskGenerateShader;
 
-		[HideInInspector]
 		[FormerlySerializedAs("maskDisplayShader")]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _MaskDisplayShader;
 
+		[HideInInspector]
 		[SerializeField]
 		[FormerlySerializedAs("heightMapperShader")]
-		[HideInInspector]
 		private Shader _HeightMapperShader;
 
 		[FormerlySerializedAs("heightMapperShaderAlt")]

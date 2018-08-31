@@ -129,8 +129,8 @@ namespace UltimateWater
 		[SerializeField]
 		private WaveParticlesSystemGPU _GPUParticleSystem;
 
-		[SerializeField]
 		[FormerlySerializedAs("unityParticleSystem")]
+		[SerializeField]
 		private ParticleSystem _UnityParticleSystem;
 
 		[FormerlySerializedAs("waveSpeed")]
@@ -162,42 +162,42 @@ namespace UltimateWater
 		[SerializeField]
 		private float _LeftRightSpace = 1f;
 
+		[FormerlySerializedAs("trailCalming")]
 		[SerializeField]
 		[Range(0f, 1f)]
-		[FormerlySerializedAs("trailCalming")]
 		private float _TrailCalming = 1f;
 
+		[FormerlySerializedAs("trailFoam")]
 		[SerializeField]
 		[Range(0f, 8f)]
-		[FormerlySerializedAs("trailFoam")]
 		private float _TrailFoam = 1f;
 
-		[FormerlySerializedAs("advancedEmissionPositioning")]
-		[Tooltip("Use for submarines. Allows emission to be moved to exposed ship parts during submerge process and completely disabled after complete submarge.")]
-		[Header("Advanced")]
 		[SerializeField]
+		[FormerlySerializedAs("advancedEmissionPositioning")]
+		[Header("Advanced")]
+		[Tooltip("Use for submarines. Allows emission to be moved to exposed ship parts during submerge process and completely disabled after complete submarge.")]
 		private bool _AdvancedEmissionPositioning;
 
+		[FormerlySerializedAs("shipCollider")]
 		[SerializeField]
 		[Tooltip("Required if 'advancedEmissionPositioning' is enabled. Allows emitter to determine an emission point on that collider.")]
-		[FormerlySerializedAs("shipCollider")]
 		private Collider _ShipCollider;
 
 		[FormerlySerializedAs("advancedEmissionOffset")]
 		[SerializeField]
 		private float _AdvancedEmissionOffset = 2f;
 
-		[SerializeField]
 		[FormerlySerializedAs("minTextureIndex")]
+		[SerializeField]
 		private int _MinTextureIndex;
 
 		[FormerlySerializedAs("maxTextureIndex")]
 		[SerializeField]
 		private int _MaxTextureIndex = 4;
 
+		[FormerlySerializedAs("emissionSpacing")]
 		[SerializeField]
 		[Range(0.1f, 1f)]
-		[FormerlySerializedAs("emissionSpacing")]
 		private float _EmissionSpacing = 0.45f;
 
 		private Vector2 _PreviousFrameBowPosition;

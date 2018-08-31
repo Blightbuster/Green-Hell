@@ -123,21 +123,21 @@ public class TOD_DayParameters
 		}
 	};
 
-	[Tooltip("Intensity of the light source.")]
 	[Range(0f, 8f)]
+	[Tooltip("Intensity of the light source.")]
 	public float LightIntensity = 1f;
 
 	public float m_SanityLightIntensityMul = 1f;
 
-	[Tooltip("Opacity of the shadows dropped by the light source.")]
 	[Range(0f, 1f)]
+	[Tooltip("Opacity of the shadows dropped by the light source.")]
 	public float ShadowStrength = 1f;
 
-	[Tooltip("Brightness multiplier of the ambient light.")]
 	[Range(0f, 1f)]
+	[Tooltip("Brightness multiplier of the ambient light.")]
 	public float AmbientMultiplier = 1f;
 
-	[Tooltip("Brightness multiplier of the reflection probe.")]
 	[Range(0f, 1f)]
+	[Tooltip("Brightness multiplier of the reflection probe.")]
 	public float ReflectionMultiplier = 1f;
 }

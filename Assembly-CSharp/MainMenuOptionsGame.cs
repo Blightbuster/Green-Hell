@@ -13,6 +13,11 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 		this.m_Language.AddOption("Italian", GreenHellGame.Instance.GetLocalization().Get("Language_Italian"));
 		this.m_Language.AddOption("German", GreenHellGame.Instance.GetLocalization().Get("Language_German"));
 		this.m_Language.AddOption("Spanish", GreenHellGame.Instance.GetLocalization().Get("Language_Spanish"));
+		this.m_Language.AddOption("ChineseTraditional", GreenHellGame.Instance.GetLocalization().Get("Language_ChineseTraditional"));
+		this.m_Language.AddOption("ChineseSimplyfied", GreenHellGame.Instance.GetLocalization().Get("Language_ChineseSimplyfied"));
+		this.m_Language.AddOption("Portuguese", GreenHellGame.Instance.GetLocalization().Get("Language_Portuguese"));
+		this.m_Language.AddOption("PortugueseBrazilian", GreenHellGame.Instance.GetLocalization().Get("Language_PortugueseBrazilian"));
+		this.m_Language.AddOption("Russian", GreenHellGame.Instance.GetLocalization().Get("Language_Russian"));
 		switch (GreenHellGame.Instance.m_Settings.m_Language)
 		{
 		case Language.English:
@@ -35,8 +40,42 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			this.m_Language.SetByOption("Spanish");
 			this.m_SelectedLanguage = Language.Spanish;
 			break;
+		case Language.ChineseTraditional:
+			this.m_Language.SetByOption("ChineseTraditional");
+			this.m_SelectedLanguage = Language.ChineseTraditional;
+			break;
+		case Language.ChineseSimplyfied:
+			this.m_Language.SetByOption("ChineseSimplyfied");
+			this.m_SelectedLanguage = Language.ChineseSimplyfied;
+			break;
+		case Language.Portuguese:
+			this.m_Language.SetByOption("Portuguese");
+			this.m_SelectedLanguage = Language.Portuguese;
+			break;
+		case Language.PortugueseBrazilian:
+			this.m_Language.SetByOption("PortugueseBrazilian");
+			this.m_SelectedLanguage = Language.PortugueseBrazilian;
+			break;
+		case Language.Russian:
+			this.m_Language.SetByOption("Russian");
+			this.m_SelectedLanguage = Language.Russian;
+			break;
 		}
 		this.m_AcceptButton.interactable = false;
+	}
+
+	private void ApplyLocalization()
+	{
+		this.m_Language.SetOptionText("English", GreenHellGame.Instance.GetLocalization().Get("Language_English"));
+		this.m_Language.SetOptionText("French", GreenHellGame.Instance.GetLocalization().Get("Language_French"));
+		this.m_Language.SetOptionText("Italian", GreenHellGame.Instance.GetLocalization().Get("Language_Italian"));
+		this.m_Language.SetOptionText("German", GreenHellGame.Instance.GetLocalization().Get("Language_German"));
+		this.m_Language.SetOptionText("Spanish", GreenHellGame.Instance.GetLocalization().Get("Language_Spanish"));
+		this.m_Language.SetOptionText("ChineseTraditional", GreenHellGame.Instance.GetLocalization().Get("Language_ChineseTraditional"));
+		this.m_Language.SetOptionText("ChineseSimplyfied", GreenHellGame.Instance.GetLocalization().Get("Language_ChineseSimplyfied"));
+		this.m_Language.SetOptionText("Portuguese", GreenHellGame.Instance.GetLocalization().Get("Language_Portuguese"));
+		this.m_Language.SetOptionText("PortugueseBrazilian", GreenHellGame.Instance.GetLocalization().Get("Language_PortugueseBrazilian"));
+		this.m_Language.SetOptionText("Russian", GreenHellGame.Instance.GetLocalization().Get("Language_Russian"));
 	}
 
 	public override void OnSelectionChanged(UISelectButton button, string option)
@@ -63,6 +102,26 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			else if (option == "Spanish")
 			{
 				this.m_SelectedLanguage = Language.Spanish;
+			}
+			else if (option == "ChineseTraditional")
+			{
+				this.m_SelectedLanguage = Language.ChineseTraditional;
+			}
+			else if (option == "ChineseSimplyfied")
+			{
+				this.m_SelectedLanguage = Language.ChineseSimplyfied;
+			}
+			else if (option == "Portuguese")
+			{
+				this.m_SelectedLanguage = Language.Portuguese;
+			}
+			else if (option == "PortugueseBrazilian")
+			{
+				this.m_SelectedLanguage = Language.PortugueseBrazilian;
+			}
+			else if (option == "Russian")
+			{
+				this.m_SelectedLanguage = Language.Russian;
 			}
 		}
 	}
@@ -98,6 +157,7 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			this.ApplySettings();
 			GreenHellGame.Instance.m_Settings.SaveSettings();
 			GreenHellGame.Instance.m_Settings.ApplySettings();
+			this.ApplyLocalization();
 		}
 	}
 

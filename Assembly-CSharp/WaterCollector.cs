@@ -1,7 +1,7 @@
 ﻿using System;
 using Enums;
 
-public class WaterCollector : Construction, IItemSlotParent, ITriggerThrough
+public class WaterCollector : Construction, ITriggerThrough, IItemSlotParent
 {
 	public bool CanInsertItem(Item item)
 	{

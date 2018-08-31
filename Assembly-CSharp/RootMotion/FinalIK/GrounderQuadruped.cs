@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder Quadruped")]
+	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
 	public class GrounderQuadruped : Grounder
 	{
 		[ContextMenu("User Manual")]
@@ -353,8 +353,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The maximum IK offset for the forelegs (range: 0 - inf).")]
 		public float maxForeLegOffset = 0.5f;
 
-		[Tooltip("The weight of maintaining the head's rotation as it was before solving the Grounding (range: 0 - 1).")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of maintaining the head's rotation as it was before solving the Grounding (range: 0 - 1).")]
 		public float maintainHeadRotationWeight = 0.5f;
 
 		[Tooltip("The root Transform of the character, with the rigidbody and the collider.")]

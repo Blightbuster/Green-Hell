@@ -627,8 +627,8 @@ namespace UltimateWater
 			[Tooltip("Higher values increase quality, but also decrease performance. Directly controls quality of waves, foam and spray.")]
 			public int Resolution = 256;
 
-			[Tooltip("Determines if 32-bit precision buffers should be used for computations (Default: off). Not supported on most mobile devices. This setting has impact on performance, even on PCs.\n\nTips:\n 1024 and higher - The difference is clearly visible, use this option on higher quality settings.\n 512 or lower - Keep it disabled.")]
 			[SerializeField]
+			[Tooltip("Determines if 32-bit precision buffers should be used for computations (Default: off). Not supported on most mobile devices. This setting has impact on performance, even on PCs.\n\nTips:\n 1024 and higher - The difference is clearly visible, use this option on higher quality settings.\n 512 or lower - Keep it disabled.")]
 			public bool HighPrecision = true;
 
 			[Tooltip("What error in world units is acceptable for elevation sampling used by physics and custom scripts? Lower values mean better precision, but higher CPU usage.")]

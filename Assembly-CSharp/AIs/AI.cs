@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AIs
 {
-	public class AI : Being, IAnimationEventsReceiver, INoiseReceiver
+	public class AI : Being, INoiseReceiver, IAnimationEventsReceiver
 	{
 		public static bool IsHuman(AI.AIID id)
 		{

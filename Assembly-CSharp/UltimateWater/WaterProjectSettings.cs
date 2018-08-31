@@ -162,22 +162,22 @@ namespace UltimateWater
 
 		public static readonly string CurrentVersionString = "2.1.0";
 
-		[SerializeField]
 		[FormerlySerializedAs("serializedVersion")]
+		[SerializeField]
 		private float _SerializedVersion = 1f;
 
-		[FormerlySerializedAs("waterLayer")]
 		[SerializeField]
+		[FormerlySerializedAs("waterLayer")]
 		private int _WaterLayer = 4;
 
-		[FormerlySerializedAs("waterTempLayer")]
 		[SerializeField]
+		[FormerlySerializedAs("waterTempLayer")]
 		[Tooltip("Used for some camera effects. Has to be unused. You don't need to mask it on your cameras.")]
 		private int _WaterTempLayer = 22;
 
-		[SerializeField]
-		[Tooltip("UltimateWater internally uses colliders to detect camera entering into subtractive volumes etc. You will have to ignore this layer in your scripting raycasts.")]
 		[FormerlySerializedAs("waterCollidersLayer")]
+		[Tooltip("UltimateWater internally uses colliders to detect camera entering into subtractive volumes etc. You will have to ignore this layer in your scripting raycasts.")]
+		[SerializeField]
 		private int _WaterCollidersLayer = 1;
 
 		[Tooltip("More threads increase physics precision under stress, but also decrease overall performance a bit.")]
@@ -189,13 +189,13 @@ namespace UltimateWater
 		[SerializeField]
 		private System.Threading.ThreadPriority _PhysicsThreadsPriority = System.Threading.ThreadPriority.BelowNormal;
 
-		[FormerlySerializedAs("allowCpuFFT")]
 		[SerializeField]
+		[FormerlySerializedAs("allowCpuFFT")]
 		private bool _AllowCpuFFT = true;
 
+		[FormerlySerializedAs("allowFloatingPointMipMaps")]
 		[SerializeField]
 		[Tooltip("Some hardware doesn't support floating point mip maps correctly and they are forcefully disabled. You may simulate how the water would look like on such hardware by disabling this option. Most notably fp mip maps don't work correctly on most AMD graphic cards (for now).")]
-		[FormerlySerializedAs("allowFloatingPointMipMaps")]
 		private bool _AllowFloatingPointMipMapsOverride = true;
 
 		[SerializeField]

@@ -52,9 +52,9 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterProfile _Profile;
 
+		[FormerlySerializedAs("radius")]
 		[Tooltip("Describes how big the weather system is. Common values range from 10000 to 150000, assuming that the scene units are used as meters.")]
 		[SerializeField]
-		[FormerlySerializedAs("radius")]
 		private float _Radius = 10000f;
 
 		[FormerlySerializedAs("weight")]

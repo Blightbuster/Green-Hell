@@ -332,13 +332,13 @@ namespace RootMotion.FinalIK
 		[Tooltip("Reference to the FBBIK component.")]
 		public FullBodyBipedIK ik;
 
-		[Range(0f, 1f)]
 		[Tooltip("Master weight for positioning the head.")]
+		[Range(0f, 1f)]
 		[LargeHeader("Position")]
 		public float positionWeight = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of moving the body along with the head")]
+		[Range(0f, 1f)]
 		public float bodyWeight = 0.8f;
 
 		[Tooltip("The weight of moving the thighs along with the head")]
@@ -349,16 +349,16 @@ namespace RootMotion.FinalIK
 		public bool handsPullBody = true;
 
 		[LargeHeader("Rotation")]
-		[Tooltip("The weight of rotating the head bone after solving")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of rotating the head bone after solving")]
 		public float rotationWeight;
 
-		[Tooltip("Clamping the rotation of the body")]
 		[Range(0f, 1f)]
+		[Tooltip("Clamping the rotation of the body")]
 		public float bodyClampWeight = 0.5f;
 
-		[Tooltip("Clamping the rotation of the head")]
 		[Range(0f, 1f)]
+		[Tooltip("Clamping the rotation of the head")]
 		public float headClampWeight = 0.5f;
 
 		[Tooltip("The master weight of bending/twisting the spine to the rotation of the head effector. This is similar to CCD, but uses the rotation of the head effector not the position.")]
@@ -369,12 +369,12 @@ namespace RootMotion.FinalIK
 		public FBBIKHeadEffector.BendBone[] bendBones = new FBBIKHeadEffector.BendBone[0];
 
 		[Range(0f, 1f)]
-		[LargeHeader("CCD")]
 		[Tooltip("Optional. The master weight of the CCD (Cyclic Coordinate Descent) IK effect that bends the spine towards the head effector before FBBIK solves.")]
+		[LargeHeader("CCD")]
 		public float CCDWeight = 1f;
 
-		[Tooltip("The weight of rolling the bones in towards the target")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of rolling the bones in towards the target")]
 		public float roll;
 
 		[Range(0f, 1000f)]
@@ -483,8 +483,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Assign spine and/or neck bones.")]
 			public Transform transform;
 
-			[Tooltip("The weight of rotating this bone.")]
 			[Range(0f, 1f)]
+			[Tooltip("The weight of rotating this bone.")]
 			public float weight = 0.5f;
 
 			private Quaternion defaultLocalRotation = Quaternion.identity;

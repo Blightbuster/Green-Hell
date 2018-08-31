@@ -19,7 +19,7 @@ public class RTP_TintDielectricColor : MonoBehaviour
 		Shader.SetGlobalColor("RTP_ColorSpaceDielectricSpecTint", this.DielectricTint);
 	}
 
-	[Tooltip("You can reduce/increase reflectivity by tinting default unity_ColorSpaceDielectricSpec.rgb color")]
 	[ColorUsage(false)]
+	[Tooltip("You can reduce/increase reflectivity by tinting default unity_ColorSpaceDielectricSpec.rgb color")]
 	public Color DielectricTint = new Color(0.2f, 0.2f, 0.2f, 1f);
 }

@@ -44,7 +44,19 @@ public class MainMenu : MainMenuScreen
 		Color color = Color.black;
 		if (state != MainMenuState.CompanyLogo)
 		{
-			if (state == MainMenuState.GameLogo)
+			if (state != MainMenuState.GameLogo)
+			{
+				if (state == MainMenuState.MainMenu)
+				{
+					this.m_BG.gameObject.SetActive(true);
+					this.m_CompanyLogo.gameObject.SetActive(false);
+					this.m_GameLogo.gameObject.SetActive(false);
+					color = this.m_BG.color;
+					color.a = 1f;
+					this.m_BG.color = color;
+				}
+			}
+			else
 			{
 				this.m_BG.gameObject.SetActive(true);
 				this.m_CompanyLogo.gameObject.SetActive(false);
@@ -53,17 +65,6 @@ public class MainMenu : MainMenuScreen
 				color.a = 0f;
 				this.m_GameLogo.color = color;
 				this.m_ButtonsEnabled = false;
-				return;
-			}
-			if (state == MainMenuState.MainMenu)
-			{
-				this.m_BG.gameObject.SetActive(true);
-				this.m_CompanyLogo.gameObject.SetActive(false);
-				this.m_GameLogo.gameObject.SetActive(false);
-				color = this.m_BG.color;
-				color.a = 1f;
-				this.m_BG.color = color;
-				return;
 			}
 		}
 		else
@@ -103,7 +104,8 @@ public class MainMenu : MainMenuScreen
 	public void OnLoadingEndFadeOut()
 	{
 		LoadingScreen.Get().Hide();
-		GreenHellGame.GetFadeSystem().FadeIn(FadeType.Vis, null, 1.5f);
+		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
+		fadeSystem.FadeIn(FadeType.Vis, null, 1.5f);
 	}
 
 	private void UpdateButtons()
@@ -188,8 +190,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_StartStory.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		Vector3 position = component.position;
-		float num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_StartStory)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		float num3 = (!(this.m_ActiveButton == this.m_StartStory)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX;
+		float num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_StartStory)
 		{
@@ -203,8 +206,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_StartChallenge.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		position = component.position;
-		num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_StartChallenge)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		num3 = ((!(this.m_ActiveButton == this.m_StartChallenge)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
+		num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_StartChallenge)
 		{
@@ -214,8 +218,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_StartSurvival.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		position = component.position;
-		num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_StartSurvival)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		num3 = ((!(this.m_ActiveButton == this.m_StartSurvival)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
+		num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_StartSurvival)
 		{
@@ -225,8 +230,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_LoadGame.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		position = component.position;
-		num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_LoadGame)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		num3 = ((!(this.m_ActiveButton == this.m_LoadGame)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
+		num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_LoadGame)
 		{
@@ -236,8 +242,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_Options.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		position = component.position;
-		num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_Options)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		num3 = ((!(this.m_ActiveButton == this.m_Options)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
+		num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_Options)
 		{
@@ -247,8 +254,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_Credits.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		position = component.position;
-		num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_Credits)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		num3 = ((!(this.m_ActiveButton == this.m_Credits)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
+		num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_Credits)
 		{
@@ -258,8 +266,9 @@ public class MainMenu : MainMenuScreen
 		}
 		component = this.m_Quit.GetComponentInChildren<Text>().GetComponent<RectTransform>();
 		position = component.position;
-		num3 = Mathf.Ceil(((!(this.m_ActiveButton == this.m_Quit)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX) - position.x) * Time.deltaTime * 10f;
-		position.x += num3;
+		num3 = ((!(this.m_ActiveButton == this.m_Quit)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
+		num4 = Mathf.Ceil(num3 - position.x) * Time.deltaTime * 10f;
+		position.x += num4;
 		component.position = position;
 		if (this.m_ActiveButton == this.m_Quit)
 		{
@@ -295,72 +304,65 @@ public class MainMenu : MainMenuScreen
 						Color color = this.m_BG.color;
 						color.a = 1f - Mathf.Clamp01((Time.time - this.m_StateStartTime) / this.m_FadeOutSceneDuration);
 						this.m_BG.color = color;
-						return;
 					}
-					if (this.m_BG.gameObject.activeSelf)
+					else
 					{
-						this.m_BG.gameObject.SetActive(false);
+						if (this.m_BG.gameObject.activeSelf)
+						{
+							this.m_BG.gameObject.SetActive(false);
+						}
+						if (!this.m_ButtonsEnabled)
+						{
+							this.m_ButtonsEnabled = true;
+							this.m_ButtonActivationTime = Time.time;
+						}
 					}
-					if (!this.m_ButtonsEnabled)
-					{
-						this.m_ButtonsEnabled = true;
-						this.m_ButtonActivationTime = Time.time;
-						return;
-					}
+				}
+			}
+			else if (Time.time - this.m_StateStartTime <= this.m_FadeInDuration)
+			{
+				Color color2 = this.m_GameLogo.color;
+				color2.a = Mathf.Clamp01((Time.time - this.m_StateStartTime) / this.m_FadeInDuration);
+				this.m_GameLogo.color = color2;
+			}
+			else if (Time.time - this.m_StateStartTime >= this.m_GameLogoDuration - this.m_FadeOutDuration)
+			{
+				Color color3 = this.m_GameLogo.color;
+				color3.a = 1f - Mathf.Clamp01((Time.time - this.m_StateStartTime - (this.m_GameLogoDuration - this.m_FadeOutDuration)) / this.m_FadeOutDuration);
+				this.m_GameLogo.color = color3;
+				if (Time.time - this.m_StateStartTime > this.m_GameLogoDuration + this.m_BlackScreenDuration)
+				{
+					this.SetState(MainMenuState.MainMenu);
 				}
 			}
 			else
 			{
-				if (Time.time - this.m_StateStartTime <= this.m_FadeInDuration)
-				{
-					Color color2 = this.m_GameLogo.color;
-					color2.a = Mathf.Clamp01((Time.time - this.m_StateStartTime) / this.m_FadeInDuration);
-					this.m_GameLogo.color = color2;
-					return;
-				}
-				if (Time.time - this.m_StateStartTime < this.m_GameLogoDuration - this.m_FadeOutDuration)
-				{
-					Color color3 = this.m_GameLogo.color;
-					color3.a = 1f;
-					this.m_GameLogo.color = color3;
-					return;
-				}
 				Color color4 = this.m_GameLogo.color;
-				color4.a = 1f - Mathf.Clamp01((Time.time - this.m_StateStartTime - (this.m_GameLogoDuration - this.m_FadeOutDuration)) / this.m_FadeOutDuration);
+				color4.a = 1f;
 				this.m_GameLogo.color = color4;
-				if (Time.time - this.m_StateStartTime > this.m_GameLogoDuration + this.m_BlackScreenDuration)
-				{
-					this.SetState(MainMenuState.MainMenu);
-					return;
-				}
+			}
+		}
+		else if (Time.time - this.m_StateStartTime <= this.m_FadeInDuration)
+		{
+			Color color5 = this.m_CompanyLogo.color;
+			color5.a = Mathf.Clamp01((Time.time - this.m_StateStartTime) / this.m_FadeInDuration);
+			this.m_CompanyLogo.color = color5;
+		}
+		else if (Time.time - this.m_StateStartTime >= this.m_CompanyLogoDuration - this.m_FadeOutDuration)
+		{
+			Color color6 = this.m_CompanyLogo.color;
+			color6.a = 1f - Mathf.Clamp01((Time.time - this.m_StateStartTime - (this.m_CompanyLogoDuration - this.m_FadeOutDuration)) / this.m_FadeOutDuration);
+			this.m_CompanyLogo.color = color6;
+			if (Time.time - this.m_StateStartTime > this.m_CompanyLogoDuration + this.m_BlackScreenDuration)
+			{
+				this.SetState(MainMenuState.GameLogo);
 			}
 		}
 		else
 		{
-			if (Time.time - this.m_StateStartTime <= this.m_FadeInDuration)
-			{
-				Color color5 = this.m_CompanyLogo.color;
-				color5.a = Mathf.Clamp01((Time.time - this.m_StateStartTime) / this.m_FadeInDuration);
-				this.m_CompanyLogo.color = color5;
-				return;
-			}
-			if (Time.time - this.m_StateStartTime >= this.m_CompanyLogoDuration - this.m_FadeOutDuration)
-			{
-				Color color6 = this.m_CompanyLogo.color;
-				color6.a = 1f - Mathf.Clamp01((Time.time - this.m_StateStartTime - (this.m_CompanyLogoDuration - this.m_FadeOutDuration)) / this.m_FadeOutDuration);
-				this.m_CompanyLogo.color = color6;
-				if (Time.time - this.m_StateStartTime > this.m_CompanyLogoDuration + this.m_BlackScreenDuration)
-				{
-					this.SetState(MainMenuState.GameLogo);
-					return;
-				}
-			}
-			else
-			{
-				Color color7 = this.m_CompanyLogo.color;
-				color7.a = 1f;
-				this.m_CompanyLogo.color = color7;
-			}
+			Color color7 = this.m_CompanyLogo.color;
+			color7.a = 1f;
+			this.m_CompanyLogo.color = color7;
 		}
 	}
 
@@ -445,19 +447,16 @@ public class MainMenu : MainMenuScreen
 			if (Input.GetKey(KeyCode.Space) && this.m_State != MainMenuState.MainMenu)
 			{
 				this.SetState(MainMenuState.MainMenu);
-				return;
 			}
-			if (Input.GetKey(KeyCode.U))
+			else if (Input.GetKey(KeyCode.U))
 			{
 				MainMenuScreen.s_DebugUnlock = true;
-				return;
 			}
-			if (Input.GetKey(KeyCode.L))
+			else if (Input.GetKey(KeyCode.L))
 			{
 				LoadingScreen.Get().Show(LoadingScreenState.StartGame);
-				return;
 			}
-			if (Input.GetKey(KeyCode.K))
+			else if (Input.GetKey(KeyCode.K))
 			{
 				LoadingScreen.Get().Hide();
 			}
@@ -481,19 +480,19 @@ public class MainMenu : MainMenuScreen
 
 	private bool m_ButtonsEnabled;
 
-	private float m_FadeInDuration;
+	private float m_FadeInDuration = 1f;
 
-	private float m_FadeOutDuration;
+	private float m_FadeOutDuration = 1.7f;
 
-	private float m_FadeOutSceneDuration;
+	private float m_FadeOutSceneDuration = 3f;
 
 	private float m_StateStartTime = -1f;
 
-	private float m_CompanyLogoDuration;
+	private float m_CompanyLogoDuration = 5f;
 
-	private float m_GameLogoDuration;
+	private float m_GameLogoDuration = 7f;
 
-	private float m_BlackScreenDuration;
+	private float m_BlackScreenDuration = 1f;
 
 	private bool m_MusicPlaying;
 

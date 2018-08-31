@@ -231,8 +231,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Shader _ParticlesRenderShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamTexture")]
+		[SerializeField]
 		private Texture _FoamTexture;
 
 		[FormerlySerializedAs("foamOverlayTexture")]

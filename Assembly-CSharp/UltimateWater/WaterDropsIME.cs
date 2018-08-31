@@ -119,8 +119,8 @@ namespace UltimateWater
 			return text;
 		}
 
-		[Range(0.95f, 1f)]
 		[Tooltip("How slow the effects disappear")]
+		[Range(0.95f, 1f)]
 		public float Fade = 1f;
 
 		public WaterDropsIME.BlurModule Blur;
@@ -203,8 +203,8 @@ namespace UltimateWater
 
 			private float _Intensity;
 
-			[HideInInspector]
 			[SerializeField]
+			[HideInInspector]
 			private Blur _Blur;
 		}
 

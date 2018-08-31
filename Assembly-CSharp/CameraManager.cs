@@ -38,6 +38,10 @@ public class CameraManager : MonoBehaviour
 	private void Update()
 	{
 		this.UpdateZoom();
+		if (!Debug.isDebugBuild)
+		{
+			return;
+		}
 		if (Input.GetKey(KeyCode.RightShift) && Input.GetKeyDown(KeyCode.Alpha0))
 		{
 			if (this.m_Mode == CameraManager.Mode.Normal)
@@ -45,11 +49,13 @@ public class CameraManager : MonoBehaviour
 				this.m_Mode = CameraManager.Mode.Free;
 				Player.Get().BlockMoves();
 				Player.Get().BlockRotation();
-				return;
 			}
-			this.m_Mode = CameraManager.Mode.Normal;
-			Player.Get().UnblockMoves();
-			Player.Get().UnblockRotation();
+			else
+			{
+				this.m_Mode = CameraManager.Mode.Normal;
+				Player.Get().UnblockMoves();
+				Player.Get().UnblockRotation();
+			}
 		}
 	}
 

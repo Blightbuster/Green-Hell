@@ -6,7 +6,7 @@ using CJTools;
 using Enums;
 using UnityEngine;
 
-public class Player : Being, IInputsReceiver, ISaveLoad
+public class Player : Being, ISaveLoad, IInputsReceiver
 {
 	public static Player Get()
 	{
@@ -1617,6 +1617,10 @@ public class Player : Being, IInputsReceiver, ISaveLoad
 			return false;
 		}
 		if (this.IsDead())
+		{
+			return false;
+		}
+		if (ConsciousnessController.Get().IsActive())
 		{
 			return false;
 		}

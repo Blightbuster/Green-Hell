@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
-public class WaterFilter : Construction, IProcessor, IItemSlotParent
+public class WaterFilter : Construction, IItemSlotParent, IProcessor
 {
 	protected override void Start()
 	{

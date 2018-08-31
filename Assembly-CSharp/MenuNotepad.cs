@@ -246,7 +246,8 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		{
 			return;
 		}
-		RaycastHit[] array = Physics.RaycastAll(Camera.main.ViewportPointToRay(new Vector3(Input.mousePosition.x / (float)Screen.width, Input.mousePosition.y / (float)Screen.height, 0f)), 10f);
+		Ray ray = Camera.main.ViewportPointToRay(new Vector3(Input.mousePosition.x / (float)Screen.width, Input.mousePosition.y / (float)Screen.height, 0f));
+		RaycastHit[] array = Physics.RaycastAll(ray, 10f);
 		this.m_MouseOverButton = false;
 		int num = 0;
 		for (int i = 0; i < array.Length; i++)
@@ -302,7 +303,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 			}
 			else if (array[j].collider == this.m_Notepad.m_PlannerTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
-				if (Input.GetKey(KeyCode.LeftShift))
+				if (Debug.isDebugBuild && Input.GetKey(KeyCode.LeftShift))
 				{
 					HUDPlanner.Get().m_PlannerMode = PlannerMode.Planning;
 				}
@@ -374,7 +375,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		}
 		if (tab == MenuNotepad.MenuNotepadTab.PlannerTab && !GreenHellGame.ROADSHOW_DEMO)
 		{
-			if (Input.GetKey(KeyCode.LeftShift))
+			if (Debug.isDebugBuild && Input.GetKey(KeyCode.LeftShift))
 			{
 				HUDPlanner.Get().m_PlannerMode = PlannerMode.Planning;
 			}

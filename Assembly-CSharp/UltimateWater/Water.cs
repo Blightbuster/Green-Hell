@@ -713,8 +713,8 @@ namespace UltimateWater
 
 		public bool AskForWaterCamera = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("shaderSet")]
+		[SerializeField]
 		private ShaderSet _ShaderSet;
 
 		[Tooltip("Set it to anything else than 0 if your game has multiplayer functionality or you want your water to behave the same way each time your game is played (good for intro etc.).")]
@@ -730,16 +730,16 @@ namespace UltimateWater
 		[FormerlySerializedAs("profilesManager")]
 		private ProfilesManager _ProfilesManager;
 
-		[SerializeField]
 		[FormerlySerializedAs("geometry")]
+		[SerializeField]
 		private WaterGeometry _Geometry;
 
 		[FormerlySerializedAs("waterRenderer")]
 		[SerializeField]
 		private WaterRenderer _WaterRenderer;
 
-		[FormerlySerializedAs("uvAnimator")]
 		[SerializeField]
+		[FormerlySerializedAs("uvAnimator")]
 		private WaterUvAnimator _UVAnimator;
 
 		[FormerlySerializedAs("volume")]
@@ -750,28 +750,28 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterSubsurfaceScattering _SubsurfaceScattering;
 
-		[SerializeField]
 		[FormerlySerializedAs("dynamicWaterData")]
+		[SerializeField]
 		private DynamicWater.Data _DynamicWaterData;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamData")]
+		[SerializeField]
 		private Foam.Data _FoamData;
 
 		[FormerlySerializedAs("planarReflectionData")]
 		[SerializeField]
 		private PlanarReflection.Data _PlanarReflectionData;
 
-		[SerializeField]
 		[FormerlySerializedAs("windWavesData")]
+		[SerializeField]
 		private WindWaves.Data _WindWavesData;
 
 		[FormerlySerializedAs("dontRotateUpwards")]
 		[SerializeField]
 		private bool _DontRotateUpwards;
 
-		[SerializeField]
 		[FormerlySerializedAs("fastEnableDisable")]
+		[SerializeField]
 		private bool _FastEnableDisable;
 
 		[FormerlySerializedAs("version")]

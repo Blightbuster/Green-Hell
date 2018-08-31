@@ -5,10 +5,10 @@ using UnityEngine.XR;
 
 namespace DynamicFogAndMist
 {
-	[RequireComponent(typeof(Camera))]
 	[HelpURL("http://kronnect.com/taptapgo")]
-	[ImageEffectAllowedInSceneView]
+	[RequireComponent(typeof(Camera))]
 	[ExecuteInEditMode]
+	[ImageEffectAllowedInSceneView]
 	public class DynamicFog : MonoBehaviour
 	{
 		public FOG_TYPE effectType
@@ -1476,8 +1476,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _enableDithering;
 
-		[SerializeField]
 		[Range(0f, 0.2f)]
+		[SerializeField]
 		private float _ditherStrength = 0.03f;
 
 		[Range(0f, 1f)]
@@ -1492,8 +1492,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private float _noiseScale = 0.1f;
 
-		[SerializeField]
 		[Range(0f, 0.999f)]
+		[SerializeField]
 		private float _distance = 0.1f;
 
 		[Range(0.0001f, 2f)]
@@ -1512,8 +1512,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private float _height = 1f;
 
-		[SerializeField]
 		[Range(0f, 500f)]
+		[SerializeField]
 		private float _maxHeight = 100f;
 
 		[Range(0.0001f, 1f)]
@@ -1540,20 +1540,20 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private Color _color2 = Color.gray;
 
-		[SerializeField]
 		[Range(0f, 500f)]
+		[SerializeField]
 		private float _skyHaze = 50f;
 
 		[Range(0f, 1f)]
 		[SerializeField]
 		private float _skySpeed = 0.3f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _skyNoiseStrength = 0.1f;
 
-		[SerializeField]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _skyAlpha = 1f;
 
 		[SerializeField]
@@ -1577,8 +1577,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _useXZDistance;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _scattering = 0.7f;
 
 		[SerializeField]

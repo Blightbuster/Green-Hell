@@ -5,9 +5,9 @@ using UnityEngine.Serialization;
 
 namespace UnityEngine.AI
 {
-	[AddComponentMenu("Navigation/NavMeshSurface", 30)]
 	[DefaultExecutionOrder(-102)]
 	[ExecuteInEditMode]
+	[AddComponentMenu("Navigation/NavMeshSurface", 30)]
 	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
 	public class NavMeshSurface : MonoBehaviour
 	{
@@ -516,8 +516,8 @@ namespace UnityEngine.AI
 		[SerializeField]
 		private bool m_BuildHeightMesh;
 
-		[FormerlySerializedAs("m_BakedNavMeshData")]
 		[SerializeField]
+		[FormerlySerializedAs("m_BakedNavMeshData")]
 		private NavMeshData m_NavMeshData;
 
 		private NavMeshDataInstance m_NavMeshDataInstance;

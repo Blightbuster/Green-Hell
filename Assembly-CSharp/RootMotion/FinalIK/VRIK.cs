@@ -54,8 +54,8 @@ namespace RootMotion.FinalIK
 			base.InitiateSolver();
 		}
 
-		[Tooltip("Bone mapping. Right-click on the component header and select 'Auto-detect References' of fill in manually if not a Humanoid character.")]
 		[ContextMenuItem("Auto-detect References", "AutoDetectReferences")]
+		[Tooltip("Bone mapping. Right-click on the component header and select 'Auto-detect References' of fill in manually if not a Humanoid character.")]
 		public VRIK.References references = new VRIK.References();
 
 		[Tooltip("The VRIK solver.")]

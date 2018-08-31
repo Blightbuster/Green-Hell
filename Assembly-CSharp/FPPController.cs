@@ -5,8 +5,8 @@ using Enums;
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 
-[RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(CharacterController))]
 public class FPPController : PlayerController
 {
 	public Vector2 GetLookDev()

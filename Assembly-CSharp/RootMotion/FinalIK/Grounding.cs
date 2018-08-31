@@ -254,15 +254,15 @@ namespace RootMotion.FinalIK
 		[Tooltip("CapsuleCast radius. Should match approximately with the size of the feet.")]
 		public float footRadius = 0.15f;
 
-		[HideInInspector]
 		[Tooltip("Offset of the foot center along character forward axis.")]
+		[HideInInspector]
 		public float footCenterOffset;
 
 		[Tooltip("Amount of velocity based prediction of the foot positions.")]
 		public float prediction = 0.05f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Weight of rotating the feet to the ground normal offset.")]
+		[Range(0f, 1f)]
 		public float footRotationWeight = 1f;
 
 		[Tooltip("Speed of slerping the feet to their grounded rotations.")]
@@ -278,8 +278,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The speed of moving the character up/down.")]
 		public float pelvisSpeed = 5f;
 
-		[Tooltip("Used for smoothing out vertical pelvis movement (range 0 - 1).")]
 		[Range(0f, 1f)]
+		[Tooltip("Used for smoothing out vertical pelvis movement (range 0 - 1).")]
 		public float pelvisDamper;
 
 		[Tooltip("The weight of lowering the pelvis to the lowest foot.")]

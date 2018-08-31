@@ -76,8 +76,8 @@ namespace UnityStandardAssets.Cameras
 		[SerializeField]
 		private float m_MoveSpeed = 1f;
 
-		[Range(0f, 10f)]
 		[SerializeField]
+		[Range(0f, 10f)]
 		private float m_TurnSpeed = 1.5f;
 
 		[SerializeField]

@@ -8,11 +8,11 @@ public class TOD_WorldParameters
 	[Tooltip("Latitude of the current location in degrees.")]
 	public float Latitude;
 
-	[Tooltip("Longitude of the current location in degrees.")]
 	[Range(-180f, 180f)]
+	[Tooltip("Longitude of the current location in degrees.")]
 	public float Longitude;
 
-	[Tooltip("UTC/GMT time zone of the current location in hours.")]
 	[Range(-14f, 14f)]
+	[Tooltip("UTC/GMT time zone of the current location in hours.")]
 	public float UTC;
 }

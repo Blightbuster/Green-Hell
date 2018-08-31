@@ -8,10 +8,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[DocumentationSorting(1f, DocumentationSortingAttribute.Level.UserRef)]
-	[DisallowMultipleComponent]
 	[AddComponentMenu("Cinemachine/CinemachineVirtualCamera")]
+	[DisallowMultipleComponent]
+	[ExecuteInEditMode]
 	public class CinemachineVirtualCamera : CinemachineVirtualCameraBase
 	{
 		public override CameraState State
@@ -411,8 +411,8 @@ namespace Cinemachine
 			this.m_State.RawPosition = pos;
 		}
 
-		[Tooltip("The object that the camera wants to look at (the Aim target).  If this is null, then the vcam's Transform orientation will define the camera's orientation.")]
 		[NoSaveDuringPlay]
+		[Tooltip("The object that the camera wants to look at (the Aim target).  If this is null, then the vcam's Transform orientation will define the camera's orientation.")]
 		public Transform m_LookAt;
 
 		[Tooltip("The object that the camera wants to move with (the Body target).  If this is null, then the vcam's Transform position will define the camera's position.")]

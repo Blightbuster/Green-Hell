@@ -6,10 +6,10 @@ using UnityEngine.Serialization;
 namespace Cinemachine
 {
 	[RequireComponent(typeof(CinemachinePipeline))]
-	[ExecuteInEditMode]
-	[DocumentationSorting(5.5f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("")]
 	[SaveDuringPlay]
+	[AddComponentMenu("")]
+	[DocumentationSorting(5.5f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	public class CinemachineFramingTransposer : CinemachineComponentBase
 	{
 		public Rect SoftGuideRect
@@ -247,12 +247,12 @@ namespace Cinemachine
 			return Mathf.Max(b.size.x / (num * base.VcamState.Lens.Aspect), b.size.y / num);
 		}
 
-		[NoSaveDuringPlay]
 		[HideInInspector]
+		[NoSaveDuringPlay]
 		public Action OnGUICallback;
 
-		[Tooltip("This setting will instruct the composer to adjust its target offset based on the motion of the target.  The composer will look at a point where it estimates the target will be this many seconds into the future.  Note that this setting is sensitive to noisy animation, and can amplify the noise, resulting in undesirable camera jitter.  If the camera jitters unacceptably when the target is in motion, turn down this setting, or animate the target more smoothly.")]
 		[Range(0f, 1f)]
+		[Tooltip("This setting will instruct the composer to adjust its target offset based on the motion of the target.  The composer will look at a point where it estimates the target will be this many seconds into the future.  Note that this setting is sensitive to noisy animation, and can amplify the noise, resulting in undesirable camera jitter.  If the camera jitters unacceptably when the target is in motion, turn down this setting, or animate the target more smoothly.")]
 		public float m_LookaheadTime;
 
 		[Range(3f, 30f)]
@@ -271,9 +271,9 @@ namespace Cinemachine
 		[Range(0f, 20f)]
 		public float m_ZDamping = 1f;
 
+		[Tooltip("Horizontal screen position for target. The camera will move to position the tracked object here.")]
 		[Range(0f, 1f)]
 		[Space]
-		[Tooltip("Horizontal screen position for target. The camera will move to position the tracked object here.")]
 		public float m_ScreenX = 0.5f;
 
 		[Tooltip("Vertical screen position for target, The camera will move to position the tracked object here.")]
@@ -283,17 +283,17 @@ namespace Cinemachine
 		[Tooltip("The distance along the camera axis that will be maintained from the Follow target")]
 		public float m_CameraDistance = 10f;
 
-		[Space]
-		[Range(0f, 1f)]
 		[Tooltip("Camera will not move horizontally if the target is within this range of the position.")]
+		[Range(0f, 1f)]
+		[Space]
 		public float m_DeadZoneWidth = 0.1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Camera will not move vertically if the target is within this range of the position.")]
+		[Range(0f, 1f)]
 		public float m_DeadZoneHeight = 0.1f;
 
-		[Tooltip("The camera will not move along its z-axis if the Follow target is within this distance of the specified camera distance")]
 		[FormerlySerializedAs("m_DistanceDeadZoneSize")]
+		[Tooltip("The camera will not move along its z-axis if the Follow target is within this distance of the specified camera distance")]
 		public float m_DeadZoneDepth;
 
 		[Tooltip("If checked, then then soft zone will be unlimited in size.")]
@@ -308,17 +308,17 @@ namespace Cinemachine
 		[Range(0f, 2f)]
 		public float m_SoftZoneHeight = 0.8f;
 
-		[Range(-0.5f, 0.5f)]
 		[Tooltip("A non-zero bias will move the target position horizontally away from the center of the soft zone.")]
+		[Range(-0.5f, 0.5f)]
 		public float m_BiasX;
 
-		[Range(-0.5f, 0.5f)]
 		[Tooltip("A non-zero bias will move the target position vertically away from the center of the soft zone.")]
+		[Range(-0.5f, 0.5f)]
 		public float m_BiasY;
 
 		[FormerlySerializedAs("m_FramingMode")]
-		[Space]
 		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]
+		[Space]
 		public CinemachineFramingTransposer.FramingMode m_GroupFramingMode = CinemachineFramingTransposer.FramingMode.HorizontalAndVertical;
 
 		[Tooltip("How to adjust the camera to get the desired framing.  You can zoom, dolly in/out, or do both.")]
@@ -339,8 +339,8 @@ namespace Cinemachine
 		[Tooltip("Set this to limit how far from the target the camera can get.")]
 		public float m_MaximumDistance = 5000f;
 
-		[Range(1f, 179f)]
 		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
+		[Range(1f, 179f)]
 		public float m_MinimumFOV = 3f;
 
 		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]

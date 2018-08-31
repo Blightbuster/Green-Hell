@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(4f, DocumentationSortingAttribute.Level.UserRef)]
 	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[ExecuteInEditMode]
+	[DocumentationSorting(4f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
 	public class CinemachineGroupComposer : CinemachineComposer
 	{
@@ -142,8 +142,8 @@ namespace Cinemachine
 		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
 		public float m_MinimumFOV = 3f;
 
-		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]
 		[Range(1f, 179f)]
+		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]
 		public float m_MaximumFOV = 60f;
 
 		[Tooltip("If adjusting Orthographic Size, will not set it lower than this.")]

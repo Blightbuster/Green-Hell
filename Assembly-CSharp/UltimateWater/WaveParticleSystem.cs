@@ -258,9 +258,9 @@ namespace UltimateWater
 		[SerializeField]
 		private float _PrewarmTime = 40f;
 
+		[FormerlySerializedAs("timePerFrame")]
 		[SerializeField]
 		[Tooltip("Allowed execution time per frame.")]
-		[FormerlySerializedAs("timePerFrame")]
 		private float _TimePerFrame = 0.8f;
 
 		private WaveParticlesQuadtree _Particles;

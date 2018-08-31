@@ -113,8 +113,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Linking this hit point to a collider")]
 			public Collider collider;
 
-			[Tooltip("Only used if this hit point gets hit when already processing another hit")]
 			[SerializeField]
+			[Tooltip("Only used if this hit point gets hit when already processing another hit")]
 			private float crossFadeTime = 0.1f;
 
 			private float length;
@@ -252,8 +252,8 @@ namespace RootMotion.FinalIK
 				[Tooltip("Reference to the bone that this hit point rotates")]
 				public IKSolverVR.RotationOffset rotationOffset;
 
-				[Tooltip("Weight of rotating the bone")]
 				[Range(0f, 1f)]
+				[Tooltip("Weight of rotating the bone")]
 				public float weight;
 
 				private Quaternion lastValue = Quaternion.identity;

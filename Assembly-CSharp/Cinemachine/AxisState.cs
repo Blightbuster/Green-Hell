@@ -120,8 +120,8 @@ namespace Cinemachine
 			return this.m_MaxSpeed;
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("The current value of the axis.")]
+		[NoSaveDuringPlay]
 		public float Value;
 
 		[Tooltip("The maximum speed of this axis in units/second")]

@@ -83,12 +83,12 @@ namespace UltimateWater
 		[FormerlySerializedAs("water")]
 		private WaveParticlesSystemGPU _Water;
 
-		[SerializeField]
 		[FormerlySerializedAs("amplitude")]
+		[SerializeField]
 		private float _Amplitude = 0.1f;
 
-		[FormerlySerializedAs("wavelength")]
 		[SerializeField]
+		[FormerlySerializedAs("wavelength")]
 		private float _Wavelength = 10f;
 
 		[FormerlySerializedAs("lifetime")]
@@ -99,30 +99,30 @@ namespace UltimateWater
 		[FormerlySerializedAs("speed")]
 		private float _Speed = 3.5f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foam")]
+		[SerializeField]
 		private float _Foam = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("emissionArea")]
+		[SerializeField]
 		private float _EmissionArea = 1f;
 
 		[FormerlySerializedAs("emissionInterval")]
 		[SerializeField]
 		private float _EmissionInterval = 0.15f;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("trailCalming")]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _TrailCalming = 1f;
 
-		[Range(0f, 8f)]
 		[SerializeField]
+		[Range(0f, 8f)]
 		[FormerlySerializedAs("trailFoam")]
 		private float _TrailFoam = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("emissionAngle")]
+		[SerializeField]
 		[Range(0f, 180f)]
 		private float _EmissionAngle;
 

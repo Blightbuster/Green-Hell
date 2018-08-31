@@ -4,8 +4,8 @@ using System.Runtime.CompilerServices;
 
 namespace UnityEngine.AI
 {
-	[AddComponentMenu("Navigation/NavMeshLink", 33)]
 	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
+	[AddComponentMenu("Navigation/NavMeshLink", 33)]
 	[ExecuteInEditMode]
 	[DefaultExecutionOrder(-101)]
 	public class NavMeshLink : MonoBehaviour

@@ -38,6 +38,26 @@ public class Localization
 		{
 			this.ParseScript("Texts_ES");
 		}
+		else if (language == Language.ChineseTraditional)
+		{
+			this.ParseScript("Texts_CHT");
+		}
+		else if (language == Language.ChineseSimplyfied)
+		{
+			this.ParseScript("Texts_CHS");
+		}
+		else if (language == Language.Portuguese)
+		{
+			this.ParseScript("Texts_PT");
+		}
+		else if (language == Language.PortugueseBrazilian)
+		{
+			this.ParseScript("Texts_BR");
+		}
+		else if (language == Language.Russian)
+		{
+			this.ParseScript("Texts_RU");
+		}
 		this.ParseScript("TextsTemp");
 	}
 

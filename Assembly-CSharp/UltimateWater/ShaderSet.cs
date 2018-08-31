@@ -366,17 +366,17 @@ namespace UltimateWater
 			return windWavesRenderMode;
 		}
 
-		[FormerlySerializedAs("transparencyMode")]
-		[SerializeField]
 		[Header("Reflection & Refraction")]
+		[SerializeField]
+		[FormerlySerializedAs("transparencyMode")]
 		private WaterTransparencyMode _TransparencyMode = WaterTransparencyMode.Refractive;
 
-		[SerializeField]
 		[FormerlySerializedAs("reflectionProbeUsage")]
+		[SerializeField]
 		private ReflectionProbeUsage _ReflectionProbeUsage = ReflectionProbeUsage.BlendProbesAndSkybox;
 
-		[FormerlySerializedAs("planarReflections")]
 		[SerializeField]
+		[FormerlySerializedAs("planarReflections")]
 		private PlanarReflectionsMode _PlanarReflections = PlanarReflectionsMode.Normal;
 
 		[FormerlySerializedAs("receiveShadows")]
@@ -389,16 +389,16 @@ namespace UltimateWater
 		[Header("Waves")]
 		private WindWavesRenderMode _WindWavesMode;
 
-		[SerializeField]
 		[FormerlySerializedAs("dynamicSmoothnessMode")]
+		[SerializeField]
 		private DynamicSmoothnessMode _DynamicSmoothnessMode = DynamicSmoothnessMode.Physical;
 
-		[SerializeField]
 		[FormerlySerializedAs("localEffectsSupported")]
+		[SerializeField]
 		private bool _LocalEffectsSupported = true;
 
-		[FormerlySerializedAs("localEffectsDebug")]
 		[SerializeField]
+		[FormerlySerializedAs("localEffectsDebug")]
 		private bool _LocalEffectsDebug;
 
 		[FormerlySerializedAs("foam")]
@@ -419,8 +419,8 @@ namespace UltimateWater
 		[Header("Geometries Support")]
 		private bool _ProjectionGrid;
 
-		[SerializeField]
 		[FormerlySerializedAs("customTriangularGeometry")]
+		[SerializeField]
 		private bool _CustomTriangularGeometry;
 
 		[FormerlySerializedAs("displayOnlyInAdditiveVolumes")]
@@ -433,17 +433,17 @@ namespace UltimateWater
 		private bool _WavesAlign;
 
 		[FormerlySerializedAs("normalMappingMode")]
-		[Header("Surface")]
 		[SerializeField]
+		[Header("Surface")]
 		private NormalMappingMode _NormalMappingMode = NormalMappingMode.Auto;
 
 		[SerializeField]
 		[FormerlySerializedAs("supportEmission")]
 		private bool _SupportEmission;
 
-		[Header("Generated Shaders")]
-		[SerializeField]
 		[FormerlySerializedAs("surfaceShaders")]
+		[SerializeField]
+		[Header("Generated Shaders")]
 		private Shader[] _SurfaceShaders;
 
 		[FormerlySerializedAs("volumeShaders")]

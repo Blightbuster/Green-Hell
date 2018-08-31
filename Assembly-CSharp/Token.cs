@@ -24,5 +24,5 @@ public class Token
 
 	protected ScriptParser m_Parser;
 
-	protected string m_Value;
+	protected string m_Value = string.Empty;
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
-public class FoodProcessor : MonoBehaviour, IProcessor, IFirecampAttach, IItemSlotParent, ITriggerThrough
+public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IProcessor, ITriggerThrough
 {
 	public void SetFirecamp(Firecamp firecmap)
 	{

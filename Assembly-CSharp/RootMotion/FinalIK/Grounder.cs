@@ -46,8 +46,8 @@ namespace RootMotion.FinalIK
 
 		protected abstract void OpenScriptReference();
 
-		[Tooltip("The master weight. Use this to fade in/out the grounding effect.")]
 		[Range(0f, 1f)]
+		[Tooltip("The master weight. Use this to fade in/out the grounding effect.")]
 		public float weight = 1f;
 
 		[Tooltip("The Grounding solver. Not to confuse with IK solvers.")]

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	public abstract class NavmeshBase : NavGraph, ITransformedGraph, IRaycastableGraph, INavmesh, INavmeshHolder
+	public abstract class NavmeshBase : NavGraph, INavmesh, INavmeshHolder, ITransformedGraph, IRaycastableGraph
 	{
 		public abstract float TileWorldSizeX { get; }
 

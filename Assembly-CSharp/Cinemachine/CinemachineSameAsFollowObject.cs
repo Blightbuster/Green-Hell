@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(27f, DocumentationSortingAttribute.Level.UserRef)]
+	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
 	[AddComponentMenu("")]
 	public class CinemachineSameAsFollowObject : CinemachineComponentBase

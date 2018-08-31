@@ -7,8 +7,8 @@ namespace Cinemachine
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
 	[AddComponentMenu("")]
-	[ExecuteInEditMode]
 	[DocumentationSorting(3f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	public class CinemachineComposer : CinemachineComponentBase
 	{
 		public override bool IsValid
@@ -246,8 +246,8 @@ namespace Cinemachine
 			return false;
 		}
 
-		[NoSaveDuringPlay]
 		[HideInInspector]
+		[NoSaveDuringPlay]
 		public Action OnGUICallback;
 
 		[Tooltip("Target offset from the target object's center in target-local space. Use this to fine-tune the tracking target position when the desired area is not the tracked object's center.")]
@@ -270,17 +270,17 @@ namespace Cinemachine
 		[Tooltip("How aggressively the camera tries to follow the target in the screen-vertical direction. Small numbers are more responsive, rapidly orienting the camera to keep the target in the dead zone. Larger numbers give a more heavy slowly responding camera. Using different vertical and horizontal settings can yield a wide range of camera behaviors.")]
 		public float m_VerticalDamping = 0.5f;
 
+		[Tooltip("Horizontal screen position for target. The camera will rotate to position the tracked object here.")]
 		[Range(0f, 1f)]
 		[Space]
-		[Tooltip("Horizontal screen position for target. The camera will rotate to position the tracked object here.")]
 		public float m_ScreenX = 0.5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Vertical screen position for target, The camera will rotate to position the tracked object here.")]
+		[Range(0f, 1f)]
 		public float m_ScreenY = 0.5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Camera will not rotate horizontally if the target is within this range of the position.")]
+		[Range(0f, 1f)]
 		public float m_DeadZoneWidth = 0.1f;
 
 		[Tooltip("Camera will not rotate vertically if the target is within this range of the position.")]
@@ -291,8 +291,8 @@ namespace Cinemachine
 		[Range(0f, 2f)]
 		public float m_SoftZoneWidth = 0.8f;
 
-		[Range(0f, 2f)]
 		[Tooltip("When target is within this region, camera will gradually rotate vertically to re-align towards the desired position, depending on the damping speed.")]
+		[Range(0f, 2f)]
 		public float m_SoftZoneHeight = 0.8f;
 
 		[Tooltip("A non-zero bias will move the target position horizontally away from the center of the soft zone.")]

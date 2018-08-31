@@ -7,8 +7,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("")]
+[RequireComponent(typeof(Camera))]
 public class AmplifyMotionEffectBase : MonoBehaviour
 {
 	[Obsolete("workerThreads is deprecated, please use WorkerThreads instead.")]
@@ -1155,8 +1155,8 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 
 	public int ResetFrameDelay = 1;
 
-	[Header("Low-Level")]
 	[FormerlySerializedAs("workerThreads")]
+	[Header("Low-Level")]
 	public int WorkerThreads;
 
 	public bool SystemThreadPool;

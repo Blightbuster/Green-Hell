@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 namespace UltimateWater
 {
 	[RequireComponent(typeof(Renderer))]
-	public class WaterSurfaceOverlayRenderer : MonoBehaviour, ILocalDisplacementMaskRenderer, ILocalDisplacementRenderer, ILocalFoamRenderer, IDynamicWaterEffects
+	public class WaterSurfaceOverlayRenderer : MonoBehaviour, ILocalDisplacementRenderer, ILocalDisplacementMaskRenderer, ILocalFoamRenderer, IDynamicWaterEffects
 	{
 		public Material DisplacementAndNormalMaterial
 		{
@@ -98,12 +98,12 @@ namespace UltimateWater
 		[SerializeField]
 		private Material _DisplacementAndNormalMaterial;
 
-		[SerializeField]
 		[FormerlySerializedAs("displacementMaskMaterial")]
+		[SerializeField]
 		private Material _DisplacementMaskMaterial;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamMaterial")]
+		[SerializeField]
 		private Material _FoamMaterial;
 
 		private Renderer _RendererComponent;

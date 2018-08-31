@@ -383,18 +383,18 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _VolumeFrontShader;
 
-		[FormerlySerializedAs("volumeFrontFastShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("volumeFrontFastShader")]
 		private Shader _VolumeFrontFastShader;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		[FormerlySerializedAs("volumeBackShader")]
 		private Shader _VolumeBackShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("reflectionProbeAnchor")]
+		[SerializeField]
 		private Transform _ReflectionProbeAnchor;
 
 		[SerializeField]

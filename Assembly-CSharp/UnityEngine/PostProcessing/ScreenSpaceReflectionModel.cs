@@ -48,12 +48,12 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("How far away from the maxDistance to begin fading SSR.")]
 			public float fadeDistance;
 
-			[Range(0f, 1f)]
 			[Tooltip("Amplify Fresnel fade out. Increase if floor reflections look good close to the surface and bad farther 'under' the floor.")]
+			[Range(0f, 1f)]
 			public float fresnelFade;
 
-			[Tooltip("Higher values correspond to a faster Fresnel fade as the reflection changes from the grazing angle.")]
 			[Range(0.1f, 10f)]
+			[Tooltip("Higher values correspond to a faster Fresnel fade as the reflection changes from the grazing angle.")]
 			public float fresnelFadePower;
 		}
 
@@ -66,16 +66,16 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Half resolution SSRR is much faster, but less accurate.")]
 			public ScreenSpaceReflectionModel.SSRResolution reflectionQuality;
 
-			[Tooltip("Maximum reflection distance in world units.")]
 			[Range(0.1f, 300f)]
+			[Tooltip("Maximum reflection distance in world units.")]
 			public float maxDistance;
 
 			[Range(16f, 1024f)]
 			[Tooltip("Max raytracing length.")]
 			public int iterationCount;
 
-			[Range(1f, 16f)]
 			[Tooltip("Log base 2 of ray tracing coarse step size. Higher traces farther, lower gives better quality silhouettes.")]
+			[Range(1f, 16f)]
 			public int stepSize;
 
 			[Tooltip("Typical thickness of columns, walls, furniture, and other objects that reflection rays might pass behind.")]

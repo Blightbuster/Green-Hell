@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIList : MonoBehaviour, IEventSystemHandler, IPointerClickHandler, IPointerDownHandler
+public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IEventSystemHandler
 {
 	private void Awake()
 	{

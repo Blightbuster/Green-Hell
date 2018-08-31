@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("https://www.youtube.com/watch?v=-TDZpNjt2mk&index=15&list=PLVxSIA1OaTOu8Nos3CalXbJ2DrKnntMv6")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction Trigger")]
+	[HelpURL("https://www.youtube.com/watch?v=-TDZpNjt2mk&index=15&list=PLVxSIA1OaTOu8Nos3CalXbJ2DrKnntMv6")]
 	public class InteractionTrigger : MonoBehaviour
 	{
 		[ContextMenu("TUTORIAL VIDEO")]
@@ -146,12 +146,12 @@ namespace RootMotion.FinalIK
 			[Tooltip("The offset of the character's position relative to the trigger in XZ plane. Y position of the character is unlimited as long as it is contact with the collider.")]
 			public Vector2 offset;
 
-			[Tooltip("Angle offset from the default forward direction.")]
 			[Range(-180f, 180f)]
+			[Tooltip("Angle offset from the default forward direction.")]
 			public float angleOffset;
 
-			[Tooltip("Max angular offset of the character's forward from the direction of this trigger.")]
 			[Range(0f, 180f)]
+			[Tooltip("Max angular offset of the character's forward from the direction of this trigger.")]
 			public float maxAngle = 45f;
 
 			[Tooltip("Max offset of the character's position from this range's center.")]
@@ -233,8 +233,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Max distance from the lookAtTarget to the camera.")]
 			public float maxDistance = 0.5f;
 
-			[Tooltip("Max angle between the direction and the direction towards the camera.")]
 			[Range(0f, 180f)]
+			[Tooltip("Max angle between the direction and the direction towards the camera.")]
 			public float maxAngle = 45f;
 
 			[Tooltip("Fixes the Y axis of the trigger to Vector3.up. This makes the trigger symmetrical relative to the object.")]
@@ -261,12 +261,12 @@ namespace RootMotion.FinalIK
 				return true;
 			}
 
-			[SerializeField]
 			[HideInInspector]
+			[SerializeField]
 			public string name;
 
-			[SerializeField]
 			[HideInInspector]
+			[SerializeField]
 			public bool show = true;
 
 			[Tooltip("The range for the character's position and rotation.")]

@@ -385,8 +385,8 @@ namespace Cinemachine
 		[Tooltip("Force all child cameras to be enabled.  This is useful if animating them in Timeline, but consumes extra resources")]
 		public bool m_EnableAllChildCameras;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		[NoSaveDuringPlay]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 

@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/FABRIK")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page4.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/FABRIK")]
 	public class FABRIK : IK
 	{
 		[ContextMenu("User Manual")]

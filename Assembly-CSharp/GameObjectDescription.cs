@@ -14,7 +14,7 @@ public class GameObjectDescription : MonoBehaviour
 		this.m_Description = desc;
 	}
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private string m_Description = string.Empty;
 }

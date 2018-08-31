@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("Cinemachine/CinemachineBlendListCamera")]
-	[DocumentationSorting(13f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DocumentationSorting(13f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("Cinemachine/CinemachineBlendListCamera")]
 	[DisallowMultipleComponent]
 	public class CinemachineBlendListCamera : CinemachineVirtualCameraBase
 	{
@@ -269,8 +269,8 @@ namespace Cinemachine
 			return new CinemachineBlend(camA, camB, blendCurve, duration, 0f);
 		}
 
-		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
 		[NoSaveDuringPlay]
+		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
 		public Transform m_LookAt;
 
 		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
@@ -308,8 +308,8 @@ namespace Cinemachine
 			[Tooltip("How long to wait (in seconds) before activating the next virtual camera in the list (if any)")]
 			public float m_Hold;
 
-			[CinemachineBlendDefinitionProperty]
 			[Tooltip("How to blend to the next virtual camera in the list (if any)")]
+			[CinemachineBlendDefinitionProperty]
 			public CinemachineBlendDefinition m_Blend;
 		}
 	}

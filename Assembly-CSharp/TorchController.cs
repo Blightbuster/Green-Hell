@@ -46,15 +46,17 @@ public class TorchController : WeaponMeleeController
 			this.m_Animator.SetBool(this.m_TorchBurningHash, this.m_Torch.m_Burning);
 		}
 		this.UpdateState();
-		if (Input.GetKeyDown(KeyCode.T))
+		if (Debug.isDebugBuild && Input.GetKeyDown(KeyCode.T))
 		{
 			if (this.m_Torch.m_Burning)
 			{
 				this.m_Torch.Extinguish();
-				return;
 			}
-			this.m_Torch.m_Fuel = 1f;
-			this.m_Torch.StartBurning();
+			else
+			{
+				this.m_Torch.m_Fuel = 1f;
+				this.m_Torch.StartBurning();
+			}
 		}
 	}
 

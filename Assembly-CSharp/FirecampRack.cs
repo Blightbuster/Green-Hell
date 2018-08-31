@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
-public class FirecampRack : Construction, IFirecampAttach, IItemSlotParent
+public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 {
 	protected override void Awake()
 	{

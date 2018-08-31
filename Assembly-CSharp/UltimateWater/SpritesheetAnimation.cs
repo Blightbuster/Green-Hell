@@ -63,16 +63,16 @@ namespace UltimateWater
 		[FormerlySerializedAs("horizontal")]
 		private int _Horizontal = 2;
 
-		[FormerlySerializedAs("vertical")]
 		[SerializeField]
+		[FormerlySerializedAs("vertical")]
 		private int _Vertical = 2;
 
-		[SerializeField]
 		[FormerlySerializedAs("timeStep")]
+		[SerializeField]
 		private float _TimeStep = 0.06f;
 
-		[SerializeField]
 		[FormerlySerializedAs("loop")]
+		[SerializeField]
 		private bool _Loop;
 
 		[SerializeField]

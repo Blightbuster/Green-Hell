@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
-public class StatsManager : MonoBehaviour, IEventsReceiver, ISaveLoad
+public class StatsManager : MonoBehaviour, ISaveLoad, IEventsReceiver
 {
 	public static StatsManager Get()
 	{

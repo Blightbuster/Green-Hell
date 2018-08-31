@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace UltimateWater
 {
-	public class WaterDecal : MonoBehaviour, ILocalDiffuseRenderer, ILocalDisplacementRenderer, ILocalFoamRenderer, IDynamicWaterEffects
+	public class WaterDecal : MonoBehaviour, ILocalDisplacementRenderer, ILocalFoamRenderer, ILocalDiffuseRenderer, IDynamicWaterEffects
 	{
 		public Material DisplacementMaterial
 		{
@@ -205,8 +205,8 @@ namespace UltimateWater
 
 		private Renderer[] _Renderers;
 
-		[InspectorWarning("Validation", InspectorWarningAttribute.InfoType.Error)]
 		[SerializeField]
+		[InspectorWarning("Validation", InspectorWarningAttribute.InfoType.Error)]
 		private int _Validation;
 	}
 }

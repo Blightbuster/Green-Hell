@@ -49,16 +49,16 @@ namespace UltimateWater
 		[SerializeField]
 		private int _Resolution = 512;
 
-		[SerializeField]
 		[FormerlySerializedAs("period")]
+		[SerializeField]
 		private float _Period = 60f;
 
-		[SerializeField]
 		[FormerlySerializedAs("animationSpeed")]
+		[SerializeField]
 		private float _AnimationSpeed = 0.015f;
 
-		[SerializeField]
 		[FormerlySerializedAs("intensity")]
+		[SerializeField]
 		private float _Intensity = 2f;
 
 		private Water _Water;

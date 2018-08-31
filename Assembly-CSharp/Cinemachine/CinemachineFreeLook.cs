@@ -7,10 +7,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
-	[DisallowMultipleComponent]
-	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
 	[DocumentationSorting(11f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
+	[DisallowMultipleComponent]
+	[ExecuteInEditMode]
 	public class CinemachineFreeLook : CinemachineVirtualCameraBase
 	{
 		protected override void OnValidate()
@@ -560,21 +560,21 @@ namespace Cinemachine
 			}
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("Object for the camera children to look at (the aim target).")]
+		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
-		[Tooltip("Object for the camera children wants to move with (the body target).")]
 		[NoSaveDuringPlay]
+		[Tooltip("Object for the camera children wants to move with (the body target).")]
 		public Transform m_Follow;
 
-		[Tooltip("If enabled, this lens setting will apply to all three child rigs, otherwise the child rig lens settings will be used")]
 		[FormerlySerializedAs("m_UseCommonLensSetting")]
+		[Tooltip("If enabled, this lens setting will apply to all three child rigs, otherwise the child rig lens settings will be used")]
 		public bool m_CommonLens = true;
 
-		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active")]
-		[LensSettingsProperty]
 		[FormerlySerializedAs("m_LensAttributes")]
+		[LensSettingsProperty]
+		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active")]
 		public LensSettings m_Lens = LensSettings.Default;
 
 		[Tooltip("The Vertical axis.  Value is 0..1.  Chooses how to blend the child rigs")]
@@ -594,9 +594,9 @@ namespace Cinemachine
 		[Header("Orbits")]
 		public CinemachineTransposer.BindingMode m_BindingMode = CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp;
 
-		[FormerlySerializedAs("m_SplineTension")]
 		[Tooltip("Controls how taut is the line that connects the rigs' orbits, which determines final placement on the Y axis")]
 		[Range(0f, 1f)]
+		[FormerlySerializedAs("m_SplineTension")]
 		public float m_SplineCurvature = 0.2f;
 
 		[Tooltip("The radius and height of the three orbiting rigs.")]
@@ -618,8 +618,8 @@ namespace Cinemachine
 
 		private CameraState m_State = CameraState.Default;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		[NoSaveDuringPlay]
 		private CinemachineVirtualCamera[] m_Rigs = new CinemachineVirtualCamera[3];
 

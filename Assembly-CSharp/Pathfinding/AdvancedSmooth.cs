@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_advanced_smooth.php")]
 	[AddComponentMenu("Pathfinding/Modifiers/Advanced Smooth")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_advanced_smooth.php")]
 	[Serializable]
 	public class AdvancedSmooth : MonoModifier
 	{

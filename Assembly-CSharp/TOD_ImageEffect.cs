@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 public abstract class TOD_ImageEffect : MonoBehaviour
 {
 	protected Material CreateMaterial(Shader shader)

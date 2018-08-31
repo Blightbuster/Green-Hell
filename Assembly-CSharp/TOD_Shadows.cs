@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("Time of Day/Camera Cloud Shadows")]
+[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 public class TOD_Shadows : TOD_ImageEffect
 {

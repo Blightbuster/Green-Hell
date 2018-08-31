@@ -46,8 +46,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _HeightBonus;
 
-		[Range(0.04f, 1f)]
 		[SerializeField]
+		[Range(0.04f, 1f)]
 		private float _Precision = 0.2f;
 
 		[SerializeField]

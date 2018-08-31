@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(23f, DocumentationSortingAttribute.Level.UserRef)]
-	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
+	[DocumentationSorting(23f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
 	public class CinemachineHardLockToTarget : CinemachineComponentBase
 	{

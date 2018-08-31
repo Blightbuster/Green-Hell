@@ -93,12 +93,12 @@ namespace UnityEngine.PostProcessing
 		[Serializable]
 		public struct FxaaConsoleSettings
 		{
-			[Range(0.33f, 0.5f)]
 			[Tooltip("The amount of spread applied to the sampling coordinates while sampling for subpixel information.")]
+			[Range(0.33f, 0.5f)]
 			public float subpixelSpreadAmount;
 
-			[Range(2f, 8f)]
 			[Tooltip("This value dictates how sharp the edges in the image are kept; a higher value implies sharper edges.")]
+			[Range(2f, 8f)]
 			public float edgeSharpnessAmount;
 
 			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
@@ -183,16 +183,16 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Range(0.1f, 1f)]
 			[Tooltip("The diameter (in texels) inside which jitter samples are spread. Smaller values result in crisper but more aliased output, while larger values result in more stable but blurrier output.")]
+			[Range(0.1f, 1f)]
 			public float jitterSpread;
 
-			[Range(0f, 3f)]
 			[Tooltip("Controls the amount of sharpening applied to the color buffer.")]
+			[Range(0f, 3f)]
 			public float sharpen;
 
-			[Range(0f, 0.99f)]
 			[Tooltip("The blend coefficient for a stationary fragment. Controls the percentage of history sample blended into the final color.")]
+			[Range(0f, 0.99f)]
 			public float stationaryBlending;
 
 			[Range(0f, 0.99f)]

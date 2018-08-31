@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Spline")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page12.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Spline")]
 	public class RotationLimitSpline : RotationLimit
 	{
 		[ContextMenu("User Manual")]
@@ -69,8 +69,8 @@ namespace RootMotion.FinalIK
 		[Range(0f, 180f)]
 		public float twistLimit = 180f;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		public AnimationCurve spline;
 	}
 }

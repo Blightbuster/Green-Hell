@@ -6,9 +6,9 @@ using UnityEngine.Serialization;
 namespace Cinemachine
 {
 	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
+	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
+	[RequireComponent(typeof(CinemachinePipeline))]
 	public class CinemachineOrbitalTransposer : CinemachineTransposer
 	{
 		protected override void OnValidate()
@@ -221,18 +221,18 @@ namespace Cinemachine
 		[HideInInspector]
 		private float m_LegacyRadius = float.MaxValue;
 
-		[SerializeField]
-		[HideInInspector]
 		[FormerlySerializedAs("m_HeightOffset")]
+		[HideInInspector]
+		[SerializeField]
 		private float m_LegacyHeightOffset = float.MaxValue;
 
-		[FormerlySerializedAs("m_HeadingBias")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("m_HeadingBias")]
 		private float m_LegacyHeadingBias = float.MaxValue;
 
-		[HideInInspector]
 		[NoSaveDuringPlay]
+		[HideInInspector]
 		public bool m_HeadingIsSlave;
 
 		internal CinemachineOrbitalTransposer.UpdateHeadingDelegate HeadingUpdater = (CinemachineOrbitalTransposer orbital, float deltaTime, Vector3 up) => orbital.UpdateHeading(deltaTime, up, ref orbital.m_XAxis);
@@ -269,8 +269,8 @@ namespace Cinemachine
 			[Range(0f, 10f)]
 			public int m_VelocityFilterStrength;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Where the camera is placed when the X-axis value is zero.  This is a rotation in degrees around the Y axis.  When this value is 0, the camera will be placed behind the target.  Nonzero offsets will rotate the zero position around the target.")]
+			[Range(-180f, 180f)]
 			public float m_HeadingBias;
 
 			[DocumentationSorting(6.21f, DocumentationSortingAttribute.Level.UserRef)]
@@ -328,8 +328,8 @@ namespace Cinemachine
 			private int m_LegacyHeadingDefinition;
 
 			[SerializeField]
-			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			[HideInInspector]
+			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			private int m_LegacyVelocityFilterStrength;
 		}
 

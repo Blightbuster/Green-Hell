@@ -275,8 +275,8 @@ namespace RootMotion.FinalIK
 		[SerializeField]
 		public RotationLimitPolygonal.LimitPoint[] points;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		public Vector3[] P;
 
 		[SerializeField]

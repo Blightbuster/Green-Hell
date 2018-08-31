@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
-public class RainCollector : Trigger, IProcessor, IRainCollector
+public class RainCollector : Trigger, IRainCollector, IProcessor
 {
 	protected override void Start()
 	{

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AmplifyBloom
 {
 	[Serializable]
-	public sealed class AmplifyBokeh : ISerializationCallbackReceiver, IAmplifyItem
+	public sealed class AmplifyBokeh : IAmplifyItem, ISerializationCallbackReceiver
 	{
 		public AmplifyBokeh()
 		{

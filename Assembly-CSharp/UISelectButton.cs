@@ -43,6 +43,18 @@ public class UISelectButton : MonoBehaviour
 		}
 	}
 
+	public void SetOptionText(string option, string text)
+	{
+		for (int i = 0; i < this.m_Options.Keys.Count; i++)
+		{
+			if (this.m_Options.Keys.ElementAt(i) == option)
+			{
+				this.m_Options[option] = text;
+				return;
+			}
+		}
+	}
+
 	private void OnEnable()
 	{
 		this.UpdateEverything();

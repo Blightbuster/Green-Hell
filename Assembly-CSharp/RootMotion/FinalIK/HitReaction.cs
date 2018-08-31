@@ -141,8 +141,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Linking this hit point to a collider")]
 			public Collider collider;
 
-			[Tooltip("Only used if this hit point gets hit when already processing another hit")]
 			[SerializeField]
+			[Tooltip("Only used if this hit point gets hit when already processing another hit")]
 			private float crossFadeTime = 0.1f;
 
 			private float length;

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
 	[DocumentationSorting(18f, DocumentationSortingAttribute.Level.UserRef)]
+	[SaveDuringPlay]
 	[AddComponentMenu("Cinemachine/CinemachinePath")]
 	public class CinemachinePath : CinemachinePathBase
 	{

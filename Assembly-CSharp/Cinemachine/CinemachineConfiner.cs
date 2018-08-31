@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[DocumentationSorting(22f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	[AddComponentMenu("")]
 	[SaveDuringPlay]
 	public class CinemachineConfiner : CinemachineExtension
@@ -192,8 +192,8 @@ namespace Cinemachine
 		[Tooltip("If camera is orthographic, screen edges will be confined to the volume.  If not checked, then only the camera center will be confined")]
 		public bool m_ConfineScreenEdges = true;
 
-		[Range(0f, 10f)]
 		[Tooltip("How gradually to return the camera to the bounding volume if it goes beyond the borders.  Higher numbers are more gradual.")]
+		[Range(0f, 10f)]
 		public float m_Damping;
 
 		private List<List<Vector2>> m_pathCache;

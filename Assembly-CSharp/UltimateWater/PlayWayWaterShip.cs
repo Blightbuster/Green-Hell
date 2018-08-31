@@ -104,12 +104,12 @@ namespace UltimateWater
 			}
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("rigidBody")]
+		[SerializeField]
 		private Rigidbody _RigidBody;
 
-		[SerializeField]
 		[FormerlySerializedAs("mainCollider")]
+		[SerializeField]
 		private Collider _MainCollider;
 
 		[FormerlySerializedAs("sternEffects")]
@@ -128,8 +128,8 @@ namespace UltimateWater
 		[SerializeField]
 		private ParticleSystem[] _BowSprayEmitters;
 
-		[SerializeField]
 		[FormerlySerializedAs("maxVelocity")]
+		[SerializeField]
 		private float _MaxVelocity = 7.5f;
 
 		private PlayWayWaterShip.ParticleSystemData[] _PropellerEffectsData;

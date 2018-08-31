@@ -5,9 +5,9 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
 	[DocumentationSorting(7f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
+	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	public class CinemachineTrackedDolly : CinemachineComponentBase
 	{
@@ -203,8 +203,8 @@ namespace Cinemachine
 		[Range(0f, 20f)]
 		public float m_PitchDamping;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_YawDamping;
 
 		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
