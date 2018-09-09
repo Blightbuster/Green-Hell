@@ -531,7 +531,7 @@ public class MainMenu : MainMenuScreen
 	[HideInInspector]
 	public GameMode m_GameMode;
 
-	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAcces;
+	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate2;
 
 	private float m_StartTime;
 }

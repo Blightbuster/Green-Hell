@@ -5,8 +5,8 @@ using UnityEngine.Rendering;
 
 namespace UltimateWater
 {
-	[AddComponentMenu("Ultimate Water/Dynamic/Water Interactive")]
 	[RequireComponent(typeof(Renderer))]
+	[AddComponentMenu("Ultimate Water/Dynamic/Water Interactive")]
 	public sealed class WaterInteractive : MonoBehaviour, IWavesInteractive, IDynamicWaterEffects
 	{
 		public void Render(CommandBuffer commandBuffer)

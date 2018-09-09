@@ -48,20 +48,20 @@ namespace UltimateWater
 			this._Particles = new Spray.Particle[Mathf.Max(1, (int)this._EmissionRate)];
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("water")]
+		[SerializeField]
 		private Spray _Water;
 
-		[SerializeField]
 		[FormerlySerializedAs("emissionRate")]
+		[SerializeField]
 		private float _EmissionRate = 5f;
 
 		[FormerlySerializedAs("startIntensity")]
 		[SerializeField]
 		private float _StartIntensity = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("startVelocity")]
+		[SerializeField]
 		private float _StartVelocity = 1f;
 
 		[FormerlySerializedAs("lifetime")]

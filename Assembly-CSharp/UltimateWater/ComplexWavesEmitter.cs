@@ -174,33 +174,33 @@ namespace UltimateWater
 			this._SpawnPoints = list.ToArray();
 		}
 
-		[FormerlySerializedAs("wavesParticleSystem")]
 		[SerializeField]
+		[FormerlySerializedAs("wavesParticleSystem")]
 		private WaveParticleSystem _WavesParticleSystem;
 
-		[FormerlySerializedAs("wavesSource")]
 		[SerializeField]
+		[FormerlySerializedAs("wavesSource")]
 		private ComplexWavesEmitter.WavesSource _WavesSource;
 
-		[FormerlySerializedAs("wavelength")]
 		[SerializeField]
+		[FormerlySerializedAs("wavelength")]
 		private float _Wavelength = 120f;
 
-		[FormerlySerializedAs("amplitude")]
 		[SerializeField]
+		[FormerlySerializedAs("amplitude")]
 		private float _Amplitude = 0.6f;
 
-		[FormerlySerializedAs("emissionRate")]
 		[SerializeField]
+		[FormerlySerializedAs("emissionRate")]
 		private float _EmissionRate = 2f;
 
 		[FormerlySerializedAs("width")]
 		[SerializeField]
 		private int _Width = 8;
 
+		[Range(0f, 180f)]
 		[FormerlySerializedAs("spectrumCoincidenceRange")]
 		[SerializeField]
-		[Range(0f, 180f)]
 		private float _SpectrumCoincidenceRange = 20f;
 
 		[FormerlySerializedAs("spectrumWavesCount")]
@@ -213,9 +213,9 @@ namespace UltimateWater
 		[Tooltip("Affects both waves and emission area width.")]
 		private float _Span = 1000f;
 
-		[FormerlySerializedAs("waveShapeIrregularity")]
-		[SerializeField]
 		[Range(1f, 3.5f)]
+		[SerializeField]
+		[FormerlySerializedAs("waveShapeIrregularity")]
 		private float _WaveShapeIrregularity = 2f;
 
 		[FormerlySerializedAs("lifetime")]
@@ -226,8 +226,8 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _ShoreWaves = true;
 
-		[FormerlySerializedAs("boundsSize")]
 		[SerializeField]
+		[FormerlySerializedAs("boundsSize")]
 		private Vector2 _BoundsSize = new Vector2(500f, 500f);
 
 		[FormerlySerializedAs("spawnDepth")]
@@ -236,8 +236,8 @@ namespace UltimateWater
 		private float _SpawnDepth = 8f;
 
 		[FormerlySerializedAs("emissionFrequencyScale")]
-		[SerializeField]
 		[Range(0.01f, 2f)]
+		[SerializeField]
 		private float _EmissionFrequencyScale = 1f;
 
 		[FormerlySerializedAs("spawnPointsDensity")]

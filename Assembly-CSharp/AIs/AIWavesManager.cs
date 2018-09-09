@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Enums;
 using UnityEngine;
 
 namespace AIs
@@ -18,7 +19,7 @@ namespace AIs
 
 		private bool ShouldSpawnWave()
 		{
-			return false;
+			return HumanAIGroupManager.Get() && GreenHellGame.Instance.m_GameDifficulty == GameDifficulty.Hard && !this.m_BlockSpawnWaves && BalanceSystem.Get().CanSpawnHumanAIWave();
 		}
 
 		public void Update()
@@ -37,7 +38,7 @@ namespace AIs
 			}
 		}
 
-		public void SpawnWave(int count, bool hallucination = false)
+		public HumanAIWave SpawnWave(int count, bool hallucination = false)
 		{
 			GameObject gameObject = new GameObject("AIWave");
 			HumanAIWave humanAIWave = gameObject.AddComponent<HumanAIWave>();
@@ -45,6 +46,7 @@ namespace AIs
 			humanAIWave.m_Hallucination = hallucination;
 			humanAIWave.Initialize();
 			this.m_ActiveWaves.Add(humanAIWave);
+			return humanAIWave;
 		}
 
 		public void StopWave(HumanAIWave wave)

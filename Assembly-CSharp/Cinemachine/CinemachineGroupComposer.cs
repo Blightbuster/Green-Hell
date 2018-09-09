@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Cinemachine
 {
+	[AddComponentMenu("")]
+	[ExecuteInEditMode]
 	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
-	[ExecuteInEditMode]
 	[DocumentationSorting(4f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("")]
 	public class CinemachineGroupComposer : CinemachineComposer
 	{
 		private void OnValidate()
@@ -112,8 +112,8 @@ namespace Cinemachine
 			return Mathf.Max(Mathf.Max(0.0001f, b.size.x) / (num * base.VcamState.Lens.Aspect), Mathf.Max(0.0001f, b.size.y) / num);
 		}
 
-		[Tooltip("The bounding box of the targets should occupy this amount of the screen space.  1 means fill the whole screen.  0.5 means fill half the screen, etc.")]
 		[Space]
+		[Tooltip("The bounding box of the targets should occupy this amount of the screen space.  1 means fill the whole screen.  0.5 means fill half the screen, etc.")]
 		public float m_GroupFramingSize = 0.8f;
 
 		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]

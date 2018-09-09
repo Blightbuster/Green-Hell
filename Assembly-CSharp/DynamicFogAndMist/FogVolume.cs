@@ -84,8 +84,8 @@ namespace DynamicFogAndMist
 		[Tooltip("Enables alpha transition.")]
 		public bool enableAlphaTransition;
 
-		[Tooltip("Target alpha for fog when camera enters this fog volume")]
 		[Range(0f, 1f)]
+		[Tooltip("Target alpha for fog when camera enters this fog volume")]
 		public float targetFogAlpha = 0.5f;
 
 		[Range(0f, 1f)]

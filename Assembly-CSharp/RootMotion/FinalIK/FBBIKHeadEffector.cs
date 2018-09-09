@@ -337,8 +337,8 @@ namespace RootMotion.FinalIK
 		[Range(0f, 1f)]
 		public float positionWeight = 1f;
 
-		[Tooltip("The weight of moving the body along with the head")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of moving the body along with the head")]
 		public float bodyWeight = 0.8f;
 
 		[Tooltip("The weight of moving the thighs along with the head")]
@@ -348,13 +348,13 @@ namespace RootMotion.FinalIK
 		[Tooltip("If false, hands will not pull the head away if they are too far. Disabling this will improve performance significantly.")]
 		public bool handsPullBody = true;
 
-		[Tooltip("The weight of rotating the head bone after solving")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of rotating the head bone after solving")]
 		[LargeHeader("Rotation")]
 		public float rotationWeight;
 
-		[Tooltip("Clamping the rotation of the body")]
 		[Range(0f, 1f)]
+		[Tooltip("Clamping the rotation of the body")]
 		public float bodyClampWeight = 0.5f;
 
 		[Range(0f, 1f)]
@@ -373,8 +373,8 @@ namespace RootMotion.FinalIK
 		[LargeHeader("CCD")]
 		public float CCDWeight = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of rolling the bones in towards the target")]
+		[Range(0f, 1f)]
 		public float roll;
 
 		[Range(0f, 1000f)]
@@ -384,9 +384,9 @@ namespace RootMotion.FinalIK
 		[Tooltip("Bones to use for the CCD pass. Assign spine and/or neck bones.")]
 		public Transform[] CCDBones = new Transform[0];
 
-		[LargeHeader("Stretching")]
 		[Range(0f, 1f)]
 		[Tooltip("Stretching the spine/neck to help reach the target. This is useful for making sure the head stays locked relative to the VR headset. NB! Stretching is done after FBBIK has solved so if you have the hand effectors pinned and spine bones included in the 'Stretch Bones', the hands might become offset from their target positions.")]
+		[LargeHeader("Stretching")]
 		public float postStretchWeight = 1f;
 
 		[Tooltip("Stretch magnitude limit.")]

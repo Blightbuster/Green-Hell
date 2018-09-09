@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Time of Day/Camera Atmospheric Scattering")]
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
+[AddComponentMenu("Time of Day/Camera Atmospheric Scattering")]
 public class TOD_Scattering : TOD_ImageEffect
 {
 	protected void OnEnable()

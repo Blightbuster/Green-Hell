@@ -363,8 +363,8 @@ namespace UltimateWater
 		[Range(0f, 8f)]
 		public float Distortions2 = 1f;
 
-		[SerializeField]
 		[Tooltip("Optional.")]
+		[SerializeField]
 		public Transform ScrollDirectionPointer;
 
 		[SerializeField]
@@ -379,8 +379,8 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _NormalMapperShader;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Shader _CausticUtilShader;
 
 		[SerializeField]

@@ -273,7 +273,7 @@ public class ItemController : PlayerController
 
 	private bool CanThrow()
 	{
-		return this.m_State == ItemController.State.None && this.m_Item.GetInfoID() != ItemID.Fire && !Inventory3DManager.Get().gameObject.activeSelf && (!Player.Get().m_ActiveFightController || !Player.Get().m_ActiveFightController.IsBlock());
+		return this.m_State == ItemController.State.None && this.m_Item.GetInfoID() != ItemID.Fire && !Inventory3DManager.Get().gameObject.activeSelf && (!Player.Get().m_ActiveFightController || !Player.Get().m_ActiveFightController.IsBlock()) && (!Player.Get().m_ActiveFightController || !PlayerConditionModule.Get().IsStaminaLevel(Player.Get().m_ActiveFightController.m_BlockAttackStaminaLevel));
 	}
 
 	public override void GetInputActions(ref List<int> actions)

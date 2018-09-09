@@ -80,6 +80,7 @@ public class BowController : PlayerController
 		}
 		this.SetState(BowController.State.None);
 		this.m_Animator.SetInteger(this.m_IBowState, 0);
+		this.m_Animator.SetBool(this.m_LowStaminaHash, false);
 		this.m_Animator.SetInteger(this.m_IWeaponType, 0);
 		this.m_Player.StopAim();
 	}
@@ -185,31 +186,16 @@ public class BowController : PlayerController
 
 	private void UpdateState()
 	{
-		BowController.State state = this.m_State;
-		if (state != BowController.State.NoArrowIdle)
+		if (PlayerConditionModule.Get().IsStaminaLevel(WeaponMeleeController.Get().m_BlockAttackStaminaLevel))
 		{
-			if (state != BowController.State.Idle)
-			{
-				if (state == BowController.State.AimLoop)
-				{
-					if (TriggerController.Get().IsGrabInProgress())
-					{
-						this.SetState(BowController.State.Idle);
-						this.m_Player.StopAim();
-					}
-					else
-					{
-						float num = PlayerConditionModule.Get().GetStaminaDecrease(StaminaDecreaseReason.Bow) * Skill.Get<ArcherySkill>().GetStaminaConsumptionMul();
-						this.m_Player.DecreaseStamina(num * Time.deltaTime);
-						if (PlayerConditionModule.Get().GetStamina() == 0f)
-						{
-							this.SetState(BowController.State.Idle);
-							this.m_Player.StopAim();
-						}
-					}
-				}
-			}
-			else if (!Inventory3DManager.Get().gameObject.activeSelf)
+			this.m_Animator.SetBool(this.m_LowStaminaHash, true);
+			this.SetState(BowController.State.LowStamina);
+			this.m_Player.StopAim();
+		}
+		switch (this.m_State)
+		{
+		case BowController.State.Idle:
+			if (!Inventory3DManager.Get().gameObject.activeSelf)
 			{
 				this.UpdateArrowFromInventory();
 				if (this.m_Arrow == null)
@@ -217,14 +203,38 @@ public class BowController : PlayerController
 					this.SetState(BowController.State.NoArrowIdle);
 				}
 			}
-		}
-		else
-		{
+			break;
+		case BowController.State.AimLoop:
+			if (TriggerController.Get().IsGrabInProgress())
+			{
+				this.SetState(BowController.State.Idle);
+				this.m_Player.StopAim();
+			}
+			else
+			{
+				float num = PlayerConditionModule.Get().GetStaminaDecrease(StaminaDecreaseReason.Bow) * Skill.Get<ArcherySkill>().GetStaminaConsumptionMul();
+				this.m_Player.DecreaseStamina(num * Time.deltaTime);
+				if (PlayerConditionModule.Get().GetStamina() == 0f)
+				{
+					this.SetState(BowController.State.Idle);
+					this.m_Player.StopAim();
+				}
+			}
+			break;
+		case BowController.State.NoArrowIdle:
 			this.UpdateArrowFromInventory();
 			if (this.m_Arrow != null)
 			{
 				this.SetState(BowController.State.Idle);
 			}
+			break;
+		case BowController.State.LowStamina:
+			if (!PlayerConditionModule.Get().IsStaminaLevel(WeaponMeleeController.Get().m_BlockAttackStaminaLevel))
+			{
+				this.SetState((!(this.m_Arrow != null)) ? BowController.State.NoArrowIdle : BowController.State.Idle);
+				this.m_Animator.SetBool(this.m_LowStaminaHash, false);
+			}
+			break;
 		}
 		this.m_Animator.SetInteger(this.m_IBowState, (int)this.m_State);
 	}
@@ -372,6 +382,8 @@ public class BowController : PlayerController
 
 	private int m_NoArrowIdle = Animator.StringToHash("NoArrowIdle");
 
+	private int m_LowStaminaHash = Animator.StringToHash("LowStamina");
+
 	private Arrow m_Arrow;
 
 	private Transform m_ArrowHolder;
@@ -403,6 +415,7 @@ public class BowController : PlayerController
 		AimLoop = 3,
 		Shot,
 		Reload,
-		NoArrowIdle
+		NoArrowIdle,
+		LowStamina
 	}
 }

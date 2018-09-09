@@ -2066,7 +2066,7 @@ public class BodyInspectionController : PlayerController
 		}
 	}
 
-	public void AttachMaggots()
+	public void AttachMaggots(bool update_healing_start_time = true)
 	{
 		if (this.m_ActiveSlot.m_Maggots == null)
 		{
@@ -2122,7 +2122,10 @@ public class BodyInspectionController : PlayerController
 				gameObject5.name = "Maggot in wound";
 				this.m_ActiveSlot.m_Maggots.Add(gameObject5);
 			}
-			this.m_ActiveSlot.m_Injury.StartHealing();
+			if (update_healing_start_time)
+			{
+				this.m_ActiveSlot.m_Injury.StartHealing();
+			}
 			break;
 		}
 	}
@@ -2258,6 +2261,14 @@ public class BodyInspectionController : PlayerController
 	{
 		for (int i = 0; i < this.m_WoundSlots.Count; i++)
 		{
+			Injury injury = this.m_WoundSlots[i].m_Injury;
+			if (this.m_WoundSlots[i].m_Maggots == null && injury != null && injury.m_State == InjuryState.Infected && injury.m_HealingStartTime < 3.40282347E+38f)
+			{
+				BIWoundSlot activeSlot = this.m_ActiveSlot;
+				this.m_ActiveSlot = this.m_WoundSlots[i];
+				this.AttachMaggots(false);
+				this.m_ActiveSlot = activeSlot;
+			}
 			if (this.m_WoundSlots[i].m_LacerationMaggotsVertices != null && this.m_WoundSlots[i].m_Maggots != null)
 			{
 				BIWoundSlot biwoundSlot = this.m_WoundSlots[i];

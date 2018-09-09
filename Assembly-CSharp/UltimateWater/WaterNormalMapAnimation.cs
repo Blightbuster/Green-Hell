@@ -40,17 +40,17 @@ namespace UltimateWater
 			Graphics.Blit(this._SourceNormalMap, this._NormalMap1, this._NormalMapMaterial, 0);
 		}
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("normalMapShader")]
+		[SerializeField]
+		[HideInInspector]
 		private Shader _NormalMapShader;
 
-		[FormerlySerializedAs("resolution")]
 		[SerializeField]
+		[FormerlySerializedAs("resolution")]
 		private int _Resolution = 512;
 
-		[SerializeField]
 		[FormerlySerializedAs("period")]
+		[SerializeField]
 		private float _Period = 60f;
 
 		[FormerlySerializedAs("animationSpeed")]

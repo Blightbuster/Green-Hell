@@ -8,9 +8,9 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(1f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("Cinemachine/CinemachineVirtualCamera")]
 	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineVirtualCamera")]
+	[DocumentationSorting(1f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
 	public class CinemachineVirtualCamera : CinemachineVirtualCameraBase
 	{
@@ -419,9 +419,9 @@ namespace Cinemachine
 		[NoSaveDuringPlay]
 		public Transform m_Follow;
 
-		[LensSettingsProperty]
-		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active.")]
 		[FormerlySerializedAs("m_LensAttributes")]
+		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active.")]
+		[LensSettingsProperty]
 		public LensSettings m_Lens = LensSettings.Default;
 
 		public const string PipelineName = "cm";
@@ -434,8 +434,8 @@ namespace Cinemachine
 
 		private CinemachineComponentBase[] m_ComponentPipeline;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Transform m_ComponentOwner;
 
 		public delegate Transform CreatePipelineDelegate(CinemachineVirtualCamera vcam, string name, CinemachineComponentBase[] copyFrom);

@@ -912,8 +912,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Positional weight of the hand target.")]
 			public float positionWeight = 1f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the hand target")]
+			[Range(0f, 1f)]
 			public float rotationWeight = 1f;
 
 			[Tooltip("Different techniques for shoulder bone rotation.")]
@@ -1734,8 +1734,8 @@ namespace RootMotion.FinalIK
 				return vector2.y - sphereRadius < 0f;
 			}
 
-			[Tooltip("Used for blending in/out of procedural locomotion.")]
 			[Range(0f, 1f)]
+			[Tooltip("Used for blending in/out of procedural locomotion.")]
 			public float weight = 1f;
 
 			[Tooltip("Tries to maintain this distance between the legs.")]
@@ -1756,8 +1756,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The amount of head/hand target velocity prediction.")]
 			public float velocityFactor = 0.4f;
 
-			[Tooltip("How much can a leg be extended before it is forced to step to another position? 1 means fully stretched.")]
 			[Range(0.9f, 1f)]
+			[Tooltip("How much can a leg be extended before it is forced to step to another position? 1 means fully stretched.")]
 			public float maxLegStretch = 1f;
 
 			[Tooltip("The speed of lerping the root of the character towards the horizontal mid-point of the footsteps.")]
@@ -2237,8 +2237,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The pelvis target, useful with seated rigs.")]
 			public Transform pelvisTarget;
 
-			[Range(0f, 1f)]
 			[Tooltip("Positional weight of the head target.")]
+			[Range(0f, 1f)]
 			public float positionWeight = 1f;
 
 			[Range(0f, 1f)]
@@ -2256,8 +2256,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("If 'Chest Goal Weight' is greater than 0, the chest will be turned towards this Transform.")]
 			public Transform chestGoal;
 
-			[Tooltip("Rotational weight of the chest target.")]
 			[Range(0f, 1f)]
+			[Tooltip("Rotational weight of the chest target.")]
 			public float chestGoalWeight;
 
 			[Tooltip("Minimum height of the head from the root of the character.")]
@@ -2267,13 +2267,13 @@ namespace RootMotion.FinalIK
 			[Range(0f, 1f)]
 			public float bodyPosStiffness = 0.55f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Determines how much the body will follow the rotation of the head.")]
+			[Range(0f, 1f)]
 			public float bodyRotStiffness = 0.1f;
 
-			[Range(0f, 1f)]
-			[FormerlySerializedAs("chestRotationWeight")]
 			[Tooltip("Determines how much the chest will rotate to the rotation of the head.")]
+			[FormerlySerializedAs("chestRotationWeight")]
+			[Range(0f, 1f)]
 			public float neckStiffness = 0.2f;
 
 			[Range(0f, 1f)]
@@ -2284,8 +2284,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Clamps head rotation.")]
 			public float headClampWeight = 0.6f;
 
-			[Range(0f, 1f)]
 			[Tooltip("How much will the pelvis maintain it's animated position?")]
+			[Range(0f, 1f)]
 			public float maintainPelvisPosition = 0.2f;
 
 			[Range(0f, 180f)]

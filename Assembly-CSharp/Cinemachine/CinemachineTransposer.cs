@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("")]
-	[DocumentationSorting(5f, DocumentationSortingAttribute.Level.UserRef)]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
+	[AddComponentMenu("")]
+	[DocumentationSorting(5f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachineTransposer : CinemachineComponentBase
 	{
 		protected virtual void OnValidate()

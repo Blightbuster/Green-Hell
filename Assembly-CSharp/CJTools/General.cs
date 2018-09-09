@@ -8,6 +8,25 @@ namespace CJTools
 {
 	public static class General
 	{
+		public static float LinearToDecibel(float linear)
+		{
+			float result;
+			if (linear != 0f)
+			{
+				result = 20f * Mathf.Log10(linear);
+			}
+			else
+			{
+				result = -144f;
+			}
+			return result;
+		}
+
+		public static float DecibelToLinear(float dB)
+		{
+			return Mathf.Pow(10f, dB / 20f);
+		}
+
 		public static T GetComponentDeepChild<T>(GameObject go)
 		{
 			T component = go.GetComponent<T>();

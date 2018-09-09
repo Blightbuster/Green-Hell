@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using CJTools;
 using Enums;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -260,6 +261,7 @@ public class GreenHellGame : MonoBehaviour
 
 	private void Update()
 	{
+		this.UpdateAudio();
 		this.UpdateResolution();
 		if (GreenHellGame.DEBUG)
 		{
@@ -270,6 +272,56 @@ public class GreenHellGame : MonoBehaviour
 			GreenHellGame.m_FadeSystem.UpdateInternal();
 		}
 		CursorManager.Get().Update();
+	}
+
+	private void UpdateAudio()
+	{
+		int num = 0;
+		AudioMixerSnapshotGame currentSnapshot = this.m_CurrentSnapshot;
+		if (currentSnapshot != AudioMixerSnapshotGame.Default)
+		{
+			if (currentSnapshot != AudioMixerSnapshotGame.LowSanity)
+			{
+				if (currentSnapshot == AudioMixerSnapshotGame.Sleep)
+				{
+					num = 2;
+				}
+			}
+			else
+			{
+				num = 1;
+			}
+		}
+		else
+		{
+			num = 0;
+		}
+		GameSettings settings = GreenHellGame.Instance.m_Settings;
+		float volume = settings.m_Volume;
+		float value = General.LinearToDecibel(volume);
+		this.m_AudioMixer.SetFloat("MasterVolume", value);
+		float dialogsVolume = settings.m_DialogsVolume;
+		float num2 = this.m_SnapshotMatrix[num, 4];
+		float value2 = General.LinearToDecibel(num2 * dialogsVolume);
+		this.m_AudioMixer.SetFloat("DialogsVolume", value2);
+		float musicVolume = settings.m_MusicVolume;
+		float num3 = this.m_SnapshotMatrix[num, 2];
+		float value3 = General.LinearToDecibel(num3 * musicVolume);
+		this.m_AudioMixer.SetFloat("MusicVolume", value3);
+		float enviroVolume = settings.m_EnviroVolume;
+		float num4 = this.m_SnapshotMatrix[num, 1];
+		float value4 = General.LinearToDecibel(num4 * enviroVolume);
+		this.m_AudioMixer.SetFloat("EnviroVolume", value4);
+		float generalVolume = settings.m_GeneralVolume;
+		float num5 = this.m_SnapshotMatrix[num, 0];
+		float value5 = General.LinearToDecibel(num5 * generalVolume);
+		this.m_AudioMixer.SetFloat("PlayerVolume", value5);
+		float num6 = this.m_SnapshotMatrix[num, 3];
+		float value6 = General.LinearToDecibel(num6 * generalVolume);
+		this.m_AudioMixer.SetFloat("AIVolume", value6);
+		float num7 = this.m_SnapshotMatrix[num, 5];
+		float value7 = General.LinearToDecibel(num7 * generalVolume);
+		this.m_AudioMixer.SetFloat("SleepVolume", value7);
 	}
 
 	private void LateUpdate()
@@ -447,7 +499,9 @@ public class GreenHellGame : MonoBehaviour
 
 	public static GameVersion s_GameVersionEarlyAcces = new GameVersion(0, 9);
 
-	public static GameVersion s_GameVersion = new GameVersion(GreenHellGame.s_GameVersionEarlyAcces);
+	public static GameVersion s_GameVersionEarlyAccessUpdate2 = new GameVersion(0, 10);
+
+	public static GameVersion s_GameVersion = new GameVersion(GreenHellGame.s_GameVersionEarlyAccessUpdate2);
 
 	private static GreenHellGame s_Instance = null;
 
@@ -504,6 +558,34 @@ public class GreenHellGame : MonoBehaviour
 	private bool m_LoadAllPrefabs;
 
 	private Dictionary<string, GameObject> m_AllPrefabsMap = new Dictionary<string, GameObject>();
+
+	private float[,] m_SnapshotMatrix = new float[,]
+	{
+		{
+			1f,
+			1f,
+			1f,
+			1f,
+			1f,
+			0f
+		},
+		{
+			0.8f,
+			1f,
+			1f,
+			1f,
+			1f,
+			0f
+		},
+		{
+			0f,
+			0f,
+			1f,
+			0f,
+			0f,
+			1f
+		}
+	};
 
 	public AudioMixer m_AudioMixer;
 

@@ -72,8 +72,11 @@ public class WeaponSpearController : WeaponController
 
 	protected override void EndAttackNonStop()
 	{
-		base.EndAttackNonStop();
-		this.EndAttack();
+		if (this.m_ImpaledObject)
+		{
+			this.SetState(WeaponSpearController.State.Presentation);
+		}
+		this.m_WasWaterHit = false;
 	}
 
 	protected override void EndAttack()
@@ -109,7 +112,7 @@ public class WeaponSpearController : WeaponController
 		return this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID.ToString();
 	}
 
-	protected new bool CanAttack()
+	protected override bool CanAttack()
 	{
 		return !MainLevel.Instance.IsPause() && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && !this.IsAttack() && !PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel);
 	}

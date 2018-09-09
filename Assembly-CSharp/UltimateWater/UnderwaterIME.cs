@@ -6,10 +6,10 @@ using UnityEngine.Rendering;
 
 namespace UltimateWater
 {
+	[RequireComponent(typeof(WaterCamera))]
+	[AddComponentMenu("Ultimate Water/Underwater IME")]
 	[ExecuteInEditMode]
 	[RequireComponent(typeof(Camera))]
-	[AddComponentMenu("Ultimate Water/Underwater IME")]
-	[RequireComponent(typeof(WaterCamera))]
 	public sealed class UnderwaterIME : MonoBehaviour, IWaterImageEffect
 	{
 		public float Intensity

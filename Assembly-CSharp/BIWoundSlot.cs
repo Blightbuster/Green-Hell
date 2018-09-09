@@ -164,7 +164,7 @@ public class BIWoundSlot : ItemSlot
 		{
 			if (item.m_Info.m_ID == ItemID.Maggots)
 			{
-				BodyInspectionController.Get().AttachMaggots();
+				BodyInspectionController.Get().AttachMaggots(true);
 			}
 			else
 			{
@@ -182,7 +182,11 @@ public class BIWoundSlot : ItemSlot
 			{
 				this.m_PoisonDebuff = item.m_Info.m_PoisonDebuff;
 			}
-			if (item.m_Info.m_ID != ItemID.Leech)
+			if (this.m_Injury.m_Type == InjuryType.WormHole && this.m_Injury.m_State == InjuryState.WormInside)
+			{
+				BodyInspectionController.Get().Deworm(item, this);
+			}
+			else if (item.m_Info.m_ID != ItemID.Leech)
 			{
 				BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
 			}
@@ -281,10 +285,14 @@ public class BIWoundSlot : ItemSlot
 		}
 		if (this.m_Injury.m_State == InjuryState.Infected)
 		{
-			return !(this.m_Injury.m_Bandage != null) && (item.m_Info.m_ID == ItemID.Maggots || item.m_Info.m_ID == ItemID.Honey_Dressing);
+			return !(this.m_Injury.m_Bandage != null) && this.m_Injury.m_Slot.m_Maggots == null && (item.m_Info.m_ID == ItemID.Maggots || item.m_Info.m_ID == ItemID.Honey_Dressing);
 		}
 		if (this.m_Injury.m_Type == InjuryType.SmallWoundAbrassion || this.m_Injury.m_Type == InjuryType.SmallWoundScratch || this.m_Injury.m_Type == InjuryType.WormHole)
 		{
+			if (this.m_Injury.m_Type == InjuryType.WormHole && this.m_Injury.m_State == InjuryState.WormInside && (item.m_Info.m_ID == ItemID.Fish_Bone || item.m_Info.m_ID == ItemID.Bone_Needle))
+			{
+				return true;
+			}
 			if (this.m_Injury.m_Bandage != null)
 			{
 				return false;
@@ -294,7 +302,7 @@ public class BIWoundSlot : ItemSlot
 				return true;
 			}
 		}
-		else if (this.m_Injury.m_Type == InjuryType.Worm)
+		else if (this.m_Injury.m_Type == InjuryType.Worm || (this.m_Injury.m_Type == InjuryType.WormHole && this.m_Injury.m_State == InjuryState.WormInside))
 		{
 			if (item.m_Info.m_ID == ItemID.Fish_Bone || item.m_Info.m_ID == ItemID.Bone_Needle)
 			{

@@ -23,8 +23,8 @@ namespace UltimateWater
 		[Header("Settings")]
 		public float Damping = 0.3f;
 
-		[Tooltip("How fast the waves spread")]
 		[Range(0f, 1f)]
+		[Tooltip("How fast the waves spread")]
 		public float Propagation = 1f;
 
 		[Tooltip("Force inflicted by interacting objects")]
@@ -39,13 +39,13 @@ namespace UltimateWater
 		[Tooltip("Wave height multiplier")]
 		public float Amplitude = 1f;
 
+		[Header("Smooth")]
 		[Tooltip("How much smoothing is applied between iterations")]
 		[Range(0f, 1f)]
-		[Header("Smooth")]
 		public float Sigma;
 
-		[Tooltip("How strong are wave normals")]
 		[Header("Normals")]
+		[Tooltip("How strong are wave normals")]
 		public float Multiplier = 1f;
 
 		[Tooltip("How wide is sampling distance for normal calculations")]

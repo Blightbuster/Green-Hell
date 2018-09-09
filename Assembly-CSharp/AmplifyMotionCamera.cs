@@ -4,8 +4,8 @@ using AmplifyMotion;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("")]
+[RequireComponent(typeof(Camera))]
 public class AmplifyMotionCamera : MonoBehaviour
 {
 	public bool Initialized

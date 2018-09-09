@@ -396,6 +396,12 @@ public class InventoryBackpack : MonoBehaviour
 		}
 	}
 
+	public void OnCloseBackpack()
+	{
+		this.m_MainPocketGrid.OnCloseBackpack();
+		this.m_FrontPocketGrid.OnCloseBackpack();
+	}
+
 	public bool IsOverload()
 	{
 		return this.m_CurrentWeight > this.m_OverloadWeight;

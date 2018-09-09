@@ -24,7 +24,7 @@ public class TOD_AtmosphereParameters
 	[Tooltip("Directionality factor that determines the size of the glow around the sun.")]
 	public float Directionality = 0.7f;
 
-	[Tooltip("Density of the fog covering the sky.")]
 	[TOD_Range(0f, 1f)]
+	[Tooltip("Density of the fog covering the sky.")]
 	public float Fogginess;
 }

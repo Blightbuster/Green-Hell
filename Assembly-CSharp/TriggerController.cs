@@ -604,7 +604,7 @@ public class TriggerController : PlayerController
 			trigger.OnExecute(action);
 			this.m_LastTrigerExecutionTime = Time.time;
 		}
-		if (action == TriggerAction.TYPE.Use || action == TriggerAction.TYPE.Drink)
+		if (action == TriggerAction.TYPE.Use)
 		{
 			HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
 			string text = GreenHellGame.Instance.GetLocalization().Get(TriggerAction.GetTextPerfect(action)) + ": " + GreenHellGame.Instance.GetLocalization().Get(trigger.GetName());
@@ -621,13 +621,18 @@ public class TriggerController : PlayerController
 		{
 			if (action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold || action == TriggerAction.TYPE.PickUp)
 			{
-				if (this.m_Player.GetCurrentItem(Hand.Left) != null && this.m_Player.GetCurrentItem(Hand.Left).m_Info.m_ID == ItemID.Bow)
+				Item currentItem = this.m_Player.GetCurrentItem(Hand.Left);
+				if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bow)
 				{
 					this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
 				}
-				else if (this.m_Player.GetCurrentItem(Hand.Left) != null && this.m_Player.GetCurrentItem(Hand.Left).m_Info.m_ID == ItemID.Bamboo_Bow)
+				else if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bamboo_Bow)
 				{
 					this.m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, true);
+				}
+				else if (currentItem && currentItem.m_Info.IsBow())
+				{
+					this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
 				}
 				else if (trigger.PlayGrabAnimOnExecute(action))
 				{

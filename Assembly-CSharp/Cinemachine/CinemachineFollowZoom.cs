@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[DocumentationSorting(16f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	[SaveDuringPlay]
 	[AddComponentMenu("")]
 	public class CinemachineFollowZoom : CinemachineExtension
@@ -52,8 +52,8 @@ namespace Cinemachine
 		[Tooltip("The shot width to maintain, in world units, at target distance.")]
 		public float m_Width = 2f;
 
-		[Tooltip("Increase this value to soften the aggressiveness of the follow-zoom.  Small numbers are more responsive, larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("Increase this value to soften the aggressiveness of the follow-zoom.  Small numbers are more responsive, larger numbers give a more heavy slowly responding camera.")]
 		public float m_Damping = 1f;
 
 		[Range(1f, 179f)]

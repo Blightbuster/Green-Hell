@@ -10,6 +10,7 @@ public class MenuOptions : MenuScreen
 		this.m_AudioText = this.m_Audio.GetComponentInChildren<Text>();
 		this.m_BackText = this.m_BackButton.GetComponentInChildren<Text>();
 		this.m_GraphicsText = this.m_Graphics.GetComponentInChildren<Text>();
+		this.m_ControlsText = this.m_Controls.GetComponentInChildren<Text>();
 	}
 
 	protected override void Update()
@@ -28,6 +29,7 @@ public class MenuOptions : MenuScreen
 		this.m_Game.GetComponentInChildren<Text>().color = color;
 		this.m_Controls.GetComponentInChildren<Text>().color = color;
 		this.m_Audio.GetComponentInChildren<Text>().color = color;
+		this.m_Controls.GetComponentInChildren<Text>().color = color;
 		this.m_BackButton.GetComponentInChildren<Text>().color = color;
 		Vector2 screenPoint = Input.mousePosition;
 		this.m_ActiveButton = null;
@@ -47,7 +49,7 @@ public class MenuOptions : MenuScreen
 			this.m_ActiveButton = this.m_Game;
 		}
 		component = this.m_Controls.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint) && !this.m_EarlyAccess)
+		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
 		{
 			this.m_ActiveButton = this.m_Controls;
 		}
@@ -84,9 +86,17 @@ public class MenuOptions : MenuScreen
 		{
 			this.m_Game.GetComponentInChildren<Text>().color = color2;
 		}
-		if (this.m_EarlyAccess)
+		component = this.m_ControlsText.GetComponent<RectTransform>();
+		localPosition = component.localPosition;
+		num = ((!(this.m_ActiveButton == this.m_Controls)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX);
+		num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
+		localPosition.x += num2;
+		component.localPosition = localPosition;
+		if (this.m_ActiveButton == this.m_Controls)
 		{
-			this.m_Controls.GetComponentInChildren<Text>().color = color2;
+			color = this.m_ControlsText.color;
+			color.a = 1f;
+			this.m_ControlsText.color = color;
 		}
 		component = this.m_BackText.GetComponent<RectTransform>();
 		localPosition = component.localPosition;
@@ -126,6 +136,11 @@ public class MenuOptions : MenuScreen
 		this.m_MenuInGameManager.ShowScreen(typeof(MenuOptionsGraphics));
 	}
 
+	public void OnControls()
+	{
+		this.m_MenuInGameManager.ShowScreen(typeof(MenuOptionsControls));
+	}
+
 	public Button m_Graphics;
 
 	public Button m_Game;
@@ -138,13 +153,15 @@ public class MenuOptions : MenuScreen
 
 	public Text m_GraphicsText;
 
+	public Text m_ControlsText;
+
 	private Button m_ActiveButton;
 
 	public Button m_BackButton;
 
 	public Text m_BackText;
 
-	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAcces;
+	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate2;
 
 	private float m_ButtonTextStartX;
 

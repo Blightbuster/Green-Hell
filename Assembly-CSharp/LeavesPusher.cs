@@ -206,7 +206,7 @@ public class LeavesPusher : MonoBehaviour
 
 	private static LeavesPusher s_Instance;
 
-	private float m_LeechCooldownDecrease2 = 10f;
+	private float m_LeechCooldownDecrease2 = 5f;
 
 	private LeavesPusherData m_LeavesPusher_data;
 

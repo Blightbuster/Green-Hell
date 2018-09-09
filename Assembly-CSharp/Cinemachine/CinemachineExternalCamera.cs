@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(Camera))]
-	[DocumentationSorting(14f, DocumentationSortingAttribute.Level.UserRef)]
-	[DisallowMultipleComponent]
 	[ExecuteInEditMode]
 	[AddComponentMenu("Cinemachine/CinemachineExternalCamera")]
+	[DocumentationSorting(14f, DocumentationSortingAttribute.Level.UserRef)]
+	[RequireComponent(typeof(Camera))]
+	[DisallowMultipleComponent]
 	public class CinemachineExternalCamera : CinemachineVirtualCameraBase
 	{
 		public override CameraState State

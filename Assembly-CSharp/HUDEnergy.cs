@@ -362,7 +362,7 @@ public class HUDEnergy : HUDBase
 
 	private void UpdateOxygenBar()
 	{
-		bool flag = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAcces;
+		bool flag = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate2;
 		if (flag)
 		{
 			this.m_OxygenBar.gameObject.SetActive(false);

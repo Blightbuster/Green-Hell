@@ -15,6 +15,10 @@ public class InsectsSensor : SensorBase
 		{
 			return;
 		}
+		if (MakeFireController.Get().IsActive())
+		{
+			return;
+		}
 		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
 		if (currentItem && currentItem.m_Info.IsTorch())
 		{

@@ -63,8 +63,8 @@ namespace UltimateWater
 			return (height <= 0f) ? WaterSampler.SubmersionState.Under : WaterSampler.SubmersionState.Above;
 		}
 
-		[SerializeField]
 		[Header("References")]
+		[SerializeField]
 		private Water _Water;
 
 		public float Hysteresis = 0.1f;

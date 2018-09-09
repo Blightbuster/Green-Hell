@@ -82,8 +82,8 @@ public class NGSS_Directional : MonoBehaviour
 		Shader.EnableKeyword((this.SAMPLERS_COUNT != NGSS_Directional.SAMPLER_COUNT.SAMPLERS_64) ? ((this.SAMPLERS_COUNT != NGSS_Directional.SAMPLER_COUNT.SAMPLERS_32) ? ((this.SAMPLERS_COUNT != NGSS_Directional.SAMPLER_COUNT.SAMPLERS_25) ? "DIR_POISSON_16" : "DIR_POISSON_25") : "DIR_POISSON_32") : "DIR_POISSON_64");
 	}
 
-	[Tooltip("If false, NGSS Directional shadows replacement will be removed from Graphics settings when OnDisable is called in this component.")]
 	[Header("MAIN SETTINGS")]
+	[Tooltip("If false, NGSS Directional shadows replacement will be removed from Graphics settings when OnDisable is called in this component.")]
 	public bool KEEP_NGSS_ONDISABLE = true;
 
 	[Tooltip("Optimize shadows performance by skipping fragments that are either 100% lit or 100% shadowed. Some macro noisy artefacts can be seen if shadows are too soft or sampling amount is below 64.")]
@@ -93,9 +93,9 @@ public class NGSS_Directional : MonoBehaviour
 	[Tooltip("Recommended values: Mobile = 16, Consoles = 25, Desktop VR = 32, Desktop High = 64")]
 	public NGSS_Directional.SAMPLER_COUNT SAMPLERS_COUNT = NGSS_Directional.SAMPLER_COUNT.SAMPLERS_64;
 
-	[Range(0f, 2f)]
-	[Tooltip("Overall softness for both PCF and PCSS shadows.")]
 	[Header("SOFTNESS")]
+	[Tooltip("Overall softness for both PCF and PCSS shadows.")]
+	[Range(0f, 2f)]
 	public float GLOBAL_SOFTNESS = 1f;
 
 	[Range(0f, 2f)]
@@ -111,8 +111,8 @@ public class NGSS_Directional : MonoBehaviour
 	[Tooltip("Fades out artifacts produced by shadow bias")]
 	public float BIAS_FADE_VALUE = 1f;
 
-	[Header("PCSS")]
 	[Tooltip("Provides Area Light like soft-shadows. With shadows being harder at close ranges and softer at long ranges.\nDisable it if you are looking for uniformly simple soft-shadows. Disabled by default on Mobile.")]
+	[Header("PCSS")]
 	public bool PCSS_ENABLED = true;
 
 	[Range(0f, 2f)]

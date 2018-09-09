@@ -20,12 +20,12 @@ public class TOD_CloudParameters
 	[Tooltip("Sharpness of the cloud to sky transition.")]
 	public float Sharpness = 0.5f;
 
-	[TOD_Range(0f, 1f)]
 	[Tooltip("Amount of skylight that is blocked.")]
+	[TOD_Range(0f, 1f)]
 	public float Attenuation = 0.5f;
 
-	[TOD_Range(0f, 1f)]
 	[Tooltip("Amount of sunlight that is blocked.\nOnly affects the highest cloud quality setting.")]
+	[TOD_Range(0f, 1f)]
 	public float Saturation = 0.5f;
 
 	[TOD_Min(0f)]

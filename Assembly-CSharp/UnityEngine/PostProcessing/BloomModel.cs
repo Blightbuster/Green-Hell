@@ -55,16 +55,16 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Min(0f)]
 			[Tooltip("Strength of the bloom filter.")]
+			[Min(0f)]
 			public float intensity;
 
 			[Tooltip("Filters out pixels under this level of brightness.")]
 			[Min(0f)]
 			public float threshold;
 
-			[Range(0f, 1f)]
 			[Tooltip("Makes transition between under/over-threshold gradual (0 = hard threshold, 1 = soft threshold).")]
+			[Range(0f, 1f)]
 			public float softKnee;
 
 			[Tooltip("Changes extent of veiling effects in a screen resolution-independent fashion.")]

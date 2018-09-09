@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("http://www.root-motion.com/finalikdox/html/page7.html")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Limb IK")]
+	[HelpURL("http://www.root-motion.com/finalikdox/html/page7.html")]
 	public class LimbIK : IK
 	{
 		[ContextMenu("User Manual")]

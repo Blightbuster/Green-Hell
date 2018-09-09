@@ -164,8 +164,8 @@ namespace UltimateWater.Internal
 			return 2f * camera.nearClipPlane * Mathf.Tan(0.5f * camera.fieldOfView * 0.0174532924f);
 		}
 
-		[SerializeField]
 		[Range(0f, 2f)]
+		[SerializeField]
 		private float _Radius = 1f;
 
 		[SerializeField]

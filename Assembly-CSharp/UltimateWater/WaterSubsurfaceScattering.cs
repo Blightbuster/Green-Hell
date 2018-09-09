@@ -175,6 +175,7 @@ namespace UltimateWater
 		[Range(0f, 0.9f)]
 		private float _IgnoredLightFraction = 0.15f;
 
+		[SerializeField]
 		[Resolution(128, new int[]
 		{
 			64,
@@ -182,11 +183,10 @@ namespace UltimateWater
 			256,
 			512
 		})]
-		[SerializeField]
 		private int _AmbientResolution = 128;
 
-		[Range(-1f, 6f)]
 		[SerializeField]
+		[Range(-1f, 6f)]
 		private int _LightCount = -1;
 
 		[SerializeField]

@@ -8,8 +8,8 @@ namespace Cinemachine
 {
 	[DocumentationSorting(15f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
-	[ExecuteInEditMode]
 	[SaveDuringPlay]
+	[ExecuteInEditMode]
 	public class CinemachineCollider : CinemachineExtension
 	{
 		public bool IsTargetObscured(ICinemachineCamera vcam)
@@ -448,8 +448,8 @@ namespace Cinemachine
 			return false;
 		}
 
-		[Tooltip("The Unity layer mask against which the collider will raycast")]
 		[Header("Obstacle Detection")]
+		[Tooltip("The Unity layer mask against which the collider will raycast")]
 		public LayerMask m_CollideAgainst = 1;
 
 		[TagField]
@@ -478,9 +478,9 @@ namespace Cinemachine
 		[Range(1f, 10f)]
 		public int m_MaximumEffort = 4;
 
-		[Tooltip("The gradualness of collision resolution.  Higher numbers will move the camera more gradually away from obstructions.")]
 		[Range(0f, 10f)]
 		[FormerlySerializedAs("m_Smoothing")]
+		[Tooltip("The gradualness of collision resolution.  Higher numbers will move the camera more gradually away from obstructions.")]
 		public float m_Damping;
 
 		[Tooltip("If greater than zero, a higher score will be given to shots when the target is closer to this distance.  Set this to zero to disable this feature.")]

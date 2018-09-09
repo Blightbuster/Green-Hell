@@ -159,7 +159,7 @@ public class WeaponMeleeController : WeaponController
 
 	protected override void Attack()
 	{
-		if (!base.CanAttack())
+		if (!this.CanAttack())
 		{
 			if (!this.m_ComboBlocked && !PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel))
 			{

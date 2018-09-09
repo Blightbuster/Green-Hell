@@ -254,15 +254,15 @@ namespace RootMotion.FinalIK
 		[Tooltip("CapsuleCast radius. Should match approximately with the size of the feet.")]
 		public float footRadius = 0.15f;
 
-		[Tooltip("Offset of the foot center along character forward axis.")]
 		[HideInInspector]
+		[Tooltip("Offset of the foot center along character forward axis.")]
 		public float footCenterOffset;
 
 		[Tooltip("Amount of velocity based prediction of the foot positions.")]
 		public float prediction = 0.05f;
 
-		[Tooltip("Weight of rotating the feet to the ground normal offset.")]
 		[Range(0f, 1f)]
+		[Tooltip("Weight of rotating the feet to the ground normal offset.")]
 		public float footRotationWeight = 1f;
 
 		[Tooltip("Speed of slerping the feet to their grounded rotations.")]

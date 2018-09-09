@@ -5,11 +5,11 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
-	[AddComponentMenu("")]
-	[DocumentationSorting(5.5f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[DocumentationSorting(5.5f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachineFramingTransposer : CinemachineComponentBase
 	{
 		public Rect SoftGuideRect
@@ -247,24 +247,24 @@ namespace Cinemachine
 			return Mathf.Max(b.size.x / (num * base.VcamState.Lens.Aspect), b.size.y / num);
 		}
 
-		[HideInInspector]
 		[NoSaveDuringPlay]
+		[HideInInspector]
 		public Action OnGUICallback;
 
 		[Range(0f, 1f)]
 		[Tooltip("This setting will instruct the composer to adjust its target offset based on the motion of the target.  The composer will look at a point where it estimates the target will be this many seconds into the future.  Note that this setting is sensitive to noisy animation, and can amplify the noise, resulting in undesirable camera jitter.  If the camera jitters unacceptably when the target is in motion, turn down this setting, or animate the target more smoothly.")]
 		public float m_LookaheadTime;
 
-		[Range(3f, 30f)]
 		[Tooltip("Controls the smoothness of the lookahead algorithm.  Larger values smooth out jittery predictions and also increase prediction lag")]
+		[Range(3f, 30f)]
 		public float m_LookaheadSmoothing = 10f;
 
 		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to maintain the offset in the X-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_XDamping = 1f;
 
-		[Tooltip("How aggressively the camera tries to maintain the offset in the Y-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain the offset in the Y-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_YDamping = 1f;
 
 		[Tooltip("How aggressively the camera tries to maintain the offset in the Z-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]

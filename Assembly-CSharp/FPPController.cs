@@ -5,7 +5,6 @@ using Enums;
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 
-[RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(CharacterController))]
 public class FPPController : PlayerController
 {
@@ -318,7 +317,16 @@ public class FPPController : PlayerController
 		}
 		if (!this.m_Player || !this.m_Player.GetRotationBlocked())
 		{
-			this.m_LookController.UpdateLookDev(this.m_Inputs.m_MouseX, this.m_Inputs.m_MouseY);
+			float xsensitivity = GreenHellGame.Instance.m_Settings.m_XSensitivity;
+			float ysensitivity = GreenHellGame.Instance.m_Settings.m_YSensitivity;
+			if (!GreenHellGame.Instance.m_Settings.m_InvertMouseY)
+			{
+				this.m_LookController.UpdateLookDev(this.m_Inputs.m_MouseX * xsensitivity, this.m_Inputs.m_MouseY * ysensitivity);
+			}
+			else
+			{
+				this.m_LookController.UpdateLookDev(this.m_Inputs.m_MouseX * xsensitivity, -this.m_Inputs.m_MouseY * ysensitivity);
+			}
 		}
 		Quaternion rotation = default(Quaternion);
 		rotation = Quaternion.Euler(0f, this.m_LookController.m_LookDev.x, 0f);

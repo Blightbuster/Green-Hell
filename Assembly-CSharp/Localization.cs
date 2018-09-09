@@ -58,6 +58,10 @@ public class Localization
 		{
 			this.ParseScript("Texts_RU");
 		}
+		else if (language == Language.Polish)
+		{
+			this.ParseScript("Texts_PL");
+		}
 		this.ParseScript("TextsTemp");
 	}
 

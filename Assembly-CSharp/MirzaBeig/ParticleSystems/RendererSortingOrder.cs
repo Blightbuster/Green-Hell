@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace MirzaBeig.ParticleSystems
 {
-	[ExecuteInEditMode]
 	[RequireComponent(typeof(Renderer))]
+	[ExecuteInEditMode]
 	public class RendererSortingOrder : MonoBehaviour
 	{
 		private void Awake()

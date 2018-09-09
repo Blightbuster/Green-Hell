@@ -201,12 +201,12 @@ namespace UltimateWater
 			}
 		}
 
-		[FormerlySerializedAs("enter")]
 		[SerializeField]
+		[FormerlySerializedAs("enter")]
 		private UnityEvent _Enter;
 
-		[FormerlySerializedAs("leave")]
 		[SerializeField]
+		[FormerlySerializedAs("leave")]
 		private UnityEvent _Leave;
 
 		private Water _CurrentWater;

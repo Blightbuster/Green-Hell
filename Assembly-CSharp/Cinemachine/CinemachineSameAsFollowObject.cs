@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(27f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("")]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
-	[AddComponentMenu("")]
+	[DocumentationSorting(27f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachineSameAsFollowObject : CinemachineComponentBase
 	{
 		public override bool IsValid

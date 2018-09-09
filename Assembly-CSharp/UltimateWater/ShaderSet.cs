@@ -366,17 +366,17 @@ namespace UltimateWater
 			return windWavesRenderMode;
 		}
 
+		[FormerlySerializedAs("transparencyMode")]
 		[Header("Reflection & Refraction")]
 		[SerializeField]
-		[FormerlySerializedAs("transparencyMode")]
 		private WaterTransparencyMode _TransparencyMode = WaterTransparencyMode.Refractive;
 
 		[FormerlySerializedAs("reflectionProbeUsage")]
 		[SerializeField]
 		private ReflectionProbeUsage _ReflectionProbeUsage = ReflectionProbeUsage.BlendProbesAndSkybox;
 
-		[SerializeField]
 		[FormerlySerializedAs("planarReflections")]
+		[SerializeField]
 		private PlanarReflectionsMode _PlanarReflections = PlanarReflectionsMode.Normal;
 
 		[FormerlySerializedAs("receiveShadows")]
@@ -423,17 +423,17 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _CustomTriangularGeometry;
 
-		[FormerlySerializedAs("displayOnlyInAdditiveVolumes")]
-		[SerializeField]
 		[Header("Volumes")]
+		[SerializeField]
+		[FormerlySerializedAs("displayOnlyInAdditiveVolumes")]
 		private bool _DisplayOnlyInAdditiveVolumes;
 
 		[FormerlySerializedAs("wavesAlign")]
 		[SerializeField]
 		private bool _WavesAlign;
 
-		[SerializeField]
 		[Header("Surface")]
+		[SerializeField]
 		[FormerlySerializedAs("normalMappingMode")]
 		private NormalMappingMode _NormalMappingMode = NormalMappingMode.Auto;
 
@@ -441,8 +441,8 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _SupportEmission;
 
-		[FormerlySerializedAs("surfaceShaders")]
 		[SerializeField]
+		[FormerlySerializedAs("surfaceShaders")]
 		[Header("Generated Shaders")]
 		private Shader[] _SurfaceShaders;
 

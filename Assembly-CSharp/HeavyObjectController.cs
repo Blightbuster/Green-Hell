@@ -39,6 +39,11 @@ public class HeavyObjectController : PlayerController
 		this.m_Animator.SetInteger(this.m_IHeavyObjectState, 0);
 		this.SetState(HeavyObjectControllerState.None);
 		this.m_DropScheduled = false;
+		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
+		if (currentItem)
+		{
+			this.DropItem();
+		}
 	}
 
 	public override void OnInputAction(InputsManager.InputAction action)
@@ -78,7 +83,7 @@ public class HeavyObjectController : PlayerController
 				this.m_Animator.SetInteger(this.m_IHeavyObjectState, 1);
 			}
 		}
-		if (this.m_State == HeavyObjectControllerState.Leaving && currentAnimatorStateInfo.shortNameHash != this.m_IHeavyObjectState && currentAnimatorStateInfo.shortNameHash != this.m_IPostHeavyObjectState && !this.m_Animator.IsInTransition(1))
+		if (this.m_State == HeavyObjectControllerState.Leaving && ((currentAnimatorStateInfo.shortNameHash == this.m_IPostHeavyObjectState && currentAnimatorStateInfo.normalizedTime >= 0.5f) || (currentAnimatorStateInfo.shortNameHash == this.m_IInsertHeavyObjectToSlotState && currentAnimatorStateInfo.normalizedTime >= 0.6f)))
 		{
 			Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 			this.DropItem();
@@ -134,6 +139,8 @@ public class HeavyObjectController : PlayerController
 	private int m_IPreHeavyObjectState = Animator.StringToHash("PreHeavyObject");
 
 	private int m_IPostHeavyObjectState = Animator.StringToHash("PostHeavyObject");
+
+	private int m_IInsertHeavyObjectToSlotState = Animator.StringToHash("InsertHeavyObjectToSlot");
 
 	private HeavyObjectControllerState m_State;
 

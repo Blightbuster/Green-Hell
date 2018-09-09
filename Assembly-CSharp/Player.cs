@@ -2135,6 +2135,10 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 		{
 			return;
 		}
+		if (MakeFireController.Get().IsActive())
+		{
+			return;
+		}
 		if (this.m_ActiveFightController && this.m_ActiveFightController.IsBlock())
 		{
 			this.m_ActiveFightController.SetBlock(false);
@@ -2282,7 +2286,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	private bool ShouldHideWeapon()
 	{
-		return Inventory3DManager.Get().IsActive() || BodyInspectionController.Get().IsActive() || this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) || this.m_Animator.GetBool(ItemController.Get().m_FireHash) || NotepadController.Get().IsActive() || MapController.Get().IsActive() || LadderController.Get().IsActive() || LiquidInHandsController.Get().IsActive() || SwimController.Get().IsActive() || HeavyObjectController.Get().IsActive() || BoatController.Get().IsActive() || ConsciousnessController.Get().IsActive() || GrapplingHookController.Get().IsActive() || HarvestingAnimalController.Get().IsActive() || HarvestingSmallAnimalController.Get().IsActive() || CraftingController.Get().IsActive() || MakeFireController.Get().IsActive() || HitReactionController.Get().IsActive() || (this.m_ActiveFightController && PlayerConditionModule.Get().IsStaminaLevel(this.m_ActiveFightController.m_BlockAttackStaminaLevel)) || DeathController.Get().IsActive() || (ItemController.Get().IsActive() && ItemController.Get().m_StoneThrowing) || CutscenesManager.Get().IsCutscenePlaying() || ConstructionController.Get().IsActive();
+		return Inventory3DManager.Get().IsActive() || BodyInspectionController.Get().IsActive() || this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) || this.m_Animator.GetBool(ItemController.Get().m_FireHash) || NotepadController.Get().IsActive() || MapController.Get().IsActive() || LadderController.Get().IsActive() || LiquidInHandsController.Get().IsActive() || SwimController.Get().IsActive() || HeavyObjectController.Get().IsActive() || BoatController.Get().IsActive() || ConsciousnessController.Get().IsActive() || GrapplingHookController.Get().IsActive() || HarvestingAnimalController.Get().IsActive() || HarvestingSmallAnimalController.Get().IsActive() || CraftingController.Get().IsActive() || MakeFireController.Get().IsActive() || HitReactionController.Get().IsActive() || DeathController.Get().IsActive() || (ItemController.Get().IsActive() && ItemController.Get().m_StoneThrowing) || CutscenesManager.Get().IsCutscenePlaying() || ConstructionController.Get().IsActive();
 	}
 
 	private void UpdateWeapon()
@@ -3255,7 +3259,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 			0,
 			0,
 			0,
-			0,
+			1,
 			0,
 			0,
 			0

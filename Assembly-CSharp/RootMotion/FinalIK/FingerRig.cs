@@ -145,8 +145,8 @@ namespace RootMotion.FinalIK
 			this.FixFingerTransforms();
 		}
 
-		[Range(0f, 1f)]
 		[Tooltip("The master weight for all fingers.")]
+		[Range(0f, 1f)]
 		public float weight = 1f;
 
 		public Finger[] fingers = new Finger[0];

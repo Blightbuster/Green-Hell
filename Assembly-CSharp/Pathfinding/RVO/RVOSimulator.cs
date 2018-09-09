@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Pathfinding.RVO
 {
-	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Simulator")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_simulator.php")]
+	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Simulator")]
 	[ExecuteInEditMode]
 	public class RVOSimulator : VersionedMonoBehaviour
 	{

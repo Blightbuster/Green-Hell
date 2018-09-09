@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[AddComponentMenu("Pathfinding/Link3")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link3.php")]
+	[AddComponentMenu("Pathfinding/Link3")]
 	public class NodeLink3 : GraphModifier
 	{
 		public static NodeLink3 GetNodeLink(GraphNode node)

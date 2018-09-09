@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
+	[AddComponentMenu("Cinemachine/CinemachineStateDrivenCamera")]
 	[DisallowMultipleComponent]
 	[ExecuteInEditMode]
 	[DocumentationSorting(13f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("Cinemachine/CinemachineStateDrivenCamera")]
 	public class CinemachineStateDrivenCamera : CinemachineVirtualCameraBase
 	{
 		public override string Description
@@ -364,16 +364,16 @@ namespace Cinemachine
 			return new CinemachineBlend(camA, camB, blendCurve, duration, 0f);
 		}
 
-		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
 		[NoSaveDuringPlay]
+		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
 		public Transform m_LookAt;
 
 		[NoSaveDuringPlay]
 		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
 		public Transform m_Follow;
 
-		[Space]
 		[Tooltip("The state machine whose state changes will drive this camera's choice of active child")]
+		[Space]
 		public Animator m_AnimatedTarget;
 
 		[Tooltip("Which layer in the target state machine to observe")]
@@ -385,23 +385,23 @@ namespace Cinemachine
 		[Tooltip("Force all child cameras to be enabled.  This is useful if animating them in Timeline, but consumes extra resources")]
 		public bool m_EnableAllChildCameras;
 
+		[NoSaveDuringPlay]
 		[HideInInspector]
 		[SerializeField]
-		[NoSaveDuringPlay]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("The set of instructions associating virtual cameras with states.  These instructions are used to choose the live child at any given moment")]
 		public CinemachineStateDrivenCamera.Instruction[] m_Instructions;
 
-		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Camera children")]
 		[CinemachineBlendDefinitionProperty]
+		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Camera children")]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.EaseInOut, 0.5f);
 
 		[Tooltip("This is the asset which contains custom settings for specific child blends")]
 		public CinemachineBlenderSettings m_CustomBlends;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		public CinemachineStateDrivenCamera.ParentHash[] m_ParentHash;
 
 		private CameraState m_State = CameraState.Default;

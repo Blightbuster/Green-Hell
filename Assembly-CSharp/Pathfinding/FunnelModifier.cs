@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[AddComponentMenu("Pathfinding/Modifiers/Funnel")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_funnel_modifier.php")]
+	[AddComponentMenu("Pathfinding/Modifiers/Funnel")]
 	[Serializable]
 	public class FunnelModifier : MonoModifier
 	{

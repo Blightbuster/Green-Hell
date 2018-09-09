@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using CJTools;
 using Enums;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,6 +19,13 @@ public class GameSettings : MonoBehaviour
 		binaryFormatter.Serialize(fileStream, this.m_Volume);
 		binaryFormatter.Serialize(fileStream, this.m_SoftShadows);
 		binaryFormatter.Serialize(fileStream, this.m_ShadowsBlur);
+		binaryFormatter.Serialize(fileStream, this.m_InvertMouseY);
+		binaryFormatter.Serialize(fileStream, this.m_XSensitivity);
+		binaryFormatter.Serialize(fileStream, this.m_YSensitivity);
+		binaryFormatter.Serialize(fileStream, this.m_DialogsVolume);
+		binaryFormatter.Serialize(fileStream, this.m_MusicVolume);
+		binaryFormatter.Serialize(fileStream, this.m_EnviroVolume);
+		binaryFormatter.Serialize(fileStream, this.m_GeneralVolume);
 		fileStream.Close();
 	}
 
@@ -27,11 +35,25 @@ public class GameSettings : MonoBehaviour
 		{
 			BinaryFormatter binaryFormatter = new BinaryFormatter();
 			FileStream fileStream = File.Open(Application.persistentDataPath + "/" + this.m_SettingsFileName, FileMode.Open);
-			GameVersion gameVersion = new GameVersion((GameVersion)binaryFormatter.Deserialize(fileStream));
+			GameVersion lhs = new GameVersion((GameVersion)binaryFormatter.Deserialize(fileStream));
 			this.m_Language = (Language)binaryFormatter.Deserialize(fileStream);
 			this.m_Volume = (float)binaryFormatter.Deserialize(fileStream);
+			if (lhs < GreenHellGame.s_GameVersionEarlyAccessUpdate2)
+			{
+				this.m_Volume = General.DecibelToLinear(this.m_Volume);
+			}
 			this.m_SoftShadows = (bool)binaryFormatter.Deserialize(fileStream);
 			this.m_ShadowsBlur = (GameSettings.OptionLevel)binaryFormatter.Deserialize(fileStream);
+			if (lhs > GreenHellGame.s_GameVersionEarlyAcces)
+			{
+				this.m_InvertMouseY = (bool)binaryFormatter.Deserialize(fileStream);
+				this.m_XSensitivity = (float)binaryFormatter.Deserialize(fileStream);
+				this.m_YSensitivity = (float)binaryFormatter.Deserialize(fileStream);
+				this.m_DialogsVolume = (float)binaryFormatter.Deserialize(fileStream);
+				this.m_MusicVolume = (float)binaryFormatter.Deserialize(fileStream);
+				this.m_EnviroVolume = (float)binaryFormatter.Deserialize(fileStream);
+				this.m_GeneralVolume = (float)binaryFormatter.Deserialize(fileStream);
+			}
 			fileStream.Close();
 		}
 		this.ApplySettings();
@@ -40,7 +62,6 @@ public class GameSettings : MonoBehaviour
 	public void ApplySettings()
 	{
 		this.ApplyLanguage();
-		GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Master).audioMixer.SetFloat("MasterVolume", this.m_Volume);
 	}
 
 	private void ApplyLanguage()
@@ -96,7 +117,19 @@ public class GameSettings : MonoBehaviour
 	public Language m_Language;
 
 	[HideInInspector]
-	public float m_Volume = 1f;
+	public float m_Volume = 0.5f;
+
+	[HideInInspector]
+	public float m_DialogsVolume = 1f;
+
+	[HideInInspector]
+	public float m_MusicVolume = 1f;
+
+	[HideInInspector]
+	public float m_EnviroVolume = 1f;
+
+	[HideInInspector]
+	public float m_GeneralVolume = 1f;
 
 	[HideInInspector]
 	public string m_SettingsFileName = "Settings.sav";
@@ -106,6 +139,15 @@ public class GameSettings : MonoBehaviour
 
 	[HideInInspector]
 	public GameSettings.OptionLevel m_ShadowsBlur = GameSettings.OptionLevel.High;
+
+	[HideInInspector]
+	public bool m_InvertMouseY;
+
+	[HideInInspector]
+	public float m_XSensitivity = 1f;
+
+	[HideInInspector]
+	public float m_YSensitivity = 1f;
 
 	public enum OptionLevel
 	{

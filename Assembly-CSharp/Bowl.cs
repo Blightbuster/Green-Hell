@@ -118,7 +118,14 @@ public class Bowl : LiquidContainer
 		case Bowl.State.WaterCooked:
 		case Bowl.State.Herb:
 		case Bowl.State.HerbCooked:
-			actions.Add(TriggerAction.TYPE.Drink);
+			if (this.m_LCInfo.CanDrink())
+			{
+				actions.Add(TriggerAction.TYPE.Drink);
+			}
+			else
+			{
+				actions.Add(TriggerAction.TYPE.Take);
+			}
 			break;
 		}
 	}

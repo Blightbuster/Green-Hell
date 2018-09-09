@@ -6,11 +6,11 @@ using UnityEngine.Events;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[ExecuteInEditMode]
 	[DisallowMultipleComponent]
-	[AddComponentMenu("Cinemachine/CinemachineBrain")]
 	[DocumentationSorting(0f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
+	[AddComponentMenu("Cinemachine/CinemachineBrain")]
+	[SaveDuringPlay]
 	public class CinemachineBrain : MonoBehaviour
 	{
 		public Camera OutputCamera

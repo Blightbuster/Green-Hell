@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Image Effects/Amplify Color Volume")]
 [RequireComponent(typeof(BoxCollider))]
+[AddComponentMenu("Image Effects/Amplify Color Volume")]
 public class AmplifyColorVolume : AmplifyColorVolumeBase
 {
 	private void OnTriggerEnter(Collider other)

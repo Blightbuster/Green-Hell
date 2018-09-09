@@ -696,9 +696,9 @@ namespace UltimateWater
 		[SerializeField]
 		private float _DirectionalLightsIntensity = 1f;
 
-		[Tooltip("May hurt performance on some systems.")]
 		[SerializeField]
 		[Range(0f, 1f)]
+		[Tooltip("May hurt performance on some systems.")]
 		private float _TesselationFactor = 1f;
 
 		private Water _Water;

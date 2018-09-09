@@ -6,9 +6,9 @@ using UnityEngine.Serialization;
 namespace UnityEngine.AI
 {
 	[AddComponentMenu("Navigation/NavMeshSurface", 30)]
+	[DefaultExecutionOrder(-102)]
 	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
 	[ExecuteInEditMode]
-	[DefaultExecutionOrder(-102)]
 	public class NavMeshSurface : MonoBehaviour
 	{
 		public int agentTypeID

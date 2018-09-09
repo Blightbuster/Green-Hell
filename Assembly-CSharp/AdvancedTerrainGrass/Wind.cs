@@ -104,19 +104,19 @@ namespace AdvancedTerrainGrass
 
 		public Shader WindCompositeShader;
 
-		[Space(4f)]
 		[Header("Wind Multipliers")]
+		[Space(4f)]
 		public float Grass = 1f;
 
 		public float Foliage = 1f;
 
+		[Space(4f)]
 		[Header("Size and Speed")]
 		[Range(0.001f, 0.1f)]
-		[Space(4f)]
 		public float size = 0.01f;
 
-		[Range(0.0001f, 0.2f)]
 		[Space(5f)]
+		[Range(0.0001f, 0.2f)]
 		public float speed = 0.02f;
 
 		public float speedLayer0 = 0.476f;
@@ -125,14 +125,14 @@ namespace AdvancedTerrainGrass
 
 		public float speedLayer2 = 2.93f;
 
-		[Header("Noise")]
 		[Space(4f)]
+		[Header("Noise")]
 		public int GrassGustTiling = 4;
 
 		public float GrassGustSpeed = 0.278f;
 
-		[Header("Jitter")]
 		[Space(4f)]
+		[Header("Jitter")]
 		public float JitterFrequency = 3.127f;
 
 		public float JitterHighFrequency = 21f;

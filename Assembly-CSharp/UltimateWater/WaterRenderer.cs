@@ -378,27 +378,27 @@ namespace UltimateWater
 			effectsCamera.targetTexture = null;
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("volumeFrontShader")]
+		[SerializeField]
 		[HideInInspector]
 		private Shader _VolumeFrontShader;
 
-		[HideInInspector]
 		[SerializeField]
 		[FormerlySerializedAs("volumeFrontFastShader")]
+		[HideInInspector]
 		private Shader _VolumeFrontFastShader;
 
-		[HideInInspector]
 		[SerializeField]
 		[FormerlySerializedAs("volumeBackShader")]
+		[HideInInspector]
 		private Shader _VolumeBackShader;
 
 		[FormerlySerializedAs("reflectionProbeAnchor")]
 		[SerializeField]
 		private Transform _ReflectionProbeAnchor;
 
-		[SerializeField]
 		[FormerlySerializedAs("shadowCastingMode")]
+		[SerializeField]
 		private ShadowCastingMode _ShadowCastingMode;
 
 		[FormerlySerializedAs("useSharedMask")]

@@ -183,8 +183,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Tooltip("The diameter (in texels) inside which jitter samples are spread. Smaller values result in crisper but more aliased output, while larger values result in more stable but blurrier output.")]
 			[Range(0.1f, 1f)]
+			[Tooltip("The diameter (in texels) inside which jitter samples are spread. Smaller values result in crisper but more aliased output, while larger values result in more stable but blurrier output.")]
 			public float jitterSpread;
 
 			[Range(0f, 3f)]
@@ -195,8 +195,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("The blend coefficient for a stationary fragment. Controls the percentage of history sample blended into the final color.")]
 			public float stationaryBlending;
 
-			[Tooltip("The blend coefficient for a fragment with significant motion. Controls the percentage of history sample blended into the final color.")]
 			[Range(0f, 0.99f)]
+			[Tooltip("The blend coefficient for a fragment with significant motion. Controls the percentage of history sample blended into the final color.")]
 			public float motionBlending;
 		}
 

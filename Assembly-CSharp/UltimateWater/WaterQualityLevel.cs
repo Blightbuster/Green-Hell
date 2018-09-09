@@ -35,8 +35,8 @@ namespace UltimateWater
 		[FormerlySerializedAs("allowHighQualityNormalMaps")]
 		public bool AllowHighQualityNormalMaps;
 
-		[FormerlySerializedAs("tileSizeScale")]
 		[Range(0f, 1f)]
+		[FormerlySerializedAs("tileSizeScale")]
 		public float TileSizeScale;
 
 		[FormerlySerializedAs("wavesMode")]
@@ -45,12 +45,12 @@ namespace UltimateWater
 		[FormerlySerializedAs("allowSpray")]
 		public bool AllowSpray;
 
-		[FormerlySerializedAs("foamQuality")]
 		[Range(0f, 1f)]
+		[FormerlySerializedAs("foamQuality")]
 		public float FoamQuality;
 
-		[FormerlySerializedAs("maxTesselationFactor")]
 		[Range(0f, 1f)]
+		[FormerlySerializedAs("maxTesselationFactor")]
 		public float MaxTesselationFactor;
 
 		[FormerlySerializedAs("maxVertexCount")]

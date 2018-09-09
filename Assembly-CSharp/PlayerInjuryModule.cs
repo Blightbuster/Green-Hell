@@ -265,13 +265,21 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		{
 			place = (InjuryPlace)UnityEngine.Random.Range(0, 4);
 		}
-		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place, injuryType);
-		if (freeWoundSlot == null)
+		int num = UnityEngine.Random.Range(1, 4);
+		if (RainManager.Get().m_WeatherInterpolated >= 1f)
 		{
-			return;
+			num = UnityEngine.Random.Range(3, 6);
 		}
-		this.m_LeechNextTime2 = Injury.s_LeechCooldownInMinutes + MainLevel.Instance.GetCurrentTimeMinutes();
-		this.AddInjury(injuryType, place, freeWoundSlot, InjuryState.Open, 0, null);
+		for (int i = 0; i < num; i++)
+		{
+			BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place, injuryType);
+			if (freeWoundSlot == null)
+			{
+				return;
+			}
+			this.AddInjury(injuryType, place, freeWoundSlot, InjuryState.Open, 0, null);
+			this.m_LeechNextTime2 = Injury.s_LeechCooldownInMinutes + MainLevel.Instance.GetCurrentTimeMinutes();
+		}
 	}
 
 	public void ScenarioAddInjury(string type, string place, string state)
@@ -310,6 +318,10 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		if (!slot || PlayerConditionModule.Get().GetParameterLossBlocked())
 		{
 			return null;
+		}
+		if (type == InjuryType.Leech && this.GetAllInjuries(type).Count == 0 && PlayerSanityModule.Get())
+		{
+			PlayerSanityModule.Get().ResetEventCooldown(PlayerSanityModule.SanityEventType.Leech);
 		}
 		Debug.Log("AddInjury");
 		Injury injury = new Injury(type, place, slot, state, poison_level, parent_injury);
@@ -602,21 +614,24 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		int num = SaveGame.LoadIVal("InjuriesCount");
 		for (int i = 0; i < num; i++)
 		{
-			InjuryType type = (InjuryType)SaveGame.LoadIVal("InjuryType" + i);
+			InjuryType injuryType = (InjuryType)SaveGame.LoadIVal("InjuryType" + i);
 			InjuryPlace place = (InjuryPlace)SaveGame.LoadIVal("InjuryPlace" + i);
 			InjuryState injuryState = (InjuryState)SaveGame.LoadIVal("InjuryState" + i);
-			BIWoundSlot woundSlot = BodyInspectionController.Get().GetWoundSlot(place, SaveGame.LoadSVal("InjurySlot" + i));
-			int poison_level = SaveGame.LoadIVal("InjuryPoisonLevel" + i);
-			Injury injury = this.AddInjury(type, place, woundSlot, injuryState, poison_level, null);
-			if (injuryState == InjuryState.Infected)
+			if (injuryType != InjuryType.WormHole || injuryState != InjuryState.WormInside)
 			{
-				injury.Infect();
+				BIWoundSlot woundSlot = BodyInspectionController.Get().GetWoundSlot(place, SaveGame.LoadSVal("InjurySlot" + i));
+				int poison_level = SaveGame.LoadIVal("InjuryPoisonLevel" + i);
+				Injury injury = this.AddInjury(injuryType, place, woundSlot, injuryState, poison_level, null);
+				if (injuryState == InjuryState.Infected)
+				{
+					injury.Infect();
+				}
+				else if (injuryState == InjuryState.Closed)
+				{
+					injury.CloseWound();
+				}
+				injury.Load(i);
 			}
-			else if (injuryState == InjuryState.Closed)
-			{
-				injury.CloseWound();
-			}
-			injury.Load(i);
 		}
 	}
 

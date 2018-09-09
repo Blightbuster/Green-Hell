@@ -324,8 +324,8 @@ namespace Pathfinding
 		[Tooltip("How many degrees rotation that is required for an update to the navmesh. Should be between 0 and 180.")]
 		public float updateRotationDistance = 10f;
 
-		[FormerlySerializedAs("useRotation")]
 		[Tooltip("Includes rotation in calculations. This is slower since a lot more matrix multiplications are needed but gives more flexibility.")]
+		[FormerlySerializedAs("useRotation")]
 		public bool useRotationAndScale;
 
 		private Vector3[][] contours;

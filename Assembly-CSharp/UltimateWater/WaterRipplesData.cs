@@ -54,17 +54,17 @@ namespace UltimateWater
 			}
 		}
 
-		[Tooltip("Static objects that interact with water (terrain, pillars, rocks)")]
 		[SerializeField]
+		[Tooltip("Static objects that interact with water (terrain, pillars, rocks)")]
 		private LayerMask _StaticDepthMask;
 
-		[Tooltip("How many simulation steps are performed per frame, the more iterations, the faster the water waves are, but it's expensive")]
 		[SerializeField]
+		[Tooltip("How many simulation steps are performed per frame, the more iterations, the faster the water waves are, but it's expensive")]
 		private int _Iterations = 1;
 
 		[Tooltip("Simulation data (only R channel is used)")]
-		[Header("Texture formats")]
 		[SerializeField]
+		[Header("Texture formats")]
 		private RenderTextureFormat _SimulationFormat = RenderTextureFormat.RHalf;
 
 		[SerializeField]
@@ -75,8 +75,8 @@ namespace UltimateWater
 		[Tooltip("Depth data (only R channel is used)")]
 		private RenderTextureFormat _DepthFormat = RenderTextureFormat.RHalf;
 
-		[Header("Shaders")]
 		[SerializeField]
+		[Header("Shaders")]
 		private WaterRipplesData.ShaderModes _ShaderMode = WaterRipplesData.ShaderModes.PixelShader;
 
 		[Serializable]

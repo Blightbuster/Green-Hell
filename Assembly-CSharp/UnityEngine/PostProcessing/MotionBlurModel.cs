@@ -41,8 +41,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Range(0f, 360f)]
 			[Tooltip("The angle of rotary shutter. Larger values give longer exposure.")]
+			[Range(0f, 360f)]
 			public float shutterAngle;
 
 			[Tooltip("The amount of sample points, which affects quality and performances.")]

@@ -219,8 +219,8 @@ namespace UltimateWater
 			this._ParticlesRenderMaterial.SetTexture("_FoamOverlayTexture", this._FoamOverlayTexture);
 		}
 
-		[FormerlySerializedAs("maxParticles")]
 		[SerializeField]
+		[FormerlySerializedAs("maxParticles")]
 		private int _MaxParticles = 80000;
 
 		[FormerlySerializedAs("controllerShader")]
@@ -235,8 +235,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Texture _FoamTexture;
 
-		[FormerlySerializedAs("foamOverlayTexture")]
 		[SerializeField]
+		[FormerlySerializedAs("foamOverlayTexture")]
 		private Texture _FoamOverlayTexture;
 
 		[FormerlySerializedAs("foamAtlasWidth")]

@@ -2,8 +2,8 @@
 using System.Reflection;
 using UnityEngine;
 
-[AddComponentMenu("Relief Terrain/Engine - Terrain or Mesh")]
 [ExecuteInEditMode]
+[AddComponentMenu("Relief Terrain/Engine - Terrain or Mesh")]
 public class ReliefTerrain : MonoBehaviour
 {
 	public void GetGlobalSettingsHolder()

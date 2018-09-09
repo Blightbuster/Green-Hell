@@ -59,8 +59,8 @@ namespace UnityEngine.PostProcessing
 			[Range(1f, 99f)]
 			public float lowPercent;
 
-			[Tooltip("Filters the bright part of the histogram when computing the average luminance to avoid very dark pixels from contributing to the auto exposure. Unit is in percent.")]
 			[Range(1f, 99f)]
+			[Tooltip("Filters the bright part of the histogram when computing the average luminance to avoid very dark pixels from contributing to the auto exposure. Unit is in percent.")]
 			public float highPercent;
 
 			[Tooltip("Minimum average luminance to consider for auto exposure (in EV).")]
@@ -83,16 +83,16 @@ namespace UnityEngine.PostProcessing
 			[Min(0f)]
 			public float speedUp;
 
-			[Min(0f)]
 			[Tooltip("Adaptation speed from a light to a dark environment.")]
+			[Min(0f)]
 			public float speedDown;
 
-			[Tooltip("Lower bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			[Range(-16f, -1f)]
+			[Tooltip("Lower bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			public int logMin;
 
-			[Tooltip("Upper bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			[Range(1f, 16f)]
+			[Tooltip("Upper bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			public int logMax;
 		}
 	}

@@ -7,9 +7,9 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(11f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
 	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
+	[DocumentationSorting(11f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
 	public class CinemachineFreeLook : CinemachineVirtualCameraBase
 	{
@@ -560,8 +560,8 @@ namespace Cinemachine
 			}
 		}
 
-		[Tooltip("Object for the camera children to look at (the aim target).")]
 		[NoSaveDuringPlay]
+		[Tooltip("Object for the camera children to look at (the aim target).")]
 		public Transform m_LookAt;
 
 		[NoSaveDuringPlay]
@@ -572,9 +572,9 @@ namespace Cinemachine
 		[Tooltip("If enabled, this lens setting will apply to all three child rigs, otherwise the child rig lens settings will be used")]
 		public bool m_CommonLens = true;
 
-		[FormerlySerializedAs("m_LensAttributes")]
 		[LensSettingsProperty]
 		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active")]
+		[FormerlySerializedAs("m_LensAttributes")]
 		public LensSettings m_Lens = LensSettings.Default;
 
 		[Tooltip("The Vertical axis.  Value is 0..1.  Chooses how to blend the child rigs")]
@@ -594,9 +594,9 @@ namespace Cinemachine
 		[Header("Orbits")]
 		public CinemachineTransposer.BindingMode m_BindingMode = CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp;
 
-		[Tooltip("Controls how taut is the line that connects the rigs' orbits, which determines final placement on the Y axis")]
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("m_SplineTension")]
+		[Range(0f, 1f)]
+		[Tooltip("Controls how taut is the line that connects the rigs' orbits, which determines final placement on the Y axis")]
 		public float m_SplineCurvature = 0.2f;
 
 		[Tooltip("The radius and height of the three orbiting rigs.")]
@@ -607,9 +607,9 @@ namespace Cinemachine
 			new CinemachineFreeLook.Orbit(0.4f, 1.3f)
 		};
 
-		[SerializeField]
 		[FormerlySerializedAs("m_HeadingBias")]
 		[HideInInspector]
+		[SerializeField]
 		private float m_LegacyHeadingBias = float.MaxValue;
 
 		private bool mUseLegacyRigDefinitions;
@@ -618,9 +618,9 @@ namespace Cinemachine
 
 		private CameraState m_State = CameraState.Default;
 
-		[SerializeField]
-		[HideInInspector]
 		[NoSaveDuringPlay]
+		[HideInInspector]
+		[SerializeField]
 		private CinemachineVirtualCamera[] m_Rigs = new CinemachineVirtualCamera[3];
 
 		private CinemachineOrbitalTransposer[] mOrbitals;

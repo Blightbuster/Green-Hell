@@ -4,8 +4,8 @@ using UnityEngine;
 [Serializable]
 public class TOD_SunParameters
 {
-	[TOD_Min(0f)]
 	[Tooltip("Diameter of the sun in degrees.\nThe diameter as seen from earth is 0.5 degrees.")]
+	[TOD_Min(0f)]
 	public float MeshSize = 1f;
 
 	[TOD_Min(0f)]

@@ -5,9 +5,9 @@ using UnityEngine;
 namespace Cinemachine
 {
 	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineMixingCamera")]
 	[ExecuteInEditMode]
 	[DocumentationSorting(20f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("Cinemachine/CinemachineMixingCamera")]
 	public class CinemachineMixingCamera : CinemachineVirtualCameraBase
 	{
 		public float GetWeight(int index)

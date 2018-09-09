@@ -144,8 +144,8 @@ namespace UltimateWater
 		[Tooltip("Particle force modifier based on particle size")]
 		public float SizeMultipier;
 
-		[Tooltip("Calculate only a subset of all particles per frame")]
 		[Range(0f, 16f)]
+		[Tooltip("Calculate only a subset of all particles per frame")]
 		public int FrameSplit = 2;
 
 		private ParticleSystem _System;

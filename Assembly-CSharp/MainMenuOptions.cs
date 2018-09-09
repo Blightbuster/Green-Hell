@@ -38,7 +38,7 @@ public class MainMenuOptions : MainMenuScreen
 			this.m_ActiveButton = this.m_Game;
 		}
 		component = this.m_Controls.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint) && !this.m_EarlyAccess)
+		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
 		{
 			this.m_ActiveButton = this.m_Controls;
 		}
@@ -103,10 +103,6 @@ public class MainMenuOptions : MainMenuScreen
 			color.a = 1f;
 			this.m_Controls.GetComponentInChildren<Text>().color = color;
 		}
-		if (this.m_EarlyAccess)
-		{
-			this.m_Controls.GetComponentInChildren<Text>().color = color2;
-		}
 		if (this.m_ActiveButton == this.m_BackButton)
 		{
 			color = this.m_BackButton.GetComponentInChildren<Text>().color;
@@ -129,6 +125,11 @@ public class MainMenuOptions : MainMenuScreen
 		MainMenuManager.Get().SetActiveScreen(typeof(MainMenuOptionsAudio), true);
 	}
 
+	public void OnControls()
+	{
+		MainMenuManager.Get().SetActiveScreen(typeof(MainMenuOptionsControls), true);
+	}
+
 	public void OnBack()
 	{
 		MainMenuManager.Get().SetActiveScreen(typeof(MainMenu), true);
@@ -146,5 +147,5 @@ public class MainMenuOptions : MainMenuScreen
 
 	public Button m_BackButton;
 
-	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAcces;
+	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate2;
 }

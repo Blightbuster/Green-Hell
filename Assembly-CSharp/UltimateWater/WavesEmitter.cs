@@ -87,16 +87,16 @@ namespace UltimateWater
 		[SerializeField]
 		private float _Amplitude = 0.1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("wavelength")]
+		[SerializeField]
 		private float _Wavelength = 10f;
 
 		[FormerlySerializedAs("lifetime")]
 		[SerializeField]
 		private float _Lifetime = 50f;
 
-		[SerializeField]
 		[FormerlySerializedAs("speed")]
+		[SerializeField]
 		private float _Speed = 3.5f;
 
 		[FormerlySerializedAs("foam")]
@@ -111,14 +111,14 @@ namespace UltimateWater
 		[SerializeField]
 		private float _EmissionInterval = 0.15f;
 
-		[SerializeField]
 		[FormerlySerializedAs("trailCalming")]
+		[SerializeField]
 		[Range(0f, 1f)]
 		private float _TrailCalming = 1f;
 
+		[FormerlySerializedAs("trailFoam")]
 		[SerializeField]
 		[Range(0f, 8f)]
-		[FormerlySerializedAs("trailFoam")]
 		private float _TrailFoam = 1f;
 
 		[FormerlySerializedAs("emissionAngle")]

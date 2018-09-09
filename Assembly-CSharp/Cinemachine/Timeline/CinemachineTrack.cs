@@ -7,8 +7,8 @@ namespace Cinemachine.Timeline
 {
 	[TrackBindingType(typeof(CinemachineBrain))]
 	[TrackColor(0.53f, 0f, 0.08f)]
-	[TrackMediaType(TimelineAsset.MediaType.Script)]
 	[TrackClipType(typeof(CinemachineShot))]
+	[TrackMediaType(TimelineAsset.MediaType.Script)]
 	[Serializable]
 	public class CinemachineTrack : TrackAsset
 	{

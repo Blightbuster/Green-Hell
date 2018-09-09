@@ -314,7 +314,14 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 		else if (Input.GetKeyDown(KeyCode.Equals))
 		{
-			RainManager.Get().ToggleRain();
+			if (Input.GetKey(KeyCode.LeftShift))
+			{
+				RainManager.Get().ToggleDebug();
+			}
+			else
+			{
+				RainManager.Get().ToggleRain();
+			}
 		}
 		else if (Input.GetKeyDown(KeyCode.Semicolon))
 		{
@@ -762,7 +769,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			}
 			if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.PreloadScheduled)
 			{
-				SaveGame.PreLoad();
+				SaveGame.PlayerLoad();
 			}
 			else if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.PreloadCompleted)
 			{
@@ -928,9 +935,18 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 
 	public void ResetGameBeforeLoad()
 	{
-		CameraManager.Get().SetZoom(0f);
-		HintsManager.Get().HideAllHints();
-		ObjectivesManager.Get().DeactivateAllActiveObjectives();
+		if (CameraManager.Get())
+		{
+			CameraManager.Get().SetZoom(0f);
+		}
+		if (HintsManager.Get())
+		{
+			HintsManager.Get().HideAllHints();
+		}
+		if (ObjectivesManager.Get())
+		{
+			ObjectivesManager.Get().DeactivateAllActiveObjectives();
+		}
 	}
 
 	private void TeleportPlayerOnStart()

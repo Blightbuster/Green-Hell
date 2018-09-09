@@ -145,7 +145,7 @@ public class Trigger : CJObject
 
 	public virtual Vector3 GetIconPos()
 	{
-		return ((!this.m_Collider || !this.m_Collider.enabled) ? base.gameObject.transform.position : this.m_Collider.bounds.center) + Vector3.up * 0.15f;
+		return ((!this.m_Collider || !this.m_Collider.enabled) ? ((!this.m_IsBeingDestroyed) ? base.gameObject.transform.position : Vector3.zero) : this.m_Collider.bounds.center) + Vector3.up * 0.15f;
 	}
 
 	public virtual Vector3 GetHudInfoDisplayOffset()

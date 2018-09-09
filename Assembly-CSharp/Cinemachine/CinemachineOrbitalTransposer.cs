@@ -5,10 +5,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[AddComponentMenu("")]
 	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
 	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
+	[AddComponentMenu("")]
 	public class CinemachineOrbitalTransposer : CinemachineTransposer
 	{
 		protected override void OnValidate()
@@ -217,18 +217,18 @@ namespace Cinemachine
 		public AxisState m_XAxis = new AxisState(300f, 2f, 1f, 0f, "Mouse X", true);
 
 		[FormerlySerializedAs("m_Radius")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private float m_LegacyRadius = float.MaxValue;
 
+		[SerializeField]
 		[FormerlySerializedAs("m_HeightOffset")]
 		[HideInInspector]
-		[SerializeField]
 		private float m_LegacyHeightOffset = float.MaxValue;
 
+		[FormerlySerializedAs("m_HeadingBias")]
 		[HideInInspector]
 		[SerializeField]
-		[FormerlySerializedAs("m_HeadingBias")]
 		private float m_LegacyHeadingBias = float.MaxValue;
 
 		[NoSaveDuringPlay]
@@ -327,9 +327,9 @@ namespace Cinemachine
 			[HideInInspector]
 			private int m_LegacyHeadingDefinition;
 
+			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			[SerializeField]
 			[HideInInspector]
-			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			private int m_LegacyVelocityFilterStrength;
 		}
 

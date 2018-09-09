@@ -5,10 +5,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	[DocumentationSorting(7f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
-	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
 	public class CinemachineTrackedDolly : CinemachineComponentBase
 	{
 		public override bool IsValid
@@ -192,8 +192,8 @@ namespace Cinemachine
 		[Tooltip("How aggressively the camera tries to maintain its position in the path-local up direction.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_YDamping;
 
-		[Tooltip("How aggressively the camera tries to maintain its position in a direction parallel to the path.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain its position in a direction parallel to the path.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_ZDamping = 1f;
 
 		[Tooltip("How to set the virtual camera's Up vector.  This will affect the screen composition, because the camera Aim behaviours will always try to respect the Up direction.")]
@@ -203,12 +203,12 @@ namespace Cinemachine
 		[Range(0f, 20f)]
 		public float m_PitchDamping;
 
-		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
+		[Range(0f, 20f)]
 		public float m_YawDamping;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_RollDamping;
 
 		[Tooltip("Controls how automatic dollying occurs.  A Follow target is necessary to use this feature.")]
@@ -251,8 +251,8 @@ namespace Cinemachine
 			[Tooltip("Search up to how many waypoints on either side of the current position.  Use 0 for Entire path.")]
 			public int m_SearchRadius;
 
-			[Tooltip("We search between waypoints by dividing the segment into this many straight pieces.  The higher the number, the more accurate the result, but performance is proportionally slower for higher numbers")]
 			[FormerlySerializedAs("m_StepsPerSegment")]
+			[Tooltip("We search between waypoints by dividing the segment into this many straight pieces.  The higher the number, the more accurate the result, but performance is proportionally slower for higher numbers")]
 			public int m_SearchResolution;
 		}
 	}

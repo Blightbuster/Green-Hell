@@ -255,8 +255,8 @@ namespace Pathfinding.RVO
 		[Tooltip("Radius of the agent")]
 		public float radius = 0.5f;
 
-		[Tooltip("Height of the agent. In world units")]
 		[HideInInspector]
+		[Tooltip("Height of the agent. In world units")]
 		public float height = 2f;
 
 		[Tooltip("A locked unit cannot move. Other units will still avoid it. But avoidance quality is not the best")]
@@ -287,8 +287,8 @@ namespace Pathfinding.RVO
 		[HideInInspector]
 		public float wallAvoidFalloff = 1f;
 
-		[Tooltip("How strongly other agents will avoid this agent")]
 		[Range(0f, 1f)]
+		[Tooltip("How strongly other agents will avoid this agent")]
 		public float priority = 0.5f;
 
 		[Tooltip("Center of the agent relative to the pivot point of this game object")]

@@ -248,6 +248,12 @@ public class PlayerSanityModule : PlayerModule
 		return sanityEventData.m_Interval;
 	}
 
+	public void ResetEventCooldown(PlayerSanityModule.SanityEventType evn)
+	{
+		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
+		sanityEventData.m_LastEventTime = Time.time;
+	}
+
 	public void OnEat(int sanity_change)
 	{
 		if (MainLevel.Instance.m_Tutorial)
@@ -382,6 +388,10 @@ public class PlayerSanityModule : PlayerModule
 		{
 			return;
 		}
+		if (this.m_CurrentHallucination != null)
+		{
+			return;
+		}
 		float proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_AIHallucinationMaxInterval, this.m_AIHallucinationMinInterval, (float)this.m_Sanity, (float)this.m_AIHallucinationsSanityLevel, 1f);
 		if (this.m_LastAIHallucinationTime == 0f || Time.time - this.m_LastAIHallucinationTime >= proportionalClamp)
 		{
@@ -392,7 +402,13 @@ public class PlayerSanityModule : PlayerModule
 	private void SpawnAIHallucination()
 	{
 		int count = Mathf.FloorToInt(CJTools.Math.GetProportionalClamp((float)this.m_AIHallucinationsMinCount, (float)this.m_AIHallucinationsMaxCount, (float)this.m_Sanity, (float)this.m_AIHallucinationsSanityLevel, 1f));
-		AIWavesManager.Get().SpawnWave(count, true);
+		this.m_CurrentHallucination = AIWavesManager.Get().SpawnWave(count, true);
+		this.m_LastAIHallucinationTime = Time.time;
+	}
+
+	public void OnDeactivateHallucination()
+	{
+		this.m_CurrentHallucination = null;
 		this.m_LastAIHallucinationTime = Time.time;
 	}
 
@@ -586,6 +602,8 @@ public class PlayerSanityModule : PlayerModule
 	private int m_AIHallucinationsMinCount = 1;
 
 	private int m_AIHallucinationsMaxCount = 6;
+
+	private HumanAIWave m_CurrentHallucination;
 
 	private float m_LastAIHallucinationTime;
 

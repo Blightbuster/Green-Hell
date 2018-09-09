@@ -168,6 +168,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 		this.m_SelectedGroup = null;
 		this.m_MouseOverCraftTable = false;
 		this.m_MouseOverBackpack = false;
+		InventoryBackpack.Get().OnCloseBackpack();
 		base.gameObject.SetActive(false);
 		this.m_DeactivationTime = Time.time;
 		this.m_ActivityChanged = true;

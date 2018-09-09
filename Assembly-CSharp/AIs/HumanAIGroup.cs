@@ -128,7 +128,7 @@ namespace AIs
 			this.SetupState();
 		}
 
-		public virtual void OnDeactivate()
+		protected virtual void OnDeactivate()
 		{
 			if (this.IsWave())
 			{

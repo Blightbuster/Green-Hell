@@ -172,14 +172,14 @@ namespace UltimateWater.Internal
 			this._ColliderVerticesBuffer.SetData(array);
 		}
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("colliderInteractionShader")]
+		[SerializeField]
+		[HideInInspector]
 		private ComputeShader _ColliderInteractionShader;
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("maskDisplayShader")]
+		[SerializeField]
+		[HideInInspector]
 		private Shader _MaskDisplayShader;
 
 		[HideInInspector]
@@ -187,17 +187,17 @@ namespace UltimateWater.Internal
 		[FormerlySerializedAs("baseShader")]
 		private Shader _BaseShader;
 
-		[Header("Contact Foam")]
-		[SerializeField]
 		[FormerlySerializedAs("foam")]
+		[SerializeField]
+		[Header("Contact Foam")]
 		private bool _Foam = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamPatternTiling")]
+		[SerializeField]
 		private float _FoamPatternTiling = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamRange")]
+		[SerializeField]
 		private float _FoamRange = 1.6f;
 
 		[SerializeField]
@@ -208,9 +208,9 @@ namespace UltimateWater.Internal
 		[FormerlySerializedAs("noisyFoamAmount")]
 		private float _NoisyFoamAmount = 30.5f;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("foamIntensity")]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _FoamIntensity = 0.45f;
 
 		[FormerlySerializedAs("detectContactArea")]
@@ -225,17 +225,17 @@ namespace UltimateWater.Internal
 
 		private int _OcclusionMapProjectionMatrixHash;
 
-		[FormerlySerializedAs("meshFilters")]
 		[SerializeField]
+		[FormerlySerializedAs("meshFilters")]
 		private MeshFilter[] _MeshFilters;
 
+		[FormerlySerializedAs("waves")]
 		[SerializeField]
 		[Header("Waves")]
-		[FormerlySerializedAs("waves")]
 		private bool _Waves = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("water")]
+		[SerializeField]
 		private WaveParticlesSystemGPU _Water;
 
 		[Range(0f, 4f)]

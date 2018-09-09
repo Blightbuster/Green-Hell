@@ -18,7 +18,7 @@ namespace AIs
 
 		public override bool IsWave()
 		{
-			return true;
+			return !this.m_Hallucination;
 		}
 
 		protected override void InitObjects()
@@ -85,6 +85,16 @@ namespace AIs
 			AIWavesManager.Get().m_BlockSpawnWaves = false;
 		}
 
+		protected override void OnDeactivate()
+		{
+			base.OnDeactivate();
+			if (this.m_Hallucination)
+			{
+				PlayerSanityModule.Get().OnDeactivateHallucination();
+			}
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
+
 		protected override void SetupState()
 		{
 			base.SetState(HumanAIGroup.State.StartWave);
@@ -121,11 +131,6 @@ namespace AIs
 				{
 					return;
 				}
-			}
-			if (this.m_Members.Count == 0)
-			{
-				base.Deactivate();
-				UnityEngine.Object.Destroy(base.gameObject);
 			}
 		}
 
@@ -166,6 +171,14 @@ namespace AIs
 			foreach (HumanAI humanAI in this.m_Members)
 			{
 				humanAI.m_EnemyModule.SetEnemy(true);
+			}
+		}
+
+		protected override void UpdateActivity()
+		{
+			if (!this.m_Active && this.m_WaveSpawned && this.m_Members.Count > 0)
+			{
+				base.Activate();
 			}
 		}
 

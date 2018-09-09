@@ -119,8 +119,24 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		}
 		if (this.m_DebugEnabled)
 		{
-			this.m_WeatherInterpolated = 1f;
-			this.m_Wetness = 1f;
+			if (this.m_DebugRainEnabled)
+			{
+				this.m_WeatherInterpolated += Time.deltaTime * 0.15f;
+			}
+			else
+			{
+				this.m_WeatherInterpolated -= Time.deltaTime * 0.15f;
+			}
+			this.m_WeatherInterpolated = Mathf.Clamp01(this.m_WeatherInterpolated);
+			if (this.m_WeatherInterpolated >= 1f)
+			{
+				this.m_Wetness += Time.deltaTime * 0.5f;
+			}
+			else
+			{
+				this.m_Wetness -= Time.deltaTime * 0.2f;
+			}
+			this.m_Wetness = Mathf.Clamp01(this.m_Wetness);
 			this.SetShaderProperty();
 			this.SendRainMessages();
 			this.UpdateTerrainWetness();
@@ -293,9 +309,14 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		this.m_RainCollectors.Remove(collector);
 	}
 
-	public void ToggleRain()
+	public void ToggleDebug()
 	{
 		this.m_DebugEnabled = !this.m_DebugEnabled;
+	}
+
+	public void ToggleRain()
+	{
+		this.m_DebugRainEnabled = !this.m_DebugRainEnabled;
 	}
 
 	private void Update()
@@ -548,6 +569,8 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 	private int m_CurrentDataIndex;
 
 	public bool m_DebugEnabled;
+
+	public bool m_DebugRainEnabled;
 
 	private float m_RainCollectorFillPerSecondRain = 5f;
 

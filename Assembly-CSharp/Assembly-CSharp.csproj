@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E6E4B2D8-B5A5-491A-A4C0-1331825E74BC}</ProjectGuid>
+    <ProjectGuid>{92E0F15D-E919-4F0C-B7DE-003E9502E2E5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Assembly-CSharp</RootNamespace>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -885,6 +885,7 @@
     <Compile Include="MainMenuManager.cs" />
     <Compile Include="MainMenuOptions.cs" />
     <Compile Include="MainMenuOptionsAudio.cs" />
+    <Compile Include="MainMenuOptionsControls.cs" />
     <Compile Include="MainMenuOptionsGame.cs" />
     <Compile Include="MainMenuScreen.cs" />
     <Compile Include="MainMenuState.cs" />
@@ -923,6 +924,7 @@
     <Compile Include="MenuObjectives.cs" />
     <Compile Include="MenuOptions.cs" />
     <Compile Include="MenuOptionsAudio.cs" />
+    <Compile Include="MenuOptionsControls.cs" />
     <Compile Include="MenuOptionsGraphics.cs" />
     <Compile Include="MenuSave.cs" />
     <Compile Include="MenuSaveLoadCommon.cs" />
@@ -1012,6 +1014,7 @@
     <Compile Include="ObjectWithTrunk.cs" />
     <Compile Include="OffsetHelperController.cs" />
     <Compile Include="OneShotSoundObject.cs" />
+    <Compile Include="OptionsControlsQuestion.cs" />
     <Compile Include="OptionsGameQuestion.cs" />
     <Compile Include="OutlineEffect.cs" />
     <Compile Include="PageNum.cs" />

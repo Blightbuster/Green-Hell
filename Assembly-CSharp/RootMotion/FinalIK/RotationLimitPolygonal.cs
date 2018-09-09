@@ -275,12 +275,12 @@ namespace RootMotion.FinalIK
 		[SerializeField]
 		public RotationLimitPolygonal.LimitPoint[] points;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		public Vector3[] P;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		public RotationLimitPolygonal.ReachCone[] reachCones = new RotationLimitPolygonal.ReachCone[0];
 
 		[Serializable]

@@ -380,15 +380,17 @@ public static class SaveGame
 		}
 		GreenHellGame.Instance.m_LoadingScreen.Show(LoadingScreenState.LoadSaveGame);
 		GreenHellGame.Instance.m_LoadGameState = LoadGameState.PreloadScheduled;
+		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
+		fadeSystem.FadeIn(FadeType.All, null, 2f);
 		SaveGame.s_MainSaveName = save_name;
 	}
 
-	public static void PreLoad()
+	public static void PlayerLoad()
 	{
-		SaveGame.PreLoad(SaveGame.s_MainSaveName);
+		SaveGame.PlayerLoad(SaveGame.s_MainSaveName);
 	}
 
-	private static void PreLoad(string save_name)
+	private static void PlayerLoad(string save_name)
 	{
 		if (SaveGame.m_State != SaveGame.State.None)
 		{
@@ -406,7 +408,7 @@ public static class SaveGame
 		GameMode gameMode = (GameMode)binaryFormatter.Deserialize(fileStream);
 		long num = (long)binaryFormatter.Deserialize(fileStream);
 		int num2 = (int)binaryFormatter.Deserialize(fileStream);
-		int num3 = (int)binaryFormatter.Deserialize(fileStream);
+		GreenHellGame.Instance.m_GameDifficulty = (GameDifficulty)binaryFormatter.Deserialize(fileStream);
 		SaveGame.m_IVals = (Dictionary<string, int>)binaryFormatter.Deserialize(fileStream);
 		SaveGame.m_SVals = (Dictionary<string, string>)binaryFormatter.Deserialize(fileStream);
 		SaveGame.m_FVals = (Dictionary<string, float>)binaryFormatter.Deserialize(fileStream);
@@ -433,6 +435,7 @@ public static class SaveGame
 		{
 			return;
 		}
+		MainLevel.Instance.ResetGameBeforeLoad();
 		SaveGame.m_State = SaveGame.State.Load;
 		SaveGame.SetupObjects();
 		SaveGame.m_IVals.Clear();
@@ -445,7 +448,7 @@ public static class SaveGame
 		GameMode gameMode = (GameMode)binaryFormatter.Deserialize(fileStream);
 		long num = (long)binaryFormatter.Deserialize(fileStream);
 		int num2 = (int)binaryFormatter.Deserialize(fileStream);
-		int num3 = (int)binaryFormatter.Deserialize(fileStream);
+		GreenHellGame.Instance.m_GameDifficulty = (GameDifficulty)binaryFormatter.Deserialize(fileStream);
 		SaveGame.m_IVals = (Dictionary<string, int>)binaryFormatter.Deserialize(fileStream);
 		SaveGame.m_SVals = (Dictionary<string, string>)binaryFormatter.Deserialize(fileStream);
 		SaveGame.m_FVals = (Dictionary<string, float>)binaryFormatter.Deserialize(fileStream);

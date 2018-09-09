@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
 [AddComponentMenu("Image Effects/HBAO")]
+[RequireComponent(typeof(Camera))]
 public class HBAO : MonoBehaviour
 {
 	public HBAO.Presets presets
@@ -626,20 +626,20 @@ public class HBAO : MonoBehaviour
 
 	public Shader hbaoShader;
 
-	[SerializeField]
 	[HBAO.SettingsGroup]
+	[SerializeField]
 	private HBAO.Presets m_Presets = HBAO.Presets.defaultPresets;
 
-	[SerializeField]
 	[HBAO.SettingsGroup]
+	[SerializeField]
 	private HBAO.GeneralSettings m_GeneralSettings = HBAO.GeneralSettings.defaultSettings;
 
 	[HBAO.SettingsGroup]
 	[SerializeField]
 	private HBAO.AOSettings m_AOSettings = HBAO.AOSettings.defaultSettings;
 
-	[SerializeField]
 	[HBAO.SettingsGroup]
+	[SerializeField]
 	private HBAO.ColorBleedingSettings m_ColorBleedingSettings = HBAO.ColorBleedingSettings.defaultSettings;
 
 	[HBAO.SettingsGroup]
@@ -837,9 +837,9 @@ public class HBAO : MonoBehaviour
 			}
 		}
 
-		[Range(0f, 2f)]
 		[Space(6f)]
 		[Tooltip("AO radius: this is the distance outside which occluders are ignored.")]
+		[Range(0f, 2f)]
 		public float radius;
 
 		[Range(32f, 256f)]
@@ -854,8 +854,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("This value allows to scale up the ambient occlusion values.")]
 		public float intensity;
 
-		[Tooltip("This value allows to attenuate ambient occlusion depending on final color luminance.")]
 		[Range(0f, 1f)]
+		[Tooltip("This value allows to attenuate ambient occlusion depending on final color luminance.")]
 		public float luminanceInfluence;
 
 		[Tooltip("The max distance to display AO.")]
@@ -864,8 +864,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The distance before max distance at which AO start to decrease.")]
 		public float distanceFalloff;
 
-		[Tooltip("The type of per pixel normals to use.")]
 		[Space(10f)]
+		[Tooltip("The type of per pixel normals to use.")]
 		public HBAO.PerPixelNormals perPixelNormals;
 
 		[Tooltip("This setting allow you to set the base color if the AO, the alpha channel value is unused.")]
@@ -893,13 +893,13 @@ public class HBAO : MonoBehaviour
 		[Space(6f)]
 		public bool enabled;
 
-		[Range(0f, 4f)]
-		[Space(10f)]
 		[Tooltip("This value allows to control the saturation of the color bleeding.")]
+		[Space(10f)]
+		[Range(0f, 4f)]
 		public float saturation;
 
-		[Tooltip("This value allows to scale the contribution of the color bleeding samples.")]
 		[Range(0f, 32f)]
+		[Tooltip("This value allows to scale the contribution of the color bleeding samples.")]
 		public float albedoMultiplier;
 	}
 
@@ -924,8 +924,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The type of blur to use.")]
 		public HBAO.Blur amount;
 
-		[Range(0f, 16f)]
 		[Space(10f)]
+		[Range(0f, 16f)]
 		[Tooltip("This parameter controls the depth-dependent weight of the bilateral filter, to avoid bleeding across edges. A zero sharpness is a pure Gaussian blur. Increasing the blur sharpness removes bleeding by using lower weights for samples with large depth delta from the current pixel.")]
 		public float sharpness;
 

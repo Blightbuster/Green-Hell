@@ -467,14 +467,14 @@ namespace UltimateWater
 		public static List<StaticWaterInteraction> StaticWaterInteractions = new List<StaticWaterInteraction>();
 
 		[SerializeField]
-		[Range(0.001f, 80f)]
 		[FormerlySerializedAs("shoreSmoothness")]
 		[Tooltip("Specifies a distance from the shore over which a water gets one meter deeper (value of 50 means that water has a depth of 1m at a distance of 50m from the shore).")]
+		[Range(0.001f, 80f)]
 		private float _ShoreSmoothness = 50f;
 
-		[Tooltip("If set to true, geometry that floats above water is correctly ignored.\n\nUse for objects that are closed and have faces at the bottom like basic primitives and most custom meshes, but not terrain.")]
-		[SerializeField]
 		[FormerlySerializedAs("hasBottomFaces")]
+		[SerializeField]
+		[Tooltip("If set to true, geometry that floats above water is correctly ignored.\n\nUse for objects that are closed and have faces at the bottom like basic primitives and most custom meshes, but not terrain.")]
 		private bool _HasBottomFaces;
 
 		[SerializeField]
@@ -482,6 +482,7 @@ namespace UltimateWater
 		private StaticWaterInteraction.UnderwaterAreasMode _UnderwaterAreasMode;
 
 		[FormerlySerializedAs("mapResolution")]
+		[SerializeField]
 		[Resolution(1024, new int[]
 		{
 			128,
@@ -490,21 +491,20 @@ namespace UltimateWater
 			1024,
 			2048
 		})]
-		[SerializeField]
 		private int _MapResolution = 1024;
 
-		[Tooltip("All waves bigger than this (in scene units) will be dampened near the shore.")]
-		[SerializeField]
 		[FormerlySerializedAs("waveDampingThreshold")]
+		[SerializeField]
+		[Tooltip("All waves bigger than this (in scene units) will be dampened near the shore.")]
 		private float _WaveDampingThreshold = 4f;
 
 		[SerializeField]
 		[FormerlySerializedAs("depthScale")]
 		private float _DepthScale = 1f;
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("maskGenerateShader")]
+		[SerializeField]
+		[HideInInspector]
 		private Shader _MaskGenerateShader;
 
 		[FormerlySerializedAs("maskDisplayShader")]
@@ -512,9 +512,9 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _MaskDisplayShader;
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("heightMapperShader")]
+		[SerializeField]
+		[HideInInspector]
 		private Shader _HeightMapperShader;
 
 		[FormerlySerializedAs("heightMapperShaderAlt")]

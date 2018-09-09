@@ -560,7 +560,7 @@ public class Injury
 			}
 			else
 			{
-				BodyInspectionController.Get().AttachMaggots();
+				BodyInspectionController.Get().AttachMaggots(true);
 			}
 		}
 		this.m_Healing = SaveGame.LoadBVal("InjuryHeal" + index);

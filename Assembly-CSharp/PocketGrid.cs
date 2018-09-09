@@ -338,6 +338,21 @@ public class PocketGrid
 		return null;
 	}
 
+	public void OnCloseBackpack()
+	{
+		InventoryCell[,] cells = this.m_Cells;
+		int length = cells.GetLength(0);
+		int length2 = cells.GetLength(1);
+		for (int i = 0; i < length; i++)
+		{
+			for (int j = 0; j < length2; j++)
+			{
+				InventoryCell inventoryCell = cells[i, j];
+				inventoryCell.m_Renderer.enabled = false;
+			}
+		}
+	}
+
 	public GameObject m_Grid;
 
 	public Vector2 m_GridSize = Vector2.one;

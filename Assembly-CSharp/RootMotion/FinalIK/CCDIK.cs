@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/CCD IK")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page3.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/CCD IK")]
 	public class CCDIK : IK
 	{
 		[ContextMenu("User Manual")]

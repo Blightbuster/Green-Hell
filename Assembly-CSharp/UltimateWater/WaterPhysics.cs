@@ -638,37 +638,37 @@ namespace UltimateWater
 			}
 		}
 
-		[SerializeField]
-		[FormerlySerializedAs("sampleCount")]
-		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
 		[Range(1f, 30f)]
+		[FormerlySerializedAs("sampleCount")]
+		[SerializeField]
+		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
 		private int _SampleCount = 20;
 
-		[Range(0f, 6f)]
-		[FormerlySerializedAs("dragCoefficient")]
-		[SerializeField]
 		[Tooltip("Controls drag force. Determined experimentally in wind tunnels. Example values:\n https://en.wikipedia.org/wiki/Drag_coefficient#General")]
+		[SerializeField]
+		[FormerlySerializedAs("dragCoefficient")]
+		[Range(0f, 6f)]
 		private float _DragCoefficient = 0.9f;
 
+		[Tooltip("Determines how many waves will be used in computations. Set it low for big objects, larger than most of the waves. Set it high for smaller objects of size comparable to many waves.")]
 		[SerializeField]
 		[FormerlySerializedAs("precision")]
 		[Range(0.125f, 1f)]
-		[Tooltip("Determines how many waves will be used in computations. Set it low for big objects, larger than most of the waves. Set it high for smaller objects of size comparable to many waves.")]
 		private float _Precision = 0.5f;
 
 		[SerializeField]
-		[Tooltip("Adjust buoyancy proportionally, if your collider is bigger or smaller than the actual object. Lowering this may fix some weird behaviour of objects with extremely low density like beach balls or baloons.")]
-		[Range(0.1f, 10f)]
 		[FormerlySerializedAs("buoyancyIntensity")]
+		[Range(0.1f, 10f)]
+		[Tooltip("Adjust buoyancy proportionally, if your collider is bigger or smaller than the actual object. Lowering this may fix some weird behaviour of objects with extremely low density like beach balls or baloons.")]
 		private float _BuoyancyIntensity = 1f;
 
-		[FormerlySerializedAs("flowIntensity")]
-		[SerializeField]
 		[Tooltip("Horizontal flow force intensity.")]
+		[SerializeField]
+		[FormerlySerializedAs("flowIntensity")]
 		private float _FlowIntensity = 1f;
 
-		[SerializeField]
 		[Tooltip("Temporarily supports only mesh colliders.")]
+		[SerializeField]
 		[FormerlySerializedAs("useImprovedDragAndFlowForces")]
 		private bool _UseImprovedDragAndFlowForces;
 

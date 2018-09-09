@@ -5,9 +5,9 @@ using UnityEngine;
 namespace Cinemachine
 {
 	[ExecuteInEditMode]
-	[DocumentationSorting(12f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("Cinemachine/CinemachineClearShot")]
 	[DisallowMultipleComponent]
+	[DocumentationSorting(12f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachineClearShot : CinemachineVirtualCameraBase
 	{
 		public override string Description
@@ -313,8 +313,8 @@ namespace Cinemachine
 			}
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
+		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
 		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
@@ -326,8 +326,8 @@ namespace Cinemachine
 		public bool m_ShowDebugText;
 
 		[NoSaveDuringPlay]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("Wait this many seconds before activating a new child camera")]
@@ -339,8 +339,8 @@ namespace Cinemachine
 		[Tooltip("If checked, camera choice will be randomized if multiple cameras are equally desirable.  Otherwise, child list order and child camera priority will be used.")]
 		public bool m_RandomizeChoice;
 
-		[CinemachineBlendDefinitionProperty]
 		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
+		[CinemachineBlendDefinitionProperty]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
 
 		[HideInInspector]

@@ -88,12 +88,12 @@ namespace UnityEngine.PostProcessing
 			[Min(0f)]
 			public float motionImageAmplitude;
 
-			[Range(0f, 1f)]
 			[Tooltip("Opacity for the motion vector arrows.")]
+			[Range(0f, 1f)]
 			public float motionVectorsOpacity;
 
-			[Range(8f, 64f)]
 			[Tooltip("The arrow density on screen.")]
+			[Range(8f, 64f)]
 			public int motionVectorsResolution;
 
 			[Tooltip("Tweaks the arrows length.")]

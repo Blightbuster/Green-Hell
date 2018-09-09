@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
+[AddComponentMenu("Time of Day/Camera God Rays")]
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
-[AddComponentMenu("Time of Day/Camera God Rays")]
 public class TOD_Rays : TOD_ImageEffect
 {
 	protected void OnEnable()
@@ -129,16 +129,16 @@ public class TOD_Rays : TOD_ImageEffect
 	[Tooltip("The number of blur iterations to be performed.")]
 	public int BlurIterations = 2;
 
-	[TOD_Min(0f)]
 	[Tooltip("The radius to blur filter applied to the god rays.")]
+	[TOD_Min(0f)]
 	public float BlurRadius = 2f;
 
 	[TOD_Min(0f)]
 	[Tooltip("The intensity of the god rays.")]
 	public float Intensity = 1f;
 
-	[TOD_Min(0f)]
 	[Tooltip("The maximum radius of the god rays.")]
+	[TOD_Min(0f)]
 	public float MaxRadius = 0.5f;
 
 	[Tooltip("Whether or not to use the depth buffer.")]

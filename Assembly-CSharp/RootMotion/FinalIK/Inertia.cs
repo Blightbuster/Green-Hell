@@ -78,8 +78,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The acceleration, smaller values means lazyer following")]
 			public float acceleration = 3f;
 
-			[Tooltip("Matching target velocity")]
 			[Range(0f, 1f)]
+			[Tooltip("Matching target velocity")]
 			public float matchVelocity;
 
 			[Tooltip("gravity applied to the Body")]

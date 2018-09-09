@@ -211,6 +211,7 @@ public class WeaponController : FightController
 		base.OnDisable();
 		this.m_Animator.SetInteger(this.m_IWeaponType, 0);
 		this.SetState(WeaponControllerState.None);
+		this.m_Animator.SetBool(this.m_LowStaminaHash, false);
 		if (this.m_MovesBlocked)
 		{
 			this.m_Player.UnblockMoves();
@@ -220,7 +221,7 @@ public class WeaponController : FightController
 		this.m_Animator.SetBool(this.m_BRemoveWeaponFromObstacle, false);
 	}
 
-	protected bool CanAttack()
+	protected virtual bool CanAttack()
 	{
 		return !MainLevel.Instance.IsPause() && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && !this.IsAttack() && !this.m_Player.m_Aim && !PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel);
 	}
@@ -248,6 +249,20 @@ public class WeaponController : FightController
 		if (!currentItem.m_Info.IsWeapon())
 		{
 			return;
+		}
+		if (PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel))
+		{
+			this.m_ComboScheduled = false;
+			this.m_ReleaseComboScheduled = false;
+			if (!this.m_Animator.GetBool(this.m_LowStaminaHash) && !this.IsAttack())
+			{
+				this.m_Animator.SetBool(this.m_LowStaminaHash, true);
+			}
+			return;
+		}
+		if (this.m_Animator.GetBool(this.m_LowStaminaHash))
+		{
+			this.m_Animator.SetBool(this.m_LowStaminaHash, false);
 		}
 		WeaponType weaponType = ((Weapon)currentItem).GetWeaponType();
 		this.m_Animator.SetInteger(this.m_IWeaponType, (int)weaponType);
@@ -418,12 +433,19 @@ public class WeaponController : FightController
 			HumanAI component = cj_object.GetComponent<HumanAI>();
 			if (component)
 			{
+				if (component.m_Hallucination && component.m_HallucinationDisappearing)
+				{
+					return;
+				}
 				this.HitHumanAI(component, hit_pos, hit_dir);
 				this.MakeHitSound(coll.gameObject, currentItem.m_Info.m_ID);
 				this.m_AlreadyHit = true;
 				return;
 			}
-			this.HitObject(cj_object, hit_pos, hit_dir);
+			else
+			{
+				this.HitObject(cj_object, hit_pos, hit_dir);
+			}
 		}
 		else
 		{
@@ -743,7 +765,15 @@ public class WeaponController : FightController
 			weapon = (Weapon)currentItem;
 		}
 		bool flag = true;
-		this.m_AlreadyHit = true;
+		Item component = obj.GetComponent<Item>();
+		if (component && component.m_IsPlant)
+		{
+			this.m_AlreadyHit = false;
+		}
+		else
+		{
+			this.m_AlreadyHit = true;
+		}
 		if (obj.CanReceiveDamageOfType(currentItem.m_Info.m_DamageType))
 		{
 			DamageInfo damageInfo = new DamageInfo();
@@ -758,42 +788,33 @@ public class WeaponController : FightController
 						flag = false;
 					}
 				}
-				else
+				else if (component)
 				{
-					Item component = obj.GetComponent<Item>();
-					if (component)
+					if (component.m_IsPlant)
 					{
-						if (component.m_IsPlant)
-						{
-							damageInfo.m_Damage = weaponInfo.m_PlantDamage;
-							this.m_AlreadyHit = false;
-						}
-						else if (component.m_IsTree)
-						{
-							damageInfo.m_Damage = weaponInfo.m_TreeDamage;
-						}
-						else
-						{
-							damageInfo.m_Damage = weaponInfo.m_DefaultDamage;
-						}
+						damageInfo.m_Damage = weaponInfo.m_PlantDamage;
+					}
+					else if (component.m_IsTree)
+					{
+						damageInfo.m_Damage = weaponInfo.m_TreeDamage;
 					}
 					else
 					{
 						damageInfo.m_Damage = weaponInfo.m_DefaultDamage;
 					}
 				}
+				else
+				{
+					damageInfo.m_Damage = weaponInfo.m_DefaultDamage;
+				}
+			}
+			else if (component && component.m_IsTree && weapon.m_Info.IsTorch())
+			{
+				damageInfo.m_Damage = 0f;
 			}
 			else
 			{
-				Item component2 = obj.GetComponent<Item>();
-				if (component2 && component2.m_IsTree && weapon.m_Info.IsTorch())
-				{
-					damageInfo.m_Damage = 0f;
-				}
-				else
-				{
-					damageInfo.m_Damage = 1000f;
-				}
+				damageInfo.m_Damage = 1000f;
 			}
 			damageInfo.m_Damage *= this.GetDamageMultiplier(currentItem);
 			damageInfo.m_Damager = this.m_Player.gameObject;
@@ -1032,6 +1053,8 @@ public class WeaponController : FightController
 	private int m_TakeOutItemHash = Animator.StringToHash("TakeOutItem");
 
 	protected int m_SpearIdleHash = Animator.StringToHash("Spear_Idle");
+
+	private int m_LowStaminaHash = Animator.StringToHash("LowStamina");
 
 	private int m_BRemoveWeaponFromObstacle = Animator.StringToHash("RemoveWeaponFromObstacle");
 

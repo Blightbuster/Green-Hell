@@ -112,8 +112,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Collider _MainCollider;
 
-		[FormerlySerializedAs("sternEffects")]
 		[SerializeField]
+		[FormerlySerializedAs("sternEffects")]
 		private ParticleSystem[] _SternEffects;
 
 		[FormerlySerializedAs("sternWaveEmitters")]
@@ -124,8 +124,8 @@ namespace UltimateWater
 		[SerializeField]
 		private ShipBowWavesEmitter _BowWavesEmitter;
 
-		[FormerlySerializedAs("bowSprayEmitters")]
 		[SerializeField]
+		[FormerlySerializedAs("bowSprayEmitters")]
 		private ParticleSystem[] _BowSprayEmitters;
 
 		[FormerlySerializedAs("maxVelocity")]

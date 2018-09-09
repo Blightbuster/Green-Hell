@@ -177,8 +177,8 @@ namespace RootMotion.FinalIK
 
 		protected bool firstInitiation = true;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		protected Transform root;
 
 		[Serializable]

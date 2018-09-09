@@ -881,7 +881,11 @@ public class Item : Trigger
 		else
 		{
 			SaveGame.SaveVal("ItemSlot" + index, this.m_CurrentSlot != null);
-			SaveGame.SaveVal("ItemSlotName" + index, (!(this.m_CurrentSlot != null)) ? string.Empty : this.m_CurrentSlot.name);
+			if (this.m_CurrentSlot != null)
+			{
+				SaveGame.SaveVal("ItemSlotName" + index, this.m_CurrentSlot.name);
+				SaveGame.SaveVal("ItemSlotPos" + index, this.m_CurrentSlot.transform.position);
+			}
 		}
 		SaveGame.SaveVal("WasTriggered" + index, this.m_WasTriggered);
 		SaveGame.SaveVal("FirstTriggerTime" + index, this.m_FirstTriggerTime);
@@ -998,7 +1002,11 @@ public class Item : Trigger
 			if (flag2)
 			{
 				string b = SaveGame.LoadSVal("ItemSlotName" + index);
-				Vector3 b2 = (!this.m_InventoryHolder) ? base.transform.position : this.m_InventoryHolder.transform.position;
+				Vector3 vector = SaveGame.LoadV3Val("ItemSlotPos" + index);
+				if (vector == Vector3.zero)
+				{
+					vector = ((!this.m_InventoryHolder) ? base.transform.position : this.m_InventoryHolder.transform.position);
+				}
 				this.m_PhxStaticRequests = 0;
 				foreach (ItemSlot itemSlot in ItemSlot.s_AllItemSlots)
 				{
@@ -1008,7 +1016,7 @@ public class Item : Trigger
 						{
 							if (!itemSlot.m_GOParent || !(itemSlot.m_GOParent == base.gameObject))
 							{
-								if ((itemSlot.transform.position - b2).sqrMagnitude <= 0.01f)
+								if ((itemSlot.transform.position - vector).sqrMagnitude <= 0.01f)
 								{
 									itemSlot.InsertItem(this);
 									return;
@@ -1211,6 +1219,10 @@ public class Item : Trigger
 					this.m_Rigidbody.velocity *= 0.1f;
 				}
 			}
+			else if (this.m_Rigidbody)
+			{
+				this.m_Rigidbody.velocity *= 0.4f;
+			}
 		}
 	}
 
@@ -1315,6 +1327,11 @@ public class Item : Trigger
 						this.m_Rigidbody.velocity *= 0.1f;
 					}
 				}
+				else if (this.m_Rigidbody)
+				{
+					this.m_Rigidbody.velocity *= 0.4f;
+					this.m_Rigidbody.angularVelocity *= 0.5f;
+				}
 			}
 		}
 		if (flag)
@@ -1350,6 +1367,10 @@ public class Item : Trigger
 	{
 		ObjectMaterial component = go.GetComponent<ObjectMaterial>();
 		if (component != null && component.m_ObjectMaterial == EObjectMaterial.Stone)
+		{
+			return false;
+		}
+		if (ai && ai.m_Hallucination)
 		{
 			return false;
 		}

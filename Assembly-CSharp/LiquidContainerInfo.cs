@@ -60,6 +60,6 @@ public class LiquidContainerInfo : ItemInfo
 
 	public override bool CanDrink()
 	{
-		return this.m_Amount > 0f;
+		return this.m_Amount >= 1f;
 	}
 }

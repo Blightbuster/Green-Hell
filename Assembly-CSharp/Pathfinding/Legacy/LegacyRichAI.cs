@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Pathfinding.Legacy
 {
+	[RequireComponent(typeof(Seeker))]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_rich_a_i.php")]
 	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy RichAI (3D, for navmesh)")]
-	[RequireComponent(typeof(Seeker))]
 	public class LegacyRichAI : RichAI
 	{
 		protected override void Awake()

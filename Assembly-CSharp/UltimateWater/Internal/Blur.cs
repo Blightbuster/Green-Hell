@@ -169,19 +169,19 @@ namespace UltimateWater.Internal
 			RenderTexture.ReleaseTemporary(temporary);
 		}
 
+		[SerializeField]
 		[FormerlySerializedAs("blurComputeShader")]
 		[HideInInspector]
-		[SerializeField]
 		protected ComputeShader _BlurComputeShader;
 
-		[FormerlySerializedAs("blurShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("blurShader")]
 		private Shader _BlurShader;
 
+		[HideInInspector]
 		[FormerlySerializedAs("computeShaderKernelIndex")]
 		[SerializeField]
-		[HideInInspector]
 		private int _ComputeShaderKernelIndex;
 
 		[SerializeField]
@@ -189,8 +189,8 @@ namespace UltimateWater.Internal
 		[FormerlySerializedAs("iterations")]
 		private int _Iterations = 1;
 
-		[FormerlySerializedAs("size")]
 		[SerializeField]
+		[FormerlySerializedAs("size")]
 		private float _Size = 0.005f;
 
 		private Material _BlurMaterial;

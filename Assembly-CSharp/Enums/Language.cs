@@ -13,6 +13,7 @@ namespace Enums
 		ChineseSimplyfied,
 		Portuguese,
 		PortugueseBrazilian,
-		Russian
+		Russian,
+		Polish
 	}
 }

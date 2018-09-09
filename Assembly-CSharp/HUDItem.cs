@@ -106,7 +106,7 @@ public class HUDItem : HUDBase
 		{
 			this.AddSlot(HUDItem.Action.Take);
 		}
-		if (item.m_ReplaceInfo.IsHeavyObject() && !item.m_ReplaceInfo.m_CanBeAddedToInventory)
+		if (item.m_ReplaceInfo.IsHeavyObject() && !item.m_ReplaceInfo.m_CanBeAddedToInventory && !MakeFireController.Get().IsActive())
 		{
 			this.AddSlot(HUDItem.Action.PickUp);
 		}
@@ -118,7 +118,7 @@ public class HUDItem : HUDBase
 		{
 			this.AddSlot(HUDItem.Action.Drink);
 		}
-		if (!flag)
+		if (item.m_ReplaceInfo.m_Craftable && !flag)
 		{
 			this.AddSlot(HUDItem.Action.Craft);
 		}
@@ -142,7 +142,10 @@ public class HUDItem : HUDBase
 		bool flag = Player.Get().m_SwimController.IsActive();
 		if (this.m_Item.m_Info.IsHeavyObject() && !this.m_Item.m_Info.m_CanBeAddedToInventory)
 		{
-			this.AddSlot(HUDItem.Action.PickUp);
+			if (!MakeFireController.Get().IsActive())
+			{
+				this.AddSlot(HUDItem.Action.PickUp);
+			}
 		}
 		else if (this.m_Item.m_Info.m_CanEquip)
 		{
@@ -186,7 +189,7 @@ public class HUDItem : HUDBase
 		{
 			this.AddSlot(HUDItem.Action.Drink);
 		}
-		if (!this.m_Item.m_OnCraftingTable && !flag)
+		if (this.m_Item.m_Info.m_Craftable && !this.m_Item.m_OnCraftingTable && !flag)
 		{
 			this.AddSlot(HUDItem.Action.Craft);
 		}
@@ -335,13 +338,18 @@ public class HUDItem : HUDBase
 				this.m_ActionToExecute = this.m_ActiveButton.action;
 				Player.Get().BlockMoves();
 				Player.Get().BlockRotation();
-				if (Player.Get().GetCurrentItem(Hand.Left) != null && Player.Get().GetCurrentItem(Hand.Left).m_Info.m_ID == ItemID.Bow)
+				Item currentItem = Player.Get().GetCurrentItem(Hand.Left);
+				if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bow)
 				{
 					Player.Get().m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
 				}
-				else if (Player.Get().GetCurrentItem(Hand.Left) != null && Player.Get().GetCurrentItem(Hand.Left).m_Info.m_ID == ItemID.Bamboo_Bow)
+				else if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bamboo_Bow)
 				{
 					Player.Get().m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, true);
+				}
+				else if (currentItem && currentItem.m_Info.IsBow())
+				{
+					Player.Get().m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
 				}
 				else
 				{

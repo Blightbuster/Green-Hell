@@ -89,12 +89,14 @@ public class Construction : Item, IAttachable, IPlaceToAttach
 		IFirecampAttach[] components = base.gameObject.GetComponents<IFirecampAttach>();
 		if (components.Length > 0)
 		{
+			Bounds bounds = new Bounds(base.transform.TransformPoint(this.m_BoxCollider.center), this.m_BoxCollider.size);
 			for (int i = 0; i < Firecamp.s_Firecamps.Count; i++)
 			{
 				Firecamp firecamp = Firecamp.s_Firecamps[i];
 				if (!(firecamp.gameObject == base.gameObject))
 				{
-					if (firecamp.m_BoxCollider.bounds.Intersects(this.m_BoxCollider.bounds))
+					Bounds bounds2 = new Bounds(firecamp.transform.TransformPoint(firecamp.m_BoxCollider.center), firecamp.m_BoxCollider.size);
+					if (bounds.Intersects(bounds2))
 					{
 						for (int j = 0; j < components.Length; j++)
 						{

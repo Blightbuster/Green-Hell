@@ -521,8 +521,8 @@ namespace UltimateWater
 
 		[SerializeField]
 		[Range(1f, 32f)]
-		[Header("Settings")]
 		[Tooltip("How many simulation pixels per one unit are used")]
+		[Header("Settings")]
 		private int _PixelsPerUnit = 16;
 
 		[Range(0.125f, 2f)]

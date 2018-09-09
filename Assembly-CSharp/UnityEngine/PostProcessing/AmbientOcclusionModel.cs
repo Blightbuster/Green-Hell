@@ -53,8 +53,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Range(0f, 4f)]
 			[Tooltip("Degree of darkness produced by the effect.")]
+			[Range(0f, 4f)]
 			public float intensity;
 
 			[Tooltip("Radius of sample points, which affects extent of darkened areas.")]

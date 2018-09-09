@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[AddComponentMenu("Relief Terrain/Helpers/Deferred Params")]
-[ExecuteInEditMode]
 [DisallowMultipleComponent]
+[ExecuteInEditMode]
+[AddComponentMenu("Relief Terrain/Helpers/Deferred Params")]
 [RequireComponent(typeof(Camera))]
 public class RTP_DeferredParams : MonoBehaviour
 {

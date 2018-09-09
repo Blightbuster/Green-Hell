@@ -283,9 +283,9 @@ public class Seeker : VersionedMonoBehaviour
 	[HideInInspector]
 	public int traversableTags = -1;
 
-	[FormerlySerializedAs("traversableTags")]
 	[SerializeField]
 	[HideInInspector]
+	[FormerlySerializedAs("traversableTags")]
 	protected TagMask traversableTagsCompatibility = new TagMask(-1, -1);
 
 	[HideInInspector]

@@ -18,6 +18,7 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 		this.m_Language.AddOption("Portuguese", GreenHellGame.Instance.GetLocalization().Get("Language_Portuguese"));
 		this.m_Language.AddOption("PortugueseBrazilian", GreenHellGame.Instance.GetLocalization().Get("Language_PortugueseBrazilian"));
 		this.m_Language.AddOption("Russian", GreenHellGame.Instance.GetLocalization().Get("Language_Russian"));
+		this.m_Language.AddOption("Polish", GreenHellGame.Instance.GetLocalization().Get("Language_Polish"));
 		switch (GreenHellGame.Instance.m_Settings.m_Language)
 		{
 		case Language.English:
@@ -60,6 +61,10 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			this.m_Language.SetByOption("Russian");
 			this.m_SelectedLanguage = Language.Russian;
 			break;
+		case Language.Polish:
+			this.m_Language.SetByOption("Polish");
+			this.m_SelectedLanguage = Language.Polish;
+			break;
 		}
 		this.m_AcceptButton.interactable = false;
 	}
@@ -76,6 +81,7 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 		this.m_Language.SetOptionText("Portuguese", GreenHellGame.Instance.GetLocalization().Get("Language_Portuguese"));
 		this.m_Language.SetOptionText("PortugueseBrazilian", GreenHellGame.Instance.GetLocalization().Get("Language_PortugueseBrazilian"));
 		this.m_Language.SetOptionText("Russian", GreenHellGame.Instance.GetLocalization().Get("Language_Russian"));
+		this.m_Language.SetOptionText("Polish", GreenHellGame.Instance.GetLocalization().Get("Language_Polish"));
 	}
 
 	public override void OnSelectionChanged(UISelectButton button, string option)
@@ -122,6 +128,10 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			else if (option == "Russian")
 			{
 				this.m_SelectedLanguage = Language.Russian;
+			}
+			else if (option == "Polish")
+			{
+				this.m_SelectedLanguage = Language.Polish;
 			}
 		}
 	}

@@ -4,8 +4,8 @@ using UnityEngine.Serialization;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_graph_update_scene.php")]
 	[AddComponentMenu("Pathfinding/GraphUpdateScene")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_graph_update_scene.php")]
 	public class GraphUpdateScene : GraphModifier
 	{
 		public void Start()

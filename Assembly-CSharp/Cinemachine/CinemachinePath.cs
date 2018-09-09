@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(18f, DocumentationSortingAttribute.Level.UserRef)]
 	[SaveDuringPlay]
 	[AddComponentMenu("Cinemachine/CinemachinePath")]
+	[DocumentationSorting(18f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachinePath : CinemachinePathBase
 	{
 		public override float MinPos
