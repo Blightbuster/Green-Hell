@@ -1155,8 +1155,8 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 
 	public int ResetFrameDelay = 1;
 
-	[FormerlySerializedAs("workerThreads")]
 	[Header("Low-Level")]
+	[FormerlySerializedAs("workerThreads")]
 	public int WorkerThreads;
 
 	public bool SystemThreadPool;

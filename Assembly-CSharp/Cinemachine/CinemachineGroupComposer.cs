@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("")]
 	[ExecuteInEditMode]
+	[AddComponentMenu("")]
 	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(4f, DocumentationSortingAttribute.Level.UserRef)]
@@ -112,15 +112,15 @@ namespace Cinemachine
 			return Mathf.Max(Mathf.Max(0.0001f, b.size.x) / (num * base.VcamState.Lens.Aspect), Mathf.Max(0.0001f, b.size.y) / num);
 		}
 
-		[Space]
 		[Tooltip("The bounding box of the targets should occupy this amount of the screen space.  1 means fill the whole screen.  0.5 means fill half the screen, etc.")]
+		[Space]
 		public float m_GroupFramingSize = 0.8f;
 
 		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]
 		public CinemachineGroupComposer.FramingMode m_FramingMode = CinemachineGroupComposer.FramingMode.HorizontalAndVertical;
 
-		[Tooltip("How aggressively the camera tries to frame the group. Small numbers are more responsive, rapidly adjusting the camera to keep the group in the frame.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to frame the group. Small numbers are more responsive, rapidly adjusting the camera to keep the group in the frame.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_FrameDamping = 2f;
 
 		[Tooltip("How to adjust the camera to get the desired framing.  You can zoom, dolly in/out, or do both.")]
@@ -142,8 +142,8 @@ namespace Cinemachine
 		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
 		public float m_MinimumFOV = 3f;
 
-		[Range(1f, 179f)]
 		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]
+		[Range(1f, 179f)]
 		public float m_MaximumFOV = 60f;
 
 		[Tooltip("If adjusting Orthographic Size, will not set it lower than this.")]

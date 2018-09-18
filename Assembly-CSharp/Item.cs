@@ -6,7 +6,6 @@ using Enums;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
-using UnityEngine.SceneManagement;
 
 public class Item : Trigger
 {
@@ -559,6 +558,18 @@ public class Item : Trigger
 			{
 				this.m_TrailRenderer.enabled = false;
 			}
+			if (Player.Get().GetCurrentItem(Hand.Right) == this)
+			{
+				Player.Get().SetWantedItem(Hand.Right, null, true);
+			}
+			else if (Player.Get().GetCurrentItem(Hand.Left) == this)
+			{
+				Player.Get().SetWantedItem(Hand.Left, null, true);
+			}
+			if (InventoryBackpack.Get().m_EquippedItem == this)
+			{
+				InventoryBackpack.Get().m_EquippedItem = null;
+			}
 			if (Time.time > this.m_DestroyTime + this.m_TimeFromDestroyToDissapear)
 			{
 				for (int j = 0; j < this.m_Info.m_ItemsToBackpackOnDestroy.Count; j++)
@@ -889,6 +900,7 @@ public class Item : Trigger
 		}
 		SaveGame.SaveVal("WasTriggered" + index, this.m_WasTriggered);
 		SaveGame.SaveVal("FirstTriggerTime" + index, this.m_FirstTriggerTime);
+		SaveGame.SaveVal("CreationTime" + index, this.m_Info.m_CreationTime);
 		SaveGame.SaveVal("ItemHealth" + index, this.m_Info.m_Health);
 		SaveGame.SaveVal("EquippedItem" + index, InventoryBackpack.Get().m_EquippedItem == this);
 	}
@@ -945,35 +957,24 @@ public class Item : Trigger
 		}
 		this.m_WasTriggered = SaveGame.LoadBVal("WasTriggered" + index);
 		this.m_FirstTriggerTime = SaveGame.LoadFVal("FirstTriggerTime" + index);
+		if (GreenHellGame.s_GameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate3)
+		{
+			this.m_Info.m_CreationTime = SaveGame.LoadFVal("CreationTime" + index);
+		}
 		this.m_Info.m_Health = SaveGame.LoadFVal("ItemHealth" + index);
 		if (SaveGame.LoadBVal("EquippedItem" + index))
 		{
 			InventoryBackpack.Get().m_EquippedItem = this;
 		}
-	}
-
-	private Transform FindParent(string name, Vector3 position, Quaternion rotation)
-	{
-		for (int i = 0; i < SceneManager.sceneCount; i++)
+		bool flag4 = SaveGame.LoadBVal("ItemSlot" + index);
+		if (flag4)
 		{
-			Scene sceneAt = SceneManager.GetSceneAt(i);
-			if (sceneAt.isLoaded)
+			this.m_InSlotCheckPos = SaveGame.LoadV3Val("ItemSlotPos" + index);
+			if (this.m_InSlotCheckPos == Vector3.zero)
 			{
-				GameObject[] rootGameObjects = sceneAt.GetRootGameObjects();
-				for (int j = 0; j < rootGameObjects.Length; j++)
-				{
-					Transform[] componentsInChildren = rootGameObjects[j].GetComponentsInChildren<Transform>(true);
-					for (int k = 0; k < componentsInChildren.Length; k++)
-					{
-						if (componentsInChildren[k].name == name && componentsInChildren[k].transform.position == position && componentsInChildren[k].transform.rotation == rotation)
-						{
-							return componentsInChildren[k].transform;
-						}
-					}
-				}
+				this.m_InSlotCheckPos = ((!this.m_InventoryHolder) ? base.transform.position : this.m_InventoryHolder.transform.position);
 			}
 		}
-		return null;
 	}
 
 	public virtual void SetupAfterLoad(int index)
@@ -1002,11 +1003,6 @@ public class Item : Trigger
 			if (flag2)
 			{
 				string b = SaveGame.LoadSVal("ItemSlotName" + index);
-				Vector3 vector = SaveGame.LoadV3Val("ItemSlotPos" + index);
-				if (vector == Vector3.zero)
-				{
-					vector = ((!this.m_InventoryHolder) ? base.transform.position : this.m_InventoryHolder.transform.position);
-				}
 				this.m_PhxStaticRequests = 0;
 				foreach (ItemSlot itemSlot in ItemSlot.s_AllItemSlots)
 				{
@@ -1016,7 +1012,7 @@ public class Item : Trigger
 						{
 							if (!itemSlot.m_GOParent || !(itemSlot.m_GOParent == base.gameObject))
 							{
-								if ((itemSlot.transform.position - vector).sqrMagnitude <= 0.01f)
+								if ((itemSlot.transform.position - this.m_InSlotCheckPos).sqrMagnitude <= 0.01f)
 								{
 									itemSlot.InsertItem(this);
 									return;
@@ -1164,7 +1160,7 @@ public class Item : Trigger
 		{
 			return;
 		}
-		this.OnThrowHit(collision);
+		this.OnThrowHit(collision.gameObject, collision.contacts[0].point, collision.contacts[0].normal);
 	}
 
 	private void OnTriggerEnter(Collider other)
@@ -1181,60 +1177,20 @@ public class Item : Trigger
 				}
 			}
 		}
-		else if (this.m_Thrown)
+		else if (this.m_Thrown && other.gameObject.IsAI())
 		{
-			AI component = other.gameObject.GetComponent<AI>();
-			if (other.gameObject.IsAI())
-			{
-				if (this.m_Thrower && this.m_Thrower.gameObject == Player.Get().gameObject)
-				{
-					if (this.m_Info.IsSpear())
-					{
-						Skill.Get<SpearSkill>().OnSkillAction();
-					}
-					else if (this.m_Info.IsArrow())
-					{
-						Skill.Get<ArcherySkill>().OnSkillAction();
-					}
-					else
-					{
-						Skill.Get<ThrowingSkill>().OnSkillAction();
-					}
-				}
-				DamageInfo damageInfo = new DamageInfo();
-				damageInfo.m_Damage = ((!this.m_Thrower.IsPlayer()) ? 10f : this.m_Info.m_ThrowDamage);
-				damageInfo.m_Damage *= this.GetThrowDamageMultiplier();
-				if (component && !component.IsHuman() && this.m_Info.IsSpear())
-				{
-					damageInfo.m_Damage = 9999f;
-				}
-				damageInfo.m_Damager = ((!this.m_Thrower) ? base.gameObject : this.m_Thrower.gameObject);
-				damageInfo.m_DamageItem = this;
-				damageInfo.m_DamageType = this.GetDamageType();
-				damageInfo.m_Position = component.transform.position;
-				damageInfo.m_Normal = -this.m_ThrowVel.normalized;
-				component.TakeDamage(damageInfo);
-				if (this.m_Rigidbody)
-				{
-					this.m_Rigidbody.velocity *= 0.1f;
-				}
-			}
-			else if (this.m_Rigidbody)
-			{
-				this.m_Rigidbody.velocity *= 0.4f;
-			}
+			this.OnThrowHit(other.gameObject, other.gameObject.transform.position, -this.m_ThrowVel.normalized);
 		}
 	}
 
-	private void OnThrowHit(Collision collision)
+	private void OnThrowHit(GameObject other, Vector3 hit_point, Vector3 hit_normal)
 	{
 		this.m_Thrown = false;
 		this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
 		bool flag = true;
-		Vector3 point = collision.contacts[0].point;
 		Vector3 normalized = this.m_ThrowVel.normalized;
 		AI ai = null;
-		CJObject component = collision.gameObject.GetComponent<CJObject>();
+		CJObject component = other.GetComponent<CJObject>();
 		if (component)
 		{
 			if (component.IsAI())
@@ -1274,8 +1230,8 @@ public class Item : Trigger
 					base.Invoke("DestroyMe", 3f);
 				}
 			}
-			Item component2 = collision.gameObject.GetComponent<Item>();
-			if (component2 == null || component2.CanReceiveDamageOfType(this.m_Info.m_DamageType))
+			Item item = (!component.IsItem()) ? null : other.GetComponent<Item>();
+			if (item == null || item.CanReceiveDamageOfType(this.m_Info.m_DamageType))
 			{
 				DamageInfo damageInfo = new DamageInfo();
 				damageInfo.m_Damage = ((!this.m_Thrower.IsPlayer()) ? 10f : this.m_Info.m_ThrowDamage);
@@ -1287,7 +1243,7 @@ public class Item : Trigger
 				damageInfo.m_Damager = ((!this.m_Thrower) ? base.gameObject : this.m_Thrower.gameObject);
 				damageInfo.m_DamageItem = this;
 				damageInfo.m_DamageType = this.GetDamageType();
-				damageInfo.m_Position = point;
+				damageInfo.m_Position = hit_point;
 				damageInfo.m_Normal = -normalized;
 				component.TakeDamage(damageInfo);
 				if (this.m_Rigidbody)
@@ -1296,54 +1252,51 @@ public class Item : Trigger
 				}
 			}
 		}
-		else
+		RagdollBone component2 = other.GetComponent<RagdollBone>();
+		if (component2)
 		{
-			RagdollBone component3 = collision.gameObject.GetComponent<RagdollBone>();
+			flag = false;
+			DeadBody component3 = component2.m_Parent.GetComponent<DeadBody>();
 			if (component3)
 			{
-				flag = false;
-				DeadBody component4 = component3.m_Parent.GetComponent<DeadBody>();
-				if (component4)
+				component3.OnTakeDamage(new DamageInfo
 				{
-					component4.OnTakeDamage(new DamageInfo
-					{
-						m_DamageItem = this,
-						m_Damager = base.gameObject,
-						m_Position = point,
-						m_HitDir = normalized,
-						m_Normal = -normalized
-					});
+					m_DamageItem = this,
+					m_Damager = base.gameObject,
+					m_Position = hit_point,
+					m_HitDir = normalized,
+					m_Normal = -normalized
+				});
+			}
+		}
+		else
+		{
+			FlockChild component4 = other.GetComponent<FlockChild>();
+			if (component4)
+			{
+				component4.Hit(normalized);
+				flag = false;
+				if (this.m_Rigidbody)
+				{
+					this.m_Rigidbody.velocity *= 0.1f;
 				}
 			}
-			else
+			else if (this.m_Rigidbody)
 			{
-				FlockChild component5 = collision.gameObject.GetComponent<FlockChild>();
-				if (component5)
-				{
-					component5.Hit(normalized);
-					flag = false;
-					if (this.m_Rigidbody)
-					{
-						this.m_Rigidbody.velocity *= 0.1f;
-					}
-				}
-				else if (this.m_Rigidbody)
-				{
-					this.m_Rigidbody.velocity *= 0.4f;
-					this.m_Rigidbody.angularVelocity *= 0.5f;
-				}
+				this.m_Rigidbody.velocity *= 0.4f;
+				this.m_Rigidbody.angularVelocity *= 0.5f;
 			}
 		}
 		if (flag)
 		{
-			this.TryStickOnHit(point, normalized, ai, collision);
+			this.TryStickOnHit(hit_point, normalized, ai, other);
 		}
 		if (ai && ai.IsFish() && (this.m_Info.m_ID == ItemID.Arrow || this.m_Info.IsSpear()))
 		{
 			Fish fish = (Fish)ai;
 			if (fish.m_Tank)
 			{
-				fish.OnHitByItem(this, point);
+				fish.OnHitByItem(this, hit_point);
 			}
 		}
 		if (this.m_TrailRenderer)
@@ -1435,9 +1388,9 @@ public class Item : Trigger
 		return 1f;
 	}
 
-	private void TryStickOnHit(Vector3 hit_point, Vector3 hit_dir, AI ai, Collision collision)
+	private void TryStickOnHit(Vector3 hit_point, Vector3 hit_dir, AI ai, GameObject other)
 	{
-		if (!this.CanStickOnHit(ai, collision.gameObject))
+		if (!this.CanStickOnHit(ai, other))
 		{
 			return;
 		}
@@ -1454,40 +1407,40 @@ public class Item : Trigger
 				return;
 			}
 			max = 0.5f;
-			goto IL_148;
+			goto IL_11D;
 		default:
 			switch (id)
 			{
 			case ItemID.Stone_Blade:
-				goto IL_121;
+				goto IL_F6;
 			case ItemID.Obsidian_Blade:
 			case ItemID.Stone_Axe:
-				goto IL_148;
+				goto IL_11D;
 			case ItemID.Axe:
 				break;
 			default:
-				goto IL_148;
+				goto IL_11D;
 			}
 			break;
 		case ItemID.Bone_Knife:
-			goto IL_121;
+			goto IL_F6;
 		}
 		float num = 0.3f;
-		if (collision.contacts[0].normal.y < -num || collision.contacts[0].normal.y > num)
+		if (-hit_dir.y < -num || -hit_dir.y > num)
 		{
 			return;
 		}
 		base.transform.rotation = Quaternion.LookRotation(hit_dir, Vector3.Cross(hit_dir, Vector3.up));
 		base.transform.Rotate(Vector3.up, -UnityEngine.Random.Range(0f, 20f));
 		max = 0.5f;
-		goto IL_148;
-		IL_121:
+		goto IL_11D;
+		IL_F6:
 		if (Vector3.Angle(hit_dir, base.transform.right) > 75f)
 		{
 			return;
 		}
 		min = 0.5f;
-		IL_148:
+		IL_11D:
 		Vector3 a = Vector3.zero;
 		if (this.m_Info.IsAxe())
 		{
@@ -1770,4 +1723,6 @@ public class Item : Trigger
 	public bool m_DestroyingOnlyScript;
 
 	private static List<MonoBehaviour> s_ComponentsCache = new List<MonoBehaviour>(10);
+
+	private Vector3 m_InSlotCheckPos = Vector3.zero;
 }

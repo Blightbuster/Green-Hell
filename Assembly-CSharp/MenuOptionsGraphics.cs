@@ -15,11 +15,11 @@ public class MenuOptionsGraphics : MenuScreen, IYesNoDialogOwner
 		this.m_ShadowsBlur.AddOption("Medium", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_Medium"));
 		this.m_ShadowsBlur.AddOption("High", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_High"));
 		this.m_ShadowsBlur.AddOption("VeryHigh", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_VeryHigh"));
-		this.m_Quality.AddOption("VeryLow", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_VeryLow"));
+		this.m_Quality.AddOption("Very Low", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_VeryLow"));
 		this.m_Quality.AddOption("Low", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_Low"));
 		this.m_Quality.AddOption("Medium", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_Medium"));
 		this.m_Quality.AddOption("High", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_High"));
-		this.m_Quality.AddOption("VeryHigh", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_VeryHigh"));
+		this.m_Quality.AddOption("Very High", GreenHellGame.Instance.GetLocalization().Get("MenuGraphics_VeryHigh"));
 	}
 
 	protected override void OnShow()

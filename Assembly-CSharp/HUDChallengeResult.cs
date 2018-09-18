@@ -21,6 +21,7 @@ public class HUDChallengeResult : HUDBase
 		color.a = 0f;
 		this.m_QuitText.color = color;
 		this.m_QuitButton.interactable = false;
+		this.m_QuitButton.gameObject.SetActive(false);
 	}
 
 	public override void SetupGroups()
@@ -48,6 +49,13 @@ public class HUDChallengeResult : HUDBase
 		color.a = 0f;
 		this.m_QuitText.color = color;
 		this.m_QuitButton.interactable = true;
+		this.m_QuitButton.gameObject.SetActive(true);
+	}
+
+	protected override void OnHide()
+	{
+		base.OnHide();
+		this.m_QuitButton.gameObject.SetActive(false);
 	}
 
 	protected override void Update()

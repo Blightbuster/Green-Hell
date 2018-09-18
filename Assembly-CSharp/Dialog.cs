@@ -148,7 +148,7 @@ public class Dialog : IInputsReceiver
 
 	public void OnInputAction(InputsManager.InputAction action)
 	{
-		if (GreenHellGame.DEBUG && action == InputsManager.InputAction.SkipDialogNode)
+		if (GreenHellGame.DEBUG && (action == InputsManager.InputAction.SkipDialogNode || action == InputsManager.InputAction.Quit))
 		{
 			this.FinishNode();
 		}

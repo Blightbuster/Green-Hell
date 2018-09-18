@@ -169,9 +169,9 @@ namespace UltimateWater.Internal
 			RenderTexture.ReleaseTemporary(temporary);
 		}
 
-		[SerializeField]
-		[FormerlySerializedAs("blurComputeShader")]
 		[HideInInspector]
+		[FormerlySerializedAs("blurComputeShader")]
+		[SerializeField]
 		protected ComputeShader _BlurComputeShader;
 
 		[HideInInspector]
@@ -184,9 +184,9 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private int _ComputeShaderKernelIndex;
 
-		[SerializeField]
 		[Range(0f, 10f)]
 		[FormerlySerializedAs("iterations")]
+		[SerializeField]
 		private int _Iterations = 1;
 
 		[SerializeField]

@@ -353,8 +353,24 @@ public class FPPController : PlayerController
 	{
 		if (!Player.Get().GetMovesBlocked())
 		{
-			this.m_Inputs.m_Horizontal = CrossPlatformInputManager.GetAxis("Horizontal");
-			this.m_Inputs.m_Vertical = CrossPlatformInputManager.GetAxis("Vertical");
+			this.m_Inputs.m_Vertical = 0f;
+			if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Forward))
+			{
+				this.m_Inputs.m_Vertical = 1f;
+			}
+			else if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Backward))
+			{
+				this.m_Inputs.m_Vertical = -1f;
+			}
+			this.m_Inputs.m_Horizontal = 0f;
+			if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Left))
+			{
+				this.m_Inputs.m_Horizontal = -1f;
+			}
+			else if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Right))
+			{
+				this.m_Inputs.m_Horizontal = 1f;
+			}
 			this.m_Inputs.m_Jump = InputsManager.Get().IsActionActive(InputsManager.InputAction.Jump);
 			this.m_Inputs.m_Duck = InputsManager.Get().IsActionActive(InputsManager.InputAction.Duck);
 			this.m_Inputs.m_Sprint = InputsManager.Get().IsActionActive(InputsManager.InputAction.Sprint);

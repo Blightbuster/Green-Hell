@@ -28,7 +28,7 @@ namespace AIs
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
-			if (this.m_AI.m_ID == AI.AIID.Jaguar)
+			if (this.m_AI.m_ID == AI.AIID.Jaguar && this.m_AI.m_EnemyModule.m_Enemy)
 			{
 				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();

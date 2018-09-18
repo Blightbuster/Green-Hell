@@ -8,5 +8,6 @@ public enum HUDMessageIcon
 	Fat,
 	Hydration,
 	Energy,
-	Item
+	Item,
+	FoodPoisoning
 }

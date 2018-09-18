@@ -253,6 +253,11 @@ public class ItemInfo
 		return false;
 	}
 
+	public static bool IsStoneRing(ItemID id)
+	{
+		return id == ItemID.Stone_Ring;
+	}
+
 	public static bool IsFirecamp(ItemID id)
 	{
 		return id == ItemID.Small_Fire || id == ItemID.Campfire;

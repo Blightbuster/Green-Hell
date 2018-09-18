@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Pathfinding.RVO
 {
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_simulator.php")]
-	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Simulator")]
 	[ExecuteInEditMode]
+	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Simulator")]
 	public class RVOSimulator : VersionedMonoBehaviour
 	{
 		public static RVOSimulator active { get; private set; }
@@ -68,8 +68,8 @@ namespace Pathfinding.RVO
 		[Tooltip("Calculate local avoidance in between frames.\nThis can increase jitter in the agents' movement so use it only if you really need the performance boost. It will also reduce the responsiveness of the agents to the commands you send to them.")]
 		public bool doubleBuffering;
 
-		[Tooltip("Bias agents to pass each other on the right side.\nIf the desired velocity of an agent puts it on a collision course with another agent or an obstacle its desired velocity will be rotated this number of radians (1 radian is approximately 57°) to the right. This helps to break up symmetries and makes it possible to resolve some situations much faster.\n\nWhen many agents have the same goal this can however have the side effect that the group clustered around the target point may as a whole start to spin around the target point.")]
 		[Range(0f, 0.2f)]
+		[Tooltip("Bias agents to pass each other on the right side.\nIf the desired velocity of an agent puts it on a collision course with another agent or an obstacle its desired velocity will be rotated this number of radians (1 radian is approximately 57°) to the right. This helps to break up symmetries and makes it possible to resolve some situations much faster.\n\nWhen many agents have the same goal this can however have the side effect that the group clustered around the target point may as a whole start to spin around the target point.")]
 		public float symmetryBreakingBias = 0.1f;
 
 		[Tooltip("Determines if the XY (2D) or XZ (3D) plane is used for movement")]

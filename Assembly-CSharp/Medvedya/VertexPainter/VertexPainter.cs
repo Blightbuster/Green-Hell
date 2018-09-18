@@ -6,9 +6,9 @@ namespace Medvedya.VertexPainter
 {
 	[DisallowMultipleComponent]
 	[RequireComponent(typeof(MeshRenderer))]
-	[AddComponentMenu("Vertex painter/Vertex painter")]
 	[ExecuteInEditMode]
 	[RequireComponent(typeof(MeshFilter))]
+	[AddComponentMenu("Vertex painter/Vertex painter")]
 	public class VertexPainter : MonoBehaviour, IPainting
 	{
 		public MeshFilter meshFilter

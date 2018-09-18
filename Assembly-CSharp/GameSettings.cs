@@ -26,6 +26,7 @@ public class GameSettings : MonoBehaviour
 		binaryFormatter.Serialize(fileStream, this.m_MusicVolume);
 		binaryFormatter.Serialize(fileStream, this.m_EnviroVolume);
 		binaryFormatter.Serialize(fileStream, this.m_GeneralVolume);
+		InputsManager.Get().SaveSettings(binaryFormatter, fileStream);
 		fileStream.Close();
 	}
 
@@ -53,6 +54,10 @@ public class GameSettings : MonoBehaviour
 				this.m_MusicVolume = (float)binaryFormatter.Deserialize(fileStream);
 				this.m_EnviroVolume = (float)binaryFormatter.Deserialize(fileStream);
 				this.m_GeneralVolume = (float)binaryFormatter.Deserialize(fileStream);
+			}
+			if (lhs >= GreenHellGame.s_GameVersionEarlyAccessUpdate3)
+			{
+				InputsManager.Get().LoadSettings(binaryFormatter, fileStream);
 			}
 			fileStream.Close();
 		}

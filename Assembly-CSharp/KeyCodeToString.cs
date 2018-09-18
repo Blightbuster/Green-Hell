@@ -13,7 +13,48 @@ internal class KeyCodeToString
 		{
 			if (!KeyCodeToString.s_Dict.ContainsKey((int)enumerator.Current))
 			{
-				KeyCodeToString.s_Dict.Add((int)enumerator.Current, enumerator.Current.ToString());
+				string text = enumerator.Current.ToString();
+				if (text == "Alpha0")
+				{
+					text = "0";
+				}
+				if (text == "Alpha1")
+				{
+					text = "1";
+				}
+				if (text == "Alpha2")
+				{
+					text = "2";
+				}
+				if (text == "Alpha3")
+				{
+					text = "3";
+				}
+				if (text == "Alpha4")
+				{
+					text = "4";
+				}
+				if (text == "Alpha5")
+				{
+					text = "5";
+				}
+				if (text == "Alpha6")
+				{
+					text = "6";
+				}
+				if (text == "Alpha7")
+				{
+					text = "7";
+				}
+				if (text == "Alpha8")
+				{
+					text = "8";
+				}
+				if (text == "Alpha9")
+				{
+					text = "9";
+				}
+				KeyCodeToString.s_Dict.Add((int)enumerator.Current, text);
 			}
 		}
 		KeyCodeToString.s_Initialized = true;

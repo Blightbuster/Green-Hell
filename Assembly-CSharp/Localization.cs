@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Enums;
+using UnityEngine;
 
 public class Localization
 {
@@ -87,12 +88,88 @@ public class Localization
 
 	public string Get(string key)
 	{
-		string result = string.Empty;
-		if (!this.m_LocalizedTexts.TryGetValue(key, out result))
+		string text = string.Empty;
+		if (!this.m_LocalizedTexts.TryGetValue(key, out text))
 		{
-			result = key + " = !!!MISSING TEXT!!!";
+			text = key + " = !!!MISSING TEXT!!!";
+			return text;
 		}
-		return result;
+		if (text.Length == 0)
+		{
+			return text;
+		}
+		int i = 0;
+		int num = 0;
+		int num2 = 0;
+		i = text.IndexOf("[", i);
+		string text2 = text;
+		bool flag = false;
+		while (i >= 0)
+		{
+			flag = true;
+			num = text2.IndexOf("]", i);
+			if (num2 == 0)
+			{
+				text = text2.Substring(num2, i - num2 + 1);
+			}
+			else
+			{
+				text += text2.Substring(num2 + 1, i - num2);
+			}
+			string text3 = text2.Substring(i + 1, num - i - 1);
+			bool flag2 = true;
+			InputsManager.InputAction key2 = InputsManager.InputAction.SkipCutscene;
+			TriggerAction.TYPE key3 = TriggerAction.TYPE.Take;
+			bool flag3 = false;
+			bool flag4 = false;
+			try
+			{
+				key2 = (InputsManager.InputAction)Enum.Parse(typeof(InputsManager.InputAction), text3);
+				flag3 = true;
+			}
+			catch (ArgumentException)
+			{
+				flag2 = false;
+			}
+			if (!flag2)
+			{
+				try
+				{
+					key3 = (TriggerAction.TYPE)Enum.Parse(typeof(TriggerAction.TYPE), text3);
+					flag4 = true;
+				}
+				catch (ArgumentException)
+				{
+					flag2 = false;
+				}
+			}
+			if (flag2)
+			{
+				string str = string.Empty;
+				if (flag3)
+				{
+					KeyCode keyCode = InputsManager.Get().GetActionsByInputAction()[(int)key2].m_KeyCode;
+					str = KeyCodeToString.GetString(keyCode);
+				}
+				else if (flag4)
+				{
+					KeyCode keyCode2 = InputsManager.Get().GetActionsByTriggerAction()[(int)key3].m_KeyCode;
+					str = KeyCodeToString.GetString(keyCode2);
+				}
+				text = text + str + "]";
+			}
+			else
+			{
+				text = text + text3 + "]";
+			}
+			num2 = num;
+			i = text2.IndexOf("[", num2);
+		}
+		if (flag)
+		{
+			text += text2.Substring(num + 1, text2.Length - num - 1);
+		}
+		return text;
 	}
 
 	public void Reload()

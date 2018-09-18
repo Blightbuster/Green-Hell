@@ -584,7 +584,7 @@ public class WeaponSpearController : WeaponController
 
 	private int m_AttackDownHash = Animator.StringToHash("Spear_AttackDown");
 
-	private GameObject m_ImpaledObject;
+	public GameObject m_ImpaledObject;
 
 	[HideInInspector]
 	public Item m_ItemBody;

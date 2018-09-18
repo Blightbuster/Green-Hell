@@ -129,12 +129,12 @@ namespace UltimateWater
 		[SerializeField]
 		private WaveParticlesSystemGPU _GPUParticleSystem;
 
-		[SerializeField]
 		[FormerlySerializedAs("unityParticleSystem")]
+		[SerializeField]
 		private ParticleSystem _UnityParticleSystem;
 
-		[SerializeField]
 		[FormerlySerializedAs("waveSpeed")]
+		[SerializeField]
 		[Range(0.02f, 0.98f)]
 		private float _WaveSpeed = 0.5f;
 
@@ -142,8 +142,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _Amplitude = 0.5f;
 
-		[SerializeField]
 		[FormerlySerializedAs("wavelength")]
+		[SerializeField]
 		private float _Wavelength = 6f;
 
 		[FormerlySerializedAs("lifetime")]
@@ -162,24 +162,24 @@ namespace UltimateWater
 		[SerializeField]
 		private float _LeftRightSpace = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("trailCalming")]
+		[SerializeField]
 		[Range(0f, 1f)]
 		private float _TrailCalming = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("trailFoam")]
+		[SerializeField]
 		[Range(0f, 8f)]
 		private float _TrailFoam = 1f;
 
 		[SerializeField]
 		[FormerlySerializedAs("advancedEmissionPositioning")]
-		[Tooltip("Use for submarines. Allows emission to be moved to exposed ship parts during submerge process and completely disabled after complete submarge.")]
 		[Header("Advanced")]
+		[Tooltip("Use for submarines. Allows emission to be moved to exposed ship parts during submerge process and completely disabled after complete submarge.")]
 		private bool _AdvancedEmissionPositioning;
 
-		[SerializeField]
 		[FormerlySerializedAs("shipCollider")]
+		[SerializeField]
 		[Tooltip("Required if 'advancedEmissionPositioning' is enabled. Allows emitter to determine an emission point on that collider.")]
 		private Collider _ShipCollider;
 

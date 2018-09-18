@@ -5,6 +5,12 @@ namespace AIs
 {
 	public class HostileStateModule : AIModule
 	{
+		private void SetState(HostileStateModule.State state)
+		{
+			this.m_State = state;
+			this.m_EnterStateTime = Time.time;
+		}
+
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
@@ -13,43 +19,51 @@ namespace AIs
 			case HostileStateModule.State.Calm:
 				if (this.m_AI.m_EnemyModule.m_Enemy != null)
 				{
-					this.m_State = HostileStateModule.State.Upset;
+					this.SetState(HostileStateModule.State.Upset);
 				}
 				break;
 			case HostileStateModule.State.Upset:
 				if (this.m_AI.m_EnemyModule.m_Enemy == null)
 				{
-					this.m_State = HostileStateModule.State.Calm;
+					this.SetState(HostileStateModule.State.Calm);
 				}
-				else if (Player.Get().IsRunning() || Vector3.Distance(Player.Get().transform.position, base.transform.position) < this.m_AI.m_Params.m_AttackRange * 2f)
+				else if (Player.Get().IsRunning() || Vector3.Distance(Player.Get().transform.position, base.transform.position) < this.m_AI.m_Params.m_AttackRange * 3f)
 				{
-					this.m_State = HostileStateModule.State.Aggressive;
+					this.SetState(HostileStateModule.State.Aggressive);
 				}
 				break;
 			case HostileStateModule.State.Aggressive:
 				if (this.m_AI.m_EnemyModule.m_Enemy == null)
 				{
-					this.m_State = HostileStateModule.State.Calm;
+					this.SetState(HostileStateModule.State.Calm);
 				}
 				else if (this.m_AI.m_MoraleModule.m_Morale <= 0f)
 				{
-					this.m_State = HostileStateModule.State.Scared;
+					this.SetState(HostileStateModule.State.Scared);
 				}
 				break;
 			case HostileStateModule.State.Scared:
 				if (this.m_AI.m_EnemyModule.m_Enemy == null)
 				{
-					this.m_State = HostileStateModule.State.Calm;
+					this.SetState(HostileStateModule.State.Calm);
 				}
 				else if (this.m_AI.m_MoraleModule.m_Morale > 0.5f)
 				{
-					this.m_State = HostileStateModule.State.Upset;
+					this.SetState(HostileStateModule.State.Upset);
 				}
 				break;
 			}
 		}
 
+		public override void OnTakeDamage(DamageInfo info)
+		{
+			base.OnTakeDamage(info);
+			this.SetState(HostileStateModule.State.Aggressive);
+		}
+
 		public HostileStateModule.State m_State;
+
+		private float m_EnterStateTime;
 
 		public enum State
 		{

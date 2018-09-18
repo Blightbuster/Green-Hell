@@ -61,8 +61,8 @@ namespace Cinemachine
 
 		public static LensSettings Default = new LensSettings(40f, 10f, 0.1f, 5000f, 0f, false, 1f);
 
-		[Range(1f, 179f)]
 		[Tooltip("This is the camera view in vertical degrees. For cinematic people, a 50mm lens on a super-35mm sensor would equal a 19.6 degree FOV")]
+		[Range(1f, 179f)]
 		public float FieldOfView;
 
 		[Tooltip("When using an orthographic camera, this defines the half-height, in world coordinates, of the camera view.")]

@@ -521,8 +521,8 @@ namespace UltimateWater
 
 		[SerializeField]
 		[Range(1f, 32f)]
-		[Tooltip("How many simulation pixels per one unit are used")]
 		[Header("Settings")]
+		[Tooltip("How many simulation pixels per one unit are used")]
 		private int _PixelsPerUnit = 16;
 
 		[Range(0.125f, 2f)]
@@ -534,9 +534,9 @@ namespace UltimateWater
 		[Tooltip("Does the water can be  stopped by Blocking objects")]
 		private bool _EnableStaticCalculations;
 
-		[Range(0.125f, 2f)]
 		[SerializeField]
 		[Tooltip("What resolution is used for static depth information")]
+		[Range(0.125f, 2f)]
 		private float _StaticDepthScale = 1f;
 
 		[SerializeField]
@@ -560,8 +560,8 @@ namespace UltimateWater
 
 		private MeshFilter _MeshFilter;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Material _DisplacementMaterial;
 
 		private Vector3 _Position;

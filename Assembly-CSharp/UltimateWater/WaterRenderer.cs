@@ -383,13 +383,13 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _VolumeFrontShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("volumeFrontFastShader")]
+		[SerializeField]
 		[HideInInspector]
 		private Shader _VolumeFrontFastShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("volumeBackShader")]
+		[SerializeField]
 		[HideInInspector]
 		private Shader _VolumeBackShader;
 

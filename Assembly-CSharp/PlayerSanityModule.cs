@@ -149,9 +149,11 @@ public class PlayerSanityModule : PlayerModule
 				if (Enum.IsDefined(typeof(PlayerSanityModule.SanityEventType), svalue))
 				{
 					PlayerSanityModule.SanityEventType key2 = (PlayerSanityModule.SanityEventType)Enum.Parse(typeof(PlayerSanityModule.SanityEventType), svalue);
-					this.m_EventsMap[(int)key2].m_SanityChange = key.GetVariable(1).IValue;
-					this.m_EventsMap[(int)key2].m_Interval = key.GetVariable(2).FValue;
-					this.m_EventsMap[(int)key2].m_TextID = key.GetVariable(3).SValue;
+					this.m_EventsMap[(int)key2].m_SanityChange[0] = key.GetVariable(1).IValue;
+					this.m_EventsMap[(int)key2].m_SanityChange[1] = key.GetVariable(2).IValue;
+					this.m_EventsMap[(int)key2].m_SanityChange[2] = key.GetVariable(3).IValue;
+					this.m_EventsMap[(int)key2].m_Interval = key.GetVariable(4).FValue;
+					this.m_EventsMap[(int)key2].m_TextID = key.GetVariable(5).SValue;
 				}
 			}
 			else if (key.GetName() == "StalkerStalkingSanityLevel")
@@ -289,7 +291,7 @@ public class PlayerSanityModule : PlayerModule
 		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
 		if (sanityEventData.m_LastEventTime == 0f || Time.time - sanityEventData.m_LastEventTime >= sanityEventData.m_Interval)
 		{
-			int num = Mathf.Clamp(this.m_Sanity + sanityEventData.m_SanityChange * mul, 0, 100);
+			int num = Mathf.Clamp(this.m_Sanity + sanityEventData.m_SanityChange[(int)GreenHellGame.Instance.m_GameDifficulty] * mul, 0, 100);
 			int num2 = num - this.m_Sanity;
 			if (num2 == 0)
 			{
@@ -316,17 +318,6 @@ public class PlayerSanityModule : PlayerModule
 			PlayerAudioModule.Get().PlaySanityLossSound(1f);
 		}
 		HUDSanity.Get().OnChangeSanity(diff);
-		if ((float)this.m_Sanity < 10f)
-		{
-			if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.LowSanity && !SleepController.Get().IsActive())
-			{
-				GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.LowSanity, 0.5f);
-			}
-		}
-		else if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.Default && !SleepController.Get().IsActive())
-		{
-			GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.Default, 0.5f);
-		}
 	}
 
 	public override void Update()
@@ -342,6 +333,22 @@ public class PlayerSanityModule : PlayerModule
 		this.UpdateItemsHallucinations();
 		this.UpdateRandomWhispers();
 		this.UpdateDebug();
+		this.UpdateAudio();
+	}
+
+	private void UpdateAudio()
+	{
+		if ((float)this.m_Sanity < 10f)
+		{
+			if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.LowSanity && !SleepController.Get().IsActive())
+			{
+				GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.LowSanity, 0.5f);
+			}
+		}
+		else if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.Default && !SleepController.Get().IsActive())
+		{
+			GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.Default, 0.5f);
+		}
 	}
 
 	private void UpdateEffects()

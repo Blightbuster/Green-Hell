@@ -20,8 +20,8 @@ public class TOD_MoonParameters
 	[TOD_Min(0f)]
 	public float HaloSize = 0.1f;
 
-	[TOD_Min(0f)]
 	[Tooltip("Brightness of the moon halo.")]
+	[TOD_Min(0f)]
 	public float HaloBrightness = 1f;
 
 	[Tooltip("Type of the moon position calculation.")]

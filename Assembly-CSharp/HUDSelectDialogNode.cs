@@ -28,6 +28,7 @@ public class HUDSelectDialogNode : HUDBase, IInputsReceiver
 		this.m_Icon = this.m_Reply.transform.Find("Icon").GetComponent<RawImage>();
 		this.m_ReplyCanvasGroup = this.m_Reply.gameObject.AddComponent<CanvasGroup>();
 		this.m_ReplyCanvasGroup.alpha = 0f;
+		this.m_KeyText = base.transform.FindDeepChild("Key").gameObject.GetComponent<Text>();
 	}
 
 	public void ShowNodeSelection(List<DialogNode> nodes, float duration)
@@ -100,6 +101,7 @@ public class HUDSelectDialogNode : HUDBase, IInputsReceiver
 		string str = (this.m_Nodes[0].m_Prevs.Count <= 0 || !(this.m_Nodes[0].m_Prevs[0].m_IconName != string.Empty)) ? "Walkie_talkie_icon" : this.m_Nodes[0].m_Prevs[0].m_IconName;
 		this.m_Icon.texture = Resources.Load<Texture>("HUD/HUD_Walkie_Talkie/" + str);
 		this.m_TimerBelt.gameObject.SetActive(this.m_Duration > 0f);
+		this.m_KeyText.text = KeyCodeToString.GetString(InputsManager.Get().GetActionsByInputAction()[43].m_KeyCode);
 	}
 
 	private void AddNode(string text, int index)
@@ -304,6 +306,8 @@ public class HUDSelectDialogNode : HUDBase, IInputsReceiver
 	private CanvasGroup m_ReplyCanvasGroup;
 
 	private int m_SelectedNode;
+
+	private Text m_KeyText;
 
 	public Vector3 m_CursorOffset = Vector3.zero;
 

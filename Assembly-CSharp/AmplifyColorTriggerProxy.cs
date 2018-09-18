@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("")]
 [RequireComponent(typeof(Rigidbody))]
+[AddComponentMenu("")]
 [RequireComponent(typeof(SphereCollider))]
 public class AmplifyColorTriggerProxy : AmplifyColorTriggerProxyBase
 {

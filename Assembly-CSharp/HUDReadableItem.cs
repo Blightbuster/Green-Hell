@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HUDReadableItem : HUDBase
+public class HUDReadableItem : HUDBase, IInputsReceiver
 {
 	public static HUDReadableItem Get()
 	{
@@ -88,13 +88,9 @@ public class HUDReadableItem : HUDBase
 
 	private void UpdateInputs()
 	{
-		if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Quit) || Input.GetKeyDown(KeyCode.E))
+		if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Quit) || InputsManager.Get().IsActionActive(InputsManager.InputAction.AdditionalQuit))
 		{
 			this.Quit();
-		}
-		else if (Input.GetKeyDown(KeyCode.R))
-		{
-			this.OnReadButton();
 		}
 	}
 
@@ -180,6 +176,19 @@ public class HUDReadableItem : HUDBase
 		}
 		this.m_PagePrevButton.gameObject.SetActive(this.m_PageNum > 0);
 		this.m_PageNextButton.gameObject.SetActive(this.m_PageNum < num - 1);
+	}
+
+	public void OnInputAction(InputsManager.InputAction action)
+	{
+		if (action == InputsManager.InputAction.Read)
+		{
+			this.OnReadButton();
+		}
+	}
+
+	public bool CanReceiveAction()
+	{
+		return base.gameObject.activeInHierarchy;
 	}
 
 	private bool m_Active;

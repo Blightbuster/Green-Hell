@@ -436,14 +436,18 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		}
 		if (this.m_ItemsToSetupAfterLoad.Count > 0)
 		{
+			this.m_SetupAfterLoad = true;
 			for (int i = 0; i < this.m_ItemsToSetupAfterLoad.Count; i++)
 			{
 				this.m_ItemsToSetupAfterLoad[i].SetupAfterLoad(i);
 			}
 			this.m_ItemsToSetupAfterLoad.Clear();
+			this.m_SetupAfterLoad = false;
 		}
 		this.UpdateItemsActivity();
 		this.UpdateItemSlots();
+		this.UpdateFoodProcessors();
+		this.UpdateFirecamps();
 		this.UpdateDebug();
 	}
 
@@ -558,6 +562,30 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			}
 		}
 		this.m_LastUpdateItemSlotsTime = Time.time;
+	}
+
+	private void UpdateFoodProcessors()
+	{
+		if (FoodProcessor.s_AllFoodProcessors == null)
+		{
+			return;
+		}
+		foreach (FoodProcessor foodProcessor in FoodProcessor.s_AllFoodProcessors)
+		{
+			foodProcessor.UpdateProcessing();
+		}
+	}
+
+	private void UpdateFirecamps()
+	{
+		if (Firecamp.s_Firecamps == null)
+		{
+			return;
+		}
+		foreach (Firecamp firecamp in Firecamp.s_Firecamps)
+		{
+			firecamp.ConstantUpdate();
+		}
 	}
 
 	public void OnCreateItem(ItemID id)
@@ -1040,6 +1068,8 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 	public List<ItemID> m_UnlockedItemInfos = new List<ItemID>();
 
 	private List<Item> m_FallenObjects = new List<Item>(1000);
+
+	public bool m_SetupAfterLoad;
 
 	private List<Item> m_ItemsToSetupAfterLoad = new List<Item>();
 

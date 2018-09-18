@@ -45,12 +45,12 @@ namespace UltimateWater
 		[FormerlySerializedAs("allowSpray")]
 		public bool AllowSpray;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("foamQuality")]
+		[Range(0f, 1f)]
 		public float FoamQuality;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("maxTesselationFactor")]
+		[Range(0f, 1f)]
 		public float MaxTesselationFactor;
 
 		[FormerlySerializedAs("maxVertexCount")]

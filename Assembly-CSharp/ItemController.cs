@@ -285,7 +285,7 @@ public class ItemController : PlayerController
 			{
 				if (state == ItemController.State.StoneAim)
 				{
-					actions.Add(52);
+					actions.Add(48);
 					actions.Add(4);
 				}
 			}

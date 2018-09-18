@@ -1263,6 +1263,21 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 			{
 				base.GetComponent<BodyInspectionController>().DebugAttachWorms();
 			}
+			else if (Input.GetKeyDown(KeyCode.Backslash))
+			{
+				SortedDictionary<string, string> localizedtexts = GreenHellGame.Instance.GetLocalization().GetLocalizedtexts();
+				SortedDictionary<string, string>.Enumerator enumerator = localizedtexts.GetEnumerator();
+				while (enumerator.MoveNext())
+				{
+					Localization localization = GreenHellGame.Instance.GetLocalization();
+					KeyValuePair<string, string> keyValuePair = enumerator.Current;
+					string text = localization.Get(keyValuePair.Key);
+					if (text.Contains("["))
+					{
+						Debug.Log(text);
+					}
+				}
+			}
 		}
 		if (this.CanShowWatch() && InputsManager.Get().IsActionActive(InputsManager.InputAction.Watch))
 		{
@@ -1345,14 +1360,6 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 				}
 			}
 		}
-		else if (action == InputsManager.InputAction.HideMap)
-		{
-			if (!this.m_MapActivityChanged && MapController.Get().IsActive() && MapController.Get().CanDisable())
-			{
-				MapController.Get().Hide();
-				this.m_MapActivityChanged = true;
-			}
-		}
 		else if (action == InputsManager.InputAction.ShowNotepad)
 		{
 			if (!this.m_NotepadActivityChanged && this.CanShowNotepad())
@@ -1374,14 +1381,6 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 					this.StartController(PlayerControllerType.Notepad);
 					this.m_NotepadActivityChanged = true;
 				}
-			}
-		}
-		else if (action == InputsManager.InputAction.HideNotepad)
-		{
-			if (!this.m_NotepadActivityChanged && this.m_NotepadController.IsActive() && this.m_NotepadController.CanDisable())
-			{
-				this.m_NotepadController.Hide();
-				this.m_NotepadActivityChanged = true;
 			}
 		}
 		else if (action == InputsManager.InputAction.QuickEquip0)
@@ -1409,6 +1408,16 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 				this.StartControllerInternal();
 				this.SetWantedItem(item, true);
 			}
+		}
+		if ((action == InputsManager.InputAction.HideMap || action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && !this.m_MapActivityChanged && MapController.Get().IsActive() && MapController.Get().CanDisable())
+		{
+			MapController.Get().Hide();
+			this.m_MapActivityChanged = true;
+		}
+		if ((action == InputsManager.InputAction.HideNotepad || action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && !this.m_NotepadActivityChanged && this.m_NotepadController.IsActive() && this.m_NotepadController.CanDisable())
+		{
+			this.m_NotepadController.Hide();
+			this.m_NotepadActivityChanged = true;
 		}
 	}
 
@@ -1473,7 +1482,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	public bool CanStartCrafting()
 	{
-		return !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_InsectsController.IsActive() && !VomitingController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying();
+		return !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_InsectsController.IsActive() && !VomitingController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && !HitReactionController.Get().IsActive();
 	}
 
 	private bool CanShowWatch()
@@ -1643,7 +1652,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 					{
 						PostProcessManager.Get().SetWeight(PostProcessManager.Effect.Blood, 1f);
 					}
-					if (!this.m_WeaponController.IsAttack() && !CraftingController.Get().IsActive())
+					if (this.CanStartHitReaction())
 					{
 						if (this.m_HitReactionController.enabled)
 						{
@@ -1664,6 +1673,11 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 			}
 		}
 		return base.TakeDamage(info);
+	}
+
+	private bool CanStartHitReaction()
+	{
+		return !this.m_WeaponController.IsAttack() && !CraftingController.Get().IsActive() && !CraftingManager.Get().IsActive() && !SleepController.Get().IsActive() && (!WeaponSpearController.Get().IsActive() || (!WeaponSpearController.Get().m_ImpaledObject && !WeaponSpearController.Get().m_ItemBody));
 	}
 
 	public bool IsBlock()
@@ -2286,7 +2300,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	private bool ShouldHideWeapon()
 	{
-		return Inventory3DManager.Get().IsActive() || BodyInspectionController.Get().IsActive() || this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) || this.m_Animator.GetBool(ItemController.Get().m_FireHash) || NotepadController.Get().IsActive() || MapController.Get().IsActive() || LadderController.Get().IsActive() || LiquidInHandsController.Get().IsActive() || SwimController.Get().IsActive() || HeavyObjectController.Get().IsActive() || BoatController.Get().IsActive() || ConsciousnessController.Get().IsActive() || GrapplingHookController.Get().IsActive() || HarvestingAnimalController.Get().IsActive() || HarvestingSmallAnimalController.Get().IsActive() || CraftingController.Get().IsActive() || MakeFireController.Get().IsActive() || HitReactionController.Get().IsActive() || DeathController.Get().IsActive() || (ItemController.Get().IsActive() && ItemController.Get().m_StoneThrowing) || CutscenesManager.Get().IsCutscenePlaying() || ConstructionController.Get().IsActive();
+		return Inventory3DManager.Get().IsActive() || BodyInspectionController.Get().IsActive() || this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) || this.m_Animator.GetBool(ItemController.Get().m_FireHash) || NotepadController.Get().IsActive() || MapController.Get().IsActive() || LadderController.Get().IsActive() || LiquidInHandsController.Get().IsActive() || SwimController.Get().IsActive() || HeavyObjectController.Get().IsActive() || BoatController.Get().IsActive() || ConsciousnessController.Get().IsActive() || GrapplingHookController.Get().IsActive() || HarvestingAnimalController.Get().IsActive() || HarvestingSmallAnimalController.Get().IsActive() || CraftingController.Get().IsActive() || MakeFireController.Get().IsActive() || DeathController.Get().IsActive() || (ItemController.Get().IsActive() && ItemController.Get().m_StoneThrowing) || CutscenesManager.Get().IsCutscenePlaying() || ConstructionController.Get().IsActive();
 	}
 
 	private void UpdateWeapon()
@@ -2320,6 +2334,11 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 			InventoryBackpack.Get().RemoveItem(item, false);
 			this.SetWantedItem(item, true);
 		}
+	}
+
+	private new void OnDestroy()
+	{
+		InputsManager.Get().UnregisterReceiver(this);
 	}
 
 	private static Player s_Instance;

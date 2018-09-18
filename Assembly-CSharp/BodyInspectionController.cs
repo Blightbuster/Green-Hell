@@ -475,7 +475,7 @@ public class BodyInspectionController : PlayerController
 
 	public override void OnInputAction(InputsManager.InputAction action)
 	{
-		if (this.CanLeave() && action == InputsManager.InputAction.QuitBodyInspection && Time.time - Inventory3DManager.Get().m_DeactivationTime > 0.3f)
+		if (this.CanLeave() && (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && Time.time - Inventory3DManager.Get().m_DeactivationTime > 0.3f)
 		{
 			this.m_Animator.SetBool("Inventory", true);
 			this.SetState(BIState.Leaving);

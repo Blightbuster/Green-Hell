@@ -104,7 +104,7 @@ public class FightController : PlayerController
 		base.GetInputActions(ref actions);
 		if (this.CanBlock())
 		{
-			actions.Add(58);
+			actions.Add(53);
 		}
 	}
 

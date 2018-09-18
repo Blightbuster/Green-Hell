@@ -61,13 +61,13 @@ namespace UltimateWater
 		[FormerlySerializedAs("speed")]
 		private float _Speed;
 
-		[Tooltip("Angular deviation from the wind direction.")]
 		[FormerlySerializedAs("deviation")]
+		[Tooltip("Angular deviation from the wind direction.")]
 		[SerializeField]
 		private float _Deviation;
 
-		[SerializeField]
 		[FormerlySerializedAs("intensity")]
+		[SerializeField]
 		[Range(0f, 4f)]
 		private float _Intensity;
 

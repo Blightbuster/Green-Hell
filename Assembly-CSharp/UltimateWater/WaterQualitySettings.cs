@@ -270,16 +270,16 @@ namespace UltimateWater
 
 		public WaterRipplesData Ripples;
 
-		[SerializeField]
 		[FormerlySerializedAs("qualityLevels")]
+		[SerializeField]
 		private WaterQualityLevel[] _QualityLevels;
 
-		[SerializeField]
 		[FormerlySerializedAs("synchronizeWithUnity")]
+		[SerializeField]
 		private bool _SynchronizeWithUnity = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("savedCustomQualityLevel")]
+		[SerializeField]
 		private int _SavedCustomQualityLevel;
 
 		private int _WaterQualityIndex;

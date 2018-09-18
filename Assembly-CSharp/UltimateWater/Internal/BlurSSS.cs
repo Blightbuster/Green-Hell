@@ -40,8 +40,8 @@ namespace UltimateWater.Internal
 			source.filterMode = filterMode;
 		}
 
-		[FormerlySerializedAs("initializedDefaults")]
 		[SerializeField]
+		[FormerlySerializedAs("initializedDefaults")]
 		private bool _InitializedDefaults;
 	}
 }

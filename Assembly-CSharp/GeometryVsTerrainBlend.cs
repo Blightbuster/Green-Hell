@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[SelectionBase]
 [RequireComponent(typeof(MeshFilter))]
 [AddComponentMenu("Relief Terrain/Geometry Blend")]
+[SelectionBase]
 public class GeometryVsTerrainBlend : MonoBehaviour
 {
 	private void Start()

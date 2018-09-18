@@ -10,18 +10,23 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 		this.m_ConnectedFirecamp = firecmap;
 	}
 
+	private void Awake()
+	{
+		FoodProcessor.s_AllFoodProcessors.Add(this);
+	}
+
+	private void OnDestroy()
+	{
+		FoodProcessor.s_AllFoodProcessors.Remove(this);
+	}
+
 	protected void Start()
 	{
 		this.m_ItemsManager = ItemsManager.Get();
 		this.m_Firecamp = base.GetComponent<Firecamp>();
 	}
 
-	protected void Update()
-	{
-		this.UpdateProcessing();
-	}
-
-	private void UpdateProcessing()
+	public void UpdateProcessing()
 	{
 		foreach (ItemSlot itemSlot in this.m_ActiveSlots)
 		{
@@ -189,7 +194,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 			return;
 		}
 		Food food = (Food)slot.m_Item;
-		if (SaveGame.m_State == SaveGame.State.None)
+		if (!ItemsManager.Get().m_SetupAfterLoad)
 		{
 			food.m_ProcessDuration = 0f;
 		}
@@ -219,6 +224,11 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 				Skill.Get<CookingSkill>().OnSkillAction();
 			}
 			this.m_ProcessedSlots.Remove(slot);
+		}
+		if (slot.m_Item)
+		{
+			slot.m_Item.enabled = true;
+			HUDProcess.Get().UnregisterProcess(slot.m_Item);
 		}
 	}
 
@@ -250,6 +260,8 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 	private ItemsManager m_ItemsManager;
 
 	public bool m_DebugImmediate;
+
+	public static List<FoodProcessor> s_AllFoodProcessors = new List<FoodProcessor>();
 
 	public enum Type
 	{

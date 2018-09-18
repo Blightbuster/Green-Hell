@@ -102,16 +102,16 @@ namespace UltimateWater
 		[SerializeField]
 		private Water _Water;
 
-		[Header("Profiles")]
 		[SerializeField]
+		[Header("Profiles")]
 		private WaterProfile _First;
 
 		[SerializeField]
 		private WaterProfile _Second;
 
-		[Range(0f, 1f)]
-		[SerializeField]
 		[Header("Blend:")]
+		[SerializeField]
+		[Range(0f, 1f)]
 		private float _Factor;
 
 		private readonly Water.WeightedProfile[] _Profiles = new Water.WeightedProfile[2];

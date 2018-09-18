@@ -919,16 +919,16 @@ namespace RootMotion.FinalIK
 			[Tooltip("Different techniques for shoulder bone rotation.")]
 			public IKSolverVR.Arm.ShoulderRotationMode shoulderRotationMode;
 
-			[Range(0f, 1f)]
 			[Tooltip("The weight of shoulder rotation")]
+			[Range(0f, 1f)]
 			public float shoulderRotationWeight = 1f;
 
-			[Range(0f, 1f)]
 			[Tooltip("If greater than 0, will bend the elbow towards the 'Bend Goal' Transform.")]
+			[Range(0f, 1f)]
 			public float bendGoalWeight;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Angular offset of the elbow bending direction.")]
+			[Range(-180f, 180f)]
 			public float swivelOffset;
 
 			[Tooltip("Local axis of the hand bone that points from the wrist towards the palm. Used for defining hand bone orientation.")]
@@ -1416,12 +1416,12 @@ namespace RootMotion.FinalIK
 			[Tooltip("Rotational weight of the toe/foot target.")]
 			public float rotationWeight;
 
-			[Range(0f, 1f)]
 			[Tooltip("If greater than 0, will bend the knee towards the 'Bend Goal' Transform.")]
+			[Range(0f, 1f)]
 			public float bendGoalWeight;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Angular offset of the knee bending direction.")]
+			[Range(-180f, 180f)]
 			public float swivelOffset;
 
 			[HideInInspector]
@@ -1756,8 +1756,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The amount of head/hand target velocity prediction.")]
 			public float velocityFactor = 0.4f;
 
-			[Range(0.9f, 1f)]
 			[Tooltip("How much can a leg be extended before it is forced to step to another position? 1 means fully stretched.")]
+			[Range(0.9f, 1f)]
 			public float maxLegStretch = 1f;
 
 			[Tooltip("The speed of lerping the root of the character towards the horizontal mid-point of the footsteps.")]
@@ -1772,8 +1772,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The height offset of the heel by normalized step progress (0 - 1).")]
 			public AnimationCurve heelHeight;
 
-			[Range(0f, 180f)]
 			[Tooltip("Rotates the foot while the leg is not stepping to relax the twist rotation of the leg if ideal rotation is past this angle.")]
+			[Range(0f, 180f)]
 			public float relaxLegTwistMinAngle = 20f;
 
 			[Tooltip("The speed of rotating the foot while the leg is not stepping to relax the twist rotation of the leg.")]
@@ -2245,12 +2245,12 @@ namespace RootMotion.FinalIK
 			[Tooltip("Rotational weight of the head target.")]
 			public float rotationWeight = 1f;
 
-			[Tooltip("Positional weight of the pelvis target.")]
 			[Range(0f, 1f)]
+			[Tooltip("Positional weight of the pelvis target.")]
 			public float pelvisPositionWeight;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the pelvis target.")]
+			[Range(0f, 1f)]
 			public float pelvisRotationWeight;
 
 			[Tooltip("If 'Chest Goal Weight' is greater than 0, the chest will be turned towards this Transform.")]
@@ -2263,21 +2263,21 @@ namespace RootMotion.FinalIK
 			[Tooltip("Minimum height of the head from the root of the character.")]
 			public float minHeadHeight = 0.8f;
 
-			[Tooltip("Determines how much the body will follow the position of the head.")]
 			[Range(0f, 1f)]
+			[Tooltip("Determines how much the body will follow the position of the head.")]
 			public float bodyPosStiffness = 0.55f;
 
-			[Tooltip("Determines how much the body will follow the rotation of the head.")]
 			[Range(0f, 1f)]
+			[Tooltip("Determines how much the body will follow the rotation of the head.")]
 			public float bodyRotStiffness = 0.1f;
 
-			[Tooltip("Determines how much the chest will rotate to the rotation of the head.")]
 			[FormerlySerializedAs("chestRotationWeight")]
+			[Tooltip("Determines how much the chest will rotate to the rotation of the head.")]
 			[Range(0f, 1f)]
 			public float neckStiffness = 0.2f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Clamps chest rotation.")]
+			[Range(0f, 1f)]
 			public float chestClampWeight = 0.5f;
 
 			[Range(0f, 1f)]

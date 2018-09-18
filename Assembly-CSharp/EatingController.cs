@@ -45,6 +45,11 @@ public class EatingController : PlayerController
 		Localization localization = GreenHellGame.Instance.GetLocalization();
 		HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
 		string text = string.Empty;
+		if (info.m_ConsumeEffect == ConsumeEffect.FoodPoisoning)
+		{
+			text = info.m_ConsumeEffectLevel.ToString("F0") + " " + localization.Get("HUD_FoodPoisoning");
+			hudmessages.AddMessage(text, null, HUDMessageIcon.FoodPoisoning, string.Empty);
+		}
 		if (info.m_AddEnergy > 0f)
 		{
 			text = info.m_AddEnergy.ToString("F0") + " " + localization.Get("HUD_Energy");

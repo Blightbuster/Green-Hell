@@ -7,8 +7,8 @@ using CJTools;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[ExecuteInEditMode]
 [RequireComponent(typeof(TOD_Components))]
+[ExecuteInEditMode]
 [RequireComponent(typeof(TOD_Resources))]
 public class TOD_Sky : MonoBehaviour
 {

@@ -291,8 +291,8 @@ namespace Pathfinding.RVO
 		[Tooltip("How strongly other agents will avoid this agent")]
 		public float priority = 0.5f;
 
-		[Tooltip("Center of the agent relative to the pivot point of this game object")]
 		[HideInInspector]
+		[Tooltip("Center of the agent relative to the pivot point of this game object")]
 		public float center = 1f;
 
 		protected Transform tr;

@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace DynamicFogAndMist
 {
-	[HelpURL("http://kronnect.com/taptapgo")]
 	[ExecuteInEditMode]
+	[HelpURL("http://kronnect.com/taptapgo")]
 	public class DynamicFogManager : MonoBehaviour
 	{
 		private void OnEnable()

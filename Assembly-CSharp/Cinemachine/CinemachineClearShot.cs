@@ -313,21 +313,21 @@ namespace Cinemachine
 			}
 		}
 
-		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
 		[NoSaveDuringPlay]
+		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
 		public Transform m_LookAt;
 
-		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
 		[NoSaveDuringPlay]
+		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
 		public Transform m_Follow;
 
 		[NoSaveDuringPlay]
 		[Tooltip("When enabled, the current child camera and blend will be indicated in the game window, for debugging")]
 		public bool m_ShowDebugText;
 
+		[HideInInspector]
 		[NoSaveDuringPlay]
 		[SerializeField]
-		[HideInInspector]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("Wait this many seconds before activating a new child camera")]
@@ -339,8 +339,8 @@ namespace Cinemachine
 		[Tooltip("If checked, camera choice will be randomized if multiple cameras are equally desirable.  Otherwise, child list order and child camera priority will be used.")]
 		public bool m_RandomizeChoice;
 
-		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
 		[CinemachineBlendDefinitionProperty]
+		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
 
 		[HideInInspector]

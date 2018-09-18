@@ -32,8 +32,8 @@ namespace Pathfinding
 			return 1;
 		}
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private int version;
 	}
 }

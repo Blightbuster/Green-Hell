@@ -5,10 +5,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[SaveDuringPlay]
 	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
+	[SaveDuringPlay]
 	public class CinemachineOrbitalTransposer : CinemachineTransposer
 	{
 		protected override void OnValidate()
@@ -216,14 +216,14 @@ namespace Cinemachine
 		[Tooltip("Heading Control.  The settings here control the behaviour of the camera in response to the player's input.")]
 		public AxisState m_XAxis = new AxisState(300f, 2f, 1f, 0f, "Mouse X", true);
 
-		[FormerlySerializedAs("m_Radius")]
 		[HideInInspector]
+		[FormerlySerializedAs("m_Radius")]
 		[SerializeField]
 		private float m_LegacyRadius = float.MaxValue;
 
-		[SerializeField]
-		[FormerlySerializedAs("m_HeightOffset")]
 		[HideInInspector]
+		[FormerlySerializedAs("m_HeightOffset")]
+		[SerializeField]
 		private float m_LegacyHeightOffset = float.MaxValue;
 
 		[FormerlySerializedAs("m_HeadingBias")]
@@ -231,8 +231,8 @@ namespace Cinemachine
 		[SerializeField]
 		private float m_LegacyHeadingBias = float.MaxValue;
 
-		[NoSaveDuringPlay]
 		[HideInInspector]
+		[NoSaveDuringPlay]
 		public bool m_HeadingIsSlave;
 
 		internal CinemachineOrbitalTransposer.UpdateHeadingDelegate HeadingUpdater = (CinemachineOrbitalTransposer orbital, float deltaTime, Vector3 up) => orbital.UpdateHeading(deltaTime, up, ref orbital.m_XAxis);
@@ -322,14 +322,14 @@ namespace Cinemachine
 			[Tooltip("Maximum angular speed of recentering.  Will accelerate into and decelerate out of this.")]
 			public float m_RecenteringTime;
 
-			[FormerlySerializedAs("m_HeadingDefinition")]
 			[SerializeField]
 			[HideInInspector]
+			[FormerlySerializedAs("m_HeadingDefinition")]
 			private int m_LegacyHeadingDefinition;
 
 			[FormerlySerializedAs("m_VelocityFilterStrength")]
-			[SerializeField]
 			[HideInInspector]
+			[SerializeField]
 			private int m_LegacyVelocityFilterStrength;
 		}
 

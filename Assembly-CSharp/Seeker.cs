@@ -4,8 +4,8 @@ using Pathfinding;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[HelpURL("http://arongranberg.com/astar/docs/class_seeker.php")]
 [AddComponentMenu("Pathfinding/Seeker")]
+[HelpURL("http://arongranberg.com/astar/docs/class_seeker.php")]
 public class Seeker : VersionedMonoBehaviour
 {
 	public Seeker()
@@ -283,9 +283,9 @@ public class Seeker : VersionedMonoBehaviour
 	[HideInInspector]
 	public int traversableTags = -1;
 
-	[SerializeField]
 	[HideInInspector]
 	[FormerlySerializedAs("traversableTags")]
+	[SerializeField]
 	protected TagMask traversableTagsCompatibility = new TagMask(-1, -1);
 
 	[HideInInspector]

@@ -150,7 +150,7 @@ public class HUDItemInHand : HUDBase
 			{
 				HUDItemInHand.Action action2 = this.m_Actions[num];
 				action2.rect_trans.anchoredPosition = action2.position;
-				if (inputActionData.m_KeyCodes[0] == KeyCode.Mouse0)
+				if (inputActionData.m_KeyCode == KeyCode.Mouse0)
 				{
 					action2.key_frame.gameObject.SetActive(false);
 					action2.key_text.gameObject.SetActive(false);
@@ -158,7 +158,7 @@ public class HUDItemInHand : HUDBase
 					action2.mouse_icon_rmb.gameObject.SetActive(false);
 					action2.mouse_icon_mmb.gameObject.SetActive(false);
 				}
-				else if (inputActionData.m_KeyCodes[0] == KeyCode.Mouse1)
+				else if (inputActionData.m_KeyCode == KeyCode.Mouse1)
 				{
 					action2.key_frame.gameObject.SetActive(false);
 					action2.key_text.gameObject.SetActive(false);
@@ -166,7 +166,7 @@ public class HUDItemInHand : HUDBase
 					action2.mouse_icon_rmb.gameObject.SetActive(true);
 					action2.mouse_icon_mmb.gameObject.SetActive(false);
 				}
-				else if (inputActionData.m_KeyCodes[0] == KeyCode.Mouse2)
+				else if (inputActionData.m_KeyCode == KeyCode.Mouse2)
 				{
 					action2.key_frame.gameObject.SetActive(false);
 					action2.key_text.gameObject.SetActive(false);
@@ -210,7 +210,7 @@ public class HUDItemInHand : HUDBase
 		{
 			return string.Empty;
 		}
-		return KeyCodeToString.GetString(data.m_KeyCodes[0]);
+		return KeyCodeToString.GetString(data.m_KeyCode);
 	}
 
 	public Image m_Icon;

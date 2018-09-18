@@ -5,10 +5,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[SaveDuringPlay]
 	[DocumentationSorting(7f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineTrackedDolly : CinemachineComponentBase
 	{
 		public override bool IsValid
@@ -188,19 +188,19 @@ namespace Cinemachine
 		[Range(0f, 20f)]
 		public float m_XDamping;
 
-		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to maintain its position in the path-local up direction.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
+		[Range(0f, 20f)]
 		public float m_YDamping;
 
-		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to maintain its position in a direction parallel to the path.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
+		[Range(0f, 20f)]
 		public float m_ZDamping = 1f;
 
 		[Tooltip("How to set the virtual camera's Up vector.  This will affect the screen composition, because the camera Aim behaviours will always try to respect the Up direction.")]
 		public CinemachineTrackedDolly.CameraUpMode m_CameraUp;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's X angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's X angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_PitchDamping;
 
 		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]

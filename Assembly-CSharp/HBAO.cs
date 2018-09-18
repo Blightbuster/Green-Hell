@@ -626,8 +626,8 @@ public class HBAO : MonoBehaviour
 
 	public Shader hbaoShader;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.Presets m_Presets = HBAO.Presets.defaultPresets;
 
 	[HBAO.SettingsGroup]
@@ -638,8 +638,8 @@ public class HBAO : MonoBehaviour
 	[SerializeField]
 	private HBAO.AOSettings m_AOSettings = HBAO.AOSettings.defaultSettings;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.ColorBleedingSettings m_ColorBleedingSettings = HBAO.ColorBleedingSettings.defaultSettings;
 
 	[HBAO.SettingsGroup]
@@ -809,8 +809,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The type of noise to use.")]
 		public HBAO.NoiseType noiseType;
 
-		[Space(10f)]
 		[Tooltip("The way the AO is displayed on screen.")]
+		[Space(10f)]
 		public HBAO.DisplayMode displayMode;
 	}
 
@@ -837,9 +837,9 @@ public class HBAO : MonoBehaviour
 			}
 		}
 
+		[Range(0f, 2f)]
 		[Space(6f)]
 		[Tooltip("AO radius: this is the distance outside which occluders are ignored.")]
-		[Range(0f, 2f)]
 		public float radius;
 
 		[Range(32f, 256f)]
@@ -868,8 +868,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The type of per pixel normals to use.")]
 		public HBAO.PerPixelNormals perPixelNormals;
 
-		[Tooltip("This setting allow you to set the base color if the AO, the alpha channel value is unused.")]
 		[Space(10f)]
+		[Tooltip("This setting allow you to set the base color if the AO, the alpha channel value is unused.")]
 		public Color baseColor;
 	}
 
@@ -893,8 +893,8 @@ public class HBAO : MonoBehaviour
 		[Space(6f)]
 		public bool enabled;
 
-		[Tooltip("This value allows to control the saturation of the color bleeding.")]
 		[Space(10f)]
+		[Tooltip("This value allows to control the saturation of the color bleeding.")]
 		[Range(0f, 4f)]
 		public float saturation;
 
@@ -924,8 +924,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The type of blur to use.")]
 		public HBAO.Blur amount;
 
-		[Space(10f)]
 		[Range(0f, 16f)]
+		[Space(10f)]
 		[Tooltip("This parameter controls the depth-dependent weight of the bilateral filter, to avoid bleeding across edges. A zero sharpness is a pure Gaussian blur. Increasing the blur sharpness removes bleeding by using lower weights for samples with large depth delta from the current pixel.")]
 		public float sharpness;
 

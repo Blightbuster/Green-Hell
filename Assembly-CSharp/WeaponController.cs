@@ -250,6 +250,10 @@ public class WeaponController : FightController
 		{
 			return;
 		}
+		if (this.m_AnimationStopped)
+		{
+			this.UpdateStoppedAnimation();
+		}
 		if (PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel))
 		{
 			this.m_ComboScheduled = false;
@@ -266,10 +270,6 @@ public class WeaponController : FightController
 		}
 		WeaponType weaponType = ((Weapon)currentItem).GetWeaponType();
 		this.m_Animator.SetInteger(this.m_IWeaponType, (int)weaponType);
-		if (this.m_AnimationStopped)
-		{
-			this.UpdateStoppedAnimation();
-		}
 		if (!this.m_WasActivated && !currentItem.gameObject.activeSelf)
 		{
 			int shortNameHash = this.m_Animator.GetCurrentAnimatorStateInfo(this.m_SpineLayerIndex).shortNameHash;

@@ -233,7 +233,7 @@ public class ConstructionGhost : Trigger
 	private void UpdateProhibitionType()
 	{
 		this.m_ProhibitionType = ConstructionGhost.ProhibitionType.None;
-		if (this.m_AllignToTerrain)
+		if (this.m_AllignToTerrain && !this.m_Smoker && this.m_FirecampRacks.Count == 0)
 		{
 			float num = Vector3.Angle(base.transform.up, Vector3.up);
 			if (num > this.m_MaxAllignAngle)
@@ -255,11 +255,14 @@ public class ConstructionGhost : Trigger
 		{
 			list.Remove(this.m_Firecamp.m_Collider);
 		}
-		if (ItemInfo.IsFirecamp(this.m_ResultItemID) && this.m_FirecampRack)
+		if ((ItemInfo.IsFirecamp(this.m_ResultItemID) || ItemInfo.IsStoneRing(this.m_ResultItemID)) && this.m_FirecampRacks.Count > 0)
 		{
-			list.Remove(this.m_FirecampRack.m_Collider);
+			foreach (FirecampRack firecampRack in this.m_FirecampRacks)
+			{
+				list.Remove(firecampRack.m_Collider);
+			}
 		}
-		if (ItemInfo.IsFirecamp(this.m_ResultItemID) && this.m_Smoker)
+		if ((ItemInfo.IsFirecamp(this.m_ResultItemID) || ItemInfo.IsStoneRing(this.m_ResultItemID)) && this.m_Smoker)
 		{
 			list.Remove(this.m_Smoker.m_Collider);
 		}
@@ -477,14 +480,15 @@ public class ConstructionGhost : Trigger
 		{
 			return;
 		}
-		if (this.m_AllignToTerrain)
-		{
-			this.AllignToTerrain();
-		}
+		this.AllignToTerrain();
 	}
 
 	private void AllignToTerrain()
 	{
+		if (!this.m_AllignToTerrain)
+		{
+			return;
+		}
 		bool enabled = this.m_BoxCollider.enabled;
 		this.m_BoxCollider.enabled = false;
 		RaycastHit raycastHit = default(RaycastHit);
@@ -583,45 +587,40 @@ public class ConstructionGhost : Trigger
 			position.y -= this.m_BoxCollider.bounds.min.y - base.gameObject.transform.position.y;
 			base.transform.position = position;
 			this.m_Firecamp = firecamp;
+			this.AllignToTerrain();
 		}
 		return this.m_Firecamp != null;
 	}
 
 	private bool UpdateSnapToRack()
 	{
-		if (!ItemInfo.IsFirecamp(this.m_ResultItemID))
+		if (!ItemInfo.IsFirecamp(this.m_ResultItemID) && !ItemInfo.IsStoneRing(this.m_ResultItemID))
 		{
 			return false;
 		}
-		this.m_FirecampRack = null;
-		float num = float.MaxValue;
-		FirecampRack firecampRack = null;
-		foreach (FirecampRack firecampRack2 in FirecampRack.s_FirecampRacks)
+		this.m_FirecampRacks.Clear();
+		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
 		{
-			float num2 = Vector3.Distance(base.transform.position, firecampRack2.transform.position);
-			if (num2 < num)
+			float num = Vector3.Distance(base.transform.position, firecampRack.transform.position);
+			if (num < this.m_FirecampSnapDist)
 			{
-				firecampRack = firecampRack2;
-				num = num2;
+				this.m_FirecampRacks.Add(firecampRack);
 			}
 		}
-		if (!firecampRack)
+		if (this.m_FirecampRacks.Count > 0)
 		{
-			return false;
-		}
-		if (num < this.m_FirecampSnapDist)
-		{
-			Vector3 position = firecampRack.transform.position;
+			Vector3 position = this.m_FirecampRacks[0].transform.position;
 			position.y -= this.m_BoxCollider.bounds.min.y - base.gameObject.transform.position.y;
 			base.transform.position = position;
-			this.m_FirecampRack = firecampRack;
+			this.AllignToTerrain();
+			return true;
 		}
-		return this.m_FirecampRack != null;
+		return false;
 	}
 
 	private bool UpdateSnapToSmoker()
 	{
-		if (!ItemInfo.IsFirecamp(this.m_ResultItemID))
+		if (!ItemInfo.IsFirecamp(this.m_ResultItemID) && !ItemInfo.IsStoneRing(this.m_ResultItemID))
 		{
 			return false;
 		}
@@ -821,7 +820,8 @@ public class ConstructionGhost : Trigger
 
 	private void CreateConstruction()
 	{
-		Item item = ItemsManager.Get().CreateItem(this.m_ResultItemID, true, base.transform.position, base.transform.rotation);
+		Item item = null;
+		item = ItemsManager.Get().CreateItem(this.m_ResultItemID, true, base.transform.position, base.transform.rotation);
 		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.NeedFirecamp)
 		{
 			IFirecampAttach[] components = item.gameObject.GetComponents<IFirecampAttach>();
@@ -830,12 +830,15 @@ public class ConstructionGhost : Trigger
 				firecampAttach.SetFirecamp(this.m_Firecamp);
 			}
 		}
-		if (this.m_FirecampRack && ItemInfo.IsFirecamp(item.GetInfoID()))
+		if (this.m_FirecampRacks.Count > 0 && ItemInfo.IsFirecamp(item.GetInfoID()))
 		{
-			IFirecampAttach[] components2 = this.m_FirecampRack.gameObject.GetComponents<IFirecampAttach>();
-			foreach (IFirecampAttach firecampAttach2 in components2)
+			foreach (FirecampRack firecampRack in this.m_FirecampRacks)
 			{
-				firecampAttach2.SetFirecamp((Firecamp)item);
+				IFirecampAttach[] components2 = firecampRack.gameObject.GetComponents<IFirecampAttach>();
+				foreach (IFirecampAttach firecampAttach2 in components2)
+				{
+					firecampAttach2.SetFirecamp((Firecamp)item);
+				}
 			}
 		}
 		if (this.m_Smoker && ItemInfo.IsFirecamp(item.GetInfoID()))
@@ -1089,7 +1092,7 @@ public class ConstructionGhost : Trigger
 
 	public float m_FirecampRackSnapDist = 1f;
 
-	private FirecampRack m_FirecampRack;
+	private List<FirecampRack> m_FirecampRacks = new List<FirecampRack>();
 
 	public float m_SmokerSnapDist = 1f;
 

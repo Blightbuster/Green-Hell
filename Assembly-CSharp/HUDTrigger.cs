@@ -105,7 +105,7 @@ public class HUDTrigger : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return !TriggerController.Get().IsGrabInProgress() && ((this.IsExpanded() && this.m_TriggerType == HUDTrigger.TriggerType.Normal) || (this.GetTrigger() && this.GetTrigger().CanTrigger() && (this.m_TriggerType == HUDTrigger.TriggerType.Normal || !Inventory3DManager.Get().gameObject.activeSelf)));
+		return !TriggerController.Get().IsGrabInProgress() && ((this.IsExpanded() && this.m_TriggerType == HUDTrigger.TriggerType.Normal) || (this.GetTrigger() && this.GetTrigger().CanTrigger() && (!Inventory3DManager.Get().IsActive() || !Inventory3DManager.Get().m_CarriedItem) && (this.m_TriggerType == HUDTrigger.TriggerType.Normal || !Inventory3DManager.Get().gameObject.activeSelf)));
 	}
 
 	protected override void OnShow()
@@ -329,7 +329,7 @@ public class HUDTrigger : HUDBase
 			InputActionData inputActionData = InputsManager.Get().GetInputActionData(action);
 			if (inputActionData != null)
 			{
-				if (inputActionData.m_KeyCodes[0] == KeyCode.Mouse1)
+				if (inputActionData.m_KeyCode == KeyCode.Mouse1)
 				{
 					if (this.m_MouseRMBIcon[num])
 					{
@@ -341,7 +341,7 @@ public class HUDTrigger : HUDBase
 				else
 				{
 					Text text = this.m_Keys[num];
-					text.text += inputActionData.m_KeyCodes[0].ToString();
+					text.text += inputActionData.m_KeyCode.ToString();
 				}
 				if (inputActionData.m_Hold > 0f)
 				{

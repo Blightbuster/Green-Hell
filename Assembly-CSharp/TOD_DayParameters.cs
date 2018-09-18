@@ -129,15 +129,15 @@ public class TOD_DayParameters
 
 	public float m_SanityLightIntensityMul = 1f;
 
-	[Tooltip("Opacity of the shadows dropped by the light source.")]
 	[Range(0f, 1f)]
+	[Tooltip("Opacity of the shadows dropped by the light source.")]
 	public float ShadowStrength = 1f;
 
 	[Tooltip("Brightness multiplier of the ambient light.")]
 	[Range(0f, 1f)]
 	public float AmbientMultiplier = 1f;
 
-	[Tooltip("Brightness multiplier of the reflection probe.")]
 	[Range(0f, 1f)]
+	[Tooltip("Brightness multiplier of the reflection probe.")]
 	public float ReflectionMultiplier = 1f;
 }

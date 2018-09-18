@@ -789,27 +789,24 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			{
 				this.IncreaseHP(-this.m_HealthLossPerSecondNoHydration * deltaTime);
 			}
-			if (this.IsNutritionCarboHealingLevel() && this.IsNutritionFatHealingLevel() && this.IsNutritionProteinsHealingLevel())
+			bool flag = true;
+			List<Injury> injuriesList = this.m_InjuryModule.GetInjuriesList();
+			for (int i = 0; i < injuriesList.Count; i++)
 			{
-				bool flag = true;
-				List<Injury> injuriesList = this.m_InjuryModule.GetInjuriesList();
-				for (int i = 0; i < injuriesList.Count; i++)
+				if (injuriesList[i].m_ParentInjury == null)
 				{
-					if (injuriesList[i].m_ParentInjury == null)
+					if (injuriesList[i].m_Type != InjuryType.Worm && injuriesList[i].m_Type != InjuryType.Rash && injuriesList[i].m_Type != InjuryType.Leech)
 					{
-						if (injuriesList[i].m_Type != InjuryType.Worm)
-						{
-							flag = false;
-							break;
-						}
+						flag = false;
+						break;
 					}
 				}
-				if (flag)
-				{
-					float num = MainLevel.Instance.m_TODTime.m_DayLengthInMinutes + MainLevel.Instance.m_TODTime.m_NightLengthInMinutes;
-					float num2 = num * 60f;
-					this.IncreaseHP(this.m_MaxHP * this.m_HealthRecoveryPerDay / num2 * deltaTime);
-				}
+			}
+			if (flag)
+			{
+				float num = MainLevel.Instance.m_TODTime.m_DayLengthInMinutes + MainLevel.Instance.m_TODTime.m_NightLengthInMinutes;
+				float num2 = num * 60f;
+				this.IncreaseHP(this.m_MaxHP * this.m_HealthRecoveryPerDay / num2 * deltaTime);
 			}
 			if (this.m_Oxygen <= 0f)
 			{

@@ -19,6 +19,22 @@ public class InsectsSensor : SensorBase
 		{
 			return;
 		}
+		if (CraftingController.Get().IsActive())
+		{
+			return;
+		}
+		if (HitReactionController.Get().IsActive())
+		{
+			return;
+		}
+		if (HarvestingAnimalController.Get().IsActive())
+		{
+			return;
+		}
+		if (HarvestingSmallAnimalController.Get().IsActive())
+		{
+			return;
+		}
 		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
 		if (currentItem && currentItem.m_Info.IsTorch())
 		{

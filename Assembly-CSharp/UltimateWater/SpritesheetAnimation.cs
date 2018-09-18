@@ -59,24 +59,24 @@ namespace UltimateWater
 			}
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("horizontal")]
+		[SerializeField]
 		private int _Horizontal = 2;
 
 		[FormerlySerializedAs("vertical")]
 		[SerializeField]
 		private int _Vertical = 2;
 
-		[SerializeField]
 		[FormerlySerializedAs("timeStep")]
+		[SerializeField]
 		private float _TimeStep = 0.06f;
 
-		[FormerlySerializedAs("loop")]
 		[SerializeField]
+		[FormerlySerializedAs("loop")]
 		private bool _Loop;
 
-		[FormerlySerializedAs("destroyGo")]
 		[SerializeField]
+		[FormerlySerializedAs("destroyGo")]
 		private bool _DestroyGo;
 
 		private Material _Material;

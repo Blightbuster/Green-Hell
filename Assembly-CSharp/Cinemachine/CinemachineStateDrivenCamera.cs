@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("Cinemachine/CinemachineStateDrivenCamera")]
 	[DisallowMultipleComponent]
-	[ExecuteInEditMode]
+	[AddComponentMenu("Cinemachine/CinemachineStateDrivenCamera")]
 	[DocumentationSorting(13f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	public class CinemachineStateDrivenCamera : CinemachineVirtualCameraBase
 	{
 		public override string Description
@@ -385,9 +385,9 @@ namespace Cinemachine
 		[Tooltip("Force all child cameras to be enabled.  This is useful if animating them in Timeline, but consumes extra resources")]
 		public bool m_EnableAllChildCameras;
 
-		[NoSaveDuringPlay]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
+		[NoSaveDuringPlay]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("The set of instructions associating virtual cameras with states.  These instructions are used to choose the live child at any given moment")]

@@ -97,16 +97,16 @@ namespace UltimateWater.Internal
 		[HideInInspector]
 		private Shader _MaskDisplayShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("intensityMask")]
+		[SerializeField]
 		private Texture2D _IntensityMask;
 
 		[FormerlySerializedAs("worldUnitsOffset")]
 		[SerializeField]
 		private Vector2 _WorldUnitsOffset;
 
-		[FormerlySerializedAs("worldUnitsSize")]
 		[SerializeField]
+		[FormerlySerializedAs("worldUnitsSize")]
 		private Vector2 _WorldUnitsSize;
 
 		private MeshRenderer _InteractionMaskRenderer;

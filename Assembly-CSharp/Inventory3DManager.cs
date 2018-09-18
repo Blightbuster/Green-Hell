@@ -363,7 +363,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 		{
 			this.Activate();
 		}
-		else if (!this.m_ActivityChanged && base.gameObject.activeSelf && (action == InputsManager.InputAction.HideInventory || action == InputsManager.InputAction.ShowInventory))
+		else if (!this.m_ActivityChanged && base.gameObject.activeSelf && (action == InputsManager.InputAction.HideInventory || action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit || action == InputsManager.InputAction.ShowInventory))
 		{
 			if (CraftingManager.Get().gameObject.activeSelf)
 			{
@@ -398,7 +398,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 
 	private void OnLMouseDown()
 	{
-		if (!this.m_FocusedItem || HUDBackpack.Get().m_IsHovered || this.m_FocusedItem.m_Info.m_CantBeDraggedInInventory)
+		if (!this.m_FocusedItem || HUDBackpack.Get().m_IsHovered || this.m_FocusedItem.m_Info.m_CantBeDraggedInInventory || HUDItem.Get().enabled)
 		{
 			return;
 		}
@@ -419,7 +419,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 
 	private bool CanInsertCarriedItemToBackpack()
 	{
-		return this.m_CarriedItem && this.m_CarriedItem.m_Info.m_CanBeAddedToInventory && ((this.m_SelectedSlot && this.m_SelectedSlot.m_BackpackSlot) || this.m_SelectedGroup != null);
+		return this.m_CarriedItem && this.m_CarriedItem.m_Info.m_CanBeAddedToInventory && ((this.m_SelectedSlot && this.m_SelectedSlot.m_BackpackSlot) || (this.m_SelectedGroup != null && this.m_SelectedGroup.IsFree()));
 	}
 
 	private void OnLMouseUp()
@@ -503,7 +503,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 			else
 			{
 				CraftingManager.Get().RemoveItem(this.m_FocusedItem);
-				if (!this.m_FocusedItem.Take())
+				if (this.m_FocusedItem.m_Info.IsHeavyObject() || !this.m_FocusedItem.Take())
 				{
 					this.DropItem(this.m_FocusedItem);
 				}
@@ -882,6 +882,11 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 	{
 		this.m_AudioSource.clip = this.m_DropItemAudioClip;
 		this.m_AudioSource.Play();
+	}
+
+	private void OnDestroy()
+	{
+		InputsManager.Get().UnregisterReceiver(this);
 	}
 
 	public GameObject m_Backpack;

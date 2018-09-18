@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace AdvancedTerrainGrass
 {
-	[RequireComponent(typeof(WindZone))]
 	[ExecuteInEditMode]
+	[RequireComponent(typeof(WindZone))]
 	public class Wind : MonoBehaviour
 	{
 		private void OnEnable()
@@ -96,23 +96,23 @@ namespace AdvancedTerrainGrass
 			this.WindRenderTexture.SetGlobalShaderProperty("_AtgWindRT");
 		}
 
-		[Header("Render Texture Settings")]
 		[Space(4f)]
+		[Header("Render Texture Settings")]
 		public RTSize Resolution = RTSize._512;
 
 		public Texture WindBaseTex;
 
 		public Shader WindCompositeShader;
 
-		[Header("Wind Multipliers")]
 		[Space(4f)]
+		[Header("Wind Multipliers")]
 		public float Grass = 1f;
 
 		public float Foliage = 1f;
 
+		[Range(0.001f, 0.1f)]
 		[Space(4f)]
 		[Header("Size and Speed")]
-		[Range(0.001f, 0.1f)]
 		public float size = 0.01f;
 
 		[Space(5f)]

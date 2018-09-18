@@ -172,6 +172,7 @@ public class MakeFireController : PlayerController
 			this.m_ParticleObj = null;
 			this.m_FireTool.m_Animator.SetBool(this.m_ToolAnimHash, false);
 			this.StopSound();
+			HintsManager.Get().ShowHint("MakeFire_Fail", 10f);
 			break;
 		case MakeFireController.State.Success:
 			Skill.Get<MakeFireSkill>().OnSkillAction();
@@ -192,7 +193,7 @@ public class MakeFireController : PlayerController
 
 	public override void OnInputAction(InputsManager.InputAction action)
 	{
-		if (action == InputsManager.InputAction.StopFireMinigame)
+		if (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit)
 		{
 			this.SetState(MakeFireController.State.Fail);
 		}

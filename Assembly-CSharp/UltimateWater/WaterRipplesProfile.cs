@@ -18,9 +18,9 @@ namespace UltimateWater
 			}
 		}
 
-		[Tooltip("How fast wave amplitude decreases with time")]
-		[Range(0f, 1f)]
 		[Header("Settings")]
+		[Range(0f, 1f)]
+		[Tooltip("How fast wave amplitude decreases with time")]
 		public float Damping = 0.3f;
 
 		[Range(0f, 1f)]
@@ -39,13 +39,13 @@ namespace UltimateWater
 		[Tooltip("Wave height multiplier")]
 		public float Amplitude = 1f;
 
-		[Header("Smooth")]
 		[Tooltip("How much smoothing is applied between iterations")]
 		[Range(0f, 1f)]
+		[Header("Smooth")]
 		public float Sigma;
 
-		[Header("Normals")]
 		[Tooltip("How strong are wave normals")]
+		[Header("Normals")]
 		public float Multiplier = 1f;
 
 		[Tooltip("How wide is sampling distance for normal calculations")]

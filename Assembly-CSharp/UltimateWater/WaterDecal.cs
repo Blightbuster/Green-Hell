@@ -205,8 +205,8 @@ namespace UltimateWater
 
 		private Renderer[] _Renderers;
 
-		[SerializeField]
 		[InspectorWarning("Validation", InspectorWarningAttribute.InfoType.Error)]
+		[SerializeField]
 		private int _Validation;
 	}
 }

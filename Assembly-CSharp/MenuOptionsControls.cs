@@ -11,6 +11,7 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 	{
 		base.Awake();
 		this.m_BackText = this.m_BackButton.GetComponentInChildren<Text>();
+		this.m_KeyBindingText = this.m_KeyBindingsButton.GetComponentInChildren<Text>();
 		this.m_InvertMouseYButton.SetTitle(GreenHellGame.Instance.GetLocalization().Get("OptionsControls_InvertMouse"));
 		this.m_InvertMouseYButton.AddOption("Yes", GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Yes"));
 		this.m_InvertMouseYButton.AddOption("No", GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_No"));
@@ -98,6 +99,7 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 		Color color2 = this.m_BackButton.GetComponentInChildren<Text>().color;
 		color.a = MainMenuScreen.s_ButtonsAlpha;
 		color2.a = MainMenuScreen.s_InactiveButtonsAlpha;
+		this.m_KeyBindingText.GetComponentInChildren<Text>().color = color;
 		this.m_BackButton.GetComponentInChildren<Text>().color = color;
 		this.m_InvertMouseYButton.GetComponentInChildren<Text>().color = color;
 		this.m_XSensitivityButton.GetComponentInChildren<Text>().color = color;
@@ -108,6 +110,11 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
 		{
 			this.m_ActiveButton = this.m_BackButton.gameObject;
+		}
+		component = this.m_KeyBindingsButton.GetComponent<RectTransform>();
+		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
+		{
+			this.m_ActiveButton = this.m_KeyBindingsButton.gameObject;
 		}
 		component = this.m_BackText.GetComponent<RectTransform>();
 		Vector3 localPosition = component.localPosition;
@@ -120,6 +127,18 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 			color = this.m_BackText.color;
 			color.a = 1f;
 			this.m_BackText.color = color;
+		}
+		component = this.m_KeyBindingText.GetComponent<RectTransform>();
+		localPosition = component.localPosition;
+		num = ((!(this.m_ActiveButton == this.m_KeyBindingsButton.gameObject)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX);
+		num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
+		localPosition.x += num2;
+		component.localPosition = localPosition;
+		if (this.m_ActiveButton == this.m_KeyBindingsButton.gameObject)
+		{
+			color = this.m_BackText.color;
+			color.a = 1f;
+			this.m_KeyBindingText.color = color;
 		}
 		this.UpdateButton(this.m_InvertMouseYButton);
 		this.UpdateButton(this.m_XSensitivityButton);
@@ -180,6 +199,11 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 		}
 	}
 
+	public void OnKeyBindings()
+	{
+		this.m_MenuInGameManager.ShowScreen(typeof(MenuOptionsControlsKeysBinding));
+	}
+
 	public UISelectButton m_InvertMouseYButton;
 
 	public GameObject m_XSensitivityButton;
@@ -194,6 +218,8 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 
 	private float m_StartYSensitivity = 1f;
 
+	public Button m_KeyBindingsButton;
+
 	public Button m_BackButton;
 
 	private bool m_OptionsChanged;
@@ -203,6 +229,8 @@ public class MenuOptionsControls : MenuScreen, IYesNoDialogOwner
 	private bool m_InvertMouseY;
 
 	public Text m_BackText;
+
+	public Text m_KeyBindingText;
 
 	private float m_ButtonTextStartX;
 

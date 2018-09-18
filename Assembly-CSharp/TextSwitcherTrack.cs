@@ -4,9 +4,9 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
 
-[TrackClipType(typeof(TextSwitcherClip))]
-[TrackColor(0.1394896f, 0.4411765f, 0.3413077f)]
 [TrackBindingType(typeof(Text))]
+[TrackColor(0.1394896f, 0.4411765f, 0.3413077f)]
+[TrackClipType(typeof(TextSwitcherClip))]
 public class TextSwitcherTrack : TrackAsset
 {
 	public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount)

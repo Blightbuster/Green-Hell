@@ -448,24 +448,24 @@ namespace Cinemachine
 			return false;
 		}
 
-		[Header("Obstacle Detection")]
 		[Tooltip("The Unity layer mask against which the collider will raycast")]
+		[Header("Obstacle Detection")]
 		public LayerMask m_CollideAgainst = 1;
 
-		[TagField]
 		[Tooltip("Obstacles with this tag will be ignored.  It is a good idea to set this field to the target's tag")]
+		[TagField]
 		public string m_IgnoreTag = string.Empty;
 
 		[Tooltip("Obstacles closer to the target than this will be ignored")]
 		public float m_MinimumDistanceFromTarget = 0.1f;
 
-		[FormerlySerializedAs("m_PreserveLineOfSight")]
 		[Space]
+		[FormerlySerializedAs("m_PreserveLineOfSight")]
 		[Tooltip("When enabled, will attempt to resolve situations where the line of sight to the target is blocked by an obstacle")]
 		public bool m_AvoidObstacles = true;
 
-		[FormerlySerializedAs("m_LineOfSightFeelerDistance")]
 		[Tooltip("The maximum raycast distance when checking if the line of sight to this camera's target is clear.  If the setting is 0 or less, the current actual distance to target will be used.")]
+		[FormerlySerializedAs("m_LineOfSightFeelerDistance")]
 		public float m_DistanceLimit;
 
 		[Tooltip("Camera will try to maintain this distance from any obstacle.  Try to keep this value small.  Increase it if you are seeing inside obstacles due to a large FOV on the camera.")]
@@ -474,13 +474,13 @@ namespace Cinemachine
 		[Tooltip("The way in which the Collider will attempt to preserve sight of the target.")]
 		public CinemachineCollider.ResolutionStrategy m_Strategy = CinemachineCollider.ResolutionStrategy.PreserveCameraHeight;
 
-		[Tooltip("Upper limit on how many obstacle hits to process.  Higher numbers may impact performance.  In most environments, 4 is enough.")]
 		[Range(1f, 10f)]
+		[Tooltip("Upper limit on how many obstacle hits to process.  Higher numbers may impact performance.  In most environments, 4 is enough.")]
 		public int m_MaximumEffort = 4;
 
+		[Tooltip("The gradualness of collision resolution.  Higher numbers will move the camera more gradually away from obstructions.")]
 		[Range(0f, 10f)]
 		[FormerlySerializedAs("m_Smoothing")]
-		[Tooltip("The gradualness of collision resolution.  Higher numbers will move the camera more gradually away from obstructions.")]
 		public float m_Damping;
 
 		[Tooltip("If greater than zero, a higher score will be given to shots when the target is closer to this distance.  Set this to zero to disable this feature.")]

@@ -4,8 +4,8 @@ using UnityEngine.Networking;
 
 namespace UltimateWater
 {
-	[RequireComponent(typeof(Water))]
 	[AddComponentMenu("Ultimate Water/Network Synchronization", 2)]
+	[RequireComponent(typeof(Water))]
 	public class NetworkWater : NetworkBehaviour
 	{
 		private void Awake()

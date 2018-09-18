@@ -4,8 +4,8 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine.PostProcessing
 {
-	[AddComponentMenu("Effects/Post-Processing Behaviour", -1)]
 	[ExecuteInEditMode]
+	[AddComponentMenu("Effects/Post-Processing Behaviour", -1)]
 	[DisallowMultipleComponent]
 	[RequireComponent(typeof(Camera))]
 	[ImageEffectAllowedInSceneView]

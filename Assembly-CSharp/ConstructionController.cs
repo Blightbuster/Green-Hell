@@ -51,7 +51,7 @@ public class ConstructionController : PlayerController
 			this.m_Ghost.SetState(ConstructionGhost.GhostState.Building);
 			this.Stop();
 		}
-		else if (action == InputsManager.InputAction.CancelConstruction)
+		else if (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit)
 		{
 			if (!this.m_Ghost.m_IsBeingDestroyed)
 			{

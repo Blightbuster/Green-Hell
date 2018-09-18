@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Terrain/Grass modifier")]
 [ExecuteInEditMode]
+[AddComponentMenu("Terrain/Grass modifier")]
 public class GrassModifier : MonoBehaviour
 {
 }

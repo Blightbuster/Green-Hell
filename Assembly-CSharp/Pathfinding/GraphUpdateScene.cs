@@ -313,8 +313,8 @@ namespace Pathfinding
 		[SerializeField]
 		private int serializedVersion;
 
-		[SerializeField]
 		[FormerlySerializedAs("useWorldSpace")]
+		[SerializeField]
 		private bool legacyUseWorldSpace;
 	}
 }

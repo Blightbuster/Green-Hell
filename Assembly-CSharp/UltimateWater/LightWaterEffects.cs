@@ -371,8 +371,8 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _WorldPosShader;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _CausticsMapShader;
 
 		[SerializeField]

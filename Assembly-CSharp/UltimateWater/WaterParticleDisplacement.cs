@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace UltimateWater
 {
-	[AddComponentMenu("Ultimate Water/Dynamic/Water Particles")]
 	[RequireComponent(typeof(ParticleSystem))]
+	[AddComponentMenu("Ultimate Water/Dynamic/Water Particles")]
 	public class WaterParticleDisplacement : MonoBehaviour
 	{
 		public bool Initialized
@@ -130,8 +130,8 @@ namespace UltimateWater
 		[Tooltip("Force that each particle inflicts on water")]
 		public float Force = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Percentage of particles causing wave effects")]
+		[Range(0f, 1f)]
 		public float UsedParticles = 1f;
 
 		[Tooltip("Particle force modifier based on particle speed")]

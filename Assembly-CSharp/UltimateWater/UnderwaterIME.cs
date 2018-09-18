@@ -337,8 +337,8 @@ namespace UltimateWater
 		[Tooltip("Individual camera blur scale. It's recommended to modify blur scale through water profiles. Use this one, only if some of your cameras need a clear view and some don't.")]
 		private float _CameraBlurScale = 1f;
 
-		[SerializeField]
 		[Range(0.1f, 1f)]
+		[SerializeField]
 		private float _MaskResolution = 0.5f;
 
 		private Material _MaskMaterial;

@@ -112,5 +112,14 @@ public class HUDBase : MonoBehaviour
 		UnityEngine.Object.Destroy(obj);
 	}
 
+	private void OnDestroy()
+	{
+		IInputsReceiver component = base.gameObject.GetComponent<IInputsReceiver>();
+		if (component != null)
+		{
+			InputsManager.Get().UnregisterReceiver(component);
+		}
+	}
+
 	private HUDManager.HUDGroup m_Group;
 }

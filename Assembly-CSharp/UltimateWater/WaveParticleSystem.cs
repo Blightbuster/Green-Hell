@@ -241,26 +241,26 @@ namespace UltimateWater
 			}
 		}
 
+		[HideInInspector]
 		[FormerlySerializedAs("waterWavesParticlesShader")]
 		[SerializeField]
-		[HideInInspector]
 		private Shader _WaterWavesParticlesShader;
 
-		[FormerlySerializedAs("maxParticles")]
 		[SerializeField]
+		[FormerlySerializedAs("maxParticles")]
 		private int _MaxParticles = 50000;
 
 		[FormerlySerializedAs("maxParticlesPerTile")]
 		[SerializeField]
 		private int _MaxParticlesPerTile = 2000;
 
-		[FormerlySerializedAs("prewarmTime")]
 		[SerializeField]
+		[FormerlySerializedAs("prewarmTime")]
 		private float _PrewarmTime = 40f;
 
-		[SerializeField]
-		[Tooltip("Allowed execution time per frame.")]
 		[FormerlySerializedAs("timePerFrame")]
+		[Tooltip("Allowed execution time per frame.")]
+		[SerializeField]
 		private float _TimePerFrame = 0.8f;
 
 		private WaveParticlesQuadtree _Particles;

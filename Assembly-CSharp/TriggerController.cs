@@ -117,7 +117,7 @@ public class TriggerController : PlayerController
 					InputActionData inputActionData2 = InputsManager.Get().GetInputActionData(data.actions[i]);
 					if (inputActionData2.m_TriggerAction != action)
 					{
-						if (inputActionData2.m_KeyCodes[0] == inputActionData.m_KeyCodes[0])
+						if (inputActionData2.m_KeyCode == inputActionData.m_KeyCode)
 						{
 							if (inputActionData2.m_Hold > 0f)
 							{

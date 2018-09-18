@@ -411,17 +411,17 @@ namespace Cinemachine
 			this.m_State.RawPosition = pos;
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("The object that the camera wants to look at (the Aim target).  If this is null, then the vcam's Transform orientation will define the camera's orientation.")]
+		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
 		[Tooltip("The object that the camera wants to move with (the Body target).  If this is null, then the vcam's Transform position will define the camera's position.")]
 		[NoSaveDuringPlay]
 		public Transform m_Follow;
 
-		[FormerlySerializedAs("m_LensAttributes")]
-		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active.")]
 		[LensSettingsProperty]
+		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active.")]
+		[FormerlySerializedAs("m_LensAttributes")]
 		public LensSettings m_Lens = LensSettings.Default;
 
 		public const string PipelineName = "cm";

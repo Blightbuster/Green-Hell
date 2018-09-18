@@ -5,6 +5,12 @@ using UnityEngine;
 
 public class Torch : Weapon
 {
+	protected override void Awake()
+	{
+		base.Awake();
+		this.SetupAudio();
+	}
+
 	protected override void Start()
 	{
 		base.Start();
@@ -37,7 +43,6 @@ public class Torch : Weapon
 			this.m_Fuel = 1f;
 			this.StartBurning();
 		}
-		this.SetupAudio();
 	}
 
 	private void SetupAudio()
@@ -131,10 +136,11 @@ public class Torch : Weapon
 
 	public void StartBurning()
 	{
-		if (this.m_Burning || this.m_Fuel <= 0f)
+		if (this.m_Burning)
 		{
 			return;
 		}
+		this.m_Fuel = 1f;
 		this.m_Burning = true;
 		this.m_StartBurningTime = MainLevel.Instance.GetCurrentTimeMinutes();
 		this.SetupEffects();

@@ -99,6 +99,12 @@ public class HUDMessages : HUDBase
 				hudmessage.m_IconComponent.sprite = this.m_EnergyIcon;
 				hudmessage.m_IconComponent.color = IconColors.GetColor(IconColors.Icon.Energy);
 			}
+			else if (icon == HUDMessageIcon.FoodPoisoning)
+			{
+				hudmessage.m_IconComponent.enabled = true;
+				hudmessage.m_IconComponent.sprite = this.m_FoodPoisoningIcon;
+				hudmessage.m_IconComponent.color = Color.white;
+			}
 			else if (icon == HUDMessageIcon.Item)
 			{
 				if (icon_name.Empty())
@@ -205,4 +211,6 @@ public class HUDMessages : HUDBase
 	public Sprite m_HydrationIcon;
 
 	public Sprite m_EnergyIcon;
+
+	public Sprite m_FoodPoisoningIcon;
 }

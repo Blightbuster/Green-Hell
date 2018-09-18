@@ -65,16 +65,52 @@ public class Firecamp : Construction, IItemSlotParent
 		return false;
 	}
 
-	protected override void Update()
+	protected override void OnEnable()
 	{
-		base.Update();
+		base.OnEnable();
+		this.UpdateFireLevel();
+	}
+
+	public void ConstantUpdate()
+	{
+		this.CheckRain();
+		this.UpdateBuriningDuration();
+		this.UpdateFireLevel();
+	}
+
+	public void UpdateBuriningDuration()
+	{
 		if (this.m_Burning)
 		{
 			this.m_BurningDuration += MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
 		}
-		this.CheckRain();
+	}
+
+	public void CheckRain()
+	{
+		if (!this.m_Burning)
+		{
+			this.m_RainDuration = 0f;
+			return;
+		}
+		if (RainManager.Get().IsRain() && !RainManager.Get().IsInRainCutter(base.transform.position))
+		{
+			this.m_RainDuration += Time.deltaTime;
+			if (this.m_RainDuration >= this.m_MinRainDurationToExtinguish)
+			{
+				this.Extinguish();
+			}
+		}
+		else
+		{
+			this.m_RainDuration = 0f;
+		}
+	}
+
+	protected override void Update()
+	{
+		base.Update();
 		this.UpdateHUD();
-		this.UpdateFireLevel();
 		this.UpdateLightIntensity();
 		this.UpdateSlots();
 		this.UpdateLightNoise();
@@ -108,27 +144,6 @@ public class Firecamp : Construction, IItemSlotParent
 			float proportionalClamp = CJTools.Math.GetProportionalClamp(5f, 10f, this.m_FireLevel, 0f, 1f);
 			Player.Get().GiveDamage(base.gameObject, null, proportionalClamp, Vector3.up, DamageType.None, 0, false);
 			this.m_LastDamageTime = Time.time;
-		}
-	}
-
-	private void CheckRain()
-	{
-		if (!this.m_Burning)
-		{
-			this.m_RainDuration = 0f;
-			return;
-		}
-		if (RainManager.Get().IsRain() && !RainManager.Get().IsInRainCutter(base.transform.position))
-		{
-			this.m_RainDuration += Time.deltaTime;
-			if (this.m_RainDuration >= this.m_MinRainDurationToExtinguish)
-			{
-				this.Extinguish();
-			}
-		}
-		else
-		{
-			this.m_RainDuration = 0f;
 		}
 	}
 
@@ -412,7 +427,6 @@ public class Firecamp : Construction, IItemSlotParent
 		UnityEngine.Object.Instantiate<GameObject>(prefab, base.transform.position + Vector3.up * 0.1f + Vector3.left * 0.08f, base.transform.rotation);
 		UnityEngine.Object.Instantiate<GameObject>(prefab, base.transform.position + Vector3.up * 0.1f + Vector3.right * 0.08f, base.transform.rotation);
 		HUDFirecamp.Get().UnregisterFirecamp(this);
-		Firecamp.s_Firecamps.Remove(this);
 		UnityEngine.Object.Destroy(base.gameObject);
 	}
 

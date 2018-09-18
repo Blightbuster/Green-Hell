@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace UnityStandardAssets.Characters.ThirdPerson
 {
-	[RequireComponent(typeof(Animator))]
-	[RequireComponent(typeof(CapsuleCollider))]
 	[RequireComponent(typeof(Rigidbody))]
+	[RequireComponent(typeof(CapsuleCollider))]
+	[RequireComponent(typeof(Animator))]
 	public class ThirdPersonCharacter : MonoBehaviour
 	{
 		private void Start()
@@ -169,8 +169,8 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 		[SerializeField]
 		private float m_JumpPower = 12f;
 
-		[SerializeField]
 		[Range(1f, 4f)]
+		[SerializeField]
 		private float m_GravityMultiplier = 2f;
 
 		[SerializeField]

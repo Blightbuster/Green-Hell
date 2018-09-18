@@ -639,27 +639,27 @@ namespace UltimateWater
 		}
 
 		[Range(1f, 30f)]
+		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
 		[FormerlySerializedAs("sampleCount")]
 		[SerializeField]
-		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
 		private int _SampleCount = 20;
 
 		[Tooltip("Controls drag force. Determined experimentally in wind tunnels. Example values:\n https://en.wikipedia.org/wiki/Drag_coefficient#General")]
-		[SerializeField]
 		[FormerlySerializedAs("dragCoefficient")]
+		[SerializeField]
 		[Range(0f, 6f)]
 		private float _DragCoefficient = 0.9f;
 
 		[Tooltip("Determines how many waves will be used in computations. Set it low for big objects, larger than most of the waves. Set it high for smaller objects of size comparable to many waves.")]
-		[SerializeField]
-		[FormerlySerializedAs("precision")]
 		[Range(0.125f, 1f)]
+		[FormerlySerializedAs("precision")]
+		[SerializeField]
 		private float _Precision = 0.5f;
 
-		[SerializeField]
 		[FormerlySerializedAs("buoyancyIntensity")]
 		[Range(0.1f, 10f)]
 		[Tooltip("Adjust buoyancy proportionally, if your collider is bigger or smaller than the actual object. Lowering this may fix some weird behaviour of objects with extremely low density like beach balls or baloons.")]
+		[SerializeField]
 		private float _BuoyancyIntensity = 1f;
 
 		[Tooltip("Horizontal flow force intensity.")]

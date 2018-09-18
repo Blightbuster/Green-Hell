@@ -102,7 +102,7 @@ public class BodyInspectionMiniGameController : PlayerController
 
 	public override void OnInputAction(InputsManager.InputAction action)
 	{
-		if (action == InputsManager.InputAction.QuitBodyInspection && GreenHellGame.GetFadeSystem().CanStartFade())
+		if ((action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && GreenHellGame.GetFadeSystem().CanStartFade())
 		{
 			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
 			fadeSystem.FadeOut(FadeType.All, new VDelegate(this.StopMinigame), 1.5f, null);

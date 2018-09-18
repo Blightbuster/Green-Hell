@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
-using UnityStandardAssets.CrossPlatformInput;
 
 public class InputsManager : MonoBehaviour
 {
@@ -23,10 +25,11 @@ public class InputsManager : MonoBehaviour
 
 	private void LoadScript()
 	{
-		TextAssetParser textAssetParser = new TextAssetParser(this.m_InputsScript);
-		for (int i = 0; i < textAssetParser.GetKeysCount(); i++)
+		ScriptParser scriptParser = new ScriptParser();
+		scriptParser.Parse(this.m_InputsScript, true);
+		for (int i = 0; i < scriptParser.GetKeysCount(); i++)
 		{
-			Key key = textAssetParser.GetKey(i);
+			Key key = scriptParser.GetKey(i);
 			if (key.GetName() == "Action")
 			{
 				this.LoadAction(key, false);
@@ -52,41 +55,17 @@ public class InputsManager : MonoBehaviour
 		string svalue = key.GetVariable(1).SValue;
 		inputActionData.m_Type = (InputsManager.InputActionType)Enum.Parse(typeof(InputsManager.InputActionType), key.GetVariable(2).SValue);
 		inputActionData.m_Hold = key.GetVariable(3).FValue;
-		if (key.GetVariablesCount() > 4)
+		KeyCode keyCode = (KeyCode)Enum.Parse(typeof(KeyCode), svalue);
+		inputActionData.m_KeyCode = keyCode;
+		if (this.m_ActionsByKeyCode.ContainsKey((int)keyCode))
 		{
-			inputActionData.m_CrossPlatformInput = key.GetVariable(4).SValue;
+			this.m_ActionsByKeyCode[(int)keyCode].Add(inputActionData);
 		}
-		string[] array = svalue.Split(new char[]
+		else
 		{
-			';'
-		});
-		for (int i = 0; i < array.Length; i++)
-		{
-			KeyCode keyCode = (KeyCode)Enum.Parse(typeof(KeyCode), array[i]);
-			inputActionData.m_KeyCodes.Add(keyCode);
-			if (this.m_ActionsByKeyCode.ContainsKey((int)keyCode))
-			{
-				this.m_ActionsByKeyCode[(int)keyCode].Add(inputActionData);
-			}
-			else
-			{
-				List<InputActionData> list = new List<InputActionData>();
-				list.Add(inputActionData);
-				this.m_ActionsByKeyCode.Add((int)keyCode, list);
-			}
-		}
-		if (inputActionData.m_CrossPlatformInput != string.Empty)
-		{
-			if (this.m_ActionsByCrossPlatformInput.ContainsKey(inputActionData.m_CrossPlatformInput))
-			{
-				this.m_ActionsByCrossPlatformInput[inputActionData.m_CrossPlatformInput].Add(inputActionData);
-			}
-			else
-			{
-				List<InputActionData> list2 = new List<InputActionData>();
-				list2.Add(inputActionData);
-				this.m_ActionsByCrossPlatformInput.Add(inputActionData.m_CrossPlatformInput, list2);
-			}
+			List<InputActionData> list = new List<InputActionData>();
+			list.Add(inputActionData);
+			this.m_ActionsByKeyCode.Add((int)keyCode, list);
 		}
 		if (trigger)
 		{
@@ -116,7 +95,7 @@ public class InputsManager : MonoBehaviour
 
 	public void UnregisterReceiver(IInputsReceiver receiver)
 	{
-		this.m_UnregisterReceiversRequests.Remove(receiver);
+		this.m_UnregisterReceiversRequests.Add(receiver);
 	}
 
 	private void LateUpdate()
@@ -152,68 +131,69 @@ public class InputsManager : MonoBehaviour
 
 	private void UpdateActions()
 	{
-		foreach (KeyValuePair<string, List<InputActionData>> keyValuePair in this.m_ActionsByCrossPlatformInput)
+		foreach (KeyValuePair<int, List<InputActionData>> keyValuePair in this.m_ActionsByKeyCode)
 		{
-			string key = keyValuePair.Key;
-			float axis = CrossPlatformInputManager.GetAxis(key);
-			if (axis >= InputsManager.MIN_AXIS_VAL)
+			int key = keyValuePair.Key;
+			if (Input.GetKeyDown((KeyCode)key))
 			{
-				foreach (InputActionData inputActionData in this.m_ActionsByCrossPlatformInput[key])
+				foreach (InputActionData inputActionData in this.m_ActionsByKeyCode[key])
 				{
 					if (inputActionData.m_Type == InputsManager.InputActionType.Down && inputActionData.m_Hold == 0f)
 					{
 						this.OnAction(inputActionData);
-						if (!this.m_ActiveActionsByInputActionCPI.ContainsKey((int)inputActionData.m_Action))
+						if (inputActionData.m_TriggerAction != TriggerAction.TYPE.None)
 						{
-							this.m_ActiveActionsByInputActionCPI.Add((int)inputActionData.m_Action, key);
-						}
-					}
-				}
-			}
-		}
-		foreach (KeyValuePair<int, List<InputActionData>> keyValuePair2 in this.m_ActionsByKeyCode)
-		{
-			int key2 = keyValuePair2.Key;
-			if (Input.GetKeyDown((KeyCode)key2))
-			{
-				foreach (InputActionData inputActionData2 in this.m_ActionsByKeyCode[key2])
-				{
-					if (inputActionData2.m_Type == InputsManager.InputActionType.Down && inputActionData2.m_Hold == 0f)
-					{
-						this.OnAction(inputActionData2);
-						if (inputActionData2.m_TriggerAction != TriggerAction.TYPE.None)
-						{
-							if (!this.m_ActiveActionsByTriggerAction.ContainsKey((int)inputActionData2.m_TriggerAction))
+							if (!this.m_ActiveActionsByTriggerAction.ContainsKey((int)inputActionData.m_TriggerAction))
 							{
-								this.m_ActiveActionsByTriggerAction.Add((int)inputActionData2.m_TriggerAction, (KeyCode)key2);
+								this.m_ActiveActionsByTriggerAction.Add((int)inputActionData.m_TriggerAction, (KeyCode)key);
 							}
 						}
-						else if (!this.m_ActiveActionsByInputAction.ContainsKey((int)inputActionData2.m_Action))
+						else if (!this.m_ActiveActionsByInputAction.ContainsKey((int)inputActionData.m_Action))
 						{
-							this.m_ActiveActionsByInputAction.Add((int)inputActionData2.m_Action, (KeyCode)key2);
+							this.m_ActiveActionsByInputAction.Add((int)inputActionData.m_Action, (KeyCode)key);
 						}
 					}
 					else
 					{
-						inputActionData2.m_PressTime = Time.time;
-						if (!this.m_ActiveHoldActionsByTriggerAction.ContainsKey((int)inputActionData2.m_TriggerAction))
+						inputActionData.m_PressTime = Time.time;
+						if (!this.m_ActiveHoldActionsByTriggerAction.ContainsKey((int)inputActionData.m_TriggerAction))
 						{
-							this.m_ActiveHoldActionsByTriggerAction.Add((int)inputActionData2.m_TriggerAction, inputActionData2);
+							this.m_ActiveHoldActionsByTriggerAction.Add((int)inputActionData.m_TriggerAction, inputActionData);
 						}
 					}
 				}
 			}
-			else if (Input.GetKeyUp((KeyCode)key2))
+			else if (Input.GetKeyUp((KeyCode)key))
 			{
-				foreach (InputActionData inputActionData3 in this.m_ActionsByKeyCode[key2])
+				foreach (InputActionData inputActionData2 in this.m_ActionsByKeyCode[key])
 				{
-					if (inputActionData3.m_Type == InputsManager.InputActionType.Up && inputActionData3.m_Hold == 0f)
+					if (inputActionData2.m_Type == InputsManager.InputActionType.Up && inputActionData2.m_Hold == 0f)
 					{
-						this.OnAction(inputActionData3);
+						this.OnAction(inputActionData2);
 					}
-					else if (inputActionData3.m_Type == InputsManager.InputActionType.Up && inputActionData3.m_Hold > 0f && inputActionData3.m_PressTime > 0f && Time.time - inputActionData3.m_PressTime >= inputActionData3.m_Hold)
+					else if (inputActionData2.m_Type == InputsManager.InputActionType.Up && inputActionData2.m_Hold > 0f && inputActionData2.m_PressTime > 0f && Time.time - inputActionData2.m_PressTime >= inputActionData2.m_Hold)
 					{
-						this.OnAction(inputActionData3);
+						this.OnAction(inputActionData2);
+					}
+					inputActionData2.m_PressTime = 0f;
+					if (this.m_ActiveHoldActionsByTriggerAction.ContainsKey((int)inputActionData2.m_TriggerAction))
+					{
+						this.m_ActiveHoldActionsByTriggerAction.Remove((int)inputActionData2.m_TriggerAction);
+					}
+				}
+			}
+			foreach (InputActionData inputActionData3 in this.m_ActionsByKeyCode[key])
+			{
+				if (inputActionData3.m_Type == InputsManager.InputActionType.Down && inputActionData3.m_PressTime > 0f && Time.time - inputActionData3.m_PressTime >= inputActionData3.m_Hold)
+				{
+					this.OnAction(inputActionData3);
+					if (inputActionData3.m_TriggerAction != TriggerAction.TYPE.None)
+					{
+						this.m_ActiveActionsByTriggerAction.Remove((int)inputActionData3.m_TriggerAction);
+					}
+					else
+					{
+						this.m_ActiveActionsByInputAction.Remove((int)inputActionData3.m_Action);
 					}
 					inputActionData3.m_PressTime = 0f;
 					if (this.m_ActiveHoldActionsByTriggerAction.ContainsKey((int)inputActionData3.m_TriggerAction))
@@ -222,78 +202,41 @@ public class InputsManager : MonoBehaviour
 					}
 				}
 			}
-			foreach (InputActionData inputActionData4 in this.m_ActionsByKeyCode[key2])
-			{
-				if (inputActionData4.m_Type == InputsManager.InputActionType.Down && inputActionData4.m_PressTime > 0f && Time.time - inputActionData4.m_PressTime >= inputActionData4.m_Hold)
-				{
-					this.OnAction(inputActionData4);
-					if (inputActionData4.m_TriggerAction != TriggerAction.TYPE.None)
-					{
-						this.m_ActiveActionsByTriggerAction.Remove((int)inputActionData4.m_TriggerAction);
-					}
-					else
-					{
-						this.m_ActiveActionsByInputAction.Remove((int)inputActionData4.m_Action);
-					}
-					inputActionData4.m_PressTime = 0f;
-					if (this.m_ActiveHoldActionsByTriggerAction.ContainsKey((int)inputActionData4.m_TriggerAction))
-					{
-						this.m_ActiveHoldActionsByTriggerAction.Remove((int)inputActionData4.m_TriggerAction);
-					}
-				}
-			}
 		}
 	}
 
 	private void UpdatActiveActions()
 	{
-		if (this.m_ActiveActionsByInputActionCPI.Count > 0)
+		if (this.m_ActiveActionsByInputAction.Count > 0)
 		{
 			this.m_InputActionsToRemove.Clear();
-			foreach (KeyValuePair<int, string> keyValuePair in this.m_ActiveActionsByInputActionCPI)
+			foreach (KeyValuePair<int, KeyCode> keyValuePair in this.m_ActiveActionsByInputAction)
 			{
-				int key = keyValuePair.Key;
-				float axis = CrossPlatformInputManager.GetAxis(this.m_ActiveActionsByInputActionCPI[key]);
-				if (axis < InputsManager.MIN_AXIS_VAL)
+				InputsManager.InputAction key = (InputsManager.InputAction)keyValuePair.Key;
+				if (!Input.GetKey(this.m_ActiveActionsByInputAction[(int)key]))
 				{
-					this.m_InputActionsToRemove.Add((InputsManager.InputAction)key);
+					this.m_InputActionsToRemove.Add(key);
 				}
 			}
 			foreach (InputsManager.InputAction key2 in this.m_InputActionsToRemove)
 			{
-				this.m_ActiveActionsByInputActionCPI.Remove((int)key2);
-			}
-		}
-		if (this.m_ActiveActionsByInputAction.Count > 0)
-		{
-			this.m_InputActionsToRemove.Clear();
-			foreach (KeyValuePair<int, KeyCode> keyValuePair2 in this.m_ActiveActionsByInputAction)
-			{
-				InputsManager.InputAction key3 = (InputsManager.InputAction)keyValuePair2.Key;
-				if (!Input.GetKey(this.m_ActiveActionsByInputAction[(int)key3]))
-				{
-					this.m_InputActionsToRemove.Add(key3);
-				}
-			}
-			foreach (InputsManager.InputAction key4 in this.m_InputActionsToRemove)
-			{
-				this.m_ActiveActionsByInputAction.Remove((int)key4);
+				this.m_ActiveActionsByInputAction.Remove((int)key2);
 			}
 		}
 		if (this.m_ActiveActionsByTriggerAction.Count > 0)
 		{
 			this.m_TriggerActionsToRemove.Clear();
-			foreach (KeyValuePair<int, KeyCode> keyValuePair3 in this.m_ActiveActionsByTriggerAction)
+			foreach (KeyValuePair<int, KeyCode> keyValuePair2 in this.m_ActiveActionsByTriggerAction)
 			{
-				int key5 = keyValuePair3.Key;
-				if (!Input.GetKey(this.m_ActiveActionsByTriggerAction[key5]))
+				int key3 = keyValuePair2.Key;
+				if (!Input.GetKey(this.m_ActiveActionsByTriggerAction[key3]))
 				{
-					this.m_TriggerActionsToRemove.Add((TriggerAction.TYPE)key5);
+					this.m_TriggerActionsToRemove.Add((TriggerAction.TYPE)key3);
 				}
 			}
-			foreach (TriggerAction.TYPE key6 in this.m_TriggerActionsToRemove)
+			foreach (TriggerAction.TYPE key4 in this.m_TriggerActionsToRemove)
 			{
-				this.m_ActiveActionsByTriggerAction.Remove((int)key6);
+				this.m_ActiveActionsByTriggerAction.Remove((int)key4);
 			}
 		}
 	}
@@ -302,7 +245,10 @@ public class InputsManager : MonoBehaviour
 	{
 		if (action.m_TriggerAction != TriggerAction.TYPE.None)
 		{
-			TriggerController.Get().OnTriggerAction(action.m_TriggerAction);
+			if (TriggerController.Get() != null)
+			{
+				TriggerController.Get().OnTriggerAction(action.m_TriggerAction);
+			}
 		}
 		else
 		{
@@ -322,14 +268,6 @@ public class InputsManager : MonoBehaviour
 		{
 			InputsManager.InputAction key = (InputsManager.InputAction)keyValuePair.Key;
 			if (key == action)
-			{
-				return true;
-			}
-		}
-		foreach (KeyValuePair<int, string> keyValuePair2 in this.m_ActiveActionsByInputActionCPI)
-		{
-			InputsManager.InputAction key2 = (InputsManager.InputAction)keyValuePair2.Key;
-			if (key2 == action)
 			{
 				return true;
 			}
@@ -379,7 +317,155 @@ public class InputsManager : MonoBehaviour
 		return Mathf.Clamp01((Time.time - inputActionData.m_PressTime) / inputActionData.m_Hold);
 	}
 
-	public TextAsset m_InputsScript;
+	public Dictionary<int, List<InputActionData>> GetActionsByKeyCode()
+	{
+		return this.m_ActionsByKeyCode;
+	}
+
+	public Dictionary<int, InputActionData> GetActionsByInputAction()
+	{
+		return this.m_ActionsByInputAction;
+	}
+
+	public Dictionary<int, InputActionData> GetActionsByTriggerAction()
+	{
+		return this.m_ActionsByTriggerAction;
+	}
+
+	public void ApplyOptions(Dictionary<int, int> actions_by_input_action, Dictionary<int, int> actions_by_trigger_action)
+	{
+		for (int i = 0; i < actions_by_input_action.Keys.Count; i++)
+		{
+			for (int j = 0; j < this.m_ActionsByInputAction.Keys.Count; j++)
+			{
+				if (actions_by_input_action.Keys.ElementAt(i) == this.m_ActionsByInputAction.Keys.ElementAt(j))
+				{
+					this.m_ActionsByInputAction[this.m_ActionsByInputAction.Keys.ElementAt(j)].m_KeyCode = (KeyCode)actions_by_input_action.Values.ElementAt(i);
+					break;
+				}
+			}
+		}
+		for (int k = 0; k < actions_by_trigger_action.Keys.Count; k++)
+		{
+			for (int l = 0; l < this.m_ActionsByTriggerAction.Keys.Count; l++)
+			{
+				if (actions_by_trigger_action.Keys.ElementAt(k) == this.m_ActionsByTriggerAction.Keys.ElementAt(l))
+				{
+					this.m_ActionsByTriggerAction[this.m_ActionsByTriggerAction.Keys.ElementAt(l)].m_KeyCode = (KeyCode)actions_by_trigger_action.Values.ElementAt(k);
+					break;
+				}
+			}
+		}
+		this.m_ActionsByKeyCode.Clear();
+		for (int m = 0; m < this.m_ActionsByInputAction.Keys.Count; m++)
+		{
+			KeyCode keyCode = this.m_ActionsByInputAction.Values.ElementAt(m).m_KeyCode;
+			if (this.m_ActionsByKeyCode.ContainsKey((int)keyCode))
+			{
+				this.m_ActionsByKeyCode[(int)keyCode].Add(new InputActionData(this.m_ActionsByInputAction.Values.ElementAt(m)));
+			}
+			else
+			{
+				List<InputActionData> list = new List<InputActionData>();
+				list.Add(new InputActionData(this.m_ActionsByInputAction.Values.ElementAt(m)));
+				this.m_ActionsByKeyCode.Add((int)keyCode, list);
+			}
+		}
+		for (int n = 0; n < this.m_ActionsByTriggerAction.Keys.Count; n++)
+		{
+			KeyCode keyCode2 = this.m_ActionsByTriggerAction.Values.ElementAt(n).m_KeyCode;
+			if (this.m_ActionsByKeyCode.ContainsKey((int)keyCode2))
+			{
+				this.m_ActionsByKeyCode[(int)keyCode2].Add(new InputActionData(this.m_ActionsByTriggerAction.Values.ElementAt(n)));
+			}
+			else
+			{
+				List<InputActionData> list2 = new List<InputActionData>();
+				list2.Add(new InputActionData(this.m_ActionsByTriggerAction.Values.ElementAt(n)));
+				this.m_ActionsByKeyCode.Add((int)keyCode2, list2);
+			}
+		}
+		this.m_ActiveActionsByInputAction.Clear();
+		this.m_ActiveActionsByTriggerAction.Clear();
+		this.m_ActiveHoldActionsByTriggerAction.Clear();
+		this.m_InputActionsToRemove.Clear();
+		this.m_TriggerActionsToRemove.Clear();
+		GC.Collect();
+	}
+
+	public void SaveSettings(BinaryFormatter bf, FileStream file)
+	{
+		bf.Serialize(file, this.m_ActionsByInputAction.Keys.Count);
+		for (int i = 0; i < this.m_ActionsByInputAction.Keys.Count; i++)
+		{
+			int num = this.m_ActionsByInputAction.Keys.ElementAt(i);
+			InputsManager.InputAction inputAction = (InputsManager.InputAction)num;
+			string graph = inputAction.ToString();
+			bf.Serialize(file, graph);
+			KeyCode keyCode = this.m_ActionsByInputAction.Values.ElementAt(i).m_KeyCode;
+			string graph2 = keyCode.ToString();
+			bf.Serialize(file, graph2);
+		}
+		bf.Serialize(file, this.m_ActionsByTriggerAction.Keys.Count);
+		for (int j = 0; j < this.m_ActionsByTriggerAction.Keys.Count; j++)
+		{
+			int num2 = this.m_ActionsByTriggerAction.Keys.ElementAt(j);
+			TriggerAction.TYPE type = (TriggerAction.TYPE)num2;
+			string graph3 = type.ToString();
+			bf.Serialize(file, graph3);
+			KeyCode keyCode2 = this.m_ActionsByTriggerAction.Values.ElementAt(j).m_KeyCode;
+			string graph4 = keyCode2.ToString();
+			bf.Serialize(file, graph4);
+		}
+	}
+
+	public void LoadSettings(BinaryFormatter bf, FileStream file)
+	{
+		Dictionary<int, int> dictionary = new Dictionary<int, int>();
+		Dictionary<int, int> dictionary2 = new Dictionary<int, int>();
+		int num = (int)bf.Deserialize(file);
+		for (int i = 0; i < num; i++)
+		{
+			string value = (string)bf.Deserialize(file);
+			InputsManager.InputAction key = (InputsManager.InputAction)Enum.Parse(typeof(InputsManager.InputAction), value);
+			string value2 = (string)bf.Deserialize(file);
+			KeyCode value3 = (KeyCode)Enum.Parse(typeof(KeyCode), value2);
+			InputActionData inputActionData = null;
+			if (this.m_ActionsByInputAction.TryGetValue((int)key, out inputActionData))
+			{
+				dictionary.Add((int)key, (int)value3);
+			}
+		}
+		int num2 = (int)bf.Deserialize(file);
+		for (int j = 0; j < num2; j++)
+		{
+			string value4 = (string)bf.Deserialize(file);
+			TriggerAction.TYPE key2 = (TriggerAction.TYPE)Enum.Parse(typeof(TriggerAction.TYPE), value4);
+			string value5 = (string)bf.Deserialize(file);
+			KeyCode value6 = (KeyCode)Enum.Parse(typeof(KeyCode), value5);
+			InputActionData inputActionData2 = null;
+			if (this.m_ActionsByTriggerAction.TryGetValue((int)key2, out inputActionData2))
+			{
+				dictionary2.Add((int)key2, (int)value6);
+			}
+		}
+		this.ApplyOptions(dictionary, dictionary2);
+	}
+
+	public void ApplyDefaultOptions()
+	{
+		this.m_ActionsByInputAction.Clear();
+		this.m_ActionsByKeyCode.Clear();
+		this.m_ActionsByTriggerAction.Clear();
+		this.m_ActiveActionsByInputAction.Clear();
+		this.m_ActiveActionsByTriggerAction.Clear();
+		this.m_ActiveHoldActionsByTriggerAction.Clear();
+		this.m_InputActionsToRemove.Clear();
+		this.m_TriggerActionsToRemove.Clear();
+		this.LoadScript();
+	}
+
+	private string m_InputsScript = "Inputs.txt";
 
 	private List<IInputsReceiver> m_Receivers = new List<IInputsReceiver>();
 
@@ -398,10 +484,6 @@ public class InputsManager : MonoBehaviour
 	private Dictionary<int, KeyCode> m_ActiveActionsByTriggerAction = new Dictionary<int, KeyCode>();
 
 	private Dictionary<int, InputActionData> m_ActiveHoldActionsByTriggerAction = new Dictionary<int, InputActionData>();
-
-	private Dictionary<string, List<InputActionData>> m_ActionsByCrossPlatformInput = new Dictionary<string, List<InputActionData>>();
-
-	private Dictionary<int, string> m_ActiveActionsByInputActionCPI = new Dictionary<int, string>();
 
 	private static float MIN_AXIS_VAL = 0.5f;
 
@@ -433,20 +515,16 @@ public class InputsManager : MonoBehaviour
 		BowShot,
 		BowlSpil,
 		BowlDrink,
-		WaterSpill,
 		WaterDrink,
 		FishingAim,
 		FishingCast,
 		FishingStrike,
 		FishingReel,
 		FishingTakeFish,
-		StopFireMinigame,
 		CreateConstruction,
-		CancelConstruction,
 		ConstructionRotate,
 		ShowWheel,
 		HideWheel,
-		Crafting,
 		ShowInventory,
 		HideInventory,
 		HideInventoryHold,
@@ -468,7 +546,6 @@ public class InputsManager : MonoBehaviour
 		QuickEquip3,
 		ThrowStone,
 		SkipCutscene,
-		QuitBodyInspection,
 		SkipMovie,
 		FistFight,
 		FistFightHard,
@@ -482,6 +559,12 @@ public class InputsManager : MonoBehaviour
 		Sprint,
 		Quit,
 		Watch,
+		Forward,
+		Backward,
+		Left,
+		Right,
+		AdditionalQuit,
+		Read,
 		Count
 	}
 

@@ -200,6 +200,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		this.ApplyGraphicsSettings();
 		this.UpdateSlowMotion();
 		this.UpdateTimeScale();
+		this.UpdateCurentTimeInMinutes();
 		this.UpdateInputsDebug();
 		EventsManager.OnEvent(Enums.Event.PlayTime, Time.deltaTime);
 		this.UpdateAnimalsSound();
@@ -628,9 +629,14 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		return Terrain.activeTerrain.SampleHeight(pos) + Terrain.activeTerrain.GetPosition().y;
 	}
 
+	private void UpdateCurentTimeInMinutes()
+	{
+		this.m_CurentTimeInMinutes = Mathf.Floor((float)(this.m_TODSky.Cycle.Year - 2016)) * 12f * 30f * 24f * 60f + Mathf.Floor((float)this.m_TODSky.Cycle.Month) * 30f * 24f * 60f + Mathf.Floor((float)this.m_TODSky.Cycle.Day) * 24f * 60f + Mathf.Floor(this.m_TODSky.Cycle.Hour) * 60f + (float)this.m_TODSky.Cycle.DateTime.Minute + (float)this.m_TODSky.Cycle.DateTime.Second / 60f;
+	}
+
 	public float GetCurrentTimeMinutes()
 	{
-		return Mathf.Floor((float)this.m_TODSky.Cycle.Month) * 30f * 24f * 60f + Mathf.Floor((float)this.m_TODSky.Cycle.Day) * 24f * 60f + Mathf.Floor(this.m_TODSky.Cycle.Hour) * 60f + (float)this.m_TODSky.Cycle.DateTime.Minute + (float)this.m_TODSky.Cycle.DateTime.Second / 60f;
+		return this.m_CurentTimeInMinutes;
 	}
 
 	private void UpdateAnimalsSound()
@@ -1127,6 +1133,8 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 	public AsyncOperation m_UnusedAssetsAsyncOperation;
 
 	public List<AsyncOperation> m_SceneAsyncOperation = new List<AsyncOperation>();
+
+	private float m_CurentTimeInMinutes;
 
 	private Dictionary<bool, List<AudioClip>> m_AnimalSounds = new Dictionary<bool, List<AudioClip>>();
 

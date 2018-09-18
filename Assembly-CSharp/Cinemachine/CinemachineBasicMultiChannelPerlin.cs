@@ -4,10 +4,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[AddComponentMenu("")]
-	[DocumentationSorting(8f, DocumentationSortingAttribute.Level.UserRef)]
 	[SaveDuringPlay]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[DocumentationSorting(8f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("")]
 	public class CinemachineBasicMultiChannelPerlin : CinemachineComponentBase
 	{
 		public override bool IsValid

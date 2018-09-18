@@ -47,8 +47,8 @@ namespace RootMotion.FinalIK
 		[Range(0f, 1f)]
 		public float weight = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("If 0.5, this Transform will be twisted half way from parent to child. If 1, the twist angle will be locked to the child and will rotate with along with it.")]
+		[Range(0f, 1f)]
 		public float parentChildCrossfade = 0.5f;
 
 		private Vector3 twistAxis = Vector3.right;

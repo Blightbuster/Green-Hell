@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Pathfinding.Legacy
 {
-	[RequireComponent(typeof(Seeker))]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_a_i_path.php")]
 	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy AIPath (3D)")]
+	[RequireComponent(typeof(Seeker))]
 	public class LegacyAIPath : AIPath
 	{
 		protected override void Awake()

@@ -81,6 +81,11 @@ public class ConstructionsTab : ItemsTab, IInputsReceiver
 		MenuNotepad.Get().m_MouseOverConstruction = mouseOverConstruction;
 	}
 
+	private void OnDestroy()
+	{
+		InputsManager.Get().UnregisterReceiver(this);
+	}
+
 	private List<NotepadItemMask> m_Masks = new List<NotepadItemMask>();
 
 	private RectTransform m_CanvasRecTransform;

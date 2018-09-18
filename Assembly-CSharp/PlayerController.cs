@@ -267,6 +267,11 @@ public class PlayerController : MonoBehaviour, IAnimationEventsReceiver, IInputs
 		}
 	}
 
+	protected virtual void OnDestroy()
+	{
+		InputsManager.Get().UnregisterReceiver(this);
+	}
+
 	protected PlayerControllerType m_ControllerType = PlayerControllerType.Unknown;
 
 	protected Player m_Player;

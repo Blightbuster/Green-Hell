@@ -94,16 +94,16 @@ namespace UltimateWater
 			DynamicWater.RemoveRenderer<ILocalFoamRenderer>(this);
 		}
 
-		[FormerlySerializedAs("displacementAndNormalMaterial")]
 		[SerializeField]
+		[FormerlySerializedAs("displacementAndNormalMaterial")]
 		private Material _DisplacementAndNormalMaterial;
 
 		[FormerlySerializedAs("displacementMaskMaterial")]
 		[SerializeField]
 		private Material _DisplacementMaskMaterial;
 
-		[FormerlySerializedAs("foamMaterial")]
 		[SerializeField]
+		[FormerlySerializedAs("foamMaterial")]
 		private Material _FoamMaterial;
 
 		private Renderer _RendererComponent;

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding.Legacy
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_r_v_o_controller.php")]
 	[AddComponentMenu("Pathfinding/Legacy/Local Avoidance/Legacy RVO Controller")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_r_v_o_controller.php")]
 	public class LegacyRVOController : RVOController
 	{
 		public void Update()

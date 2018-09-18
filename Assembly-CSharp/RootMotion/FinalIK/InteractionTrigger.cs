@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("https://www.youtube.com/watch?v=-TDZpNjt2mk&index=15&list=PLVxSIA1OaTOu8Nos3CalXbJ2DrKnntMv6")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction Trigger")]
+	[HelpURL("https://www.youtube.com/watch?v=-TDZpNjt2mk&index=15&list=PLVxSIA1OaTOu8Nos3CalXbJ2DrKnntMv6")]
 	public class InteractionTrigger : MonoBehaviour
 	{
 		[ContextMenu("TUTORIAL VIDEO")]
@@ -150,8 +150,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Angle offset from the default forward direction.")]
 			public float angleOffset;
 
-			[Tooltip("Max angular offset of the character's forward from the direction of this trigger.")]
 			[Range(0f, 180f)]
+			[Tooltip("Max angular offset of the character's forward from the direction of this trigger.")]
 			public float maxAngle = 45f;
 
 			[Tooltip("Max offset of the character's position from this range's center.")]
@@ -265,8 +265,8 @@ namespace RootMotion.FinalIK
 			[HideInInspector]
 			public string name;
 
-			[HideInInspector]
 			[SerializeField]
+			[HideInInspector]
 			public bool show = true;
 
 			[Tooltip("The range for the character's position and rotation.")]

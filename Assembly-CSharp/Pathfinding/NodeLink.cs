@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link.php")]
 	[AddComponentMenu("Pathfinding/Link")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link.php")]
 	public class NodeLink : GraphModifier
 	{
 		public Transform Start

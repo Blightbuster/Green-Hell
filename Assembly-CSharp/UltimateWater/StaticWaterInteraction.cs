@@ -481,8 +481,6 @@ namespace UltimateWater
 		[FormerlySerializedAs("underwaterAreasMode")]
 		private StaticWaterInteraction.UnderwaterAreasMode _UnderwaterAreasMode;
 
-		[FormerlySerializedAs("mapResolution")]
-		[SerializeField]
 		[Resolution(1024, new int[]
 		{
 			128,
@@ -491,10 +489,12 @@ namespace UltimateWater
 			1024,
 			2048
 		})]
+		[SerializeField]
+		[FormerlySerializedAs("mapResolution")]
 		private int _MapResolution = 1024;
 
-		[FormerlySerializedAs("waveDampingThreshold")]
 		[SerializeField]
+		[FormerlySerializedAs("waveDampingThreshold")]
 		[Tooltip("All waves bigger than this (in scene units) will be dampened near the shore.")]
 		private float _WaveDampingThreshold = 4f;
 
@@ -502,14 +502,14 @@ namespace UltimateWater
 		[FormerlySerializedAs("depthScale")]
 		private float _DepthScale = 1f;
 
-		[FormerlySerializedAs("maskGenerateShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("maskGenerateShader")]
 		private Shader _MaskGenerateShader;
 
 		[FormerlySerializedAs("maskDisplayShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Shader _MaskDisplayShader;
 
 		[FormerlySerializedAs("heightMapperShader")]
@@ -517,9 +517,9 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _HeightMapperShader;
 
+		[HideInInspector]
 		[FormerlySerializedAs("heightMapperShaderAlt")]
 		[SerializeField]
-		[HideInInspector]
 		private Shader _HeightMapperShaderAlt;
 
 		private GameObject[] _GameObjects;

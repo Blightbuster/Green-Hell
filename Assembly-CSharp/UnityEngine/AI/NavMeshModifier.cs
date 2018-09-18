@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace UnityEngine.AI
 {
-	[ExecuteInEditMode]
-	[AddComponentMenu("Navigation/NavMeshModifier", 32)]
 	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
+	[AddComponentMenu("Navigation/NavMeshModifier", 32)]
+	[ExecuteInEditMode]
 	public class NavMeshModifier : MonoBehaviour
 	{
 		public bool overrideArea

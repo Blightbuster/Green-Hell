@@ -675,8 +675,8 @@ public class Streamer : MonoBehaviour
 	[Tooltip("Distance in grid elements after which you want to unload assets.")]
 	public Vector3 deloadingRange = new Vector3(3f, 3f, 3f);
 
-	[Tooltip("Frequancy in seconds in which you want to check if grid element is close /far enough to load/unload.")]
 	[Header("Settings")]
+	[Tooltip("Frequancy in seconds in which you want to check if grid element is close /far enough to load/unload.")]
 	public float positionCheckTime = 0.1f;
 
 	[Tooltip("Time in seconds after which grid element will be unloaded.")]
@@ -692,13 +692,13 @@ public class Streamer : MonoBehaviour
 	[Space(10f)]
 	public TerrainNeighbours terrainNeighbours;
 
-	[Space(10f)]
 	[Tooltip("Enable looping system, each layer is streamed independently, so if you want to synchronize them, they should have the same XYZ size. More info at manual.")]
+	[Space(10f)]
 	public bool looping;
 
-	[Tooltip("Drag and drop here, an object that system have to follow during streaming process.")]
 	[Space(10f)]
 	[Header("Player Settings")]
+	[Tooltip("Drag and drop here, an object that system have to follow during streaming process.")]
 	public Transform player;
 
 	[Tooltip("Streamer will wait for player spawn and fill it automatically")]

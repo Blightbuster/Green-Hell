@@ -252,8 +252,8 @@ namespace RootMotion.FinalIK
 				[Tooltip("Reference to the bone that this hit point rotates")]
 				public IKSolverVR.RotationOffset rotationOffset;
 
-				[Range(0f, 1f)]
 				[Tooltip("Weight of rotating the bone")]
+				[Range(0f, 1f)]
 				public float weight;
 
 				private Quaternion lastValue = Quaternion.identity;

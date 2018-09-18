@@ -45,12 +45,12 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _NormalMapShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("resolution")]
+		[SerializeField]
 		private int _Resolution = 512;
 
-		[FormerlySerializedAs("period")]
 		[SerializeField]
+		[FormerlySerializedAs("period")]
 		private float _Period = 60f;
 
 		[FormerlySerializedAs("animationSpeed")]

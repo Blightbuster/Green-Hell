@@ -81,7 +81,7 @@ public class LiquidInHandsController : PlayerController
 
 	public override void OnInputAction(InputsManager.InputAction action)
 	{
-		if (action == InputsManager.InputAction.WaterSpill)
+		if (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit)
 		{
 			this.Spill(-1f);
 		}
@@ -119,8 +119,8 @@ public class LiquidInHandsController : PlayerController
 
 	public override void GetInputActions(ref List<int> actions)
 	{
+		actions.Add(67);
 		actions.Add(19);
-		actions.Add(20);
 	}
 
 	private void CheckContainer()

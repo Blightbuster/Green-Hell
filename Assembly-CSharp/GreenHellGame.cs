@@ -25,6 +25,7 @@ public class GreenHellGame : MonoBehaviour
 
 	private void Initialize()
 	{
+		this.InitInputsManager();
 		this.InitAudioMixer();
 		this.m_Settings = base.gameObject.AddComponent<GameSettings>();
 		this.m_Settings.LoadSettings();
@@ -489,6 +490,11 @@ public class GreenHellGame : MonoBehaviour
 		fileStream.Close();
 	}
 
+	private void InitInputsManager()
+	{
+		base.gameObject.AddComponent<InputsManager>();
+	}
+
 	public static bool ROADSHOW_DEMO = false;
 
 	public static bool DEBUG = false;
@@ -501,7 +507,9 @@ public class GreenHellGame : MonoBehaviour
 
 	public static GameVersion s_GameVersionEarlyAccessUpdate2 = new GameVersion(0, 10);
 
-	public static GameVersion s_GameVersion = new GameVersion(GreenHellGame.s_GameVersionEarlyAccessUpdate2);
+	public static GameVersion s_GameVersionEarlyAccessUpdate3 = new GameVersion(0, 11);
+
+	public static GameVersion s_GameVersion = new GameVersion(GreenHellGame.s_GameVersionEarlyAccessUpdate3);
 
 	private static GreenHellGame s_Instance = null;
 

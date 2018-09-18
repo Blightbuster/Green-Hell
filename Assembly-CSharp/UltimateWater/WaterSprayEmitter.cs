@@ -56,8 +56,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _EmissionRate = 5f;
 
-		[FormerlySerializedAs("startIntensity")]
 		[SerializeField]
+		[FormerlySerializedAs("startIntensity")]
 		private float _StartIntensity = 1f;
 
 		[FormerlySerializedAs("startVelocity")]

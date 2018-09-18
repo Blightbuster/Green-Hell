@@ -319,8 +319,8 @@ namespace UltimateWater
 		[Range(0.1f, 1f)]
 		public float Resolution = 0.5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Air resistance causing raindrops to slow down")]
+		[Range(0f, 1f)]
 		[Header("Friction")]
 		public float AirFriction = 0.5f;
 
@@ -367,8 +367,8 @@ namespace UltimateWater
 		[Serializable]
 		public class FadeModule
 		{
-			[Tooltip("1 - no fade, 0 - instant fade")]
 			[Range(0.5f, 1f)]
+			[Tooltip("1 - no fade, 0 - instant fade")]
 			public float Intensity = 0.99f;
 
 			[Tooltip("Additional texture based fade")]

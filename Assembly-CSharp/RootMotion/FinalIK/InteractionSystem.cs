@@ -5,8 +5,8 @@ using UnityEngine.Serialization;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("https://www.youtube.com/watch?v=r5jiZnsDH3M")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction System")]
+	[HelpURL("https://www.youtube.com/watch?v=r5jiZnsDH3M")]
 	public class InteractionSystem : MonoBehaviour
 	{
 		[ContextMenu("TUTORIAL VIDEO (PART 1: BASICS)")]
@@ -845,8 +845,8 @@ namespace RootMotion.FinalIK
 		[Header("Triggering")]
 		public Collider characterCollider;
 
-		[Tooltip("Will be used by Interaction Triggers that need the camera's position. Assign the first person view character camera.")]
 		[FormerlySerializedAs("camera")]
+		[Tooltip("Will be used by Interaction Triggers that need the camera's position. Assign the first person view character camera.")]
 		public Transform FPSCamera;
 
 		[Tooltip("The layers that will be raycasted from the camera (along camera.forward). All InteractionTrigger look at target colliders should be included.")]
@@ -873,8 +873,8 @@ namespace RootMotion.FinalIK
 
 		public RaycastHit raycastHit;
 
-		[Tooltip("Reference to the FBBIK component.")]
 		[SerializeField]
+		[Tooltip("Reference to the FBBIK component.")]
 		[Space(10f)]
 		private FullBodyBipedIK fullBody;
 

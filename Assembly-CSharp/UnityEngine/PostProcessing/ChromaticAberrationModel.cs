@@ -43,8 +43,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Shift the hue of chromatic aberrations.")]
 			public Texture2D spectralTexture;
 
-			[Range(0f, 1f)]
 			[Tooltip("Amount of tangential distortion.")]
+			[Range(0f, 1f)]
 			public float intensity;
 		}
 	}

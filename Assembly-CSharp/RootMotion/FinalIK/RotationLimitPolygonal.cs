@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Polygonal")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page12.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Polygonal")]
 	public class RotationLimitPolygonal : RotationLimit
 	{
 		[ContextMenu("User Manual")]
@@ -271,16 +271,16 @@ namespace RootMotion.FinalIK
 		[Range(0f, 3f)]
 		public int smoothIterations;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		public RotationLimitPolygonal.LimitPoint[] points;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		public Vector3[] P;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		public RotationLimitPolygonal.ReachCone[] reachCones = new RotationLimitPolygonal.ReachCone[0];
 
 		[Serializable]

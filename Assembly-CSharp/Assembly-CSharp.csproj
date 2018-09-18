@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{92E0F15D-E919-4F0C-B7DE-003E9502E2E5}</ProjectGuid>
+    <ProjectGuid>{ABC39BC1-E18A-477A-A701-F79E5519C6A9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Assembly-CSharp</RootNamespace>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -847,6 +847,7 @@
     <Compile Include="IYesNoDialogOwner.cs" />
     <Compile Include="JaguarTwitchDemo.cs" />
     <Compile Include="Key.cs" />
+    <Compile Include="KeyBindingQuestion.cs" />
     <Compile Include="KeyCodeToString.cs" />
     <Compile Include="Ladder.cs" />
     <Compile Include="LadderController.cs" />
@@ -886,6 +887,7 @@
     <Compile Include="MainMenuOptions.cs" />
     <Compile Include="MainMenuOptionsAudio.cs" />
     <Compile Include="MainMenuOptionsControls.cs" />
+    <Compile Include="MainMenuOptionsControlsKeysBinding.cs" />
     <Compile Include="MainMenuOptionsGame.cs" />
     <Compile Include="MainMenuScreen.cs" />
     <Compile Include="MainMenuState.cs" />
@@ -925,6 +927,7 @@
     <Compile Include="MenuOptions.cs" />
     <Compile Include="MenuOptionsAudio.cs" />
     <Compile Include="MenuOptionsControls.cs" />
+    <Compile Include="MenuOptionsControlsKeysBinding.cs" />
     <Compile Include="MenuOptionsGraphics.cs" />
     <Compile Include="MenuSave.cs" />
     <Compile Include="MenuSaveLoadCommon.cs" />
@@ -1579,6 +1582,8 @@
     <Compile Include="TurnBasedAI.cs" />
     <Compile Include="TwitchDemoManager.cs" />
     <Compile Include="UIButtonEx.cs" />
+    <Compile Include="UIKeyBindButton.cs" />
+    <Compile Include="UIKeyBindButtonState.cs" />
     <Compile Include="UIList.cs" />
     <Compile Include="UIListElement.cs" />
     <Compile Include="UIListEx.cs" />

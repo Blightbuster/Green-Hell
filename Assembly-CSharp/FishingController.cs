@@ -306,17 +306,17 @@ public class FishingController : PlayerController
 		switch (this.m_State)
 		{
 		case FishingController.State.None:
-			actions.Add(21);
+			actions.Add(20);
 			break;
 		case FishingController.State.Aim:
-			actions.Add(22);
+			actions.Add(21);
 			break;
 		case FishingController.State.Waiting:
-			actions.Add(24);
 			actions.Add(23);
+			actions.Add(22);
 			break;
 		case FishingController.State.Fish:
-			actions.Add(25);
+			actions.Add(24);
 			break;
 		}
 	}

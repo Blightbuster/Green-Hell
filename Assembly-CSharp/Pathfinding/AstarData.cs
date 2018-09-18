@@ -537,8 +537,8 @@ namespace Pathfinding
 		[SerializeField]
 		private string dataString;
 
-		[SerializeField]
 		[FormerlySerializedAs("data")]
+		[SerializeField]
 		private byte[] upgradeData;
 
 		public byte[] data_backup;

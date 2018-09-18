@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
+	[SaveDuringPlay]
 	[ExecuteInEditMode]
 	[DocumentationSorting(19f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("Cinemachine/CinemachineTargetGroup")]
-	[SaveDuringPlay]
 	public class CinemachineTargetGroup : MonoBehaviour
 	{
 		public Bounds BoundingBox

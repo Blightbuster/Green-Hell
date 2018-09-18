@@ -102,6 +102,10 @@ public class HUDItem : HUDBase
 		this.m_ItemReplacer = item;
 		this.ClearSlots();
 		bool flag = Player.Get().m_SwimController.IsActive();
+		if (item.m_ReplaceInfo.m_Craftable && !flag)
+		{
+			this.AddSlot(HUDItem.Action.Craft);
+		}
 		if (item.m_ReplaceInfo.m_CanBeAddedToInventory)
 		{
 			this.AddSlot(HUDItem.Action.Take);
@@ -117,10 +121,6 @@ public class HUDItem : HUDBase
 		if (item.m_ReplaceInfo.CanDrink() && !flag)
 		{
 			this.AddSlot(HUDItem.Action.Drink);
-		}
-		if (item.m_ReplaceInfo.m_Craftable && !flag)
-		{
-			this.AddSlot(HUDItem.Action.Craft);
 		}
 		if (item.m_ReplaceInfo.m_Harvestable && !flag)
 		{
@@ -140,6 +140,10 @@ public class HUDItem : HUDBase
 		this.m_Item = item;
 		this.ClearSlots();
 		bool flag = Player.Get().m_SwimController.IsActive();
+		if (this.m_Item.m_Info.m_Craftable && !this.m_Item.m_OnCraftingTable && !flag)
+		{
+			this.AddSlot(HUDItem.Action.Craft);
+		}
 		if (this.m_Item.m_Info.IsHeavyObject() && !this.m_Item.m_Info.m_CanBeAddedToInventory)
 		{
 			if (!MakeFireController.Get().IsActive())
@@ -189,18 +193,6 @@ public class HUDItem : HUDBase
 		{
 			this.AddSlot(HUDItem.Action.Drink);
 		}
-		if (this.m_Item.m_Info.m_Craftable && !this.m_Item.m_OnCraftingTable && !flag)
-		{
-			this.AddSlot(HUDItem.Action.Craft);
-		}
-		if (this.m_Item.m_Info.m_Harvestable && !flag)
-		{
-			this.AddSlot(HUDItem.Action.Harvest);
-		}
-		if (this.m_Item.m_Info.m_CanBeRemovedFromInventory && (InventoryBackpack.Get().Contains(this.m_Item) || Player.Get().GetCurrentItem(Hand.Right) == this.m_Item || Player.Get().GetCurrentItem(Hand.Left) == this.m_Item || this.m_Item.m_OnCraftingTable))
-		{
-			this.AddSlot(HUDItem.Action.Drop);
-		}
 		if (this.m_Item.m_Info.IsLiquidContainer())
 		{
 			LiquidContainerInfo liquidContainerInfo = (LiquidContainerInfo)this.m_Item.m_Info;
@@ -209,6 +201,10 @@ public class HUDItem : HUDBase
 				this.AddSlot(HUDItem.Action.Spill);
 			}
 		}
+		if (this.m_Item.m_Info.m_Harvestable && !flag)
+		{
+			this.AddSlot(HUDItem.Action.Harvest);
+		}
 		this.Activate();
 		return true;
 	}
@@ -216,22 +212,25 @@ public class HUDItem : HUDBase
 	protected override void OnShow()
 	{
 		base.OnShow();
+		if (!this.m_HUDTriggerAttach)
+		{
+			this.m_HUDTriggerAttach = HUDTrigger.GetNormal().transform.Find("Group/Action_0/KeyFrame0");
+		}
 		Player.Get().BlockRotation();
 		Player.Get().BlockMoves();
 		CursorManager.Get().ShowCursor(true);
 		CursorManager.Get().UpdateCursorVisibility();
 		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
-		Vector3 position = HUDTrigger.GetNormal().transform.Find("Group/Action_0/KeyFrame0").position;
 		Vector3 zero = Vector3.zero;
 		if (!Inventory3DManager.Get().gameObject.activeSelf)
 		{
 			zero.x = (float)Screen.width * this.m_CursorOffset.x;
 			zero.y = (float)Screen.height * this.m_CursorOffset.y;
-			CursorManager.Get().SetCursorPos(position + zero);
+			CursorManager.Get().SetCursorPos(this.m_HUDTriggerAttach.position + zero);
 		}
 		zero.x = (float)Screen.width * this.m_Offset.x;
 		zero.y = (float)Screen.height * this.m_Offset.y;
-		base.transform.position = position + zero;
+		base.transform.position = this.m_HUDTriggerAttach.position + zero;
 		this.ShowElements();
 		float a = float.MaxValue;
 		float a2 = float.MaxValue;
@@ -435,29 +434,32 @@ public class HUDItem : HUDBase
 			Player.Get().StartController(PlayerControllerType.HarvestingSmallAnimal);
 			break;
 		case HUDItem.Action.Craft:
-			if (Player.Get().GetCurrentItem(Hand.Left) == item)
+			if (Player.Get().CanStartCrafting())
 			{
-				Player.Get().SetWantedItem(Hand.Left, null, true);
+				if (Player.Get().GetCurrentItem(Hand.Left) == item)
+				{
+					Player.Get().SetWantedItem(Hand.Left, null, true);
+				}
+				else if (Player.Get().GetCurrentItem(Hand.Right) == item)
+				{
+					Player.Get().SetWantedItem(Hand.Right, null, true);
+				}
+				else if (!item.m_CurrentSlot && item.m_InventorySlot && item.m_InventorySlot.m_Items.Count > 0)
+				{
+					item.m_InventorySlot.RemoveItem(item, false);
+				}
+				else if (item.m_CurrentSlot && item.m_CurrentSlot.m_InventoryStackSlot)
+				{
+					item.m_CurrentSlot.RemoveItem(item, false);
+				}
+				if (InventoryBackpack.Get().m_EquippedItem == item)
+				{
+					InventoryBackpack.Get().m_EquippedItem = null;
+				}
+				InventoryBackpack.Get().RemoveItem(item, false);
+				CraftingManager.Get().Activate();
+				CraftingManager.Get().AddItem(item, true);
 			}
-			else if (Player.Get().GetCurrentItem(Hand.Right) == item)
-			{
-				Player.Get().SetWantedItem(Hand.Right, null, true);
-			}
-			else if (!item.m_CurrentSlot && item.m_InventorySlot && item.m_InventorySlot.m_Items.Count > 0)
-			{
-				item.m_InventorySlot.RemoveItem(item, false);
-			}
-			else if (item.m_CurrentSlot && item.m_CurrentSlot.m_InventoryStackSlot)
-			{
-				item.m_CurrentSlot.RemoveItem(item, false);
-			}
-			if (InventoryBackpack.Get().m_EquippedItem == item)
-			{
-				InventoryBackpack.Get().m_EquippedItem = null;
-			}
-			InventoryBackpack.Get().RemoveItem(item, false);
-			CraftingManager.Get().Activate();
-			CraftingManager.Get().AddItem(item, true);
 			break;
 		case HUDItem.Action.Fill:
 			this.m_LiquidSource.TakeLiquid();
@@ -619,6 +621,15 @@ public class HUDItem : HUDBase
 		}
 	}
 
+	protected override void Update()
+	{
+		base.Update();
+		Vector3 zero = Vector3.zero;
+		zero.x = (float)Screen.width * this.m_Offset.x;
+		zero.y = (float)Screen.height * this.m_Offset.y;
+		base.transform.position = this.m_HUDTriggerAttach.position + zero;
+	}
+
 	public bool m_Active;
 
 	[HideInInspector]
@@ -660,6 +671,8 @@ public class HUDItem : HUDBase
 	public float m_DelayDeactivate = 0.5f;
 
 	private bool m_DelayDeactivateRequested;
+
+	private Transform m_HUDTriggerAttach;
 
 	public Vector3 m_Offset = Vector3.zero;
 

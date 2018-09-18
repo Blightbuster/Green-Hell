@@ -750,8 +750,8 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterSubsurfaceScattering _SubsurfaceScattering;
 
-		[SerializeField]
 		[FormerlySerializedAs("dynamicWaterData")]
+		[SerializeField]
 		private DynamicWater.Data _DynamicWaterData;
 
 		[FormerlySerializedAs("foamData")]
@@ -766,16 +766,16 @@ namespace UltimateWater
 		[SerializeField]
 		private WindWaves.Data _WindWavesData;
 
-		[SerializeField]
 		[FormerlySerializedAs("dontRotateUpwards")]
+		[SerializeField]
 		private bool _DontRotateUpwards;
 
 		[FormerlySerializedAs("fastEnableDisable")]
 		[SerializeField]
 		private bool _FastEnableDisable;
 
-		[SerializeField]
 		[FormerlySerializedAs("version")]
+		[SerializeField]
 		private float _Version = 0.4f;
 
 		private readonly List<WaterModule> _Modules = new List<WaterModule>();

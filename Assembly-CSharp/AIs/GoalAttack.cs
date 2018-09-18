@@ -9,6 +9,7 @@ namespace AIs
 		{
 			base.Initialize(ai);
 			this.m_Attack = (base.CreateAction(typeof(Attack)) as Attack);
+			this.m_RotateTo = (base.CreateAction(typeof(RotateTo)) as RotateTo);
 		}
 
 		public override bool ShouldPerform()
@@ -33,6 +34,17 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
+			if (this.m_AI.m_ID == AI.AIID.Jaguar)
+			{
+				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
+				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
+				float num = Vector3.Angle(normalized2D, normalized2D2);
+				if (num > 75f)
+				{
+					this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, true);
+					base.StartAction(this.m_RotateTo);
+				}
+			}
 			base.AddToPlan(this.m_Attack);
 		}
 
@@ -86,5 +98,7 @@ namespace AIs
 		}
 
 		private Attack m_Attack;
+
+		private RotateTo m_RotateTo;
 	}
 }

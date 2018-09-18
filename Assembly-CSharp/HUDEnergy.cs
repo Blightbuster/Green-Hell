@@ -245,7 +245,10 @@ public class HUDEnergy : HUDBase
 			one.y = this.m_NoNutritionIconStartScale.y * num;
 			one.z = this.m_NoNutritionIconStartScale.z * 1f;
 			this.m_EnergyUsedByNoNutritionIcon.transform.localScale = one;
-			flag = true;
+			if (playerConditionModule.IsHydrationCriticalLevel())
+			{
+				flag = true;
+			}
 		}
 		else
 		{

@@ -2,7 +2,6 @@
 using CJTools;
 using Enums;
 using UnityEngine;
-using UnityStandardAssets.CrossPlatformInput;
 
 public class LadderController : PlayerController
 {
@@ -280,7 +279,15 @@ public class LadderController : PlayerController
 		{
 			return;
 		}
-		this.m_Inputs.m_Up = CrossPlatformInputManager.GetAxis("Vertical");
+		this.m_Inputs.m_Up = 0f;
+		if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Forward))
+		{
+			this.m_Inputs.m_Up = 1f;
+		}
+		else if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Backward))
+		{
+			this.m_Inputs.m_Up = -1f;
+		}
 	}
 
 	private void UpdateLookDev()

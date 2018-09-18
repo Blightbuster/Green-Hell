@@ -14,8 +14,13 @@ public class Backpack : MonoBehaviour
 	{
 		this.m_PocketPosition = new Vector3[5];
 		this.m_PocketRotation = new Quaternion[5];
-		TextAsset asset = Resources.Load("Scripts/Backpack") as TextAsset;
-		TextAssetParser textAssetParser = new TextAssetParser(asset);
+		string str = (Mathf.Floor(Camera.main.aspect * 10f) / 10f).ToString();
+		TextAsset textAsset = Resources.Load("Scripts/Backpack" + str) as TextAsset;
+		if (!textAsset)
+		{
+			textAsset = (Resources.Load("Scripts/Backpack") as TextAsset);
+		}
+		TextAssetParser textAssetParser = new TextAssetParser(textAsset);
 		for (int i = 0; i < textAssetParser.GetKeysCount(); i++)
 		{
 			Key key = textAssetParser.GetKey(i);

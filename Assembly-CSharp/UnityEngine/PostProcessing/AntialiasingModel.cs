@@ -43,16 +43,16 @@ namespace UnityEngine.PostProcessing
 		[Serializable]
 		public struct FxaaQualitySettings
 		{
-			[Tooltip("The amount of desired sub-pixel aliasing removal. Effects the sharpeness of the output.")]
 			[Range(0f, 1f)]
+			[Tooltip("The amount of desired sub-pixel aliasing removal. Effects the sharpeness of the output.")]
 			public float subpixelAliasingRemovalAmount;
 
 			[Range(0.063f, 0.333f)]
 			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
 			public float edgeDetectionThreshold;
 
-			[Tooltip("Local contrast adaptation value to disallow the algorithm from executing on the darker regions.")]
 			[Range(0f, 0.0833f)]
+			[Tooltip("Local contrast adaptation value to disallow the algorithm from executing on the darker regions.")]
 			public float minimumRequiredLuminance;
 
 			public static AntialiasingModel.FxaaQualitySettings[] presets = new AntialiasingModel.FxaaQualitySettings[]
@@ -105,8 +105,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
 			public float edgeDetectionThreshold;
 
-			[Tooltip("Local contrast adaptation value to disallow the algorithm from executing on the darker regions.")]
 			[Range(0.04f, 0.06f)]
+			[Tooltip("Local contrast adaptation value to disallow the algorithm from executing on the darker regions.")]
 			public float minimumRequiredLuminance;
 
 			public static AntialiasingModel.FxaaConsoleSettings[] presets = new AntialiasingModel.FxaaConsoleSettings[]

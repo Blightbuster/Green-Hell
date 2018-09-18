@@ -5,8 +5,8 @@ namespace Cinemachine
 {
 	[AddComponentMenu("")]
 	[DocumentationSorting(23f, DocumentationSortingAttribute.Level.UserRef)]
-	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineHardLookAt : CinemachineComponentBase
 	{
 		public override bool IsValid

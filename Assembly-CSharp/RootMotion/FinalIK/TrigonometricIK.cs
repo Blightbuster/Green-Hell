@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("http://www.root-motion.com/finalikdox/html/page9.html")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Trigonometric IK")]
+	[HelpURL("http://www.root-motion.com/finalikdox/html/page9.html")]
 	public class TrigonometricIK : IK
 	{
 		[ContextMenu("User Manual")]
