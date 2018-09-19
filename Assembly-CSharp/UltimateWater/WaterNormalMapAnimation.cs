@@ -41,12 +41,12 @@ namespace UltimateWater
 		}
 
 		[FormerlySerializedAs("normalMapShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Shader _NormalMapShader;
 
-		[FormerlySerializedAs("resolution")]
 		[SerializeField]
+		[FormerlySerializedAs("resolution")]
 		private int _Resolution = 512;
 
 		[SerializeField]
@@ -57,8 +57,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _AnimationSpeed = 0.015f;
 
-		[FormerlySerializedAs("intensity")]
 		[SerializeField]
+		[FormerlySerializedAs("intensity")]
 		private float _Intensity = 2f;
 
 		private Water _Water;

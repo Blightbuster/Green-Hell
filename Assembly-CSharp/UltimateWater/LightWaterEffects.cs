@@ -363,12 +363,12 @@ namespace UltimateWater
 		[Range(0f, 8f)]
 		public float Distortions2 = 1f;
 
-		[Tooltip("Optional.")]
 		[SerializeField]
+		[Tooltip("Optional.")]
 		public Transform ScrollDirectionPointer;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Shader _WorldPosShader;
 
 		[SerializeField]
@@ -392,8 +392,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Blur _Blur;
 
-		[SerializeField]
 		[Tooltip("Causes minor allocation per frame (no way around it), but makes caustics rendering a lot faster. Disable it, if you don't use terrains.")]
+		[SerializeField]
 		private bool _SkipTerrainTrees = true;
 
 		private Camera _RenderCamera;

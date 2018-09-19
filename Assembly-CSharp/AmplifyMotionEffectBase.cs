@@ -7,8 +7,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
-[AddComponentMenu("")]
 [RequireComponent(typeof(Camera))]
+[AddComponentMenu("")]
 public class AmplifyMotionEffectBase : MonoBehaviour
 {
 	[Obsolete("workerThreads is deprecated, please use WorkerThreads instead.")]

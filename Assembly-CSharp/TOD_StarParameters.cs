@@ -4,8 +4,8 @@ using UnityEngine;
 [Serializable]
 public class TOD_StarParameters
 {
-	[TOD_Min(0f)]
 	[Tooltip("Size of the stars.")]
+	[TOD_Min(0f)]
 	public float Size = 1f;
 
 	[Tooltip("Brightness of the stars.")]

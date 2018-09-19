@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace Pathfinding
 {
+	[AddComponentMenu("Pathfinding/Modifiers/Simple Smooth")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_simple_smooth_modifier.php")]
 	[RequireComponent(typeof(Seeker))]
-	[AddComponentMenu("Pathfinding/Modifiers/Simple Smooth")]
 	[Serializable]
 	public class SimpleSmoothModifier : MonoModifier
 	{

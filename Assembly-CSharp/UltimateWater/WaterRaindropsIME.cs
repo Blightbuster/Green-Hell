@@ -319,9 +319,9 @@ namespace UltimateWater
 		[Range(0.1f, 1f)]
 		public float Resolution = 0.5f;
 
-		[Tooltip("Air resistance causing raindrops to slow down")]
-		[Range(0f, 1f)]
 		[Header("Friction")]
+		[Range(0f, 1f)]
+		[Tooltip("Air resistance causing raindrops to slow down")]
 		public float AirFriction = 0.5f;
 
 		[Range(0f, 10f)]

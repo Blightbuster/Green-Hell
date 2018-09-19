@@ -206,8 +206,8 @@ namespace Pathfinding
 
 		private GraphModifier next;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		protected ulong uniqueID;
 
 		protected static Dictionary<ulong, GraphModifier> usedIDs = new Dictionary<ulong, GraphModifier>();

@@ -2,8 +2,8 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[RequireComponent(typeof(Light))]
 [ExecuteInEditMode]
+[RequireComponent(typeof(Light))]
 public class NGSS_Directional : MonoBehaviour
 {
 	private void OnDisable()
@@ -94,13 +94,13 @@ public class NGSS_Directional : MonoBehaviour
 	public NGSS_Directional.SAMPLER_COUNT SAMPLERS_COUNT = NGSS_Directional.SAMPLER_COUNT.SAMPLERS_64;
 
 	[Header("SOFTNESS")]
-	[Range(0f, 2f)]
 	[Tooltip("Overall softness for both PCF and PCSS shadows.")]
+	[Range(0f, 2f)]
 	public float GLOBAL_SOFTNESS = 1f;
 
+	[Header("BANDING")]
 	[Tooltip("Amount of banding or noise. Example: 0.0 gives 100 % Banding and 1.0 gives 100 % Noise.")]
 	[Range(0f, 2f)]
-	[Header("BANDING")]
 	public float BANDING_NOISE_VALUE = 1f;
 
 	[Tooltip("Fades out artifacts produced by shadow bias")]
@@ -111,12 +111,12 @@ public class NGSS_Directional : MonoBehaviour
 	[Tooltip("Fades out artifacts produced by shadow bias")]
 	public float BIAS_FADE_VALUE = 1f;
 
-	[Header("PCSS")]
 	[Tooltip("Provides Area Light like soft-shadows. With shadows being harder at close ranges and softer at long ranges.\nDisable it if you are looking for uniformly simple soft-shadows. Disabled by default on Mobile.")]
+	[Header("PCSS")]
 	public bool PCSS_ENABLED = true;
 
-	[Tooltip("PCSS softness when shadows is close to caster.")]
 	[Range(0f, 2f)]
+	[Tooltip("PCSS softness when shadows is close to caster.")]
 	public float PCSS_SOFTNESS_MIN = 1f;
 
 	[Tooltip("PCSS softness when shadows is far from caster.")]

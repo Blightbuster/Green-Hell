@@ -341,8 +341,8 @@ namespace UltimateWater
 
 		private static readonly Dictionary<Collider, WaterVolumeBase> _ColliderToVolumeCache = new Dictionary<Collider, WaterVolumeBase>();
 
-		[SerializeField]
 		[InspectorWarning("Validation", InspectorWarningAttribute.InfoType.Warning)]
+		[SerializeField]
 		private string _Validation;
 	}
 }

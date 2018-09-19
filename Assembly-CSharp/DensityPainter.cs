@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Terrain/Density area painter")]
 [ExecuteInEditMode]
+[AddComponentMenu("Terrain/Density area painter")]
 public class DensityPainter : MonoBehaviour
 {
 }

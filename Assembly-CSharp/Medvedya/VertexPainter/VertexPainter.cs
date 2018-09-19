@@ -5,10 +5,10 @@ using UnityEngine;
 namespace Medvedya.VertexPainter
 {
 	[DisallowMultipleComponent]
+	[AddComponentMenu("Vertex painter/Vertex painter")]
 	[RequireComponent(typeof(MeshRenderer))]
 	[ExecuteInEditMode]
 	[RequireComponent(typeof(MeshFilter))]
-	[AddComponentMenu("Vertex painter/Vertex painter")]
 	public class VertexPainter : MonoBehaviour, IPainting
 	{
 		public MeshFilter meshFilter

@@ -111,8 +111,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Sets the white balance to a custom color temperature.")]
 			public float temperature;
 
-			[Tooltip("Sets the white balance to compensate for a green or magenta tint.")]
 			[Range(-100f, 100f)]
+			[Tooltip("Sets the white balance to compensate for a green or magenta tint.")]
 			public float tint;
 
 			[Tooltip("Shift the hue of all colors.")]

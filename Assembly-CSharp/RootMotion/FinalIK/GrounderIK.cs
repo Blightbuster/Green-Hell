@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder IK")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder IK")]
 	public class GrounderIK : Grounder
 	{
 		[ContextMenu("User Manual")]

@@ -278,8 +278,8 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _SynchronizeWithUnity = true;
 
-		[FormerlySerializedAs("savedCustomQualityLevel")]
 		[SerializeField]
+		[FormerlySerializedAs("savedCustomQualityLevel")]
 		private int _SavedCustomQualityLevel;
 
 		private int _WaterQualityIndex;

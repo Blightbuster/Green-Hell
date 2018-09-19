@@ -332,9 +332,9 @@ namespace RootMotion.FinalIK
 		[Tooltip("Reference to the FBBIK component.")]
 		public FullBodyBipedIK ik;
 
-		[Range(0f, 1f)]
 		[LargeHeader("Position")]
 		[Tooltip("Master weight for positioning the head.")]
+		[Range(0f, 1f)]
 		public float positionWeight = 1f;
 
 		[Range(0f, 1f)]
@@ -348,9 +348,9 @@ namespace RootMotion.FinalIK
 		[Tooltip("If false, hands will not pull the head away if they are too far. Disabling this will improve performance significantly.")]
 		public bool handsPullBody = true;
 
-		[LargeHeader("Rotation")]
-		[Tooltip("The weight of rotating the head bone after solving")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of rotating the head bone after solving")]
+		[LargeHeader("Rotation")]
 		public float rotationWeight;
 
 		[Range(0f, 1f)]
@@ -368,8 +368,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The bones to use for bending.")]
 		public FBBIKHeadEffector.BendBone[] bendBones = new FBBIKHeadEffector.BendBone[0];
 
-		[Range(0f, 1f)]
 		[Tooltip("Optional. The master weight of the CCD (Cyclic Coordinate Descent) IK effect that bends the spine towards the head effector before FBBIK solves.")]
+		[Range(0f, 1f)]
 		[LargeHeader("CCD")]
 		public float CCDWeight = 1f;
 
@@ -483,8 +483,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Assign spine and/or neck bones.")]
 			public Transform transform;
 
-			[Tooltip("The weight of rotating this bone.")]
 			[Range(0f, 1f)]
+			[Tooltip("The weight of rotating this bone.")]
 			public float weight = 0.5f;
 
 			private Quaternion defaultLocalRotation = Quaternion.identity;

@@ -162,12 +162,12 @@ namespace UltimateWater
 
 		public static readonly string CurrentVersionString = "2.1.0";
 
-		[FormerlySerializedAs("serializedVersion")]
 		[SerializeField]
+		[FormerlySerializedAs("serializedVersion")]
 		private float _SerializedVersion = 1f;
 
-		[FormerlySerializedAs("waterLayer")]
 		[SerializeField]
+		[FormerlySerializedAs("waterLayer")]
 		private int _WaterLayer = 4;
 
 		[SerializeField]
@@ -175,14 +175,14 @@ namespace UltimateWater
 		[Tooltip("Used for some camera effects. Has to be unused. You don't need to mask it on your cameras.")]
 		private int _WaterTempLayer = 22;
 
+		[Tooltip("UltimateWater internally uses colliders to detect camera entering into subtractive volumes etc. You will have to ignore this layer in your scripting raycasts.")]
 		[SerializeField]
 		[FormerlySerializedAs("waterCollidersLayer")]
-		[Tooltip("UltimateWater internally uses colliders to detect camera entering into subtractive volumes etc. You will have to ignore this layer in your scripting raycasts.")]
 		private int _WaterCollidersLayer = 1;
 
-		[SerializeField]
 		[Tooltip("More threads increase physics precision under stress, but also decrease overall performance a bit.")]
 		[FormerlySerializedAs("physicsThreads")]
+		[SerializeField]
 		private int _PhysicsThreads = 1;
 
 		[SerializeField]
@@ -193,9 +193,9 @@ namespace UltimateWater
 		[FormerlySerializedAs("allowCpuFFT")]
 		private bool _AllowCpuFFT = true;
 
-		[FormerlySerializedAs("allowFloatingPointMipMaps")]
-		[SerializeField]
 		[Tooltip("Some hardware doesn't support floating point mip maps correctly and they are forcefully disabled. You may simulate how the water would look like on such hardware by disabling this option. Most notably fp mip maps don't work correctly on most AMD graphic cards (for now).")]
+		[SerializeField]
+		[FormerlySerializedAs("allowFloatingPointMipMaps")]
 		private bool _AllowFloatingPointMipMapsOverride = true;
 
 		[SerializeField]

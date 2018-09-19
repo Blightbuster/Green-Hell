@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[ExecuteInEditMode]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_astar_debugger.php")]
+	[ExecuteInEditMode]
 	[AddComponentMenu("Pathfinding/Pathfinding Debugger")]
 	public class AstarDebugger : VersionedMonoBehaviour
 	{

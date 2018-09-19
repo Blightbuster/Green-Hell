@@ -19,6 +19,12 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 		this.m_Language.AddOption("PortugueseBrazilian", GreenHellGame.Instance.GetLocalization().Get("Language_PortugueseBrazilian"));
 		this.m_Language.AddOption("Russian", GreenHellGame.Instance.GetLocalization().Get("Language_Russian"));
 		this.m_Language.AddOption("Polish", GreenHellGame.Instance.GetLocalization().Get("Language_Polish"));
+		this.m_Language.AddOption("Japanese", GreenHellGame.Instance.GetLocalization().Get("Language_Japanese"));
+		this.m_Language.AddOption("Korean", GreenHellGame.Instance.GetLocalization().Get("Language_Korean"));
+		this.m_Language.AddOption("Vietnamese", GreenHellGame.Instance.GetLocalization().Get("Language_Vietnamese"));
+		this.m_Language.AddOption("Thai", GreenHellGame.Instance.GetLocalization().Get("Language_Thai"));
+		this.m_Language.AddOption("Czech", GreenHellGame.Instance.GetLocalization().Get("Language_Czech"));
+		this.m_Language.AddOption("Swedish", GreenHellGame.Instance.GetLocalization().Get("Language_Swedish"));
 		switch (GreenHellGame.Instance.m_Settings.m_Language)
 		{
 		case Language.English:
@@ -65,6 +71,30 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			this.m_Language.SetByOption("Polish");
 			this.m_SelectedLanguage = Language.Polish;
 			break;
+		case Language.Japanese:
+			this.m_Language.SetByOption("Japanese");
+			this.m_SelectedLanguage = Language.Japanese;
+			break;
+		case Language.Korean:
+			this.m_Language.SetByOption("Korean");
+			this.m_SelectedLanguage = Language.Korean;
+			break;
+		case Language.Vietnamese:
+			this.m_Language.SetByOption("Vietnamese");
+			this.m_SelectedLanguage = Language.Vietnamese;
+			break;
+		case Language.Thai:
+			this.m_Language.SetByOption("Thai");
+			this.m_SelectedLanguage = Language.Thai;
+			break;
+		case Language.Czech:
+			this.m_Language.SetByOption("Czech");
+			this.m_SelectedLanguage = Language.Czech;
+			break;
+		case Language.Swedish:
+			this.m_Language.SetByOption("Swedish");
+			this.m_SelectedLanguage = Language.Swedish;
+			break;
 		}
 		this.m_AcceptButton.interactable = false;
 	}
@@ -82,6 +112,12 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 		this.m_Language.SetOptionText("PortugueseBrazilian", GreenHellGame.Instance.GetLocalization().Get("Language_PortugueseBrazilian"));
 		this.m_Language.SetOptionText("Russian", GreenHellGame.Instance.GetLocalization().Get("Language_Russian"));
 		this.m_Language.SetOptionText("Polish", GreenHellGame.Instance.GetLocalization().Get("Language_Polish"));
+		this.m_Language.SetOptionText("Japanese", GreenHellGame.Instance.GetLocalization().Get("Language_Japanese"));
+		this.m_Language.SetOptionText("Korean", GreenHellGame.Instance.GetLocalization().Get("Language_Korean"));
+		this.m_Language.SetOptionText("Vietnamese", GreenHellGame.Instance.GetLocalization().Get("Language_Vietnamese"));
+		this.m_Language.SetOptionText("Thai", GreenHellGame.Instance.GetLocalization().Get("Language_Thai"));
+		this.m_Language.SetOptionText("Czech", GreenHellGame.Instance.GetLocalization().Get("Language_Czech"));
+		this.m_Language.SetOptionText("Swedish", GreenHellGame.Instance.GetLocalization().Get("Language_Swedish"));
 	}
 
 	public override void OnSelectionChanged(UISelectButton button, string option)
@@ -132,6 +168,30 @@ public class MainMenuOptionsGame : MainMenuScreen, IYesNoDialogOwner
 			else if (option == "Polish")
 			{
 				this.m_SelectedLanguage = Language.Polish;
+			}
+			else if (option == "Japanese")
+			{
+				this.m_SelectedLanguage = Language.Japanese;
+			}
+			else if (option == "Korean")
+			{
+				this.m_SelectedLanguage = Language.Korean;
+			}
+			else if (option == "Vietnamese")
+			{
+				this.m_SelectedLanguage = Language.Vietnamese;
+			}
+			else if (option == "Thai")
+			{
+				this.m_SelectedLanguage = Language.Thai;
+			}
+			else if (option == "Czech")
+			{
+				this.m_SelectedLanguage = Language.Czech;
+			}
+			else if (option == "Swedish")
+			{
+				this.m_SelectedLanguage = Language.Swedish;
 			}
 		}
 	}

@@ -171,8 +171,8 @@ namespace UltimateWater
 		[SerializeField]
 		private BlurSSS _SubsurfaceScatteringBlur;
 
-		[Range(0f, 0.9f)]
 		[SerializeField]
+		[Range(0f, 0.9f)]
 		private float _IgnoredLightFraction = 0.15f;
 
 		[SerializeField]
@@ -185,8 +185,8 @@ namespace UltimateWater
 		})]
 		private int _AmbientResolution = 128;
 
-		[Range(-1f, 6f)]
 		[SerializeField]
+		[Range(-1f, 6f)]
 		private int _LightCount = -1;
 
 		[SerializeField]

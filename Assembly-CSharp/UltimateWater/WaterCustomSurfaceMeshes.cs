@@ -253,8 +253,8 @@ namespace UltimateWater
 			this.Dispose();
 		}
 
-		[SerializeField]
 		[FormerlySerializedAs("customMeshes")]
+		[SerializeField]
 		private Mesh[] _CustomMeshes;
 
 		private Water _Water;

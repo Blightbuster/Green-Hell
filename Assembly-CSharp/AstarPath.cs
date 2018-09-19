@@ -8,8 +8,8 @@ using Pathfinding.Util;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[HelpURL("http://arongranberg.com/astar/docs/class_astar_path.php")]
 [ExecuteInEditMode]
+[HelpURL("http://arongranberg.com/astar/docs/class_astar_path.php")]
 [AddComponentMenu("Pathfinding/Pathfinder")]
 public class AstarPath : VersionedMonoBehaviour
 {

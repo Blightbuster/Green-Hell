@@ -5,8 +5,8 @@ using UnityEngine.Serialization;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction System")]
 	[HelpURL("https://www.youtube.com/watch?v=r5jiZnsDH3M")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction System")]
 	public class InteractionSystem : MonoBehaviour
 	{
 		[ContextMenu("TUTORIAL VIDEO (PART 1: BASICS)")]

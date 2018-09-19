@@ -55,12 +55,12 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Tooltip("Strength of the bloom filter.")]
 			[Min(0f)]
+			[Tooltip("Strength of the bloom filter.")]
 			public float intensity;
 
-			[Tooltip("Filters out pixels under this level of brightness.")]
 			[Min(0f)]
+			[Tooltip("Filters out pixels under this level of brightness.")]
 			public float threshold;
 
 			[Tooltip("Makes transition between under/over-threshold gradual (0 = hard threshold, 1 = soft threshold).")]
@@ -93,8 +93,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Dirtiness texture to add smudges or dust to the lens.")]
 			public Texture texture;
 
-			[Tooltip("Amount of lens dirtiness.")]
 			[Min(0f)]
+			[Tooltip("Amount of lens dirtiness.")]
 			public float intensity;
 		}
 

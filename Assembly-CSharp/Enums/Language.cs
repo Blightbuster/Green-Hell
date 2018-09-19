@@ -14,6 +14,12 @@ namespace Enums
 		Portuguese,
 		PortugueseBrazilian,
 		Russian,
-		Polish
+		Polish,
+		Japanese,
+		Korean,
+		Vietnamese,
+		Thai,
+		Czech,
+		Swedish
 	}
 }

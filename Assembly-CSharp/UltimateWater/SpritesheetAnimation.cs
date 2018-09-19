@@ -71,12 +71,12 @@ namespace UltimateWater
 		[SerializeField]
 		private float _TimeStep = 0.06f;
 
-		[SerializeField]
 		[FormerlySerializedAs("loop")]
+		[SerializeField]
 		private bool _Loop;
 
-		[SerializeField]
 		[FormerlySerializedAs("destroyGo")]
+		[SerializeField]
 		private bool _DestroyGo;
 
 		private Material _Material;

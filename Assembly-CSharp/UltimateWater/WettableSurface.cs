@@ -262,8 +262,8 @@ namespace UltimateWater
 		private WaterCamera _MainCamera;
 
 		[FormerlySerializedAs("mode")]
-		[SerializeField]
 		[Tooltip("Texture space is good for small objects, especially convex ones.\nNear camera mode is better for terrains and big meshes that are static and don't have geometry at the bottom.")]
+		[SerializeField]
 		private WettableSurface.Mode _Mode;
 
 		[FormerlySerializedAs("resolution")]
@@ -275,8 +275,8 @@ namespace UltimateWater
 		[Header("Direct references (Optional)")]
 		private MeshRenderer[] _MeshRenderers;
 
-		[FormerlySerializedAs("terrains")]
 		[SerializeField]
+		[FormerlySerializedAs("terrains")]
 		private Terrain[] _Terrains;
 
 		private MeshFilter[] _MeshFilters;

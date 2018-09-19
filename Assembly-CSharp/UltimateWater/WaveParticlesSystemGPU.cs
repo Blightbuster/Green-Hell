@@ -239,8 +239,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Texture _FoamOverlayTexture;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamAtlasWidth")]
+		[SerializeField]
 		private int _FoamAtlasWidth = 8;
 
 		[SerializeField]

@@ -638,20 +638,20 @@ namespace UltimateWater
 			}
 		}
 
-		[Range(1f, 30f)]
 		[Tooltip("Controls precision of the simulation. Keep it low (1 - 2) for small and not important objects. Prefer high values (15 - 30) for ships etc.")]
 		[FormerlySerializedAs("sampleCount")]
+		[Range(1f, 30f)]
 		[SerializeField]
 		private int _SampleCount = 20;
 
 		[Tooltip("Controls drag force. Determined experimentally in wind tunnels. Example values:\n https://en.wikipedia.org/wiki/Drag_coefficient#General")]
 		[FormerlySerializedAs("dragCoefficient")]
-		[SerializeField]
 		[Range(0f, 6f)]
+		[SerializeField]
 		private float _DragCoefficient = 0.9f;
 
-		[Tooltip("Determines how many waves will be used in computations. Set it low for big objects, larger than most of the waves. Set it high for smaller objects of size comparable to many waves.")]
 		[Range(0.125f, 1f)]
+		[Tooltip("Determines how many waves will be used in computations. Set it low for big objects, larger than most of the waves. Set it high for smaller objects of size comparable to many waves.")]
 		[FormerlySerializedAs("precision")]
 		[SerializeField]
 		private float _Precision = 0.5f;
@@ -662,14 +662,14 @@ namespace UltimateWater
 		[SerializeField]
 		private float _BuoyancyIntensity = 1f;
 
-		[Tooltip("Horizontal flow force intensity.")]
 		[SerializeField]
+		[Tooltip("Horizontal flow force intensity.")]
 		[FormerlySerializedAs("flowIntensity")]
 		private float _FlowIntensity = 1f;
 
-		[Tooltip("Temporarily supports only mesh colliders.")]
-		[SerializeField]
 		[FormerlySerializedAs("useImprovedDragAndFlowForces")]
+		[SerializeField]
+		[Tooltip("Temporarily supports only mesh colliders.")]
 		private bool _UseImprovedDragAndFlowForces;
 
 		private Vector3[] _CachedSamplePositions;

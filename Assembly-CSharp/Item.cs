@@ -942,6 +942,7 @@ public class Item : Trigger
 						inventoryCellsGroup.m_Cells.Add(InventoryBackpack.Get().GetCellByName(SaveGame.LoadSVal("ItemInvGrCell" + index + i), this.m_Info.m_BackpackPocket));
 					}
 					inventoryCellsGroup.m_CenterWorld = SaveGame.LoadV3Val("ItemInvGrPos" + index);
+					inventoryCellsGroup.Setup();
 				}
 				InventoryBackpack.Get().InsertItem(this, null, inventoryCellsGroup, false, true, true, true, true);
 			}

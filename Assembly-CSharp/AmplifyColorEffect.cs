@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Image Effects/Amplify Color")]
 [ExecuteInEditMode]
+[AddComponentMenu("Image Effects/Amplify Color")]
 [ImageEffectTransformsToLDR]
 public sealed class AmplifyColorEffect : AmplifyColorBase
 {

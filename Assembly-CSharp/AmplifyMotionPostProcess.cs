@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("")]
+[RequireComponent(typeof(Camera))]
 public sealed class AmplifyMotionPostProcess : MonoBehaviour
 {
 	public AmplifyMotionEffectBase Instance

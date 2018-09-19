@@ -54,8 +54,8 @@ namespace UltimateWater
 			}
 		}
 
-		[Tooltip("Static objects that interact with water (terrain, pillars, rocks)")]
 		[SerializeField]
+		[Tooltip("Static objects that interact with water (terrain, pillars, rocks)")]
 		private LayerMask _StaticDepthMask;
 
 		[SerializeField]
@@ -75,8 +75,8 @@ namespace UltimateWater
 		[Tooltip("Depth data (only R channel is used)")]
 		private RenderTextureFormat _DepthFormat = RenderTextureFormat.RHalf;
 
-		[Header("Shaders")]
 		[SerializeField]
+		[Header("Shaders")]
 		private WaterRipplesData.ShaderModes _ShaderMode = WaterRipplesData.ShaderModes.PixelShader;
 
 		[Serializable]

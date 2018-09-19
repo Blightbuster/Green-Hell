@@ -4,9 +4,9 @@ using Pathfinding;
 using Pathfinding.Util;
 using UnityEngine;
 
-[HelpURL("http://arongranberg.com/astar/docs/class_a_i_lerp.php")]
-[AddComponentMenu("Pathfinding/AI/AILerp (2D,3D)")]
 [RequireComponent(typeof(Seeker))]
+[AddComponentMenu("Pathfinding/AI/AILerp (2D,3D)")]
+[HelpURL("http://arongranberg.com/astar/docs/class_a_i_lerp.php")]
 public class AILerp : VersionedMonoBehaviour
 {
 	public bool targetReached { get; private set; }

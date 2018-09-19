@@ -108,16 +108,16 @@ namespace UltimateWater
 		[SerializeField]
 		private Rigidbody _RigidBody;
 
-		[SerializeField]
 		[FormerlySerializedAs("mainCollider")]
+		[SerializeField]
 		private Collider _MainCollider;
 
 		[FormerlySerializedAs("sternEffects")]
 		[SerializeField]
 		private ParticleSystem[] _SternEffects;
 
-		[FormerlySerializedAs("sternWaveEmitters")]
 		[SerializeField]
+		[FormerlySerializedAs("sternWaveEmitters")]
 		private WavesEmitter[] _SternWaveEmitters;
 
 		[FormerlySerializedAs("bowWavesEmitter")]

@@ -7,8 +7,8 @@ public class TOD_AmbientParameters
 	[Tooltip("Ambient light mode.")]
 	public TOD_AmbientType Mode = TOD_AmbientType.Color;
 
-	[Tooltip("Saturation of the ambient light.")]
 	[TOD_Min(0f)]
+	[Tooltip("Saturation of the ambient light.")]
 	public float Saturation = 1f;
 
 	[TOD_Min(0f)]

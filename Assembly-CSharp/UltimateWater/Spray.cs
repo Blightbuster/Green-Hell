@@ -7,8 +7,8 @@ using UnityEngine.Serialization;
 
 namespace UltimateWater
 {
-	[RequireComponent(typeof(Water))]
 	[AddComponentMenu("Ultimate Water/Spray", 1)]
+	[RequireComponent(typeof(Water))]
 	public sealed class Spray : MonoBehaviour, IOverlaysRenderer
 	{
 		public int MaxParticles
@@ -498,13 +498,13 @@ namespace UltimateWater
 		}
 
 		[HideInInspector]
-		[FormerlySerializedAs("sprayTiledGeneratorShader")]
 		[SerializeField]
+		[FormerlySerializedAs("sprayTiledGeneratorShader")]
 		private Shader _SprayTiledGeneratorShader;
 
-		[HideInInspector]
 		[FormerlySerializedAs("sprayLocalGeneratorShader")]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _SprayLocalGeneratorShader;
 
 		[FormerlySerializedAs("sprayToFoamShader")]
@@ -512,13 +512,13 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _SprayToFoamShader;
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("sprayControllerShader")]
+		[SerializeField]
+		[HideInInspector]
 		private ComputeShader _SprayControllerShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("sprayMaterial")]
+		[SerializeField]
 		private Material _SprayMaterial;
 
 		[FormerlySerializedAs("maxParticles")]

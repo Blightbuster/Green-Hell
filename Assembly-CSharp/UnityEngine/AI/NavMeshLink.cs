@@ -4,10 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace UnityEngine.AI
 {
-	[ExecuteInEditMode]
 	[DefaultExecutionOrder(-101)]
-	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
 	[AddComponentMenu("Navigation/NavMeshLink", 33)]
+	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
+	[ExecuteInEditMode]
 	public class NavMeshLink : MonoBehaviour
 	{
 		public int agentTypeID

@@ -157,8 +157,8 @@ namespace UltimateWater
 
 		private Renderer[] _Renderers;
 
-		[SerializeField]
 		[InspectorWarning("Warning", InspectorWarningAttribute.InfoType.Error)]
+		[SerializeField]
 		private string _Warning;
 
 		public enum Type

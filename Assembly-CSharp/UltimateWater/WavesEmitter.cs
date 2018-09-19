@@ -83,8 +83,8 @@ namespace UltimateWater
 		[SerializeField]
 		private WaveParticlesSystemGPU _Water;
 
-		[FormerlySerializedAs("amplitude")]
 		[SerializeField]
+		[FormerlySerializedAs("amplitude")]
 		private float _Amplitude = 0.1f;
 
 		[FormerlySerializedAs("wavelength")]
@@ -121,13 +121,13 @@ namespace UltimateWater
 		[Range(0f, 8f)]
 		private float _TrailFoam = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("emissionAngle")]
+		[SerializeField]
 		[Range(0f, 180f)]
 		private float _EmissionAngle;
 
-		[SerializeField]
 		[FormerlySerializedAs("minTextureU")]
+		[SerializeField]
 		[Header("Advanced")]
 		private int _MinTextureU = 4;
 
@@ -135,9 +135,9 @@ namespace UltimateWater
 		[SerializeField]
 		private int _MaxTextureU = 8;
 
-		[SerializeField]
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("initialPower")]
+		[Range(0f, 1f)]
+		[SerializeField]
 		private float _InitialPower = 1f;
 
 		private float _Power = -1f;

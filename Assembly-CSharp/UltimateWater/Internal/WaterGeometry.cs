@@ -306,13 +306,13 @@ namespace UltimateWater.Internal
 		[Tooltip("Geometry type used for display.")]
 		private WaterGeometry.Type _Type;
 
-		[FormerlySerializedAs("baseVertexCount")]
-		[SerializeField]
 		[Tooltip("Water geometry vertex count at 1920x1080.")]
+		[SerializeField]
+		[FormerlySerializedAs("baseVertexCount")]
 		private int _BaseVertexCount = 500000;
 
-		[SerializeField]
 		[FormerlySerializedAs("tesselatedBaseVertexCount")]
+		[SerializeField]
 		[Tooltip("Water geometry vertex count at 1920x1080 on systems with tessellation support. Set it a bit lower as tessellation will place additional, better distributed vertices in shader.")]
 		private int _TesselatedBaseVertexCount = 16000;
 
@@ -328,12 +328,12 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private WaterProjectionGrid _ProjectionGrid;
 
-		[FormerlySerializedAs("uniformGrid")]
 		[SerializeField]
+		[FormerlySerializedAs("uniformGrid")]
 		private WaterUniformGrid _UniformGrid;
 
-		[FormerlySerializedAs("customSurfaceMeshes")]
 		[SerializeField]
+		[FormerlySerializedAs("customSurfaceMeshes")]
 		private WaterCustomSurfaceMeshes _CustomSurfaceMeshes;
 
 		private Water _Water;

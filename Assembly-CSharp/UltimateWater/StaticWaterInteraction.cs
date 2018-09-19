@@ -472,15 +472,17 @@ namespace UltimateWater
 		[Range(0.001f, 80f)]
 		private float _ShoreSmoothness = 50f;
 
-		[FormerlySerializedAs("hasBottomFaces")]
-		[SerializeField]
 		[Tooltip("If set to true, geometry that floats above water is correctly ignored.\n\nUse for objects that are closed and have faces at the bottom like basic primitives and most custom meshes, but not terrain.")]
+		[SerializeField]
+		[FormerlySerializedAs("hasBottomFaces")]
 		private bool _HasBottomFaces;
 
-		[SerializeField]
 		[FormerlySerializedAs("underwaterAreasMode")]
+		[SerializeField]
 		private StaticWaterInteraction.UnderwaterAreasMode _UnderwaterAreasMode;
 
+		[FormerlySerializedAs("mapResolution")]
+		[SerializeField]
 		[Resolution(1024, new int[]
 		{
 			128,
@@ -489,17 +491,15 @@ namespace UltimateWater
 			1024,
 			2048
 		})]
-		[SerializeField]
-		[FormerlySerializedAs("mapResolution")]
 		private int _MapResolution = 1024;
 
-		[SerializeField]
-		[FormerlySerializedAs("waveDampingThreshold")]
 		[Tooltip("All waves bigger than this (in scene units) will be dampened near the shore.")]
+		[FormerlySerializedAs("waveDampingThreshold")]
+		[SerializeField]
 		private float _WaveDampingThreshold = 4f;
 
-		[SerializeField]
 		[FormerlySerializedAs("depthScale")]
+		[SerializeField]
 		private float _DepthScale = 1f;
 
 		[HideInInspector]
@@ -507,19 +507,19 @@ namespace UltimateWater
 		[FormerlySerializedAs("maskGenerateShader")]
 		private Shader _MaskGenerateShader;
 
+		[SerializeField]
 		[FormerlySerializedAs("maskDisplayShader")]
 		[HideInInspector]
-		[SerializeField]
 		private Shader _MaskDisplayShader;
 
-		[FormerlySerializedAs("heightMapperShader")]
 		[SerializeField]
+		[FormerlySerializedAs("heightMapperShader")]
 		[HideInInspector]
 		private Shader _HeightMapperShader;
 
 		[HideInInspector]
-		[FormerlySerializedAs("heightMapperShaderAlt")]
 		[SerializeField]
+		[FormerlySerializedAs("heightMapperShaderAlt")]
 		private Shader _HeightMapperShaderAlt;
 
 		private GameObject[] _GameObjects;

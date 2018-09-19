@@ -248,7 +248,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 	{
 		Vector3 mousePosition = Input.mousePosition;
 		mousePosition.x += 10f;
-		float maxDistance = 3f;
+		float maxDistance = 5f;
 		Vector2 zero = Vector2.zero;
 		zero.x = mousePosition.x / (float)Screen.width;
 		zero.y = mousePosition.y / (float)Screen.height;

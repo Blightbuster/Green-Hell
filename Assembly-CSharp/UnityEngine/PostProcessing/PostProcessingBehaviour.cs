@@ -7,8 +7,8 @@ namespace UnityEngine.PostProcessing
 	[ExecuteInEditMode]
 	[AddComponentMenu("Effects/Post-Processing Behaviour", -1)]
 	[DisallowMultipleComponent]
-	[RequireComponent(typeof(Camera))]
 	[ImageEffectAllowedInSceneView]
+	[RequireComponent(typeof(Camera))]
 	public class PostProcessingBehaviour : MonoBehaviour
 	{
 		private void OnEnable()

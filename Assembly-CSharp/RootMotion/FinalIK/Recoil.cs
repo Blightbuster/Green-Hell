@@ -211,8 +211,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("Time of blending in another recoil when doing automatic fire.")]
 		public float blendTime;
 
-		[Space(10f)]
 		[Tooltip("FBBIK effector position offsets for the recoil (in aiming direction space).")]
+		[Space(10f)]
 		public Recoil.RecoilOffset[] offsets;
 
 		[HideInInspector]

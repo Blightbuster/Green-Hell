@@ -5,10 +5,10 @@ using UnityEngine.XR;
 
 namespace DynamicFogAndMist
 {
-	[ImageEffectAllowedInSceneView]
+	[HelpURL("http://kronnect.com/taptapgo")]
 	[RequireComponent(typeof(Camera))]
 	[ExecuteInEditMode]
-	[HelpURL("http://kronnect.com/taptapgo")]
+	[ImageEffectAllowedInSceneView]
 	public class DynamicFog : MonoBehaviour
 	{
 		public FOG_TYPE effectType
@@ -1476,12 +1476,12 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _enableDithering;
 
-		[SerializeField]
 		[Range(0f, 0.2f)]
+		[SerializeField]
 		private float _ditherStrength = 0.03f;
 
-		[SerializeField]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _alpha = 1f;
 
 		[Range(0f, 1f)]
@@ -1500,16 +1500,16 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private float _distanceFallOff = 0.01f;
 
-		[SerializeField]
 		[Range(0f, 1.2f)]
+		[SerializeField]
 		private float _maxDistance = 0.999f;
 
-		[Range(0.0001f, 0.5f)]
 		[SerializeField]
+		[Range(0.0001f, 0.5f)]
 		private float _maxDistanceFallOff;
 
-		[SerializeField]
 		[Range(0f, 500f)]
+		[SerializeField]
 		private float _height = 1f;
 
 		[Range(0f, 500f)]

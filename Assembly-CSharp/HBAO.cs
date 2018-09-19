@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
-[AddComponentMenu("Image Effects/HBAO")]
 [RequireComponent(typeof(Camera))]
+[AddComponentMenu("Image Effects/HBAO")]
+[ExecuteInEditMode]
 public class HBAO : MonoBehaviour
 {
 	public HBAO.Presets presets

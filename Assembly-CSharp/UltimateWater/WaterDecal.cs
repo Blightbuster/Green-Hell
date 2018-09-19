@@ -189,8 +189,8 @@ namespace UltimateWater
 			return string.Empty;
 		}
 
-		[SerializeField]
 		[Tooltip("Used for rendering water displacements")]
+		[SerializeField]
 		private Material _DisplacementMaterial;
 
 		[SerializeField]
@@ -205,8 +205,8 @@ namespace UltimateWater
 
 		private Renderer[] _Renderers;
 
-		[InspectorWarning("Validation", InspectorWarningAttribute.InfoType.Error)]
 		[SerializeField]
+		[InspectorWarning("Validation", InspectorWarningAttribute.InfoType.Error)]
 		private int _Validation;
 	}
 }

@@ -158,8 +158,8 @@ namespace UltimateWater
 			}
 		}
 
-		[FormerlySerializedAs("initialProfile")]
 		[SerializeField]
+		[FormerlySerializedAs("initialProfile")]
 		private WaterProfile _InitialProfile;
 
 		[FormerlySerializedAs("changed")]

@@ -379,12 +379,12 @@ namespace UltimateWater
 		}
 
 		[FormerlySerializedAs("volumeFrontShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Shader _VolumeFrontShader;
 
-		[FormerlySerializedAs("volumeFrontFastShader")]
 		[SerializeField]
+		[FormerlySerializedAs("volumeFrontFastShader")]
 		[HideInInspector]
 		private Shader _VolumeFrontFastShader;
 

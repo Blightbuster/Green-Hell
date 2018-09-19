@@ -63,6 +63,30 @@ public class Localization
 		{
 			this.ParseScript("Texts_PL");
 		}
+		else if (language == Language.Japanese)
+		{
+			this.ParseScript("Texts_JP");
+		}
+		else if (language == Language.Korean)
+		{
+			this.ParseScript("Texts_KO");
+		}
+		else if (language == Language.Vietnamese)
+		{
+			this.ParseScript("Texts_VN");
+		}
+		else if (language == Language.Thai)
+		{
+			this.ParseScript("Texts_TH");
+		}
+		else if (language == Language.Czech)
+		{
+			this.ParseScript("Texts_CZ");
+		}
+		else if (language == Language.Swedish)
+		{
+			this.ParseScript("Texts_SW");
+		}
 		this.ParseScript("TextsTemp");
 	}
 

@@ -35,8 +35,8 @@ namespace UltimateWater
 		[FormerlySerializedAs("allowHighQualityNormalMaps")]
 		public bool AllowHighQualityNormalMaps;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("tileSizeScale")]
+		[Range(0f, 1f)]
 		public float TileSizeScale;
 
 		[FormerlySerializedAs("wavesMode")]

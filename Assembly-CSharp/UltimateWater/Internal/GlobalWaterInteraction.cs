@@ -92,9 +92,9 @@ namespace UltimateWater.Internal
 			base.transform.localRotation = Quaternion.identity;
 		}
 
-		[FormerlySerializedAs("maskDisplayShader")]
 		[SerializeField]
 		[HideInInspector]
+		[FormerlySerializedAs("maskDisplayShader")]
 		private Shader _MaskDisplayShader;
 
 		[FormerlySerializedAs("intensityMask")]
@@ -105,8 +105,8 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private Vector2 _WorldUnitsOffset;
 
-		[SerializeField]
 		[FormerlySerializedAs("worldUnitsSize")]
+		[SerializeField]
 		private Vector2 _WorldUnitsSize;
 
 		private MeshRenderer _InteractionMaskRenderer;

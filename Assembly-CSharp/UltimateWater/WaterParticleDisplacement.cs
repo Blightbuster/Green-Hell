@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace UltimateWater
 {
-	[RequireComponent(typeof(ParticleSystem))]
 	[AddComponentMenu("Ultimate Water/Dynamic/Water Particles")]
+	[RequireComponent(typeof(ParticleSystem))]
 	public class WaterParticleDisplacement : MonoBehaviour
 	{
 		public bool Initialized
