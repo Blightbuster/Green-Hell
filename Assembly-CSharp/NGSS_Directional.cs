@@ -93,34 +93,34 @@ public class NGSS_Directional : MonoBehaviour
 	[Tooltip("Recommended values: Mobile = 16, Consoles = 25, Desktop VR = 32, Desktop High = 64")]
 	public NGSS_Directional.SAMPLER_COUNT SAMPLERS_COUNT = NGSS_Directional.SAMPLER_COUNT.SAMPLERS_64;
 
-	[Header("SOFTNESS")]
 	[Tooltip("Overall softness for both PCF and PCSS shadows.")]
 	[Range(0f, 2f)]
+	[Header("SOFTNESS")]
 	public float GLOBAL_SOFTNESS = 1f;
 
-	[Header("BANDING")]
-	[Tooltip("Amount of banding or noise. Example: 0.0 gives 100 % Banding and 1.0 gives 100 % Noise.")]
 	[Range(0f, 2f)]
+	[Tooltip("Amount of banding or noise. Example: 0.0 gives 100 % Banding and 1.0 gives 100 % Noise.")]
+	[Header("BANDING")]
 	public float BANDING_NOISE_VALUE = 1f;
 
-	[Tooltip("Fades out artifacts produced by shadow bias")]
 	[Header("BIAS")]
+	[Tooltip("Fades out artifacts produced by shadow bias")]
 	public bool BIAS_FADE = true;
 
-	[Range(0f, 2f)]
 	[Tooltip("Fades out artifacts produced by shadow bias")]
+	[Range(0f, 2f)]
 	public float BIAS_FADE_VALUE = 1f;
 
-	[Tooltip("Provides Area Light like soft-shadows. With shadows being harder at close ranges and softer at long ranges.\nDisable it if you are looking for uniformly simple soft-shadows. Disabled by default on Mobile.")]
 	[Header("PCSS")]
+	[Tooltip("Provides Area Light like soft-shadows. With shadows being harder at close ranges and softer at long ranges.\nDisable it if you are looking for uniformly simple soft-shadows. Disabled by default on Mobile.")]
 	public bool PCSS_ENABLED = true;
 
-	[Range(0f, 2f)]
 	[Tooltip("PCSS softness when shadows is close to caster.")]
+	[Range(0f, 2f)]
 	public float PCSS_SOFTNESS_MIN = 1f;
 
-	[Tooltip("PCSS softness when shadows is far from caster.")]
 	[Range(0f, 2f)]
+	[Tooltip("PCSS softness when shadows is far from caster.")]
 	public float PCSS_SOFTNESS_MAX = 1f;
 
 	private bool isInitialized;

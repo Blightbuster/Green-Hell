@@ -149,10 +149,10 @@ public class PlayerSanityModule : PlayerModule
 				if (Enum.IsDefined(typeof(PlayerSanityModule.SanityEventType), svalue))
 				{
 					PlayerSanityModule.SanityEventType key2 = (PlayerSanityModule.SanityEventType)Enum.Parse(typeof(PlayerSanityModule.SanityEventType), svalue);
-					this.m_EventsMap[(int)key2].m_SanityChange[0] = key.GetVariable(1).IValue;
-					this.m_EventsMap[(int)key2].m_SanityChange[1] = key.GetVariable(2).IValue;
-					this.m_EventsMap[(int)key2].m_SanityChange[2] = key.GetVariable(3).IValue;
-					this.m_EventsMap[(int)key2].m_Interval = key.GetVariable(4).FValue;
+					this.m_EventsMap[(int)key2].m_SanityChange = key.GetVariable(1).IValue;
+					this.m_EventsMap[(int)key2].m_Interval[0] = key.GetVariable(2).FValue;
+					this.m_EventsMap[(int)key2].m_Interval[1] = key.GetVariable(3).FValue;
+					this.m_EventsMap[(int)key2].m_Interval[2] = key.GetVariable(4).FValue;
 					this.m_EventsMap[(int)key2].m_TextID = key.GetVariable(5).SValue;
 				}
 			}
@@ -247,7 +247,7 @@ public class PlayerSanityModule : PlayerModule
 	public float GetEventInterval(PlayerSanityModule.SanityEventType evn)
 	{
 		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
-		return sanityEventData.m_Interval;
+		return sanityEventData.m_Interval[(int)GreenHellGame.Instance.m_GameDifficulty];
 	}
 
 	public void ResetEventCooldown(PlayerSanityModule.SanityEventType evn)
@@ -256,7 +256,7 @@ public class PlayerSanityModule : PlayerModule
 		sanityEventData.m_LastEventTime = Time.time;
 	}
 
-	public void OnEat(int sanity_change)
+	public void OnConsume(int sanity_change)
 	{
 		if (MainLevel.Instance.m_Tutorial)
 		{
@@ -289,9 +289,9 @@ public class PlayerSanityModule : PlayerModule
 			return;
 		}
 		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
-		if (sanityEventData.m_LastEventTime == 0f || Time.time - sanityEventData.m_LastEventTime >= sanityEventData.m_Interval)
+		if (sanityEventData.m_LastEventTime == 0f || Time.time - sanityEventData.m_LastEventTime >= sanityEventData.m_Interval[(int)GreenHellGame.Instance.m_GameDifficulty])
 		{
-			int num = Mathf.Clamp(this.m_Sanity + sanityEventData.m_SanityChange[(int)GreenHellGame.Instance.m_GameDifficulty] * mul, 0, 100);
+			int num = Mathf.Clamp(this.m_Sanity + sanityEventData.m_SanityChange * mul, 0, 100);
 			int num2 = num - this.m_Sanity;
 			if (num2 == 0)
 			{

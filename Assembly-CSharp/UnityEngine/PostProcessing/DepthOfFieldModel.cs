@@ -55,8 +55,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Distance to the point of focus.")]
 			public float focusDistance;
 
-			[Tooltip("Ratio of aperture (known as f-stop or f-number). The smaller the value is, the shallower the depth of field is.")]
 			[Range(0.05f, 32f)]
+			[Tooltip("Ratio of aperture (known as f-stop or f-number). The smaller the value is, the shallower the depth of field is.")]
 			public float aperture;
 
 			[Tooltip("Distance between the lens and the film. The larger the value is, the shallower the depth of field is.")]

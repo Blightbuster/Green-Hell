@@ -131,7 +131,7 @@ public class Injury
 		case InjuryType.Laceration:
 			if (this.m_State == InjuryState.Bleeding)
 			{
-				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_bleeding", typeof(Material)) as Material);
+				componentDeepChild.material = (Resources.Load("Decals/wound_laceration", typeof(Material)) as Material);
 			}
 			else if (this.m_State == InjuryState.Open)
 			{
@@ -381,7 +381,7 @@ public class Injury
 					float num = 1f;
 					if (SleepController.Get().IsActive())
 					{
-						num = PlayerInjuryModule.GetSleepTimeFactor();
+						num = Player.GetSleepTimeFactor();
 						damageInfo.m_Damage = num * 0.2f;
 					}
 					else
@@ -390,6 +390,10 @@ public class Injury
 					}
 					damageInfo.m_PlayDamageSound = false;
 					Player.Get().TakeDamage(damageInfo);
+				}
+				if (this.m_State == InjuryState.Bleeding && this.m_HealingResultInjuryState == InjuryState.None && currentTimeMinutes - this.m_HealingStartTime > Injury.s_HealingLacerationBleedingDurationInMinutes - this.m_HealingTimeDec)
+				{
+					PlayerInjuryModule.Get().HealInjury(this);
 				}
 				if (this.m_HealingResultInjuryState == InjuryState.Infected && currentTimeMinutes - this.m_HealingStartTime > 20f)
 				{
@@ -400,7 +404,7 @@ public class Injury
 			{
 				if (this.m_HealingResultInjuryState == InjuryState.None)
 				{
-					if (currentTimeMinutes - this.m_HealingStartTime > 20f)
+					if (currentTimeMinutes - this.m_HealingStartTime > Injury.s_HealingLacerationOpenDurationInMinutes - this.m_HealingTimeDec)
 					{
 						PlayerInjuryModule.Get().HealInjury(this);
 					}
@@ -634,7 +638,7 @@ public class Injury
 
 	public static float m_HealingDefaultDuration = 20f;
 
-	public static float s_HealingLacerationBleedingDurationInMinutes = 20f;
+	public static float s_HealingLacerationBleedingDurationInMinutes = 50f;
 
 	public static float s_HealingLacerationClosedDurationInMinutes = 35f;
 

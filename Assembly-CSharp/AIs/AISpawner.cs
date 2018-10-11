@@ -39,14 +39,16 @@ namespace AIs
 			Vector3 size = component.size;
 			this.m_MinDistance = AIManager.Get().m_AIActivationRange * 0.7f;
 			this.m_MaxDistance = AIManager.Get().m_AIActivationRange * 0.9f;
-			int num = Mathf.Max(this.m_DayCount, this.m_NightCount);
-			for (int i = 0; i < num; i++)
+			for (int i = 0; i < 99; i++)
 			{
-				AISpawnData aispawnData = new AISpawnData();
-				aispawnData.m_Position = this.GetSpawnPosition();
-				if (aispawnData.m_Position != Vector3.zero)
+				Vector3 spawnPosition = this.GetSpawnPosition();
+				if (spawnPosition != Vector3.zero)
 				{
-					this.m_AIDatas.Add(aispawnData);
+					this.m_Positions.Add(spawnPosition);
+				}
+				if (this.m_Positions.Count >= Mathf.Max(this.m_NightCount, this.m_DayCount) * 2)
+				{
+					break;
 				}
 			}
 			AIManager.Get().RegisterSpawner(this);
@@ -54,13 +56,6 @@ namespace AIs
 
 		private void OnDestroy()
 		{
-			for (int i = 0; i < this.m_AIDatas.Count; i++)
-			{
-				if (this.m_AIDatas[i].m_AI)
-				{
-					this.m_AIDatas[i].m_AI.m_Spawner = null;
-				}
-			}
 			AIManager.Get().UnregisterSpawner(this);
 		}
 
@@ -69,51 +64,74 @@ namespace AIs
 			return this.m_Bounds.Contains(position);
 		}
 
-		private bool CanSpawn()
+		private int GetWantedAICount()
 		{
-			if (AIManager.Get() == null)
-			{
-				return false;
-			}
-			if (this.m_ID == AI.AIID.Jaguar && !BalanceSystem.Get().CanSpawnJaguar())
-			{
-				return false;
-			}
-			int num = (!MainLevel.Instance.IsNight()) ? this.m_DayCount : this.m_NightCount;
-			return this.m_AICount < num && (!this.m_SpawnersGroup || this.m_SpawnersGroup.CanSpawnAI());
+			return (!MainLevel.Instance.IsNight()) ? (this.m_DayCount - this.m_BlockedCount) : this.m_NightCount;
 		}
 
-		private bool CanSpawn(AISpawnData data)
+		public void UpdateSpawner()
 		{
-			if (data.m_AI != null)
-			{
-				return false;
-			}
-			if (data.m_TimeToNextSpawn > 0f)
-			{
-				return false;
-			}
-			float num = Vector3.Distance(Player.Get().transform.position, data.m_Position);
-			return num <= this.m_MaxDistance && num >= this.m_MinDistance;
+			this.UpdateBlocked();
+			this.UpdateSpawn();
+			this.UpdateAICount();
 		}
 
-		private void Update()
+		private void UpdateBlocked()
 		{
-			for (int i = 0; i < this.m_AIDatas.Count; i++)
+			if (this.m_BlockedCount > 0)
 			{
-				this.m_AIDatas[i].m_TimeToNextSpawn -= Time.deltaTime;
+				this.m_BlockedDuration += Time.deltaTime;
+				if (this.m_BlockedDuration >= this.m_ResetTime)
+				{
+					this.m_BlockedCount--;
+					this.m_BlockedDuration = 0f;
+				}
 			}
+		}
+
+		private void UpdateAICount()
+		{
+			int wantedAICount = this.GetWantedAICount();
+			if (this.m_AICount <= wantedAICount)
+			{
+				return;
+			}
+			AI ai = null;
+			float num = 0f;
+			foreach (AI ai2 in this.m_AIs)
+			{
+				if (ai2.m_InvisibleDuration > num)
+				{
+					num = ai2.m_InvisibleDuration;
+					ai = ai2;
+				}
+			}
+			if (ai && ai.m_InvisibleDuration > 5f)
+			{
+				UnityEngine.Object.Destroy(ai.gameObject);
+			}
+		}
+
+		private void UpdateSpawn()
+		{
 			if (!this.CanSpawn())
 			{
 				return;
 			}
-			for (int j = 0; j < this.m_AIDatas.Count; j++)
+			for (int i = 0; i < this.m_Positions.Count; i++)
 			{
-				if (this.CanSpawn(this.m_AIDatas[j]))
+				float num = Vector3.Distance(Player.Get().transform.position, this.m_Positions[i]);
+				if (num < this.m_MaxDistance && num > this.m_MinDistance)
 				{
-					this.SpawnObject(this.m_AIDatas[j]);
+					this.SpawnObject(this.m_Positions[i]);
+					return;
 				}
 			}
+		}
+
+		private bool CanSpawn()
+		{
+			return !(AIManager.Get() == null) && (!AI.IsCat(this.m_ID) || BalanceSystem.Get().CanSpawnJaguar()) && this.m_AICount < this.GetWantedAICount() && (!this.m_SpawnersGroup || this.m_SpawnersGroup.CanSpawnAI());
 		}
 
 		public Vector3 GetRandomPositionInside()
@@ -147,25 +165,17 @@ namespace AIs
 			{
 				return false;
 			}
-			float num = Mathf.Max(this.m_AIBounds.size.x, this.m_AIBounds.size.z);
-			for (int i = 0; i < this.m_AIDatas.Count; i++)
-			{
-				if (pos.Distance(this.m_AIDatas[i].m_Position) < num)
-				{
-					return false;
-				}
-			}
 			Vector3 center = pos + Vector3.up * (this.m_AIBounds.size.y / 2f);
 			Collider[] array = Physics.OverlapBox(center, this.m_AIBounds.size, Quaternion.identity);
-			for (int j = 0; j < array.Length; j++)
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (!array[j].isTrigger)
+				if (!array[i].isTrigger)
 				{
-					if (!(array[j].gameObject.tag == "Sectr_trigger"))
+					if (!(array[i].gameObject.tag == "Sectr_trigger"))
 					{
-						if (!array[j].GetComponent<TerrainCollider>())
+						if (!array[i].GetComponent<TerrainCollider>())
 						{
-							if (!(array[j].gameObject == base.gameObject))
+							if (!(array[i].gameObject == base.gameObject))
 							{
 								return false;
 							}
@@ -176,21 +186,21 @@ namespace AIs
 			return true;
 		}
 
-		private void SpawnObject(AISpawnData data)
+		private void SpawnObject(Vector3 position)
 		{
 			Quaternion rotation = Quaternion.Euler(0f, (float)UnityEngine.Random.Range(-180, 180), 0f);
-			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_Prefab, data.m_Position, rotation);
+			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_Prefab, position, rotation);
 			gameObject.name = string.Format("{0} {1}", this.m_Prefab.name, base.transform.childCount);
 			Vector3 vector = gameObject.transform.localScale;
 			vector *= UnityEngine.Random.Range(this.m_MinScale, this.m_MaxScale);
 			gameObject.transform.localScale = vector;
 			AI component = gameObject.GetComponent<AI>();
 			component.m_Spawner = this;
-			data.m_AI = component;
 			if (this.m_SpawnersGroup)
 			{
 				this.m_SpawnersGroup.OnSpawnAI(component);
 			}
+			this.m_AIs.Add(component);
 			this.m_AICount++;
 		}
 
@@ -200,16 +210,11 @@ namespace AIs
 			{
 				this.m_SpawnersGroup.OnDestroyAI(ai);
 			}
-			for (int i = 0; i < this.m_AIDatas.Count; i++)
+			if (ai.IsDead())
 			{
-				AISpawnData aispawnData = this.m_AIDatas[i];
-				if (aispawnData.m_AI == ai)
-				{
-					aispawnData.m_AI = null;
-					aispawnData.m_TimeToNextSpawn = ((!ai.IsDead()) ? 0f : this.m_ResetTime);
-					break;
-				}
+				this.m_BlockedCount++;
 			}
+			this.m_AIs.Remove(ai);
 			this.m_AICount--;
 		}
 
@@ -231,7 +236,7 @@ namespace AIs
 		[Range(0.5f, 2f)]
 		public float m_MaxScale = 1.2f;
 
-		private List<AISpawnData> m_AIDatas = new List<AISpawnData>();
+		private List<Vector3> m_Positions = new List<Vector3>();
 
 		private float m_MinDistance;
 
@@ -242,7 +247,13 @@ namespace AIs
 
 		private int m_AICount;
 
+		private int m_BlockedCount;
+
+		private float m_BlockedDuration;
+
 		[HideInInspector]
 		public AISpawnersGroup m_SpawnersGroup;
+
+		private List<AI> m_AIs = new List<AI>();
 	}
 }

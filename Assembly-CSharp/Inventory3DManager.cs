@@ -355,7 +355,7 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 
 	public void OnInputAction(InputsManager.InputAction action)
 	{
-		if (this.m_InputsBlocked)
+		if (CraftingController.Get().BlockInventoryInputs() || HarvestingAnimalController.Get().BlockInventoryInputs() || HarvestingSmallAnimalController.Get().BlockInventoryInputs())
 		{
 			return;
 		}
@@ -944,9 +944,6 @@ public class Inventory3DManager : MonoBehaviour, IInputsReceiver
 
 	[HideInInspector]
 	public float m_DeactivationTime = -1f;
-
-	[HideInInspector]
-	public bool m_InputsBlocked;
 
 	private bool m_ActivityChanged;
 

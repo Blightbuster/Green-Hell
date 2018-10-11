@@ -497,19 +497,19 @@ namespace UltimateWater
 			this._ResourcesReady = false;
 		}
 
-		[HideInInspector]
 		[SerializeField]
 		[FormerlySerializedAs("sprayTiledGeneratorShader")]
+		[HideInInspector]
 		private Shader _SprayTiledGeneratorShader;
 
-		[FormerlySerializedAs("sprayLocalGeneratorShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("sprayLocalGeneratorShader")]
 		private Shader _SprayLocalGeneratorShader;
 
+		[HideInInspector]
 		[FormerlySerializedAs("sprayToFoamShader")]
 		[SerializeField]
-		[HideInInspector]
 		private Shader _SprayToFoamShader;
 
 		[FormerlySerializedAs("sprayControllerShader")]
@@ -517,8 +517,8 @@ namespace UltimateWater
 		[HideInInspector]
 		private ComputeShader _SprayControllerShader;
 
-		[FormerlySerializedAs("sprayMaterial")]
 		[SerializeField]
+		[FormerlySerializedAs("sprayMaterial")]
 		private Material _SprayMaterial;
 
 		[FormerlySerializedAs("maxParticles")]
@@ -526,8 +526,8 @@ namespace UltimateWater
 		[Range(16f, 327675f)]
 		private int _MaxParticles = 65535;
 
-		[FormerlySerializedAs("sprayToFoam")]
 		[SerializeField]
+		[FormerlySerializedAs("sprayToFoam")]
 		private bool _SprayToFoam = true;
 
 		private float _SpawnThreshold = 1f;

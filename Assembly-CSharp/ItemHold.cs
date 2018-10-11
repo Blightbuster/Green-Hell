@@ -5,6 +5,19 @@ using UnityEngine;
 
 public class ItemHold : Item
 {
+	protected override void Start()
+	{
+		base.Start();
+		if (this.m_IgnoreCollisionWithPlayer)
+		{
+			UnityEngine.Object.Destroy(this.m_Collider);
+			MeshCollider meshCollider = base.gameObject.AddComponent<MeshCollider>();
+			meshCollider.convex = true;
+			this.m_Collider = meshCollider;
+			Physics.IgnoreCollision(this.m_Collider, Player.Get().m_Collider);
+		}
+	}
+
 	public override bool IsItemHold()
 	{
 		return true;
@@ -61,4 +74,6 @@ public class ItemHold : Item
 
 	[HideInInspector]
 	public string m_ReplaceInfoName = string.Empty;
+
+	public bool m_IgnoreCollisionWithPlayer;
 }

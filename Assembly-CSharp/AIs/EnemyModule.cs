@@ -71,7 +71,7 @@ namespace AIs
 			else
 			{
 				Item component = info.m_Damager.gameObject.GetComponent<Item>();
-				if (component && component.m_Thrower.gameObject == Player.Get().gameObject)
+				if (component && component.m_Thrower && component.m_Thrower.gameObject == Player.Get().gameObject)
 				{
 					this.SetEnemy(true);
 				}

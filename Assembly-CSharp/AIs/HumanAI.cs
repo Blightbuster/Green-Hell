@@ -278,6 +278,8 @@ namespace AIs
 		[HideInInspector]
 		public Construction m_SelectedConstruction;
 
+		public Rigidbody m_KillerTrapJoint;
+
 		public enum State
 		{
 			None = -1,

@@ -251,21 +251,21 @@ namespace Cinemachine
 			this.UpdateVcamPoolStatus();
 		}
 
-		[NoSaveDuringPlay]
 		[HideInInspector]
+		[NoSaveDuringPlay]
 		public Action CinemachineGUIDebuggerCallback;
 
-		[NoSaveDuringPlay]
 		[SerializeField]
+		[NoSaveDuringPlay]
 		[HideInInspector]
 		public string[] m_ExcludedPropertiesInInspector = new string[]
 		{
 			"m_Script"
 		};
 
+		[NoSaveDuringPlay]
 		[SerializeField]
 		[HideInInspector]
-		[NoSaveDuringPlay]
 		public CinemachineCore.Stage[] m_LockStageInInspector;
 
 		private int m_ValidatingStreamVersion;
@@ -277,8 +277,8 @@ namespace Cinemachine
 		[HideInInspector]
 		private int m_StreamingVersion;
 
-		[Tooltip("The priority will determine which camera becomes active based on the state of other cameras and this camera.  Higher numbers have greater priority.")]
 		[NoSaveDuringPlay]
+		[Tooltip("The priority will determine which camera becomes active based on the state of other cameras and this camera.  Higher numbers have greater priority.")]
 		public int m_Priority = 10;
 
 		protected CinemachineVirtualCameraBase.OnPostPipelineStageDelegate OnPostPipelineStage;

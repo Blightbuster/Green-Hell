@@ -85,6 +85,11 @@ public class MenuDebugSelectMode : MenuScreen
 		this.OnChallenge("TribeRunaway");
 	}
 
+	public void OnHunterChallenge()
+	{
+		this.OnChallenge("Hunter");
+	}
+
 	public void OnChallenge(string name)
 	{
 		ChallengesManager.Get().m_ChallengeToActivate = name;

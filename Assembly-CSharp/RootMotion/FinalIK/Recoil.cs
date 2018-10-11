@@ -211,8 +211,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("Time of blending in another recoil when doing automatic fire.")]
 		public float blendTime;
 
-		[Tooltip("FBBIK effector position offsets for the recoil (in aiming direction space).")]
 		[Space(10f)]
+		[Tooltip("FBBIK effector position offsets for the recoil (in aiming direction space).")]
 		public Recoil.RecoilOffset[] offsets;
 
 		[HideInInspector]
@@ -267,8 +267,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Offset vector for the associated effector when doing recoil.")]
 			public Vector3 offset;
 
-			[Tooltip("When firing before the last recoil has faded, how much of the current recoil offset will be maintained?")]
 			[Range(0f, 1f)]
+			[Tooltip("When firing before the last recoil has faded, how much of the current recoil offset will be maintained?")]
 			public float additivity = 1f;
 
 			[Tooltip("Max additive recoil for automatic fire.")]

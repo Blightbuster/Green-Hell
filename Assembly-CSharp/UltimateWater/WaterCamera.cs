@@ -8,9 +8,9 @@ using UnityEngine.Serialization;
 
 namespace UltimateWater
 {
-	[AddComponentMenu("Ultimate Water/Water Camera", -1)]
 	[ExecuteInEditMode]
 	[ImageEffectAllowedInSceneView]
+	[AddComponentMenu("Ultimate Water/Water Camera", -1)]
 	public class WaterCamera : MonoBehaviour
 	{
 		public bool RenderWaterDepth
@@ -1139,19 +1139,19 @@ namespace UltimateWater
 		[HideInInspector]
 		public Camera ReflectionCamera;
 
+		[FormerlySerializedAs("depthBlitCopyShader")]
 		[HideInInspector]
 		[SerializeField]
-		[FormerlySerializedAs("depthBlitCopyShader")]
 		private Shader _DepthBlitCopyShader;
 
 		[SerializeField]
-		[HideInInspector]
 		[FormerlySerializedAs("shadowEnforcerShader")]
+		[HideInInspector]
 		private Shader _ShadowEnforcerShader;
 
 		[SerializeField]
-		[HideInInspector]
 		[FormerlySerializedAs("gbuffer0MixShader")]
+		[HideInInspector]
 		private Shader _Gbuffer0MixShader;
 
 		[SerializeField]
@@ -1159,46 +1159,46 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _Gbuffer123MixShader;
 
+		[SerializeField]
 		[FormerlySerializedAs("finalColorMixShader")]
 		[HideInInspector]
-		[SerializeField]
 		private Shader _FinalColorMixShader;
 
+		[SerializeField]
 		[FormerlySerializedAs("deferredReflections")]
 		[HideInInspector]
-		[SerializeField]
 		private Shader _DeferredReflections;
 
 		[FormerlySerializedAs("deferredShading")]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _DeferredShading;
 
 		[FormerlySerializedAs("mergeDisplacementsShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Shader _MergeDisplacementsShader;
 
-		[FormerlySerializedAs("renderMode")]
 		[SerializeField]
+		[FormerlySerializedAs("renderMode")]
 		private WaterRenderMode _RenderMode;
 
-		[FormerlySerializedAs("geometryType")]
 		[SerializeField]
+		[FormerlySerializedAs("geometryType")]
 		private WaterGeometryType _GeometryType;
 
 		[FormerlySerializedAs("renderWaterDepth")]
 		[SerializeField]
 		private bool _RenderWaterDepth = true;
 
+		[Range(0.2f, 1f)]
+		[Tooltip("Water has a pretty smooth shape so it's often safe to render it's depth in a lower resolution than the rest of the scene. Although the default value is 1.0, you may probably safely use 0.5 and gain some minor performance boost. If you will encounter any artifacts in masking or image effects, set it back to 1.0.")]
 		[SerializeField]
 		[FormerlySerializedAs("baseEffectsQuality")]
-		[Tooltip("Water has a pretty smooth shape so it's often safe to render it's depth in a lower resolution than the rest of the scene. Although the default value is 1.0, you may probably safely use 0.5 and gain some minor performance boost. If you will encounter any artifacts in masking or image effects, set it back to 1.0.")]
-		[Range(0.2f, 1f)]
 		private float _BaseEffectsQuality = 1f;
 
-		[FormerlySerializedAs("superSampling")]
 		[SerializeField]
+		[FormerlySerializedAs("superSampling")]
 		private float _SuperSampling = 1f;
 
 		[FormerlySerializedAs("renderVolumes")]
@@ -1217,13 +1217,13 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterCamera.WaterCameraEvent _SubmersionStateChanged;
 
-		[SerializeField]
 		[FormerlySerializedAs("mainWater")]
 		[Tooltip("Optional. Deferred rendering mode will try to match profile parameters of this water object as well as possible. It affects only some minor parameters and you may generally ignore this setting. May be removed in the future.")]
+		[SerializeField]
 		private Water _MainWater;
 
-		[SerializeField]
 		[FormerlySerializedAs("effectsLight")]
+		[SerializeField]
 		private LightWaterEffects _EffectsLight;
 
 		private RenderTexture _Gbuffer0Tex;

@@ -1043,6 +1043,12 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		NoiseManager.s_Receivers.Clear();
 	}
 
+	public void OnFullLoadEnd()
+	{
+		FallenObjectsManager.Get().OnFullLoadEnd();
+		BalanceSystem.Get().OnFullLoadEnd();
+	}
+
 	private static MainLevel s_Instance;
 
 	public TOD_Sky m_TODSky;

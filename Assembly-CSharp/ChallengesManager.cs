@@ -171,6 +171,10 @@ public class ChallengesManager : MonoBehaviour
 	{
 		string text = date.Hour.ToString();
 		text += ":";
+		if (date.Minute < 10)
+		{
+			text += "0";
+		}
 		text += date.Minute;
 		text += ((!two_lines) ? " " : "\n");
 		text += ((date.Day >= 10) ? date.Day.ToString() : ("0" + date.Day.ToString()));

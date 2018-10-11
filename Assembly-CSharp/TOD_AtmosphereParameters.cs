@@ -8,8 +8,8 @@ public class TOD_AtmosphereParameters
 	[Tooltip("Intensity of the atmospheric Rayleigh scattering.")]
 	public float RayleighMultiplier = 1f;
 
-	[TOD_Min(0f)]
 	[Tooltip("Intensity of the atmospheric Mie scattering.")]
+	[TOD_Min(0f)]
 	public float MieMultiplier = 1f;
 
 	[TOD_Min(0f)]

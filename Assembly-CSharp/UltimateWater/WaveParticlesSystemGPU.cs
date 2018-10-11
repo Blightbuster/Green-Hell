@@ -243,8 +243,8 @@ namespace UltimateWater
 		[SerializeField]
 		private int _FoamAtlasWidth = 8;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamAtlasHeight")]
+		[SerializeField]
 		private int _FoamAtlasHeight = 4;
 
 		private Material _ParticlesRenderMaterial;

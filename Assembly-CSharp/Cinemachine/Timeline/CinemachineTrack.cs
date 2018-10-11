@@ -5,8 +5,8 @@ using UnityEngine.Timeline;
 
 namespace Cinemachine.Timeline
 {
-	[TrackColor(0.53f, 0f, 0.08f)]
 	[TrackBindingType(typeof(CinemachineBrain))]
+	[TrackColor(0.53f, 0f, 0.08f)]
 	[TrackClipType(typeof(CinemachineShot))]
 	[TrackMediaType(TimelineAsset.MediaType.Script)]
 	[Serializable]

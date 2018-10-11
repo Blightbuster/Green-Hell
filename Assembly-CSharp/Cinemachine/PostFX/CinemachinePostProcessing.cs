@@ -9,8 +9,8 @@ namespace Cinemachine.PostFX
 {
 	[AddComponentMenu("")]
 	[SaveDuringPlay]
-	[DocumentationSorting(101f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DocumentationSorting(101f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachinePostProcessing : CinemachineExtension
 	{
 		public PostProcessProfile Profile

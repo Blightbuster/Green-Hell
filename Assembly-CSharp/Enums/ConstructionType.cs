@@ -10,6 +10,7 @@ namespace Enums
 		Water,
 		Trap,
 		WaterTrap,
-		Other
+		Other,
+		Stand
 	}
 }

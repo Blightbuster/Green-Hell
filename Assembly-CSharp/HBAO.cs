@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
-[AddComponentMenu("Image Effects/HBAO")]
 [ExecuteInEditMode]
+[AddComponentMenu("Image Effects/HBAO")]
+[RequireComponent(typeof(Camera))]
 public class HBAO : MonoBehaviour
 {
 	public HBAO.Presets presets
@@ -626,24 +626,24 @@ public class HBAO : MonoBehaviour
 
 	public Shader hbaoShader;
 
-	[SerializeField]
 	[HBAO.SettingsGroup]
+	[SerializeField]
 	private HBAO.Presets m_Presets = HBAO.Presets.defaultPresets;
 
 	[HBAO.SettingsGroup]
 	[SerializeField]
 	private HBAO.GeneralSettings m_GeneralSettings = HBAO.GeneralSettings.defaultSettings;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.AOSettings m_AOSettings = HBAO.AOSettings.defaultSettings;
 
 	[SerializeField]
 	[HBAO.SettingsGroup]
 	private HBAO.ColorBleedingSettings m_ColorBleedingSettings = HBAO.ColorBleedingSettings.defaultSettings;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.BlurSettings m_BlurSettings = HBAO.BlurSettings.defaultSettings;
 
 	private HBAO.Quality _quality;
@@ -795,8 +795,8 @@ public class HBAO : MonoBehaviour
 			}
 		}
 
-		[Space(6f)]
 		[Tooltip("The quality of the AO.")]
+		[Space(6f)]
 		public HBAO.Quality quality;
 
 		[Tooltip("The deinterleaving factor.")]
@@ -809,8 +809,8 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The type of noise to use.")]
 		public HBAO.NoiseType noiseType;
 
-		[Tooltip("The way the AO is displayed on screen.")]
 		[Space(10f)]
+		[Tooltip("The way the AO is displayed on screen.")]
 		public HBAO.DisplayMode displayMode;
 	}
 
@@ -838,8 +838,8 @@ public class HBAO : MonoBehaviour
 		}
 
 		[Range(0f, 2f)]
-		[Space(6f)]
 		[Tooltip("AO radius: this is the distance outside which occluders are ignored.")]
+		[Space(6f)]
 		public float radius;
 
 		[Range(32f, 256f)]
@@ -864,12 +864,12 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The distance before max distance at which AO start to decrease.")]
 		public float distanceFalloff;
 
-		[Space(10f)]
 		[Tooltip("The type of per pixel normals to use.")]
+		[Space(10f)]
 		public HBAO.PerPixelNormals perPixelNormals;
 
-		[Space(10f)]
 		[Tooltip("This setting allow you to set the base color if the AO, the alpha channel value is unused.")]
+		[Space(10f)]
 		public Color baseColor;
 	}
 

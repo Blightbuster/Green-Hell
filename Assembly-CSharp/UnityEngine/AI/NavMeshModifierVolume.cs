@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace UnityEngine.AI
 {
-	[ExecuteInEditMode]
-	[AddComponentMenu("Navigation/NavMeshModifierVolume", 31)]
 	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
+	[AddComponentMenu("Navigation/NavMeshModifierVolume", 31)]
+	[ExecuteInEditMode]
 	public class NavMeshModifierVolume : MonoBehaviour
 	{
 		public Vector3 size

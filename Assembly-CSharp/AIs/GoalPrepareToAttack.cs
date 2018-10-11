@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace AIs
 {
@@ -20,6 +21,23 @@ namespace AIs
 		{
 			base.Prepare();
 			base.AddToPlan(this.m_PrepareToAttack);
+		}
+
+		public override void OnUpdate()
+		{
+			base.OnUpdate();
+			this.UpdateRotation();
+		}
+
+		private void UpdateRotation()
+		{
+			if (this.m_AI.m_ID != AI.AIID.BrasilianWanderingSpider)
+			{
+				return;
+			}
+			Vector3 normalized = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).normalized;
+			Vector3 up = this.m_AI.m_EnemyModule.m_Enemy.transform.up;
+			this.m_AI.transform.rotation = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(normalized, up), Time.deltaTime / 0.1f);
 		}
 
 		private PrepareToAttack m_PrepareToAttack;

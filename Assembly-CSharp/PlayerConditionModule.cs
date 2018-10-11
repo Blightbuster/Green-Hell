@@ -862,71 +862,75 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		{
 			flag = true;
 		}
-		float deltaTime = Time.deltaTime;
-		float num = 1f;
+		float num = Time.deltaTime;
+		if (ConsciousnessController.Get().IsUnconscious())
+		{
+			num = Player.GetUnconsciousTimeFactor();
+		}
 		float num2 = 1f;
 		float num3 = 1f;
+		float num4 = 1f;
 		if (fppcontroller.IsRunning())
 		{
-			num *= this.m_NutritionCarbohydratesConsumptionRunMul;
-			num2 *= this.m_NutritionFatConsumptionRunMul;
-			num3 *= this.m_NutritionProteinsConsumptionRunMul;
+			num2 *= this.m_NutritionCarbohydratesConsumptionRunMul;
+			num3 *= this.m_NutritionFatConsumptionRunMul;
+			num4 *= this.m_NutritionProteinsConsumptionRunMul;
 		}
 		if (flag)
 		{
-			num *= this.m_NutritionCarbohydratesConsumptionActionMul;
-			num2 *= this.m_NutritionFatConsumptionActionMul;
-			num3 *= this.m_NutritionProteinsConsumptionActionMul;
+			num2 *= this.m_NutritionCarbohydratesConsumptionActionMul;
+			num3 *= this.m_NutritionFatConsumptionActionMul;
+			num4 *= this.m_NutritionProteinsConsumptionActionMul;
 		}
 		if (this.IsNutritionCarboCriticalLevel())
 		{
-			num2 *= this.m_NutritionFatConsumptionMulNoCarbs;
-			num3 *= this.m_NutritionProteinsConsumptionMulNoCarbs;
+			num3 *= this.m_NutritionFatConsumptionMulNoCarbs;
+			num4 *= this.m_NutritionProteinsConsumptionMulNoCarbs;
 		}
 		if (InventoryBackpack.Get().IsCriticalOverload())
 		{
-			num *= this.m_NutritionCarbohydratesConsumptionWeightCriticalMul;
-			num2 *= this.m_NutritionFatConsumptionWeightCriticalMul;
-			num3 *= this.m_NutritionProteinsConsumptionWeightCriticalMul;
+			num2 *= this.m_NutritionCarbohydratesConsumptionWeightCriticalMul;
+			num3 *= this.m_NutritionFatConsumptionWeightCriticalMul;
+			num4 *= this.m_NutritionProteinsConsumptionWeightCriticalMul;
 		}
 		else if (InventoryBackpack.Get().IsOverload())
 		{
-			num *= this.m_NutritionCarbohydratesConsumptionWeightOverloadMul;
-			num2 *= this.m_NutritionFatConsumptionWeightOverloadMul;
-			num3 *= this.m_NutritionProteinsConsumptionWeightOverloadMul;
+			num2 *= this.m_NutritionCarbohydratesConsumptionWeightOverloadMul;
+			num3 *= this.m_NutritionFatConsumptionWeightOverloadMul;
+			num4 *= this.m_NutritionProteinsConsumptionWeightOverloadMul;
 		}
 		else
 		{
-			num *= this.m_NutritionCarbohydratesConsumptionWeightNormalMul;
-			num2 *= this.m_NutritionFatConsumptionWeightNormalMul;
-			num3 *= this.m_NutritionProteinsConsumptionWeightNormalMul;
+			num2 *= this.m_NutritionCarbohydratesConsumptionWeightNormalMul;
+			num3 *= this.m_NutritionFatConsumptionWeightNormalMul;
+			num4 *= this.m_NutritionProteinsConsumptionWeightNormalMul;
 		}
 		if (this.m_ParasiteSickness.IsActive())
 		{
-			num *= this.m_ParasiteSickness.m_MacroNutricientCarboLossMul * (float)this.m_ParasiteSickness.m_Level;
-			num2 *= this.m_ParasiteSickness.m_MacroNutricientFatLossMul * (float)this.m_ParasiteSickness.m_Level;
-			num3 *= this.m_ParasiteSickness.m_MacroNutricientProteinsLossMul * (float)this.m_ParasiteSickness.m_Level;
+			num2 *= this.m_ParasiteSickness.m_MacroNutricientCarboLossMul * (float)this.m_ParasiteSickness.m_Level;
+			num3 *= this.m_ParasiteSickness.m_MacroNutricientFatLossMul * (float)this.m_ParasiteSickness.m_Level;
+			num4 *= this.m_ParasiteSickness.m_MacroNutricientProteinsLossMul * (float)this.m_ParasiteSickness.m_Level;
 		}
 		GameDifficulty gameDifficulty = GreenHellGame.Instance.m_GameDifficulty;
 		if (gameDifficulty == GameDifficulty.Normal)
 		{
 			float s_NormalModeLossMul = GreenHellGame.s_NormalModeLossMul;
-			num *= s_NormalModeLossMul;
 			num2 *= s_NormalModeLossMul;
 			num3 *= s_NormalModeLossMul;
+			num4 *= s_NormalModeLossMul;
 		}
 		else if (gameDifficulty == GameDifficulty.Easy)
 		{
 			float s_EasyModeLossMul = GreenHellGame.s_EasyModeLossMul;
-			num *= s_EasyModeLossMul;
 			num2 *= s_EasyModeLossMul;
 			num3 *= s_EasyModeLossMul;
+			num4 *= s_EasyModeLossMul;
 		}
-		this.m_NutritionCarbo -= this.m_NutritionCarbohydratesConsumptionPerSecond * deltaTime * num * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_CarboConsumptionMul);
+		this.m_NutritionCarbo -= this.m_NutritionCarbohydratesConsumptionPerSecond * num * num2 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_CarboConsumptionMul);
 		this.m_NutritionCarbo = Mathf.Clamp(this.m_NutritionCarbo, 0f, this.m_MaxNutritionCarbo);
-		this.m_NutritionFat -= this.m_NutritionFatConsumptionPerSecond * deltaTime * num2 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_FatConsumptionMul);
+		this.m_NutritionFat -= this.m_NutritionFatConsumptionPerSecond * num * num3 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_FatConsumptionMul);
 		this.m_NutritionFat = Mathf.Clamp(this.m_NutritionFat, 0f, this.m_MaxNutritionFat);
-		this.m_NutritionProteins -= this.m_NutritionProteinsConsumptionPerSecond * deltaTime * num3 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_ProteinsConsumptionMul);
+		this.m_NutritionProteins -= this.m_NutritionProteinsConsumptionPerSecond * num * num4 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_ProteinsConsumptionMul);
 		this.m_NutritionProteins = Mathf.Clamp(this.m_NutritionProteins, 0f, this.m_MaxNutritionProteins);
 	}
 

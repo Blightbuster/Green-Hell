@@ -178,8 +178,8 @@ namespace UltimateWater
 		[SerializeField]
 		private WaveParticleSystem _WavesParticleSystem;
 
-		[FormerlySerializedAs("wavesSource")]
 		[SerializeField]
+		[FormerlySerializedAs("wavesSource")]
 		private ComplexWavesEmitter.WavesSource _WavesSource;
 
 		[FormerlySerializedAs("wavelength")]
@@ -198,46 +198,46 @@ namespace UltimateWater
 		[SerializeField]
 		private int _Width = 8;
 
-		[FormerlySerializedAs("spectrumCoincidenceRange")]
 		[Range(0f, 180f)]
 		[SerializeField]
+		[FormerlySerializedAs("spectrumCoincidenceRange")]
 		private float _SpectrumCoincidenceRange = 20f;
 
-		[Range(0f, 100f)]
 		[FormerlySerializedAs("spectrumWavesCount")]
 		[SerializeField]
+		[Range(0f, 100f)]
 		private int _SpectrumWavesCount = 30;
 
-		[SerializeField]
 		[FormerlySerializedAs("span")]
+		[SerializeField]
 		[Tooltip("Affects both waves and emission area width.")]
 		private float _Span = 1000f;
 
-		[FormerlySerializedAs("waveShapeIrregularity")]
 		[SerializeField]
 		[Range(1f, 3.5f)]
+		[FormerlySerializedAs("waveShapeIrregularity")]
 		private float _WaveShapeIrregularity = 2f;
 
 		[FormerlySerializedAs("lifetime")]
 		[SerializeField]
 		private float _Lifetime = 200f;
 
-		[FormerlySerializedAs("shoreWaves")]
 		[SerializeField]
+		[FormerlySerializedAs("shoreWaves")]
 		private bool _ShoreWaves = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("boundsSize")]
+		[SerializeField]
 		private Vector2 _BoundsSize = new Vector2(500f, 500f);
 
+		[Range(3f, 80f)]
 		[FormerlySerializedAs("spawnDepth")]
 		[SerializeField]
-		[Range(3f, 80f)]
 		private float _SpawnDepth = 8f;
 
 		[SerializeField]
-		[FormerlySerializedAs("emissionFrequencyScale")]
 		[Range(0.01f, 2f)]
+		[FormerlySerializedAs("emissionFrequencyScale")]
 		private float _EmissionFrequencyScale = 1f;
 
 		[FormerlySerializedAs("spawnPointsDensity")]

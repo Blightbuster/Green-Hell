@@ -41,6 +41,21 @@ namespace AIs
 		public override void OnTakeDamage(DamageInfo info)
 		{
 			base.OnTakeDamage(info);
+			this.SpawnBlood(info);
+			if (this.m_AI.m_ID != AI.AIID.RedFootedTortoise)
+			{
+				this.m_DamageAudioSource.Stop();
+				this.m_DamageAudioSource.clip = AIManager.Get().m_FleshHitSounds[UnityEngine.Random.Range(0, AIManager.Get().m_FleshHitSounds.Count)];
+				this.m_DamageAudioSource.Play();
+			}
+		}
+
+		private void SpawnBlood(DamageInfo info)
+		{
+			if (AI.IsTurtle(this.m_AI.m_ID) || this.m_AI.m_ID == AI.AIID.ArmadilloThreeBanded)
+			{
+				return;
+			}
 			AIManager.BloodFXType key = (!info.m_DamageItem) ? AIManager.BloodFXType.Blunt : info.m_DamageItem.m_Info.m_BloodFXType;
 			List<string> list = AIManager.Get().m_BloodFXNames[(int)key];
 			if (list.Count == 0)
@@ -70,10 +85,8 @@ namespace AIs
 			{
 				vector = base.transform.position;
 			}
-			ParticlesManager.Get().Spawn(text, vector, Quaternion.LookRotation((Camera.main.transform.position - Camera.main.transform.right - vector).normalized), null);
-			this.m_DamageAudioSource.Stop();
-			this.m_DamageAudioSource.clip = AIManager.Get().m_FleshHitSounds[UnityEngine.Random.Range(0, AIManager.Get().m_FleshHitSounds.Count)];
-			this.m_DamageAudioSource.Play();
+			Vector3 forward = (!info.m_Damager || !(info.m_Damager == Player.Get().gameObject)) ? (-info.m_HitDir) : (Camera.main.transform.position - Camera.main.transform.right - vector).normalized;
+			ParticlesManager.Get().Spawn(text, vector, Quaternion.LookRotation(forward), null);
 		}
 
 		public void OnStartAttack()

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-public class TriggerSaveGame : Trigger
+public class TriggerSaveGame : Trigger, ITriggerThrough
 {
 	public override void GetActions(List<TriggerAction.TYPE> actions)
 	{

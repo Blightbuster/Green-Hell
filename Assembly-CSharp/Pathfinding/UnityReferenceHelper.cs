@@ -39,8 +39,8 @@ namespace Pathfinding
 			}
 		}
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private string guid;
 	}
 }

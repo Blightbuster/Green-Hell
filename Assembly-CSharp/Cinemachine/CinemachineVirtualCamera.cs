@@ -434,8 +434,8 @@ namespace Cinemachine
 
 		private CinemachineComponentBase[] m_ComponentPipeline;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private Transform m_ComponentOwner;
 
 		public delegate Transform CreatePipelineDelegate(CinemachineVirtualCamera vcam, string name, CinemachineComponentBase[] copyFrom);

@@ -41,7 +41,7 @@ public class EatingController : PlayerController
 			PlayerAudioModule.Get().PlayEatingSound(1f, false);
 		}
 		EventsManager.OnEvent(Enums.Event.Eat, 1, (int)info.m_ID);
-		PlayerSanityModule.Get().OnEat(info.m_SanityChange);
+		PlayerSanityModule.Get().OnConsume(info.m_SanityChange);
 		Localization localization = GreenHellGame.Instance.GetLocalization();
 		HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
 		string text = string.Empty;
@@ -116,6 +116,7 @@ public class EatingController : PlayerController
 		PlayerConditionModule.Get().IncreaseNutritionCarbo(carbohydrates);
 		float energy = liquidData.m_Energy;
 		PlayerConditionModule.Get().IncreaseEnergy(energy);
+		PlayerSanityModule.Get().OnConsume(liquidData.m_SanityChange);
 		this.OnDrink(liquidData, num, fat, proteins, carbohydrates, energy);
 	}
 

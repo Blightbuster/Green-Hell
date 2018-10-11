@@ -6,8 +6,8 @@ using UnityEngine.Serialization;
 
 namespace Pathfinding
 {
-	[AddComponentMenu("Pathfinding/Navmesh/Navmesh Cut")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_navmesh_cut.php")]
+	[AddComponentMenu("Pathfinding/Navmesh/Navmesh Cut")]
 	public class NavmeshCut : NavmeshClipper
 	{
 		protected override void Awake()
@@ -324,8 +324,8 @@ namespace Pathfinding
 		[Tooltip("How many degrees rotation that is required for an update to the navmesh. Should be between 0 and 180.")]
 		public float updateRotationDistance = 10f;
 
-		[Tooltip("Includes rotation in calculations. This is slower since a lot more matrix multiplications are needed but gives more flexibility.")]
 		[FormerlySerializedAs("useRotation")]
+		[Tooltip("Includes rotation in calculations. This is slower since a lot more matrix multiplications are needed but gives more flexibility.")]
 		public bool useRotationAndScale;
 
 		private Vector3[][] contours;

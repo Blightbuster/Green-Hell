@@ -29,7 +29,7 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			if (this.m_AI.m_ID == AI.AIID.Jaguar && this.m_AI.m_EnemyModule.m_Enemy)
+			if (this.m_AI.IsCat() && this.m_AI.m_EnemyModule.m_Enemy)
 			{
 				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();

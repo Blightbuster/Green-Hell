@@ -59,6 +59,9 @@ public class HUDSelectDialogNode : HUDBase, IInputsReceiver
 	protected override void OnShow()
 	{
 		base.OnShow();
+		Vector3 position = this.m_Dummy.transform.position;
+		position.y = (float)Screen.height * 0.23f;
+		this.m_Dummy.transform.position = position;
 		this.m_Reply.SetActive(true);
 		this.m_ReplyCanvasGroup.alpha = 0f;
 		this.m_NodesVisible = false;

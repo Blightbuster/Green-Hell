@@ -96,7 +96,6 @@ public class DeathController : PlayerController
 	{
 		this.m_InjuryModule.ResetInjuries();
 		this.m_ConditionModule.ResetParams();
-		this.m_Player.GetComponent<SleepController>().UpdateLastWakeUpTime();
 		SaveGame.Load();
 		this.m_Animator.SetBool(this.m_IsDeadHash, false);
 		this.m_Animator.SetBool(this.m_IsDeadUnderwaterHash, false);

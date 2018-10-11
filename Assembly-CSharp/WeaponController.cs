@@ -18,27 +18,34 @@ public class WeaponController : FightController
 	{
 		this.m_AudioModule = base.gameObject.GetComponent<PlayerAudioModule>();
 		DebugUtils.Assert(this.m_AudioModule, true);
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 13; i++)
 		{
 			this.m_AudioClipsHit[i] = new List<AudioClip>();
 			for (int j = 1; j < 10; j++)
 			{
 				string str = string.Empty;
-				switch (i)
+				EObjectMaterial eobjectMaterial = (EObjectMaterial)i;
+				switch (eobjectMaterial)
 				{
-				case 0:
+				case EObjectMaterial.Unknown:
 					str = "axe_unknown_0" + j.ToString();
 					break;
-				case 1:
+				case EObjectMaterial.Wood:
 					str = "axe_wood_0" + j.ToString();
 					break;
-				case 2:
+				case EObjectMaterial.Bush:
 					str = "axe_bush_0" + j.ToString();
 					break;
-				case 3:
+				case EObjectMaterial.Stone:
 					str = "axe_stone_0" + j.ToString();
 					break;
-				case 8:
+				default:
+					if (eobjectMaterial == EObjectMaterial.TurtleShell)
+					{
+						str = "axe_wood_0" + j.ToString();
+					}
+					break;
+				case EObjectMaterial.Flesh:
 					str = "axe_flesh_0" + j.ToString();
 					break;
 				}
@@ -191,7 +198,7 @@ public class WeaponController : FightController
 		base.OnEnable();
 		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 		DebugUtils.Assert(currentItem && currentItem.m_Info.IsWeapon(), true);
-		if (!Inventory3DManager.Get().gameObject.activeSelf)
+		if (!Inventory3DManager.Get().gameObject.activeSelf && !currentItem.m_IsBeingDestroyed)
 		{
 			currentItem.gameObject.SetActive(false);
 		}

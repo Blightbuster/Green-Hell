@@ -261,6 +261,11 @@ public class Trigger : CJObject
 		return string.Empty;
 	}
 
+	public virtual bool RequiresToolToHarvest()
+	{
+		return false;
+	}
+
 	public bool m_ShowInfoOnHUD;
 
 	public float m_TriggerUseRange;

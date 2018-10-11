@@ -132,6 +132,12 @@ public class ItemController : PlayerController
 	{
 		switch (action)
 		{
+		case InputsManager.InputAction.Drop:
+			if (this.m_Animator.GetBool(this.m_FireHash) && this.m_Item && this.m_Item.gameObject && !this.m_Item.m_IsBeingDestroyed)
+			{
+				UnityEngine.Object.Destroy(this.m_Item.gameObject);
+			}
+			break;
 		case InputsManager.InputAction.ItemSwing:
 			if (this.CanSwing())
 			{
@@ -295,9 +301,16 @@ public class ItemController : PlayerController
 				actions.Add(4);
 			}
 		}
-		else if (this.CanThrow())
+		else
 		{
-			actions.Add(3);
+			if (this.CanThrow())
+			{
+				actions.Add(3);
+			}
+			if (this.m_Animator.GetBool(this.m_FireHash))
+			{
+				actions.Add(0);
+			}
 		}
 	}
 

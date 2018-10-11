@@ -31,7 +31,7 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, this.m_AI.m_ID == AI.AIID.Jaguar);
+			this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, this.m_AI.IsCat());
 			base.AddToPlan(this.m_RotateTo);
 		}
 

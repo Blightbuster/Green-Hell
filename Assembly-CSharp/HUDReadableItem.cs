@@ -188,7 +188,7 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 
 	public bool CanReceiveAction()
 	{
-		return base.gameObject.activeInHierarchy;
+		return base.enabled;
 	}
 
 	private bool m_Active;

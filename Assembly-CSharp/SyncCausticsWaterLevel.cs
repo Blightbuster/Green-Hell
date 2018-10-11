@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("Relief Terrain/Helpers/Sync Caustics Water Level")]
+[ExecuteInEditMode]
 public class SyncCausticsWaterLevel : MonoBehaviour
 {
 	private void Update()

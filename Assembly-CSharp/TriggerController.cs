@@ -376,7 +376,7 @@ public class TriggerController : PlayerController
 														num3 = num4;
 													}
 												}
-												else if (!trigger4.CheckDot() || num4 > num2)
+												else if (!trigger4.CheckDot() || num4 >= num2)
 												{
 													hit_pos = raycastHit.point;
 													trigger = trigger4;

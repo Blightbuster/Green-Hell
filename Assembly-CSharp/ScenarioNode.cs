@@ -7,6 +7,7 @@ public class ScenarioNode
 	{
 		this.m_Name = key.GetVariable(0).SValue;
 		this.m_State = ((!key.GetVariable(1).BValue) ? ScenarioNode.State.Inactive : ScenarioNode.State.None);
+		this.m_StoredState = this.m_State;
 		this.m_ParentNames = key.GetVariable(6).SValue;
 		if (this.m_ParentNames == ScenarioNode.NO_PARENTS)
 		{
@@ -130,6 +131,16 @@ public class ScenarioNode
 		}
 	}
 
+	public void Reset()
+	{
+		this.m_State = this.m_StoredState;
+		this.m_ActiveElements.Clear();
+		foreach (ScenarioElement scenarioElement in this.m_Elements)
+		{
+			scenarioElement.m_State = ScenarioElement.State.None;
+		}
+	}
+
 	private void SetupActiveElements()
 	{
 		this.m_ActiveElements.Clear();
@@ -209,13 +220,18 @@ public class ScenarioNode
 	public void Load()
 	{
 		this.m_ActiveElements.Clear();
-		this.m_State = (ScenarioNode.State)SaveGame.LoadIVal(this.m_Name);
-		for (int i = 0; i < this.m_Elements.Count; i++)
+		int state = -1;
+		bool flag = SaveGame.LoadVal(this.m_Name, out state, false);
+		if (flag)
 		{
-			this.m_Elements[i].Load(this, i);
-			if (this.m_Elements[i].GetActionState() == ScenarioElement.State.InProgress)
+			this.m_State = (ScenarioNode.State)state;
+			for (int i = 0; i < this.m_Elements.Count; i++)
 			{
-				this.m_ActiveElements.Add(this.m_Elements[i]);
+				this.m_Elements[i].Load(this, i);
+				if (this.m_Elements[i].GetActionState() == ScenarioElement.State.InProgress)
+				{
+					this.m_ActiveElements.Add(this.m_Elements[i]);
+				}
 			}
 		}
 	}
@@ -223,6 +239,8 @@ public class ScenarioNode
 	public static string NO_PARENTS = "NoParents";
 
 	public ScenarioNode.State m_State;
+
+	private ScenarioNode.State m_StoredState;
 
 	private List<ScenarioElement> m_Elements = new List<ScenarioElement>();
 

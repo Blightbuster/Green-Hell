@@ -104,19 +104,19 @@ public class MenuDebugWounds : MenuScreen
 		BIWoundSlot biwoundSlot = null;
 		if (this.m_ToggleLH.isOn)
 		{
-			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.LHand, injuryType);
+			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
 		}
 		else if (this.m_ToggleRH.isOn)
 		{
-			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.RHand, injuryType);
+			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.RHand, injuryType, true);
 		}
 		else if (this.m_ToggleLL.isOn)
 		{
-			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.LLeg, injuryType);
+			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.LLeg, injuryType, true);
 		}
 		else if (this.m_ToggleRL.isOn)
 		{
-			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.RLeg, injuryType);
+			biwoundSlot = BodyInspectionController.Get().GetFreeWoundSlot(InjuryPlace.RLeg, injuryType, true);
 		}
 		if (biwoundSlot != null)
 		{

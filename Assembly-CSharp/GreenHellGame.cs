@@ -509,7 +509,9 @@ public class GreenHellGame : MonoBehaviour
 
 	public static GameVersion s_GameVersionEarlyAccessUpdate3 = new GameVersion(0, 11);
 
-	public static GameVersion s_GameVersion = new GameVersion(GreenHellGame.s_GameVersionEarlyAccessUpdate3);
+	public static GameVersion s_GameVersionEarlyAccessUpdate4 = new GameVersion(0, 12);
+
+	public static GameVersion s_GameVersion = new GameVersion(GreenHellGame.s_GameVersionEarlyAccessUpdate4);
 
 	private static GreenHellGame s_Instance = null;
 

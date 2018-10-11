@@ -231,8 +231,8 @@ namespace Cinemachine
 		[Tooltip("When to update the group's transform based on the position of the group members")]
 		public CinemachineTargetGroup.UpdateMethod m_UpdateMethod = CinemachineTargetGroup.UpdateMethod.LateUpdate;
 
-		[NoSaveDuringPlay]
 		[Tooltip("The target objects, together with their weights and radii, that will contribute to the group's average position, orientation, and size.")]
+		[NoSaveDuringPlay]
 		public CinemachineTargetGroup.Target[] m_Targets = new CinemachineTargetGroup.Target[0];
 
 		private float m_lastRadius;

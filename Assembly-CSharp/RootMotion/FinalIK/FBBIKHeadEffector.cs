@@ -333,8 +333,8 @@ namespace RootMotion.FinalIK
 		public FullBodyBipedIK ik;
 
 		[LargeHeader("Position")]
-		[Tooltip("Master weight for positioning the head.")]
 		[Range(0f, 1f)]
+		[Tooltip("Master weight for positioning the head.")]
 		public float positionWeight = 1f;
 
 		[Range(0f, 1f)]
@@ -368,25 +368,25 @@ namespace RootMotion.FinalIK
 		[Tooltip("The bones to use for bending.")]
 		public FBBIKHeadEffector.BendBone[] bendBones = new FBBIKHeadEffector.BendBone[0];
 
-		[Tooltip("Optional. The master weight of the CCD (Cyclic Coordinate Descent) IK effect that bends the spine towards the head effector before FBBIK solves.")]
 		[Range(0f, 1f)]
+		[Tooltip("Optional. The master weight of the CCD (Cyclic Coordinate Descent) IK effect that bends the spine towards the head effector before FBBIK solves.")]
 		[LargeHeader("CCD")]
 		public float CCDWeight = 1f;
 
-		[Tooltip("The weight of rolling the bones in towards the target")]
 		[Range(0f, 1f)]
+		[Tooltip("The weight of rolling the bones in towards the target")]
 		public float roll;
 
-		[Tooltip("Smoothing the CCD effect.")]
 		[Range(0f, 1000f)]
+		[Tooltip("Smoothing the CCD effect.")]
 		public float damper = 500f;
 
 		[Tooltip("Bones to use for the CCD pass. Assign spine and/or neck bones.")]
 		public Transform[] CCDBones = new Transform[0];
 
+		[LargeHeader("Stretching")]
 		[Range(0f, 1f)]
 		[Tooltip("Stretching the spine/neck to help reach the target. This is useful for making sure the head stays locked relative to the VR headset. NB! Stretching is done after FBBIK has solved so if you have the hand effectors pinned and spine bones included in the 'Stretch Bones', the hands might become offset from their target positions.")]
-		[LargeHeader("Stretching")]
 		public float postStretchWeight = 1f;
 
 		[Tooltip("Stretch magnitude limit.")]
@@ -483,8 +483,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Assign spine and/or neck bones.")]
 			public Transform transform;
 
-			[Range(0f, 1f)]
 			[Tooltip("The weight of rotating this bone.")]
+			[Range(0f, 1f)]
 			public float weight = 0.5f;
 
 			private Quaternion defaultLocalRotation = Quaternion.identity;

@@ -6,9 +6,9 @@ using Pathfinding.Util;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+[RequireComponent(typeof(Seeker))]
 [HelpURL("http://arongranberg.com/astar/docs/class_a_i_path.php")]
 [AddComponentMenu("Pathfinding/AI/AIPath (2D,3D)")]
-[RequireComponent(typeof(Seeker))]
 public class AIPath : AIBase
 {
 	public bool TargetReached { get; protected set; }

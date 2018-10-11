@@ -6,11 +6,11 @@ using UnityEngine.Events;
 
 namespace Cinemachine
 {
+	[AddComponentMenu("Cinemachine/CinemachineBrain")]
+	[SaveDuringPlay]
 	[DisallowMultipleComponent]
 	[DocumentationSorting(0f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
-	[AddComponentMenu("Cinemachine/CinemachineBrain")]
-	[SaveDuringPlay]
 	public class CinemachineBrain : MonoBehaviour
 	{
 		public Camera OutputCamera
@@ -538,8 +538,8 @@ namespace Cinemachine
 		[Tooltip("Use FixedUpdate if all your targets are animated during FixedUpdate (e.g. RigidBodies), LateUpdate if all your targets are animated during the normal Update loop, and SmartUpdate if you want Cinemachine to do the appropriate thing on a per-target basis.  SmartUpdate is the recommended setting")]
 		public CinemachineBrain.UpdateMethod m_UpdateMethod = CinemachineBrain.UpdateMethod.SmartUpdate;
 
-		[CinemachineBlendDefinitionProperty]
 		[Tooltip("The blend that is used in cases where you haven't explicitly defined a blend between two Virtual Cameras")]
+		[CinemachineBlendDefinitionProperty]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.EaseInOut, 2f);
 
 		[Tooltip("This is the asset that contains custom settings for blends between specific virtual cameras in your scene")]

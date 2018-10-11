@@ -19,7 +19,6 @@ public class SleepController : PlayerController
 		this.m_ControllerType = PlayerControllerType.Sleep;
 		this.m_ConditionModule = this.m_Player.GetComponent<PlayerConditionModule>();
 		this.m_TODTime = this.m_Sky.gameObject.GetComponent<TOD_Time>();
-		this.UpdateLastWakeUpTime();
 		this.LoadScript();
 	}
 
@@ -232,7 +231,6 @@ public class SleepController : PlayerController
 		}
 		this.m_StartSleepingTime = 0f;
 		this.m_ParamsMul = 1f;
-		this.UpdateLastWakeUpTime();
 		if (this.m_RestingPlace != null)
 		{
 			EventsManager.OnEvent(Enums.Event.Sleep, 1, this.m_SleepDuration, 1);
@@ -252,11 +250,6 @@ public class SleepController : PlayerController
 	public bool IsSleeping()
 	{
 		return this.m_StartSleepingTime > 0f;
-	}
-
-	public void UpdateLastWakeUpTime()
-	{
-		this.m_LastWakeUpTime = (float)this.m_Sky.Cycle.Month * 30f * 24f + (float)this.m_Sky.Cycle.Day * 24f + this.m_Sky.Cycle.Hour;
 	}
 
 	private float CalcChanceToGetWorm()
@@ -291,6 +284,10 @@ public class SleepController : PlayerController
 
 	private void CheckWorm()
 	{
+		if (this.m_RestingPlace && this.m_RestingPlace.m_Info.IsHammock())
+		{
+			return;
+		}
 		float num = this.CalcChanceToGetWorm();
 		if (UnityEngine.Random.Range(0f, 1f) < num)
 		{
@@ -302,7 +299,7 @@ public class SleepController : PlayerController
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			BIWoundSlot freeWoundSlot = BodyInspectionController.Get().GetFreeWoundSlot((InjuryPlace)i, InjuryType.Worm);
+			BIWoundSlot freeWoundSlot = BodyInspectionController.Get().GetFreeWoundSlot((InjuryPlace)i, InjuryType.Worm, true);
 			if (freeWoundSlot != null)
 			{
 				PlayerInjuryModule.Get().AddInjury(InjuryType.Worm, (InjuryPlace)i, freeWoundSlot, InjuryState.Open, 0, null);

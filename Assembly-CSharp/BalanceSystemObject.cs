@@ -18,5 +18,7 @@ public class BalanceSystemObject
 
 	public int m_ActiveChildrenMask;
 
+	public bool m_AllChildrenDestroyed;
+
 	public float m_LastSpawnObjectTime = float.MinValue;
 }

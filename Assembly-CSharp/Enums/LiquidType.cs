@@ -52,6 +52,10 @@ namespace Enums
 		Palm_heart_Infusion,
 		Cocona_fruit_Infusion,
 		monstera_deliciosa_flower_Infusion,
-		monstera_deliciosa_fruit_Infusion
+		monstera_deliciosa_fruit_Infusion,
+		Caiman_Lizard_Soup,
+		Armadillo_Three_Banded_Soup,
+		Guanabana_Fruit_Infusion,
+		Albahaca_Leaf_Infusion
 	}
 }

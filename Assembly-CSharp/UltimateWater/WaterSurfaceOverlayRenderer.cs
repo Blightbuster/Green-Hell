@@ -102,8 +102,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Material _DisplacementMaskMaterial;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamMaterial")]
+		[SerializeField]
 		private Material _FoamMaterial;
 
 		private Renderer _RendererComponent;

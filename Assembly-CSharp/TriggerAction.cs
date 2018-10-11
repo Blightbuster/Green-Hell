@@ -14,11 +14,15 @@ public class TriggerAction
 		case TriggerAction.TYPE.Take:
 			return "HUD_Trigger_Taken";
 		default:
-			if (action != TriggerAction.TYPE.CloseContextMenu)
+			if (action == TriggerAction.TYPE.CloseContextMenu)
+			{
+				return "HUD_Trigger_CloseContextMenu";
+			}
+			if (action != TriggerAction.TYPE.InsertToStand)
 			{
 				return string.Empty;
 			}
-			return "HUD_Trigger_CloseContextMenu";
+			break;
 		case TriggerAction.TYPE.Harvest:
 			return "HUD_Trigger_Harvested";
 		case TriggerAction.TYPE.Eat:
@@ -31,7 +35,7 @@ public class TriggerAction
 		case TriggerAction.TYPE.Sleep:
 			return "HUD_Trigger_Slept";
 		case TriggerAction.TYPE.Insert:
-			return "HUD_Trigger_Inserted";
+			break;
 		case TriggerAction.TYPE.PickUp:
 			return "HUD_Trigger_PickedUp";
 		case TriggerAction.TYPE.Arm:
@@ -41,6 +45,7 @@ public class TriggerAction
 		case TriggerAction.TYPE.Read:
 			return "HUD_Trigger_ReadPast";
 		}
+		return "HUD_Trigger_Inserted";
 	}
 
 	public enum TYPE
@@ -76,6 +81,7 @@ public class TriggerAction
 		SwapHold,
 		SaveGame,
 		Remove,
-		CloseContextMenu
+		CloseContextMenu,
+		InsertToStand
 	}
 }

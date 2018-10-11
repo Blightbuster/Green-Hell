@@ -460,6 +460,7 @@ public static class SaveGame
 		}
 		GreenHellGame.Instance.m_LoadGameState = LoadGameState.FullLoadCompleted;
 		SaveGame.m_State = SaveGame.State.None;
+		MainLevel.Instance.OnFullLoadEnd();
 	}
 
 	public static void LoadPlayer()

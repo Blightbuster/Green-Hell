@@ -89,6 +89,7 @@ public class Challenge
 
 	public virtual void Fail()
 	{
+		this.m_CurrentScore = MainLevel.Instance.m_TODSky.Cycle.GameTime;
 		this.OnFinish(false);
 	}
 

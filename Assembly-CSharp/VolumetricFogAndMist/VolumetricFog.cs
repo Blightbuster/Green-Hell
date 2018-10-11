@@ -5,9 +5,9 @@ using UnityEngine.XR;
 
 namespace VolumetricFogAndMist
 {
-	[HelpURL("http://kronnect.com/taptapgo")]
 	[AddComponentMenu("Image Effects/Rendering/Volumetric Fog & Mist")]
 	[ExecuteInEditMode]
+	[HelpURL("http://kronnect.com/taptapgo")]
 	public class VolumetricFog : MonoBehaviour
 	{
 		public static VolumetricFog instance

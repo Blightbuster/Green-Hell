@@ -6,9 +6,9 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_rich_a_i.php")]
-	[AddComponentMenu("Pathfinding/AI/RichAI (3D, for navmesh)")]
 	[RequireComponent(typeof(Seeker))]
+	[AddComponentMenu("Pathfinding/AI/RichAI (3D, for navmesh)")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_rich_a_i.php")]
 	public class RichAI : AIBase
 	{
 		public Vector3 Velocity

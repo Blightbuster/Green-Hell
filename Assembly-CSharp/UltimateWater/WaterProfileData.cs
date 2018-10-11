@@ -841,31 +841,31 @@ namespace UltimateWater
 		[SerializeField]
 		private float _TileScale = 1f;
 
-		[SerializeField]
-		[FormerlySerializedAs("wavesAmplitude")]
 		[Tooltip("Setting it to something else than 1.0 will make the spectrum less physically correct, but still may be useful at times.")]
+		[FormerlySerializedAs("wavesAmplitude")]
+		[SerializeField]
 		private float _WavesAmplitude = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("wavesFrequencyScale")]
+		[SerializeField]
 		private float _WavesFrequencyScale = 1f;
 
-		[Range(0f, 4f)]
 		[FormerlySerializedAs("horizontalDisplacementScale")]
 		[SerializeField]
+		[Range(0f, 4f)]
 		private float _HorizontalDisplacementScale = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("phillipsCutoffFactor")]
+		[SerializeField]
 		private float _PhillipsCutoffFactor = 2000f;
 
-		[SerializeField]
 		[FormerlySerializedAs("gravity")]
+		[SerializeField]
 		private float _Gravity = -9.81f;
 
-		[Tooltip("It is the length of water in meters over which a wind has blown. Usually a distance to the closest land in the direction opposite to the wind.")]
-		[SerializeField]
 		[FormerlySerializedAs("fetch")]
+		[SerializeField]
+		[Tooltip("It is the length of water in meters over which a wind has blown. Usually a distance to the closest land in the direction opposite to the wind.")]
 		private float _Fetch = 100000f;
 
 		[SerializeField]
@@ -874,9 +874,9 @@ namespace UltimateWater
 		[Range(0f, 1f)]
 		private float _Directionality;
 
+		[ColorUsage(false, true, 0f, 10f, 0f, 10f)]
 		[FormerlySerializedAs("absorptionColor")]
 		[SerializeField]
-		[ColorUsage(false, true, 0f, 10f, 0f, 10f)]
 		private Color _AbsorptionColor = new Color(0.35f, 0.04f, 0.001f, 1f);
 
 		[FormerlySerializedAs("customUnderwaterAbsorptionColor")]
@@ -936,8 +936,8 @@ namespace UltimateWater
 		[Range(0f, 6f)]
 		private float _IsotropicScatteringIntensity = 1f;
 
-		[FormerlySerializedAs("forwardScatteringIntensity")]
 		[SerializeField]
+		[FormerlySerializedAs("forwardScatteringIntensity")]
 		[Range(0f, 6f)]
 		private float _ForwardScatteringIntensity = 1f;
 
@@ -952,39 +952,39 @@ namespace UltimateWater
 		private Color _SubsurfaceScatteringShoreColor = new Color(1.4f, 3f, 3f);
 
 		[FormerlySerializedAs("refractionDistortion")]
-		[SerializeField]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _RefractionDistortion = 0.55f;
 
-		[FormerlySerializedAs("fresnelBias")]
 		[SerializeField]
+		[FormerlySerializedAs("fresnelBias")]
 		private float _FresnelBias = 0.02040781f;
 
+		[Range(0.5f, 20f)]
 		[FormerlySerializedAs("detailFadeDistance")]
 		[SerializeField]
-		[Range(0.5f, 20f)]
 		private float _DetailFadeDistance = 4.5f;
 
-		[FormerlySerializedAs("displacementNormalsIntensity")]
 		[Range(0.1f, 10f)]
 		[SerializeField]
+		[FormerlySerializedAs("displacementNormalsIntensity")]
 		private float _DisplacementNormalsIntensity = 2f;
 
-		[SerializeField]
-		[FormerlySerializedAs("planarReflectionIntensity")]
 		[Range(0f, 1f)]
 		[Tooltip("Planar reflections are very good solution for calm weather, but you should fade them out for profiles with big waves (storms etc.) as they get completely incorrect then.")]
+		[FormerlySerializedAs("planarReflectionIntensity")]
+		[SerializeField]
 		private float _PlanarReflectionIntensity = 0.6f;
 
+		[Range(1f, 10f)]
 		[SerializeField]
 		[FormerlySerializedAs("planarReflectionFlatten")]
-		[Range(1f, 10f)]
 		private float _PlanarReflectionFlatten = 6f;
 
-		[SerializeField]
-		[FormerlySerializedAs("planarReflectionVerticalOffset")]
-		[Range(0f, 0.008f)]
 		[Tooltip("Fixes some artifacts produced by planar reflections at grazing angles.")]
+		[Range(0f, 0.008f)]
+		[FormerlySerializedAs("planarReflectionVerticalOffset")]
+		[SerializeField]
 		private float _PlanarReflectionVerticalOffset = 0.0015f;
 
 		[FormerlySerializedAs("edgeBlendFactor")]
@@ -999,79 +999,79 @@ namespace UltimateWater
 		[SerializeField]
 		private float _PointWrapSss = 0.5f;
 
-		[SerializeField]
 		[FormerlySerializedAs("density")]
 		[Tooltip("Used by the physics.")]
+		[SerializeField]
 		private float _Density = 998.6f;
 
-		[SerializeField]
 		[FormerlySerializedAs("underwaterBlurSize")]
 		[Range(0f, 0.03f)]
+		[SerializeField]
 		private float _UnderwaterBlurSize = 0.003f;
 
-		[SerializeField]
 		[FormerlySerializedAs("underwaterLightFadeScale")]
 		[Range(0f, 2f)]
+		[SerializeField]
 		private float _UnderwaterLightFadeScale = 0.8f;
 
-		[SerializeField]
 		[FormerlySerializedAs("underwaterDistortionsIntensity")]
+		[SerializeField]
 		[Range(0f, 0.4f)]
 		private float _UnderwaterDistortionsIntensity = 0.05f;
 
-		[SerializeField]
 		[FormerlySerializedAs("underwaterDistortionAnimationSpeed")]
 		[Range(0.02f, 0.5f)]
+		[SerializeField]
 		private float _UnderwaterDistortionAnimationSpeed = 0.1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("dynamicSmoothnessIntensity")]
 		[Range(1f, 64f)]
+		[SerializeField]
 		private float _DynamicSmoothnessIntensity = 1f;
 
-		[FormerlySerializedAs("normalMapAnimation1")]
 		[SerializeField]
+		[FormerlySerializedAs("normalMapAnimation1")]
 		private NormalMapAnimation _NormalMapAnimation1 = new NormalMapAnimation(1f, -10f, 1f, new Vector2(1f, 1f));
 
-		[FormerlySerializedAs("normalMapAnimation2")]
 		[SerializeField]
+		[FormerlySerializedAs("normalMapAnimation2")]
 		private NormalMapAnimation _NormalMapAnimation2 = new NormalMapAnimation(-0.55f, 20f, 0.74f, new Vector2(1.5f, 1.5f));
 
-		[FormerlySerializedAs("normalMap")]
 		[SerializeField]
+		[FormerlySerializedAs("normalMap")]
 		private Texture2D _NormalMap;
 
-		[FormerlySerializedAs("foamIntensity")]
 		[SerializeField]
+		[FormerlySerializedAs("foamIntensity")]
 		private float _FoamIntensity = 1f;
 
-		[FormerlySerializedAs("foamThreshold")]
 		[SerializeField]
+		[FormerlySerializedAs("foamThreshold")]
 		private float _FoamThreshold = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamFadingFactor")]
 		[Tooltip("Determines how fast foam will fade out.")]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _FoamFadingFactor = 0.85f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamShoreIntensity")]
+		[SerializeField]
 		[Range(0f, 5f)]
 		private float _FoamShoreIntensity = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamShoreExtent")]
 		[Range(0f, 5f)]
+		[SerializeField]
 		private float _FoamShoreExtent = 1f;
 
 		[FormerlySerializedAs("foamNormalScale")]
 		[SerializeField]
 		private float _FoamNormalScale = 2.2f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamDiffuseColor")]
 		[ColorUsage(false)]
+		[SerializeField]
 		private Color _FoamDiffuseColor = new Color(0.8f, 0.8f, 0.8f);
 
 		[SerializeField]
@@ -1080,17 +1080,17 @@ namespace UltimateWater
 		private Color _FoamSpecularColor = new Color(1f, 1f, 1f, 0f);
 
 		[SerializeField]
-		[FormerlySerializedAs("sprayThreshold")]
 		[Range(0f, 4f)]
+		[FormerlySerializedAs("sprayThreshold")]
 		private float _SprayThreshold = 1f;
 
-		[FormerlySerializedAs("spraySkipRatio")]
 		[SerializeField]
+		[FormerlySerializedAs("spraySkipRatio")]
 		[Range(0f, 0.999f)]
 		private float _SpraySkipRatio = 0.9f;
 
-		[FormerlySerializedAs("spraySize")]
 		[SerializeField]
+		[FormerlySerializedAs("spraySize")]
 		[Range(0.25f, 4f)]
 		private float _SpraySize = 1f;
 

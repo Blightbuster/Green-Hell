@@ -6,8 +6,8 @@ using UnityEngine.Rendering;
 
 namespace UltimateWater
 {
-	[RequireComponent(typeof(Camera))]
 	[ExecuteInEditMode]
+	[RequireComponent(typeof(Camera))]
 	[AddComponentMenu("Ultimate Water/Underwater IME")]
 	[RequireComponent(typeof(WaterCamera))]
 	public sealed class UnderwaterIME : MonoBehaviour, IWaterImageEffect
@@ -332,9 +332,9 @@ namespace UltimateWater
 		[SerializeField]
 		private bool _UnderwaterAudio = true;
 
+		[Tooltip("Individual camera blur scale. It's recommended to modify blur scale through water profiles. Use this one, only if some of your cameras need a clear view and some don't.")]
 		[SerializeField]
 		[Range(0f, 4f)]
-		[Tooltip("Individual camera blur scale. It's recommended to modify blur scale through water profiles. Use this one, only if some of your cameras need a clear view and some don't.")]
 		private float _CameraBlurScale = 1f;
 
 		[SerializeField]

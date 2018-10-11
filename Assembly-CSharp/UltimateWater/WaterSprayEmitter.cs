@@ -64,8 +64,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _StartVelocity = 1f;
 
-		[FormerlySerializedAs("lifetime")]
 		[SerializeField]
+		[FormerlySerializedAs("lifetime")]
 		private float _Lifetime = 4f;
 
 		private float _TotalTime;

@@ -74,12 +74,12 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Max raytracing length.")]
 			public int iterationCount;
 
-			[Range(1f, 16f)]
 			[Tooltip("Log base 2 of ray tracing coarse step size. Higher traces farther, lower gives better quality silhouettes.")]
+			[Range(1f, 16f)]
 			public int stepSize;
 
-			[Range(0.01f, 10f)]
 			[Tooltip("Typical thickness of columns, walls, furniture, and other objects that reflection rays might pass behind.")]
+			[Range(0.01f, 10f)]
 			public float widthModifier;
 
 			[Range(0.1f, 8f)]

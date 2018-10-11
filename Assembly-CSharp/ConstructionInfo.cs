@@ -12,6 +12,7 @@ public class ConstructionInfo : ItemInfo
 		this.m_RestingParamsMul = 1f;
 		this.m_ParamsMulRadius = -1f;
 		this.m_MenuIcon = string.Empty;
+		this.m_HitsCountToDestroy = 0;
 	}
 
 	public List<string> m_PlaceToAttachNames { get; set; }
@@ -25,6 +26,8 @@ public class ConstructionInfo : ItemInfo
 	public ConstructionType m_ConstructionType { get; set; }
 
 	public string m_MenuIcon { get; set; }
+
+	public int m_HitsCountToDestroy { get; set; }
 
 	public override bool IsConstruction()
 	{
@@ -72,6 +75,10 @@ public class ConstructionInfo : ItemInfo
 		else if (key.GetName() == "MenuIcon")
 		{
 			this.m_MenuIcon = key.GetVariable(0).SValue;
+		}
+		else if (key.GetName() == "HitsCountToDestroy")
+		{
+			this.m_HitsCountToDestroy = key.GetVariable(0).IValue;
 		}
 		else
 		{

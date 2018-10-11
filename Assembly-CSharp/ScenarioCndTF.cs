@@ -62,6 +62,7 @@ public class ScenarioCndTF : ScenarioElement
 			}
 			else if (parameterType.IsAssignableFrom(typeof(GameObject)))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.FindObject(array[4], (array.Length <= 5) ? string.Empty : array[5]);
 				if (this.m_ParamO1 == null)
 				{
@@ -96,6 +97,7 @@ public class ScenarioCndTF : ScenarioElement
 			}
 			else if (parameterType.IsAssignableFrom(typeof(GameObject)))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(array[4]);
 				if (this.m_ParamO1 == null)
 				{
@@ -112,6 +114,8 @@ public class ScenarioCndTF : ScenarioElement
 			break;
 		}
 		case 3:
+			this.m_IsGO1 = true;
+			this.m_IsGO2 = true;
 			this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(array[4]);
 			this.m_ParamO2 = MainLevel.Instance.GetUniqueObject(array[5]);
 			this.m_ParamF3 = float.Parse(array[6]);
@@ -229,7 +233,7 @@ public class ScenarioCndTF : ScenarioElement
 		{
 			return;
 		}
-		if (this.m_ParamO1 == null || this.m_ParamO2 == null)
+		if ((this.m_IsGO1 && this.m_ParamO1 == null) || (this.m_IsGO2 && this.m_ParamO2 == null))
 		{
 			ScenarioCndTF.s_NullObjects.Add(this);
 		}
@@ -262,6 +266,10 @@ public class ScenarioCndTF : ScenarioElement
 	private GameObject m_ParamO1;
 
 	private GameObject m_ParamO2;
+
+	private bool m_IsGO1;
+
+	private bool m_IsGO2;
 
 	private static List<ScenarioCndTF> s_NullObjects = new List<ScenarioCndTF>();
 }

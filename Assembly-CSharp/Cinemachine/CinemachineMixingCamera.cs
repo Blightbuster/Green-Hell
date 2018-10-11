@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DisallowMultipleComponent]
 	[AddComponentMenu("Cinemachine/CinemachineMixingCamera")]
+	[DisallowMultipleComponent]
 	[ExecuteInEditMode]
 	[DocumentationSorting(20f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachineMixingCamera : CinemachineVirtualCameraBase

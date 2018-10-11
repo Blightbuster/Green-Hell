@@ -283,9 +283,9 @@ namespace Cinemachine
 		[Tooltip("Force all child cameras to be enabled.  This is useful if animating them in Timeline, but consumes extra resources")]
 		public bool m_EnableAllChildCameras;
 
-		[SerializeField]
-		[NoSaveDuringPlay]
 		[HideInInspector]
+		[NoSaveDuringPlay]
+		[SerializeField]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("The set of instructions for enabling child cameras.")]
@@ -308,8 +308,8 @@ namespace Cinemachine
 			[Tooltip("How long to wait (in seconds) before activating the next virtual camera in the list (if any)")]
 			public float m_Hold;
 
-			[Tooltip("How to blend to the next virtual camera in the list (if any)")]
 			[CinemachineBlendDefinitionProperty]
+			[Tooltip("How to blend to the next virtual camera in the list (if any)")]
 			public CinemachineBlendDefinition m_Blend;
 		}
 	}

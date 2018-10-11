@@ -120,12 +120,12 @@ namespace UltimateWater
 		[FormerlySerializedAs("sternWaveEmitters")]
 		private WavesEmitter[] _SternWaveEmitters;
 
-		[FormerlySerializedAs("bowWavesEmitter")]
 		[SerializeField]
+		[FormerlySerializedAs("bowWavesEmitter")]
 		private ShipBowWavesEmitter _BowWavesEmitter;
 
-		[FormerlySerializedAs("bowSprayEmitters")]
 		[SerializeField]
+		[FormerlySerializedAs("bowSprayEmitters")]
 		private ParticleSystem[] _BowSprayEmitters;
 
 		[FormerlySerializedAs("maxVelocity")]

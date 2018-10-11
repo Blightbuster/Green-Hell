@@ -4,8 +4,8 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	[DocumentationSorting(8f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
 	public class CinemachineBasicMultiChannelPerlin : CinemachineComponentBase
@@ -70,8 +70,8 @@ namespace Cinemachine
 		}
 
 		[FormerlySerializedAs("m_Definition")]
-		[HideInInspector]
 		[Tooltip("The asset containing the Noise Profile.  Define the frequencies and amplitudes there to make a characteristic noise profile.  Make your own or just use one of the many presets.")]
+		[HideInInspector]
 		public NoiseSettings m_NoiseProfile;
 
 		[Tooltip("Gain to apply to the amplitudes defined in the NoiseSettings asset.  1 is normal.  Setting this to 0 completely mutes the noise.")]

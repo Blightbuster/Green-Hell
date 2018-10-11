@@ -24,7 +24,7 @@ public class MenuDebugAI : MenuScreen
 			return;
 		}
 		this.m_List.Clear();
-		for (int i = 0; i < 39; i++)
+		for (int i = 0; i < 40; i++)
 		{
 			AI.AIID aiid = (AI.AIID)i;
 			string text = aiid.ToString();
@@ -44,7 +44,7 @@ public class MenuDebugAI : MenuScreen
 		{
 			return;
 		}
-		if (this.m_List.GetSelectionIndex() < 0 || this.m_List.GetSelectionIndex() >= 39)
+		if (this.m_List.GetSelectionIndex() < 0 || this.m_List.GetSelectionIndex() >= 40)
 		{
 			AIManager.Get().m_DebugSpawnID = AI.AIID.None;
 		}

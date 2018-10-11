@@ -5,8 +5,8 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("")]
 	[RequireComponent(typeof(CinemachinePipeline))]
+	[AddComponentMenu("")]
 	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
 	[SaveDuringPlay]
 	public class CinemachineOrbitalTransposer : CinemachineTransposer
@@ -216,19 +216,19 @@ namespace Cinemachine
 		[Tooltip("Heading Control.  The settings here control the behaviour of the camera in response to the player's input.")]
 		public AxisState m_XAxis = new AxisState(300f, 2f, 1f, 0f, "Mouse X", true);
 
+		[SerializeField]
 		[HideInInspector]
 		[FormerlySerializedAs("m_Radius")]
-		[SerializeField]
 		private float m_LegacyRadius = float.MaxValue;
 
+		[SerializeField]
 		[HideInInspector]
 		[FormerlySerializedAs("m_HeightOffset")]
-		[SerializeField]
 		private float m_LegacyHeightOffset = float.MaxValue;
 
-		[FormerlySerializedAs("m_HeadingBias")]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
+		[FormerlySerializedAs("m_HeadingBias")]
 		private float m_LegacyHeadingBias = float.MaxValue;
 
 		[HideInInspector]
@@ -265,8 +265,8 @@ namespace Cinemachine
 			[Tooltip("How 'forward' is defined.  The camera will be placed by default behind the target.  PositionDelta will consider 'forward' to be the direction in which the target is moving.")]
 			public CinemachineOrbitalTransposer.Heading.HeadingDefinition m_HeadingDefinition;
 
-			[Tooltip("Size of the velocity sampling window for target heading filter.  This filters out irregularities in the target's movement.  Used only if deriving heading from target's movement (PositionDelta or Velocity)")]
 			[Range(0f, 10f)]
+			[Tooltip("Size of the velocity sampling window for target heading filter.  This filters out irregularities in the target's movement.  Used only if deriving heading from target's movement (PositionDelta or Velocity)")]
 			public int m_VelocityFilterStrength;
 
 			[Tooltip("Where the camera is placed when the X-axis value is zero.  This is a rotation in degrees around the Y axis.  When this value is 0, the camera will be placed behind the target.  Nonzero offsets will rotate the zero position around the target.")]
@@ -327,9 +327,9 @@ namespace Cinemachine
 			[FormerlySerializedAs("m_HeadingDefinition")]
 			private int m_LegacyHeadingDefinition;
 
-			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			[HideInInspector]
 			[SerializeField]
+			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			private int m_LegacyVelocityFilterStrength;
 		}
 

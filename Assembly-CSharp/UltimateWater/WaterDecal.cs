@@ -189,8 +189,8 @@ namespace UltimateWater
 			return string.Empty;
 		}
 
-		[Tooltip("Used for rendering water displacements")]
 		[SerializeField]
+		[Tooltip("Used for rendering water displacements")]
 		private Material _DisplacementMaterial;
 
 		[SerializeField]

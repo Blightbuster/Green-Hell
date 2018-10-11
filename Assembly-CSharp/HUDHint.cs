@@ -5,6 +5,11 @@ using UnityEngine.UI;
 
 public class HUDHint : HUDBase
 {
+	public static HUDHint Get()
+	{
+		return HUDHint.s_Instance;
+	}
+
 	public override void SetupGroups()
 	{
 		base.SetupGroups();
@@ -15,6 +20,7 @@ public class HUDHint : HUDBase
 	protected override void Awake()
 	{
 		base.Awake();
+		HUDHint.s_Instance = this;
 		this.m_BG.enabled = false;
 		this.m_Text.enabled = false;
 		this.m_ActiveHint = null;
@@ -61,6 +67,7 @@ public class HUDHint : HUDBase
 			}
 			else if (this.m_ActiveHint != null && this.m_ActiveHint.m_Duration > 0f && Time.time > this.m_ActiveHint.m_Duration + this.m_HintShowTime)
 			{
+				this.m_ActiveHint.m_LastShowTime = Time.time;
 				this.m_ActiveHint = null;
 				this.m_HintsQueue.RemoveAt(0);
 			}
@@ -92,6 +99,11 @@ public class HUDHint : HUDBase
 		return this.m_ActiveHint == hint || this.m_HintsQueue.Contains(hint);
 	}
 
+	public bool IsHintActive(Hint hint)
+	{
+		return this.m_ActiveHint == hint;
+	}
+
 	public RawImage m_BG;
 
 	public Text m_Text;
@@ -103,4 +115,6 @@ public class HUDHint : HUDBase
 	private float m_HintShowTime;
 
 	private TextGenerator m_TextGen;
+
+	private static HUDHint s_Instance;
 }

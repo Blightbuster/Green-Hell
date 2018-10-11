@@ -6,9 +6,9 @@ using UnityEngine;
 namespace Cinemachine
 {
 	[SaveDuringPlay]
-	[AddComponentMenu("")]
 	[ExecuteInEditMode]
 	[DocumentationSorting(22f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("")]
 	public class CinemachineConfiner : CinemachineExtension
 	{
 		public bool CameraWasDisplaced(CinemachineVirtualCameraBase vcam)

@@ -41,15 +41,16 @@ public class HarvestingAnimalController : PlayerController
 		Physics.IgnoreCollision(component, this.m_Body.m_BoxCollider);
 		if (this.m_Body.m_RagdollBones != null)
 		{
-			foreach (Transform transform in this.m_Body.m_RagdollBones)
+			foreach (Rigidbody rigidbody in this.m_Body.m_RagdollBones)
 			{
-				Physics.IgnoreCollision(component, transform.GetComponent<Collider>());
+				Physics.IgnoreCollision(component, rigidbody.gameObject.GetComponent<Collider>());
 			}
 		}
 		this.m_Animator.SetTrigger(this.m_HarvestingHash);
 		this.m_StoneBlade.SetActive(true);
 		this.m_StoneBlade.transform.parent = this.m_Player.GetRHand();
 		this.m_Player.m_AudioModule.PlayHarvestAnimalSound();
+		this.m_CorrectPosition = true;
 	}
 
 	protected override void OnDisable()
@@ -62,6 +63,7 @@ public class HarvestingAnimalController : PlayerController
 		{
 			this.m_Animator.ResetTrigger(this.m_HarvestingHash);
 			this.m_Animator.ResetTrigger(this.m_HarvestingFinishHash);
+			this.m_Animator.SetTrigger(this.m_HarvestingAnimalEndHash);
 		}
 	}
 
@@ -69,7 +71,7 @@ public class HarvestingAnimalController : PlayerController
 	{
 		base.ControllerUpdate();
 		Vector3 a = this.m_Body.transform.TransformPoint(this.m_Body.m_BoxCollider.center) - base.transform.position;
-		if (a.magnitude > 0.5f)
+		if (a.magnitude > 0.5f && this.m_CorrectPosition)
 		{
 			base.transform.position += a * Time.deltaTime;
 		}
@@ -111,6 +113,7 @@ public class HarvestingAnimalController : PlayerController
 		{
 			this.m_Body.Harvest();
 			this.Stop();
+			this.m_CorrectPosition = false;
 		}
 		else if (id == AnimEventID.HarvestingSpawnFX)
 		{
@@ -118,9 +121,16 @@ public class HarvestingAnimalController : PlayerController
 		}
 	}
 
+	public bool BlockInventoryInputs()
+	{
+		return base.enabled;
+	}
+
 	private int m_HarvestingHash = Animator.StringToHash("HarvestingAnimal");
 
 	private int m_HarvestingFinishHash = Animator.StringToHash("HarvestingAnimalFinish");
+
+	private int m_HarvestingAnimalEndHash = Animator.StringToHash("HarvestingAnimalEnd");
 
 	private DeadBody m_Body;
 
@@ -131,4 +141,6 @@ public class HarvestingAnimalController : PlayerController
 	private GameObject m_StoneBlade;
 
 	private Transform m_StoneBladeHolder;
+
+	private bool m_CorrectPosition;
 }

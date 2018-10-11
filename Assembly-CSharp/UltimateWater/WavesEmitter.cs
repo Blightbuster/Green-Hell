@@ -79,12 +79,12 @@ namespace UltimateWater
 			return new Vector2(vector3.x, vector3.z);
 		}
 
-		[FormerlySerializedAs("water")]
 		[SerializeField]
+		[FormerlySerializedAs("water")]
 		private WaveParticlesSystemGPU _Water;
 
-		[SerializeField]
 		[FormerlySerializedAs("amplitude")]
+		[SerializeField]
 		private float _Amplitude = 0.1f;
 
 		[FormerlySerializedAs("wavelength")]
@@ -111,23 +111,23 @@ namespace UltimateWater
 		[SerializeField]
 		private float _EmissionInterval = 0.15f;
 
-		[FormerlySerializedAs("trailCalming")]
 		[SerializeField]
+		[FormerlySerializedAs("trailCalming")]
 		[Range(0f, 1f)]
 		private float _TrailCalming = 1f;
 
-		[FormerlySerializedAs("trailFoam")]
 		[SerializeField]
+		[FormerlySerializedAs("trailFoam")]
 		[Range(0f, 8f)]
 		private float _TrailFoam = 1f;
 
-		[FormerlySerializedAs("emissionAngle")]
 		[SerializeField]
+		[FormerlySerializedAs("emissionAngle")]
 		[Range(0f, 180f)]
 		private float _EmissionAngle;
 
-		[FormerlySerializedAs("minTextureU")]
 		[SerializeField]
+		[FormerlySerializedAs("minTextureU")]
 		[Header("Advanced")]
 		private int _MinTextureU = 4;
 
@@ -135,9 +135,9 @@ namespace UltimateWater
 		[SerializeField]
 		private int _MaxTextureU = 8;
 
+		[SerializeField]
 		[FormerlySerializedAs("initialPower")]
 		[Range(0f, 1f)]
-		[SerializeField]
 		private float _InitialPower = 1f;
 
 		private float _Power = -1f;

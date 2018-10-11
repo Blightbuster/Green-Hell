@@ -30,12 +30,13 @@ public class CJObject : MonoBehaviour
 	{
 	}
 
-	protected virtual void Update()
+	protected virtual void LateUpdate()
 	{
 	}
 
-	protected virtual void LateUpdate()
+	protected virtual void Update()
 	{
+		this.UpdateHitShake();
 	}
 
 	protected virtual void OnDestroy()
@@ -125,6 +126,31 @@ public class CJObject : MonoBehaviour
 		PlayerSanityModule.Get().OnObjectDisappear(this, play_disappear_chatter);
 	}
 
+	public void HitShake()
+	{
+		if (this.m_HitShake)
+		{
+			return;
+		}
+		this.m_StartHitShakeTime = Time.time;
+		this.m_HitShake = true;
+		this.m_StartHitShakePosition = base.transform.position;
+	}
+
+	private void UpdateHitShake()
+	{
+		if (!this.m_HitShake)
+		{
+			return;
+		}
+		base.transform.position = this.m_StartHitShakePosition + Vector3.forward * Mathf.Sign(Time.time * 123f) * 0.01f;
+		if (Time.time - this.m_StartHitShakeTime > 0.1f)
+		{
+			base.transform.position = this.m_StartHitShakePosition;
+			this.m_HitShake = false;
+		}
+	}
+
 	[HideInInspector]
 	public bool m_Hallucination;
 
@@ -137,4 +163,11 @@ public class CJObject : MonoBehaviour
 
 	[HideInInspector]
 	public bool m_IsBeingDestroyed;
+
+	[HideInInspector]
+	public bool m_HitShake;
+
+	private float m_StartHitShakeTime;
+
+	private Vector3 m_StartHitShakePosition = Vector3.zero;
 }

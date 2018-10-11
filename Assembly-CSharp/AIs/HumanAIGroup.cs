@@ -340,14 +340,7 @@ namespace AIs
 			}
 			foreach (HumanAI humanAI in this.m_Members)
 			{
-				if (humanAI.m_SightModule.m_PlayerVisible)
-				{
-					return true;
-				}
-			}
-			foreach (HumanAI humanAI2 in this.m_Members)
-			{
-				if (humanAI2.m_EnemySenseModule.m_Enemy)
+				if (humanAI.m_EnemyModule.m_Enemy)
 				{
 					return true;
 				}

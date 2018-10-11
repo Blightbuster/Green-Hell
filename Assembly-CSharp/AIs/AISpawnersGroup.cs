@@ -13,39 +13,25 @@ namespace AIs
 			foreach (AISpawner aispawner in this.m_Spawners)
 			{
 				aispawner.m_SpawnersGroup = this;
-				aispawner.m_ResetTime = 0f;
 			}
-			this.m_CurrentMaxCount = this.m_MaxCount;
 		}
 
 		private void Update()
 		{
-			if (this.m_TimeToAddMaxCount == 0f)
+			if (this.m_BlockedCount > 0)
 			{
-				if (this.m_CurrentMaxCount >= this.m_MaxCount)
+				this.m_BlockedDuration += Time.deltaTime;
+				if (this.m_BlockedDuration >= this.m_Cooldown)
 				{
-					return;
-				}
-				this.m_TimeToAddMaxCount = this.m_Cooldown;
-			}
-			this.m_TimeToAddMaxCount -= Time.deltaTime;
-			if (this.m_TimeToAddMaxCount <= 0f)
-			{
-				this.m_CurrentMaxCount++;
-				if (this.m_CurrentMaxCount < this.m_MaxCount)
-				{
-					this.m_TimeToAddMaxCount = this.m_Cooldown;
-				}
-				else
-				{
-					this.m_TimeToAddMaxCount = 0f;
+					this.m_BlockedDuration = 0f;
+					this.m_BlockedCount--;
 				}
 			}
 		}
 
 		public bool CanSpawnAI()
 		{
-			return this.m_CurrentCount < this.m_CurrentMaxCount;
+			return this.m_CurrentCount < this.m_MaxCount - this.m_BlockedCount;
 		}
 
 		public void OnSpawnAI(AI ai)
@@ -57,11 +43,7 @@ namespace AIs
 		{
 			if (ai.IsDead())
 			{
-				this.m_CurrentMaxCount--;
-				if (this.m_TimeToAddMaxCount <= 0f)
-				{
-					this.m_TimeToAddMaxCount = this.m_Cooldown;
-				}
+				this.m_BlockedCount++;
 			}
 			this.m_CurrentCount--;
 		}
@@ -70,11 +52,11 @@ namespace AIs
 
 		public float m_Cooldown;
 
-		private float m_TimeToAddMaxCount;
+		private int m_BlockedCount;
+
+		private float m_BlockedDuration;
 
 		private int m_CurrentCount;
-
-		private int m_CurrentMaxCount;
 
 		private List<AISpawner> m_Spawners;
 	}

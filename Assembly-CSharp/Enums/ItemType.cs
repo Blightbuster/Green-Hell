@@ -23,6 +23,7 @@ namespace Enums
 		Trap,
 		Dynamite,
 		Parasite,
-		ReadableItem
+		ReadableItem,
+		Stand
 	}
 }

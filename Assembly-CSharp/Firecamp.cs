@@ -23,6 +23,8 @@ public class Firecamp : Construction, IItemSlotParent
 		if (this.m_WoodSlot)
 		{
 			this.m_WoodSlot.m_ActivityUpdate = false;
+			this.m_WoodSlot.m_ItemTypeList.Add(ItemType.Bowl);
+			this.m_WoodSlot.m_ItemTypeList.Add(ItemType.LiquidContainer);
 		}
 		for (int j = 0; j < this.m_CookingSlots.Length; j++)
 		{
@@ -135,7 +137,7 @@ public class Firecamp : Construction, IItemSlotParent
 		{
 			return;
 		}
-		if (Time.time - this.m_LastDamageTime < 1.5f)
+		if (Time.time - this.m_LastPlayerDamageTime < 1.5f)
 		{
 			return;
 		}
@@ -143,16 +145,15 @@ public class Firecamp : Construction, IItemSlotParent
 		{
 			float proportionalClamp = CJTools.Math.GetProportionalClamp(5f, 10f, this.m_FireLevel, 0f, 1f);
 			Player.Get().GiveDamage(base.gameObject, null, proportionalClamp, Vector3.up, DamageType.None, 0, false);
-			this.m_LastDamageTime = Time.time;
+			this.m_LastPlayerDamageTime = Time.time;
 		}
 	}
 
 	private void UpdateSlots()
 	{
-		bool flag = this.m_Burning && this.m_FireLevel < 1f;
-		if (this.m_WoodSlot.m_Active != flag)
+		if (this.m_WoodSlot.m_Active != this.m_Burning)
 		{
-			this.m_WoodSlot.Activate(flag);
+			this.m_WoodSlot.Activate(this.m_Burning);
 		}
 		for (int i = 0; i < this.m_CookingSlots.Length; i++)
 		{
@@ -196,6 +197,11 @@ public class Firecamp : Construction, IItemSlotParent
 		this.m_NextUpdateHUDTime = Time.time + CJTools.Math.GetProportionalClamp(0.1f, 5f, num, 5f, 50f);
 	}
 
+	private float GetBurningLength()
+	{
+		return (!this.m_StoneRing) ? this.m_BurningLength : (this.m_BurningLength * 1.2f);
+	}
+
 	private void UpdateFireLevel()
 	{
 		if (!this.m_Burning)
@@ -207,7 +213,7 @@ public class Firecamp : Construction, IItemSlotParent
 			this.m_FireLevel = 1f;
 			return;
 		}
-		this.m_FireLevel = CJTools.Math.GetProportionalClamp(1f, 0f, this.m_BurningDuration, 0f, this.m_BurningLength);
+		this.m_FireLevel = CJTools.Math.GetProportionalClamp(1f, 0f, this.m_BurningDuration, 0f, this.GetBurningLength());
 		if (this.m_FireLevel == 0f)
 		{
 			this.BurnOut();
@@ -444,12 +450,26 @@ public class Firecamp : Construction, IItemSlotParent
 	{
 		if (slot == this.m_WoodSlot)
 		{
-			this.m_BurningDuration -= slot.m_Item.m_Info.m_AddFirecamBurningTime;
-			if (this.m_BurningDuration < 0f)
+			if (slot.m_Item.m_Info.IsLiquidContainer())
 			{
-				this.m_BurningDuration = 0f;
+				LiquidContainer liquidContainer = (LiquidContainer)slot.m_Item;
+				if (liquidContainer.m_LCInfo.m_Amount > 0f)
+				{
+					liquidContainer.Spill(-1f);
+					this.Extinguish();
+				}
+				slot.RemoveItem();
+				InventoryBackpack.Get().InsertItem(liquidContainer, null, null, true, true, true, true, true);
 			}
-			UnityEngine.Object.Destroy(slot.m_Item.gameObject);
+			else
+			{
+				this.m_BurningDuration -= slot.m_Item.m_Info.m_AddFirecamBurningTime;
+				if (this.m_BurningDuration < 0f)
+				{
+					this.m_BurningDuration = 0f;
+				}
+				UnityEngine.Object.Destroy(slot.m_Item.gameObject);
+			}
 			return;
 		}
 		bool flag = false;
@@ -473,7 +493,7 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public void OnRemoveItem(ItemSlot slot)
 	{
-		if (slot.m_Item && slot.m_Item.m_Info.m_Type == ItemType.Bowl)
+		if (slot.m_Item && slot.m_Item.m_Info.m_Type == ItemType.Bowl && slot != this.m_WoodSlot)
 		{
 			if (!slot.m_IsBeingDestroyed)
 			{
@@ -585,7 +605,7 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public float m_LightNoiseRange = 0.1f;
 
-	private float m_LastDamageTime;
+	private float m_LastPlayerDamageTime;
 
 	private Bounds m_DamageBounds;
 
@@ -608,4 +628,7 @@ public class Firecamp : Construction, IItemSlotParent
 	private float m_RainDuration;
 
 	private float m_MinRainDurationToExtinguish = 15f;
+
+	[HideInInspector]
+	public Construction m_StoneRing;
 }

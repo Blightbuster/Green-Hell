@@ -555,12 +555,12 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 	{
 		Item currentItem = this.GetCurrentItem(Hand.Right);
 		Item currentItem2 = this.GetCurrentItem(Hand.Left);
-		return (currentItem && currentItem.GetInfoID().ToString() == item_name) || (currentItem2 && currentItem2.GetInfoID().ToString() == item_name);
+		return (currentItem && ItemsManager.Get().ItemIDToString((int)currentItem.GetInfoID()) == item_name) || (currentItem2 && ItemsManager.Get().ItemIDToString((int)currentItem2.GetInfoID()) == item_name);
 	}
 
 	public bool HaveItem(string item_name)
 	{
-		ItemID itemID = (ItemID)Enum.Parse(typeof(ItemID), item_name);
+		ItemID itemID = (ItemID)ItemsManager.Get().StringToItemID(item_name);
 		return (this.GetCurrentItem(Hand.Right) && this.GetCurrentItem(Hand.Right).GetInfoID() == itemID) || (this.GetCurrentItem(Hand.Left) && this.GetCurrentItem(Hand.Left).GetInfoID() == itemID) || InventoryBackpack.Get().Contains(itemID);
 	}
 
@@ -1279,11 +1279,16 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 				}
 			}
 		}
-		if (this.CanShowWatch() && InputsManager.Get().IsActionActive(InputsManager.InputAction.Watch))
+		bool flag = this.m_PlayerControllers[28].IsActive();
+		bool flag2 = InputsManager.Get().IsActionActive(InputsManager.InputAction.Watch);
+		if (flag2 && this.CanShowWatch())
 		{
-			this.StartController(PlayerControllerType.Watch);
+			if (!flag)
+			{
+				this.StartController(PlayerControllerType.Watch);
+			}
 		}
-		else if (this.m_PlayerControllers[28].IsActive())
+		else if (flag)
 		{
 			this.StopController(PlayerControllerType.Watch);
 		}
@@ -1383,19 +1388,19 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 				}
 			}
 		}
-		else if (action == InputsManager.InputAction.QuickEquip0)
+		else if (action == InputsManager.InputAction.QuickEquip0 && this.CanEquipItem())
 		{
 			this.Equip(InventoryBackpack.Get().GetSlotByIndex(0, BackpackPocket.Left));
 		}
-		else if (action == InputsManager.InputAction.QuickEquip1)
+		else if (action == InputsManager.InputAction.QuickEquip1 && this.CanEquipItem())
 		{
 			this.Equip(InventoryBackpack.Get().GetSlotByIndex(1, BackpackPocket.Left));
 		}
-		else if (action == InputsManager.InputAction.QuickEquip2)
+		else if (action == InputsManager.InputAction.QuickEquip2 && this.CanEquipItem())
 		{
 			this.Equip(InventoryBackpack.Get().GetSlotByIndex(2, BackpackPocket.Left));
 		}
-		else if (action == InputsManager.InputAction.QuickEquip3)
+		else if (action == InputsManager.InputAction.QuickEquip3 && this.CanEquipItem())
 		{
 			this.Equip(InventoryBackpack.Get().GetSlotByIndex(3, BackpackPocket.Left));
 		}
@@ -1421,9 +1426,14 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 		}
 	}
 
+	private bool CanEquipItem()
+	{
+		return !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive();
+	}
+
 	private bool CanThrowStone()
 	{
-		return !Inventory3DManager.Get().gameObject.activeSelf && !this.m_DreamActive && !SleepController.Get().IsActive() && !this.m_MapController.IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !BodyInspectionController.Get().IsActive() && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive();
+		return !Inventory3DManager.Get().gameObject.activeSelf && !this.m_DreamActive && !SleepController.Get().IsActive() && !this.m_MapController.IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !BodyInspectionController.Get().IsActive() && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !ConsciousnessController.Get().IsActive();
 	}
 
 	private void StorePlayerTransforms()
@@ -1482,12 +1492,12 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	public bool CanStartCrafting()
 	{
-		return !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_InsectsController.IsActive() && !VomitingController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && !HitReactionController.Get().IsActive();
+		return !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_InsectsController.IsActive() && !VomitingController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && !HitReactionController.Get().IsActive() && !ConsciousnessController.Get().IsActive();
 	}
 
 	private bool CanShowWatch()
 	{
-		return this.m_WatchUnlocked && !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_NotepadController.IsActive() && !this.m_InsectsController.IsActive() && !VomitingController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CraftingController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying();
+		return this.m_WatchUnlocked && !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !this.m_NotepadController.IsActive() && !this.m_InsectsController.IsActive() && !VomitingController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CraftingController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && !ConsciousnessController.Get().IsActive();
 	}
 
 	private void UpdateWatchObject()
@@ -1520,7 +1530,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	public bool CanShowNotepad()
 	{
-		return this.m_NotepadUnlocked && !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !VomitingController.Get().IsActive() && !InsectsController.Get().IsActive() && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && WeaponMeleeController.Get().CanBeInterrupted() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f;
+		return this.m_NotepadUnlocked && !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !VomitingController.Get().IsActive() && !InsectsController.Get().IsActive() && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && WeaponMeleeController.Get().CanBeInterrupted() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !ConsciousnessController.Get().IsActive() && !CraftingController.Get().IsActive();
 	}
 
 	public void UnlockMap()
@@ -1535,7 +1545,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	public bool CanShowMap()
 	{
-		return this.m_MapUnlocked && !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !VomitingController.Get().IsActive() && !InsectsController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying();
+		return this.m_MapUnlocked && !this.m_DreamActive && !this.IsDead() && !SleepController.Get().IsActive() && !MenuInGameManager.Get().IsAnyScreenVisible() && !this.m_SwimController.IsActive() && !VomitingController.Get().IsActive() && !InsectsController.Get().IsActive() && !this.m_Aim && Time.time - this.m_StopAimTime >= 0.5f && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !MakeFireController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && !ConsciousnessController.Get().IsActive() && !CraftingController.Get().IsActive();
 	}
 
 	public bool IsWatchControllerActive()
@@ -1694,7 +1704,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 		if (GreenHellGame.ROADSHOW_DEMO && Input.GetKeyDown(KeyCode.Backslash) && Time.time - this.m_LastAddInjuryTime > 1f)
 		{
 			PlayerInjuryModule component = base.gameObject.GetComponent<PlayerInjuryModule>();
-			BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, InjuryType.Worm);
+			BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, InjuryType.Worm, true);
 			component.AddInjury(InjuryType.Worm, InjuryPlace.RHand, freeWoundSlot, InjuryState.Open, 0, null);
 		}
 		if (!GreenHellGame.DEBUG)
@@ -1704,7 +1714,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 		if (Input.GetKeyDown(KeyCode.Backslash) && Time.time - this.m_LastAddInjuryTime > 1f)
 		{
 			PlayerInjuryModule component2 = base.gameObject.GetComponent<PlayerInjuryModule>();
-			BIWoundSlot freeWoundSlot2 = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, InjuryType.Leech);
+			BIWoundSlot freeWoundSlot2 = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, InjuryType.Leech, true);
 			component2.AddInjury(InjuryType.Leech, InjuryPlace.RHand, freeWoundSlot2, InjuryState.Open, 0, null);
 		}
 		else if (Input.GetKeyDown(KeyCode.Backspace) && Time.time - this.m_LastAddInjuryTime > 1f)
@@ -2300,7 +2310,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	private bool ShouldHideWeapon()
 	{
-		return Inventory3DManager.Get().IsActive() || BodyInspectionController.Get().IsActive() || this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) || this.m_Animator.GetBool(ItemController.Get().m_FireHash) || NotepadController.Get().IsActive() || MapController.Get().IsActive() || LadderController.Get().IsActive() || LiquidInHandsController.Get().IsActive() || SwimController.Get().IsActive() || HeavyObjectController.Get().IsActive() || BoatController.Get().IsActive() || ConsciousnessController.Get().IsActive() || GrapplingHookController.Get().IsActive() || HarvestingAnimalController.Get().IsActive() || HarvestingSmallAnimalController.Get().IsActive() || CraftingController.Get().IsActive() || MakeFireController.Get().IsActive() || DeathController.Get().IsActive() || (ItemController.Get().IsActive() && ItemController.Get().m_StoneThrowing) || CutscenesManager.Get().IsCutscenePlaying() || ConstructionController.Get().IsActive();
+		return Inventory3DManager.Get().IsActive() || BodyInspectionController.Get().IsActive() || this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) || this.m_Animator.GetBool(ItemController.Get().m_FireHash) || NotepadController.Get().IsActive() || MapController.Get().IsActive() || LadderController.Get().IsActive() || LiquidInHandsController.Get().IsActive() || SwimController.Get().IsActive() || HeavyObjectController.Get().IsActive() || BoatController.Get().IsActive() || ConsciousnessController.Get().IsActive() || GrapplingHookController.Get().IsActive() || HarvestingAnimalController.Get().IsActive() || HarvestingSmallAnimalController.Get().IsActive() || CraftingController.Get().IsActive() || MakeFireController.Get().IsActive() || DeathController.Get().IsActive() || (ItemController.Get().IsActive() && ItemController.Get().m_StoneThrowing) || CutscenesManager.Get().IsCutscenePlaying() || ConstructionController.Get().IsActive() || VomitingController.Get().IsActive() || WatchController.Get().IsActive();
 	}
 
 	private void UpdateWeapon()
@@ -2328,7 +2338,7 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 
 	private void ShowWeapon()
 	{
-		if (InventoryBackpack.Get().m_EquippedItemSlot.m_Item)
+		if (InventoryBackpack.Get().m_EquippedItemSlot.m_Item && this.m_ControllerToStart == PlayerControllerType.Unknown)
 		{
 			Item item = InventoryBackpack.Get().m_EquippedItemSlot.m_Item;
 			InventoryBackpack.Get().RemoveItem(item, false);
@@ -2336,9 +2346,54 @@ public class Player : Being, ISaveLoad, IInputsReceiver
 		}
 	}
 
-	private new void OnDestroy()
+	protected override void OnDestroy()
 	{
+		base.OnDestroy();
 		InputsManager.Get().UnregisterReceiver(this);
+	}
+
+	public bool HasBlade()
+	{
+		if (InventoryBackpack.Get().Contains(ItemID.Obsidian_Blade) || InventoryBackpack.Get().Contains(ItemID.Obsidian_Bone_Blade) || InventoryBackpack.Get().Contains(ItemID.Stick_Blade) || InventoryBackpack.Get().Contains(ItemID.Stone_Blade) || InventoryBackpack.Get().Contains(ItemID.Bone_Knife))
+		{
+			return true;
+		}
+		Item currentItem = this.GetCurrentItem(Hand.Right);
+		return !(currentItem == null) && (currentItem.m_Info.m_ID == ItemID.Obsidian_Blade || currentItem.m_Info.m_ID == ItemID.Obsidian_Bone_Blade || currentItem.m_Info.m_ID == ItemID.Stick_Blade || currentItem.m_Info.m_ID == ItemID.Stone_Blade || currentItem.m_Info.m_ID == ItemID.Bone_Knife);
+	}
+
+	public static float GetSleepTimeFactor()
+	{
+		TOD_Sky todsky = MainLevel.Instance.m_TODSky;
+		TOD_Time todtime = MainLevel.Instance.m_TODTime;
+		bool flag = todsky.Cycle.Hour > 6f && todsky.Cycle.Hour <= 18f;
+		float num;
+		if (flag)
+		{
+			num = todtime.m_DayLengthInMinutes / 12f * 60f;
+		}
+		else
+		{
+			num = todtime.m_NightLengthInMinutes / 12f * 60f;
+		}
+		return num * SleepController.Get().m_HoursDelta;
+	}
+
+	public static float GetUnconsciousTimeFactor()
+	{
+		TOD_Sky todsky = MainLevel.Instance.m_TODSky;
+		TOD_Time todtime = MainLevel.Instance.m_TODTime;
+		bool flag = todsky.Cycle.Hour > 6f && todsky.Cycle.Hour <= 18f;
+		float num;
+		if (flag)
+		{
+			num = todtime.m_DayLengthInMinutes / 12f * 60f;
+		}
+		else
+		{
+			num = todtime.m_NightLengthInMinutes / 12f * 60f;
+		}
+		return num * ConsciousnessController.Get().m_HoursDelta;
 	}
 
 	private static Player s_Instance;

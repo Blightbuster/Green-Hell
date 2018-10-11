@@ -6,9 +6,9 @@ using UnityEngine.XR;
 namespace DynamicFogAndMist
 {
 	[HelpURL("http://kronnect.com/taptapgo")]
-	[RequireComponent(typeof(Camera))]
-	[ExecuteInEditMode]
 	[ImageEffectAllowedInSceneView]
+	[ExecuteInEditMode]
+	[RequireComponent(typeof(Camera))]
 	public class DynamicFog : MonoBehaviour
 	{
 		public FOG_TYPE effectType
@@ -1480,24 +1480,24 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private float _ditherStrength = 0.03f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _alpha = 1f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _noiseStrength = 0.5f;
 
-		[Range(0.01f, 1f)]
 		[SerializeField]
+		[Range(0.01f, 1f)]
 		private float _noiseScale = 0.1f;
 
 		[Range(0f, 0.999f)]
 		[SerializeField]
 		private float _distance = 0.1f;
 
-		[Range(0.0001f, 2f)]
 		[SerializeField]
+		[Range(0.0001f, 2f)]
 		private float _distanceFallOff = 0.01f;
 
 		[Range(0f, 1.2f)]
@@ -1512,12 +1512,12 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private float _height = 1f;
 
-		[Range(0f, 500f)]
 		[SerializeField]
+		[Range(0f, 500f)]
 		private float _maxHeight = 100f;
 
-		[Range(0.0001f, 1f)]
 		[SerializeField]
+		[Range(0.0001f, 1f)]
 		private float _heightFallOff = 0.1f;
 
 		[SerializeField]
@@ -1526,8 +1526,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _clipUnderBaseline;
 
-		[Range(0f, 15f)]
 		[SerializeField]
+		[Range(0f, 15f)]
 		private float _turbulence = 0.1f;
 
 		[Range(0f, 5f)]
@@ -1544,16 +1544,16 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private float _skyHaze = 50f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _skySpeed = 0.3f;
 
 		[Range(0f, 1f)]
 		[SerializeField]
 		private float _skyNoiseStrength = 0.1f;
 
-		[SerializeField]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _skyAlpha = 1f;
 
 		[SerializeField]
@@ -1577,8 +1577,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _useXZDistance;
 
-		[SerializeField]
 		[Range(0f, 1f)]
+		[SerializeField]
 		private float _scattering = 0.7f;
 
 		[SerializeField]

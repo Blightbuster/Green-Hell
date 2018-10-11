@@ -46,7 +46,7 @@ public class TOD_CycleParameters
 	[Tooltip("Current month of the year.")]
 	public int Month = 6;
 
-	[TOD_Range(1f, 9999f)]
 	[Tooltip("Current year.")]
+	[TOD_Range(1f, 9999f)]
 	public int Year = 2000;
 }

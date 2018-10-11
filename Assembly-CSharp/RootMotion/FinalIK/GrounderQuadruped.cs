@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder Quadruped")]
+	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
 	public class GrounderQuadruped : Grounder
 	{
 		[ContextMenu("User Manual")]

@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("Image Effects/Amplify Motion")]
+[RequireComponent(typeof(Camera))]
 public class AmplifyMotionEffect : AmplifyMotionEffectBase
 {
 	public new static AmplifyMotionEffect FirstInstance

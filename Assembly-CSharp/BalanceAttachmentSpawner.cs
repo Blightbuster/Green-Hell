@@ -41,7 +41,7 @@ public class BalanceAttachmentSpawner : BalanceSpawner
 		return null;
 	}
 
-	public override void Attach(ItemID item_id, int child_num, int active_children_mask)
+	public override Item Attach(ItemID item_id, int child_num, int active_children_mask)
 	{
 		Item item = ItemsManager.Get().CreateItem(item_id, true, base.transform.GetChild(child_num).position, base.transform.GetChild(child_num).rotation);
 		item.transform.position = Vector3.zero;
@@ -64,6 +64,7 @@ public class BalanceAttachmentSpawner : BalanceSpawner
 		{
 			UnityEngine.Object.Destroy(this.m_GameObjectsToDestroy[j]);
 		}
+		return item;
 	}
 
 	[HideInInspector]

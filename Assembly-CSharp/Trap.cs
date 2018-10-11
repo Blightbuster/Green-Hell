@@ -217,6 +217,10 @@ public class Trap : Construction
 			}
 			this.m_AI.m_BoxCollider.isTrigger = true;
 			this.m_AI.m_Trap = this;
+			if (this.m_AI.m_SoundModule)
+			{
+				this.m_AI.m_SoundModule.RequestSound(AISoundType.Panic);
+			}
 			if (GreenHellGame.Instance.GetPrefab(this.m_AI.m_ID.ToString() + "_Body"))
 			{
 				AIInTrapTrigger aiinTrapTrigger = gameObject.AddComponent<AIInTrapTrigger>();

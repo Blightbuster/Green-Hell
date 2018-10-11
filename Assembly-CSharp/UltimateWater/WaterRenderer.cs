@@ -379,12 +379,12 @@ namespace UltimateWater
 		}
 
 		[FormerlySerializedAs("volumeFrontShader")]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _VolumeFrontShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("volumeFrontFastShader")]
+		[SerializeField]
 		[HideInInspector]
 		private Shader _VolumeFrontFastShader;
 
@@ -393,16 +393,16 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _VolumeBackShader;
 
-		[FormerlySerializedAs("reflectionProbeAnchor")]
 		[SerializeField]
+		[FormerlySerializedAs("reflectionProbeAnchor")]
 		private Transform _ReflectionProbeAnchor;
 
-		[FormerlySerializedAs("shadowCastingMode")]
 		[SerializeField]
+		[FormerlySerializedAs("shadowCastingMode")]
 		private ShadowCastingMode _ShadowCastingMode;
 
-		[FormerlySerializedAs("useSharedMask")]
 		[SerializeField]
+		[FormerlySerializedAs("useSharedMask")]
 		private bool _UseSharedMask = true;
 
 		private Water _Water;

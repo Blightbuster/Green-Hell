@@ -102,7 +102,7 @@ public class HUDItem : HUDBase
 		this.m_ItemReplacer = item;
 		this.ClearSlots();
 		bool flag = Player.Get().m_SwimController.IsActive();
-		if (item.m_ReplaceInfo.m_Craftable && !flag)
+		if (item.m_ReplaceInfo.m_Craftable && Player.Get().CanStartCrafting())
 		{
 			this.AddSlot(HUDItem.Action.Craft);
 		}
@@ -140,7 +140,7 @@ public class HUDItem : HUDBase
 		this.m_Item = item;
 		this.ClearSlots();
 		bool flag = Player.Get().m_SwimController.IsActive();
-		if (this.m_Item.m_Info.m_Craftable && !this.m_Item.m_OnCraftingTable && !flag)
+		if (this.m_Item.m_Info.m_Craftable && !this.m_Item.m_OnCraftingTable && Player.Get().CanStartCrafting())
 		{
 			this.AddSlot(HUDItem.Action.Craft);
 		}
@@ -185,6 +185,10 @@ public class HUDItem : HUDBase
 		{
 			this.AddSlot(HUDItem.Action.Take);
 		}
+		if (MakeFireController.Get().IsActive() && MakeFireController.Get().CanUseItemAsKindling(item))
+		{
+			this.AddSlot(HUDItem.Action.Use);
+		}
 		if (this.m_Item.m_Info.m_Eatable && !flag)
 		{
 			this.AddSlot(HUDItem.Action.Eat);
@@ -201,9 +205,29 @@ public class HUDItem : HUDBase
 				this.AddSlot(HUDItem.Action.Spill);
 			}
 		}
-		if (this.m_Item.m_Info.m_Harvestable && !flag)
+		if (this.m_Item.m_Info.m_Harvestable && !flag && (!this.m_Item.RequiresToolToHarvest() || Player.Get().HasBlade()))
 		{
 			this.AddSlot(HUDItem.Action.Harvest);
+		}
+		if (this.m_Item.m_Info.IsStand())
+		{
+			Stand stand = (Stand)this.m_Item;
+			if (stand.GetNumitems() > 0)
+			{
+				this.AddSlot(HUDItem.Action.Take);
+			}
+			if (stand.GetNumitems() >= 3)
+			{
+				this.AddSlot(HUDItem.Action.Take3);
+			}
+			if (stand.GetNumitems() >= 2)
+			{
+				this.AddSlot(HUDItem.Action.TakeAll);
+			}
+		}
+		else
+		{
+			this.AddSlot(HUDItem.Action.Destroy);
 		}
 		this.Activate();
 		return true;
@@ -312,6 +336,15 @@ public class HUDItem : HUDBase
 		case HUDItem.Action.Spill:
 			huditemButton.text.text = localization.Get("HUD_Trigger_Spill");
 			break;
+		case HUDItem.Action.Destroy:
+			huditemButton.text.text = localization.Get("HUD_Trigger_Destroy");
+			break;
+		case HUDItem.Action.Take3:
+			huditemButton.text.text = localization.Get("HUD_Trigger_Take3");
+			break;
+		case HUDItem.Action.TakeAll:
+			huditemButton.text.text = localization.Get("HUD_Trigger_TakeAll");
+			break;
 		}
 		huditemButton.button.SetActive(true);
 		this.m_ActiveButtons.Add(huditemButton);
@@ -325,7 +358,7 @@ public class HUDItem : HUDBase
 		}
 		if (this.m_ActiveButton != null)
 		{
-			if (Inventory3DManager.Get().gameObject.activeSelf || this.m_ActiveButton.action == HUDItem.Action.Harvest || this.m_ActiveButton.action == HUDItem.Action.Close)
+			if (Inventory3DManager.Get().gameObject.activeSelf || this.m_ActiveButton.action == HUDItem.Action.Harvest || this.m_ActiveButton.action == HUDItem.Action.Destroy)
 			{
 				this.ExecuteAction(this.m_ActiveButton.action, this.m_Item);
 				base.Invoke("DelayDeactivate", this.m_DelayDeactivate);
@@ -491,22 +524,60 @@ public class HUDItem : HUDBase
 			item.Swap();
 			break;
 		case HUDItem.Action.Use:
-		{
-			Item currentItem = Player.Get().GetCurrentItem();
-			if (currentItem)
+			if (MakeFireController.Get().IsActive())
 			{
-				InventoryBackpack.Get().InsertItem(currentItem, InventoryBackpack.Get().m_EquippedItemSlot, null, true, true, true, true, false);
-				Player.Get().SetWantedItem((!currentItem.m_Info.IsBow()) ? Hand.Right : Hand.Left, null, true);
-				if (Player.Get().m_ControllerToStart != PlayerControllerType.Unknown)
-				{
-					Player.Get().StartControllerInternal();
-				}
+				InventoryBackpack.Get().RemoveItem(this.m_Item, false);
+				MakeFireController.Get().InsertItemToKindlingSlot(this.m_Item);
 			}
-			Player.Get().SetWantedItem(this.m_Item, true);
+			else
+			{
+				Item currentItem = Player.Get().GetCurrentItem();
+				if (currentItem)
+				{
+					InventoryBackpack.Get().InsertItem(currentItem, InventoryBackpack.Get().m_EquippedItemSlot, null, true, true, true, true, false);
+					Player.Get().SetWantedItem((!currentItem.m_Info.IsBow()) ? Hand.Right : Hand.Left, null, true);
+					if (Player.Get().m_ControllerToStart != PlayerControllerType.Unknown)
+					{
+						Player.Get().StartControllerInternal();
+					}
+				}
+				Player.Get().SetWantedItem(this.m_Item, true);
+			}
 			break;
-		}
 		case HUDItem.Action.Spill:
 			((LiquidContainer)this.m_Item).Spill(-1f);
+			break;
+		case HUDItem.Action.Destroy:
+			if (CraftingManager.Get().gameObject.activeSelf && CraftingManager.Get().ContainsItem(item))
+			{
+				CraftingManager.Get().RemoveItem(item);
+			}
+			if (!item.m_CurrentSlot && item.m_InventorySlot && item.m_InventorySlot.m_Items.Count > 0)
+			{
+				item.m_InventorySlot.RemoveItem(item, false);
+			}
+			else if (item.m_CurrentSlot && item.m_CurrentSlot.m_InventoryStackSlot)
+			{
+				item.m_CurrentSlot.RemoveItem(item, false);
+			}
+			if (InventoryBackpack.Get().m_EquippedItem == item)
+			{
+				InventoryBackpack.Get().m_EquippedItem = null;
+			}
+			InventoryBackpack.Get().RemoveItem(item, false);
+			UnityEngine.Object.Destroy(item.gameObject);
+			break;
+		case HUDItem.Action.Take3:
+			if (item)
+			{
+				item.Take3();
+			}
+			break;
+		case HUDItem.Action.TakeAll:
+			if (item)
+			{
+				item.TakeAll();
+			}
 			break;
 		}
 	}
@@ -695,6 +766,9 @@ public class HUDItem : HUDBase
 		Drop,
 		Swap,
 		Use,
-		Spill
+		Spill,
+		Destroy,
+		Take3,
+		TakeAll
 	}
 }

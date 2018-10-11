@@ -133,9 +133,9 @@ namespace UltimateWater
 		[SerializeField]
 		private ParticleSystem _UnityParticleSystem;
 
-		[FormerlySerializedAs("waveSpeed")]
-		[SerializeField]
 		[Range(0.02f, 0.98f)]
+		[SerializeField]
+		[FormerlySerializedAs("waveSpeed")]
 		private float _WaveSpeed = 0.5f;
 
 		[FormerlySerializedAs("amplitude")]
@@ -146,8 +146,8 @@ namespace UltimateWater
 		[SerializeField]
 		private float _Wavelength = 6f;
 
-		[FormerlySerializedAs("lifetime")]
 		[SerializeField]
+		[FormerlySerializedAs("lifetime")]
 		private float _Lifetime = 50f;
 
 		[FormerlySerializedAs("foam")]
@@ -162,9 +162,9 @@ namespace UltimateWater
 		[SerializeField]
 		private float _LeftRightSpace = 1f;
 
+		[Range(0f, 1f)]
 		[FormerlySerializedAs("trailCalming")]
 		[SerializeField]
-		[Range(0f, 1f)]
 		private float _TrailCalming = 1f;
 
 		[FormerlySerializedAs("trailFoam")]
@@ -172,10 +172,10 @@ namespace UltimateWater
 		[Range(0f, 8f)]
 		private float _TrailFoam = 1f;
 
-		[SerializeField]
-		[FormerlySerializedAs("advancedEmissionPositioning")]
-		[Header("Advanced")]
 		[Tooltip("Use for submarines. Allows emission to be moved to exposed ship parts during submerge process and completely disabled after complete submarge.")]
+		[Header("Advanced")]
+		[FormerlySerializedAs("advancedEmissionPositioning")]
+		[SerializeField]
 		private bool _AdvancedEmissionPositioning;
 
 		[FormerlySerializedAs("shipCollider")]
@@ -191,8 +191,8 @@ namespace UltimateWater
 		[SerializeField]
 		private int _MinTextureIndex;
 
-		[FormerlySerializedAs("maxTextureIndex")]
 		[SerializeField]
+		[FormerlySerializedAs("maxTextureIndex")]
 		private int _MaxTextureIndex = 4;
 
 		[FormerlySerializedAs("emissionSpacing")]

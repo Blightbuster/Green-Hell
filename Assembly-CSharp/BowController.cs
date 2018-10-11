@@ -75,7 +75,10 @@ public class BowController : PlayerController
 		{
 			this.m_Arrow.gameObject.transform.parent = null;
 			this.m_Arrow.m_Loaded = false;
-			InventoryBackpack.Get().InsertItem(this.m_Arrow, null, null, true, true, true, true, true);
+			if (InventoryBackpack.Get())
+			{
+				InventoryBackpack.Get().InsertItem(this.m_Arrow, null, null, true, true, true, true, true);
+			}
 			this.m_Arrow = null;
 		}
 		this.SetState(BowController.State.None);

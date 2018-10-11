@@ -40,6 +40,14 @@ namespace AIs
 				return;
 			}
 			base.OnTakeDamage(info);
+			if (AI.IsTurtle(this.m_AI.m_ID))
+			{
+				if (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.Hide)
+				{
+					this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.Hide);
+				}
+				return;
+			}
 			this.DecreaseHealth(info.m_Damage);
 			if (this.m_Health == 0f)
 			{

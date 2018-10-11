@@ -74,8 +74,8 @@ namespace UltimateWater.Internal
 			component.material.SetFloat("_WaterId", (float)(1 << this._Water.WaterId));
 		}
 
-		[FormerlySerializedAs("water")]
 		[SerializeField]
+		[FormerlySerializedAs("water")]
 		private Water _Water;
 
 		[SerializeField]

@@ -64,6 +64,7 @@ public class ScenarioAction : ScenarioElement
 			}
 			else if (parameterType.IsAssignableFrom(typeof(GameObject)))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.FindObject(text2, (array.Length <= 4) ? string.Empty : array[4]);
 				if (this.m_ParamO1 == null)
 				{
@@ -107,6 +108,8 @@ public class ScenarioAction : ScenarioElement
 			{
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(text3);
 				this.m_ParamO2 = MainLevel.Instance.GetUniqueObject(text4);
+				this.m_IsGO1 = true;
+				this.m_IsGO2 = true;
 				if (this.m_ParamO1 == null || this.m_ParamO2 == null)
 				{
 					ScenarioAction.s_NullObjects.Add(this);
@@ -115,6 +118,7 @@ public class ScenarioAction : ScenarioElement
 			}
 			else if (parameterType2.IsAssignableFrom(typeof(GameObject)) && parameterType3 == typeof(float))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(text3);
 				this.m_ParamF2 = float.Parse(text4);
 				if (this.m_ParamO1 == null)
@@ -125,6 +129,7 @@ public class ScenarioAction : ScenarioElement
 			}
 			else if (parameterType2.IsAssignableFrom(typeof(GameObject)) && parameterType3 == typeof(string))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(text3);
 				this.m_ParamS2 = text4;
 				if (this.m_ParamO1 == null)
@@ -139,6 +144,7 @@ public class ScenarioAction : ScenarioElement
 			}
 			else if (parameterType2.IsAssignableFrom(typeof(GameObject)) && parameterType3 == typeof(bool))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(text3);
 				this.m_ParamB2 = bool.Parse(text4);
 				if (this.m_ParamO1 == null)
@@ -173,6 +179,7 @@ public class ScenarioAction : ScenarioElement
 			string text7 = array[5];
 			if (parameterType4.IsAssignableFrom(typeof(GameObject)) && parameterType5 == typeof(string) && parameterType6 == typeof(string))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(text5);
 				this.m_ParamS1 = text6;
 				this.m_ParamS2 = text7;
@@ -203,6 +210,7 @@ public class ScenarioAction : ScenarioElement
 			string paramS3 = array[6];
 			if (parameterType8.IsAssignableFrom(typeof(GameObject)) && parameterType7 == typeof(string) && parameterType9 == typeof(string) && parameterType10 == typeof(string))
 			{
+				this.m_IsGO1 = true;
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(name);
 				this.m_ParamS1 = paramS;
 				this.m_ParamS2 = paramS2;
@@ -411,7 +419,7 @@ public class ScenarioAction : ScenarioElement
 		{
 			return;
 		}
-		if (this.m_ParamO1 == null || this.m_ParamO2 == null)
+		if ((this.m_IsGO1 && this.m_ParamO1 == null) || (this.m_IsGO2 && this.m_ParamO2 == null))
 		{
 			ScenarioAction.s_NullObjects.Add(this);
 		}
@@ -474,6 +482,10 @@ public class ScenarioAction : ScenarioElement
 	private GameObject m_ParamO1;
 
 	private GameObject m_ParamO2;
+
+	private bool m_IsGO1;
+
+	private bool m_IsGO2;
 
 	private GameObject m_StartParamO1;
 

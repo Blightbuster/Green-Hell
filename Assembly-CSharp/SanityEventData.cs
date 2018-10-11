@@ -4,9 +4,9 @@ public class SanityEventData
 {
 	public float m_LastEventTime;
 
-	public float m_Interval;
+	public float[] m_Interval = new float[3];
 
-	public int[] m_SanityChange = new int[3];
+	public int m_SanityChange;
 
 	public string m_TextID = string.Empty;
 }

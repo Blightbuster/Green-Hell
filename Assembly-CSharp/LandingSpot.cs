@@ -71,10 +71,10 @@ public class LandingSpot : MonoBehaviour
 			{
 				if (this._controller._soarLand)
 				{
-					this.landingChild._model.GetComponent<Animation>().CrossFade(this.landingChild._spawner._soarAnimation, 0.5f);
+					this.landingChild.GetAnimation().CrossFade(this.landingChild._spawner._soarAnimation, 0.5f);
 					if (num < 2f)
 					{
-						this.landingChild._model.GetComponent<Animation>().CrossFade(this.landingChild._spawner._flapAnimation, 0.5f);
+						this.landingChild.GetAnimation().CrossFade(this.landingChild._spawner._flapAnimation, 0.5f);
 					}
 				}
 				this.landingChild._targetSpeed = this.landingChild._spawner._maxSpeed * this._controller._landingSpeedModifier;
@@ -88,7 +88,7 @@ public class LandingSpot : MonoBehaviour
 				if (num < this._controller._snapLandDistance && !this._idle)
 				{
 					this._idle = true;
-					this.landingChild._model.GetComponent<Animation>().CrossFade(this.landingChild._spawner._idleAnimation, 0.55f);
+					this.landingChild.GetAnimation().CrossFade(this.landingChild._spawner._idleAnimation, 0.55f);
 				}
 				if (num > this._controller._snapLandDistance)
 				{
@@ -203,7 +203,7 @@ public class LandingSpot : MonoBehaviour
 				this._controller._activeLandingSpots++;
 				this.landingChild._landing = true;
 				this.landingChild._thisT.position = this._thisT.position;
-				this.landingChild._model.GetComponent<Animation>().Play(this.landingChild._spawner._idleAnimation);
+				this.landingChild.GetAnimation().Play(this.landingChild._spawner._idleAnimation);
 				this.landingChild._thisT.Rotate(Vector3.up, UnityEngine.Random.Range(0f, 360f));
 				if (this._controller._autoDismountDelay.x > 0f)
 				{
@@ -232,7 +232,7 @@ public class LandingSpot : MonoBehaviour
 			this._idle = false;
 			this.landingChild._avoid = true;
 			this.landingChild._damping = this.landingChild._spawner._maxDamping;
-			this.landingChild._model.GetComponent<Animation>().CrossFade(this.landingChild._spawner._flapAnimation, 0.2f);
+			this.landingChild.GetAnimation().CrossFade(this.landingChild._spawner._flapAnimation, 0.2f);
 			this.landingChild._dived = true;
 			this.landingChild._speed = 0f;
 			this.landingChild._move = true;

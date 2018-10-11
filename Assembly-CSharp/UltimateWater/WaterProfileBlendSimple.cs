@@ -109,9 +109,9 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterProfile _Second;
 
+		[SerializeField]
 		[Range(0f, 1f)]
 		[Header("Blend:")]
-		[SerializeField]
 		private float _Factor;
 
 		private readonly Water.WeightedProfile[] _Profiles = new Water.WeightedProfile[2];

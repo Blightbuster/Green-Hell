@@ -266,7 +266,7 @@ public class HUDTrigger : HUDBase
 			}
 			Vector3 zero2 = Vector3.zero;
 			zero2.x = (float)Screen.width * this.m_OffsetMul.x;
-			zero2.y = (float)Screen.height * this.m_OffsetMul.y;
+			zero2.y = (float)Screen.height * ((!item.IsSpear()) ? this.m_OffsetMul.y : 0.4f);
 			this.m_Parent.transform.position = a2 + zero2;
 		}
 		else if (!this.IsExpanded())

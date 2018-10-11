@@ -713,8 +713,8 @@ namespace UltimateWater
 
 		public bool AskForWaterCamera = true;
 
-		[FormerlySerializedAs("shaderSet")]
 		[SerializeField]
+		[FormerlySerializedAs("shaderSet")]
 		private ShaderSet _ShaderSet;
 
 		[FormerlySerializedAs("seed")]
@@ -742,8 +742,8 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterUvAnimator _UVAnimator;
 
-		[FormerlySerializedAs("volume")]
 		[SerializeField]
+		[FormerlySerializedAs("volume")]
 		private WaterVolume _Volume;
 
 		[FormerlySerializedAs("subsurfaceScattering")]
@@ -766,8 +766,8 @@ namespace UltimateWater
 		[SerializeField]
 		private WindWaves.Data _WindWavesData;
 
-		[FormerlySerializedAs("dontRotateUpwards")]
 		[SerializeField]
+		[FormerlySerializedAs("dontRotateUpwards")]
 		private bool _DontRotateUpwards;
 
 		[FormerlySerializedAs("fastEnableDisable")]

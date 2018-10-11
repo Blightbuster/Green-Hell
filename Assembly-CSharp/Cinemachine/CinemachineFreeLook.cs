@@ -7,10 +7,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[DisallowMultipleComponent]
-	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
-	[DocumentationSorting(11f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DocumentationSorting(11f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
+	[DisallowMultipleComponent]
 	public class CinemachineFreeLook : CinemachineVirtualCameraBase
 	{
 		protected override void OnValidate()
@@ -568,17 +568,17 @@ namespace Cinemachine
 		[Tooltip("Object for the camera children wants to move with (the body target).")]
 		public Transform m_Follow;
 
-		[FormerlySerializedAs("m_UseCommonLensSetting")]
 		[Tooltip("If enabled, this lens setting will apply to all three child rigs, otherwise the child rig lens settings will be used")]
+		[FormerlySerializedAs("m_UseCommonLensSetting")]
 		public bool m_CommonLens = true;
 
-		[LensSettingsProperty]
 		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active")]
 		[FormerlySerializedAs("m_LensAttributes")]
+		[LensSettingsProperty]
 		public LensSettings m_Lens = LensSettings.Default;
 
-		[Tooltip("The Vertical axis.  Value is 0..1.  Chooses how to blend the child rigs")]
 		[Header("Axis Control")]
+		[Tooltip("The Vertical axis.  Value is 0..1.  Chooses how to blend the child rigs")]
 		public AxisState m_YAxis = new AxisState(2f, 0.2f, 0.1f, 0.5f, "Mouse Y", false);
 
 		[Tooltip("The Horizontal axis.  Value is 0..359.  This is passed on to the rigs' OrbitalTransposer component")]
@@ -590,13 +590,13 @@ namespace Cinemachine
 		[Tooltip("Controls how automatic recentering of the X axis is accomplished")]
 		public CinemachineOrbitalTransposer.Recentering m_RecenterToTargetHeading = new CinemachineOrbitalTransposer.Recentering(false, 1f, 2f);
 
-		[Tooltip("The coordinate space to use when interpreting the offset from the target.  This is also used to set the camera's Up vector, which will be maintained when aiming the camera.")]
 		[Header("Orbits")]
+		[Tooltip("The coordinate space to use when interpreting the offset from the target.  This is also used to set the camera's Up vector, which will be maintained when aiming the camera.")]
 		public CinemachineTransposer.BindingMode m_BindingMode = CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp;
 
 		[FormerlySerializedAs("m_SplineTension")]
-		[Range(0f, 1f)]
 		[Tooltip("Controls how taut is the line that connects the rigs' orbits, which determines final placement on the Y axis")]
+		[Range(0f, 1f)]
 		public float m_SplineCurvature = 0.2f;
 
 		[Tooltip("The radius and height of the three orbiting rigs.")]
@@ -618,8 +618,8 @@ namespace Cinemachine
 
 		private CameraState m_State = CameraState.Default;
 
-		[NoSaveDuringPlay]
 		[HideInInspector]
+		[NoSaveDuringPlay]
 		[SerializeField]
 		private CinemachineVirtualCamera[] m_Rigs = new CinemachineVirtualCamera[3];
 

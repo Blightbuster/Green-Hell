@@ -202,7 +202,7 @@ public class BIWoundSlot : ItemSlot
 					BodyInspectionController.Get().HideAndShowLimb();
 				}
 			}
-			else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing)
+			else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing || item.m_Info.m_ID == ItemID.Honey_Dressing)
 			{
 				if (this.m_Injury.m_State == InjuryState.Bleeding || this.m_Injury.m_State == InjuryState.Open)
 				{
@@ -210,7 +210,7 @@ public class BIWoundSlot : ItemSlot
 					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
 				}
 			}
-			else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing)
+			else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing || item.m_Info.m_ID == ItemID.Honey_Dressing)
 			{
 				if (this.m_Injury.m_State == InjuryState.Bleeding)
 				{

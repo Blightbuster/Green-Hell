@@ -520,9 +520,9 @@ namespace UltimateWater
 		private WaterRipplesProfile _Profile;
 
 		[SerializeField]
-		[Tooltip("How many simulation pixels per one unit are used")]
-		[Header("Settings")]
 		[Range(1f, 32f)]
+		[Header("Settings")]
+		[Tooltip("How many simulation pixels per one unit are used")]
 		private int _PixelsPerUnit = 16;
 
 		[Range(0.125f, 2f)]

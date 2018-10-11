@@ -9,39 +9,27 @@ public class RainCutter : MonoBehaviour
 		this.m_Collider.isTrigger = true;
 	}
 
-	private void OnEnable()
-	{
-		if (RainManager.Get())
-		{
-			RainManager.Get().RegisterRainCutter(this);
-		}
-		else
-		{
-			this.m_RequestRegister = true;
-		}
-	}
-
-	private void OnDisable()
+	private void OnDestroy()
 	{
 		RainManager.Get().UnregisterRainCutter(this);
-		this.m_RequestRegister = false;
 	}
 
 	private void Update()
 	{
-		if (this.m_RequestRegister && RainManager.Get())
+		if (RainManager.Get())
 		{
 			RainManager.Get().RegisterRainCutter(this);
-			this.m_RequestRegister = false;
+			this.m_Bounds = new Bounds(this.m_Collider.bounds.center, this.m_Collider.bounds.size);
+			base.enabled = false;
 		}
 	}
 
 	public bool IsInside(Vector3 point)
 	{
-		return this.m_Collider.bounds.Contains(point);
+		return this.m_Bounds.Contains(point);
 	}
 
 	private BoxCollider m_Collider;
 
-	private bool m_RequestRegister;
+	private Bounds m_Bounds;
 }

@@ -303,6 +303,22 @@ public class FallenObjectsManager : MonoBehaviour
 		}
 	}
 
+	public void OnFullLoadEnd()
+	{
+		for (int i = 0; i < this.m_Generators.Count; i++)
+		{
+			FallenObjectGenerator fallenObjectGenerator = this.m_Generators[i];
+			if (fallenObjectGenerator != null)
+			{
+				for (int j = 0; j < fallenObjectGenerator.m_GeneratorData.m_Data.Count; j++)
+				{
+					FallenObjectData fallenObjectData = fallenObjectGenerator.m_GeneratorData.m_Data[j];
+					fallenObjectData.m_ObjectsSpawnNextTime = -1f;
+				}
+			}
+		}
+	}
+
 	private Dictionary<string, List<FallenObjectData>> m_Data = new Dictionary<string, List<FallenObjectData>>();
 
 	private List<FallenObjectGenerator> m_Generators = new List<FallenObjectGenerator>();

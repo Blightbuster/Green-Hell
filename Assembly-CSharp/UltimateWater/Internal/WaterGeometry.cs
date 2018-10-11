@@ -301,14 +301,14 @@ namespace UltimateWater.Internal
 			}
 		}
 
-		[FormerlySerializedAs("type")]
 		[SerializeField]
+		[FormerlySerializedAs("type")]
 		[Tooltip("Geometry type used for display.")]
 		private WaterGeometry.Type _Type;
 
-		[Tooltip("Water geometry vertex count at 1920x1080.")]
 		[SerializeField]
 		[FormerlySerializedAs("baseVertexCount")]
+		[Tooltip("Water geometry vertex count at 1920x1080.")]
 		private int _BaseVertexCount = 500000;
 
 		[FormerlySerializedAs("tesselatedBaseVertexCount")]
@@ -320,20 +320,20 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private bool _AdaptToResolution = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("radialGrid")]
+		[SerializeField]
 		private WaterRadialGrid _RadialGrid;
 
 		[FormerlySerializedAs("projectionGrid")]
 		[SerializeField]
 		private WaterProjectionGrid _ProjectionGrid;
 
-		[SerializeField]
 		[FormerlySerializedAs("uniformGrid")]
+		[SerializeField]
 		private WaterUniformGrid _UniformGrid;
 
-		[SerializeField]
 		[FormerlySerializedAs("customSurfaceMeshes")]
+		[SerializeField]
 		private WaterCustomSurfaceMeshes _CustomSurfaceMeshes;
 
 		private Water _Water;

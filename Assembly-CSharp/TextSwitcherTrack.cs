@@ -4,8 +4,8 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
 
-[TrackClipType(typeof(TextSwitcherClip))]
 [TrackBindingType(typeof(Text))]
+[TrackClipType(typeof(TextSwitcherClip))]
 [TrackColor(0.1394896f, 0.4411765f, 0.3413077f)]
 public class TextSwitcherTrack : TrackAsset
 {

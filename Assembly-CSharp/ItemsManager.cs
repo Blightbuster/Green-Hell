@@ -19,6 +19,32 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		{
 			this.Initialize();
 		}
+		this.m_StringToItemIDMap.Clear();
+		this.m_ItemIDToStringMap.Clear();
+		for (int i = -1; i < Enum.GetValues(typeof(ItemID)).Length; i++)
+		{
+			Dictionary<string, int> stringToItemIDMap = this.m_StringToItemIDMap;
+			ItemID itemID = (ItemID)i;
+			stringToItemIDMap.Add(itemID.ToString(), i);
+			Dictionary<int, string> itemIDToStringMap = this.m_ItemIDToStringMap;
+			int key = i;
+			ItemID itemID2 = (ItemID)i;
+			itemIDToStringMap.Add(key, itemID2.ToString());
+		}
+	}
+
+	public int StringToItemID(string item_name)
+	{
+		int result = -1;
+		this.m_StringToItemIDMap.TryGetValue(item_name, out result);
+		return result;
+	}
+
+	public string ItemIDToString(int id)
+	{
+		string empty = string.Empty;
+		this.m_ItemIDToStringMap.TryGetValue(id, out empty);
+		return empty;
 	}
 
 	private void Initialize()
@@ -119,7 +145,10 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 	{
 		foreach (ItemInfo itemInfo in this.m_ItemInfos.Values)
 		{
-			this.m_CreationsData.Add((int)itemInfo.m_ID, 0);
+			if (!this.m_CreationsData.ContainsKey((int)itemInfo.m_ID))
+			{
+				this.m_CreationsData.Add((int)itemInfo.m_ID, 0);
+			}
 		}
 	}
 
@@ -332,6 +361,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		{
 			SaveGame.SaveVal("UnlockedInNotepadItemID" + num3, (int)this.m_UnlockedInNotepadItems[num3]);
 		}
+		SaveGame.SaveVal("WasConstructionDestroyed", this.m_WasConstructionDestroyed);
 	}
 
 	public void Load()
@@ -382,6 +412,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			int value = SaveGame.LoadIVal("ItemCreationDataCount" + k);
 			this.m_CreationsData.Add((int)key, value);
 		}
+		this.InitCraftingData();
 		this.m_CraftingLockedItems.Clear();
 		int num3 = SaveGame.LoadIVal("CraftingLockedItems");
 		for (int l = 0; l < num3; l++)
@@ -420,6 +451,10 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		{
 			ItemID id = (ItemID)SaveGame.LoadIVal("UnlockedInNotepadItemID" + num7);
 			this.UnlockItemInNotepad(id);
+		}
+		if (GreenHellGame.s_GameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate4)
+		{
+			this.m_WasConstructionDestroyed = SaveGame.LoadBVal("WasConstructionDestroyed");
 		}
 	}
 
@@ -646,7 +681,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		if (!this.m_UnlockedInNotepadItems.Contains(itemID))
 		{
 			this.m_UnlockedInNotepadItems.Add(itemID);
-			this.OnItemInNotepadUnlocked(itemID);
+			this.OnItemInNotepadUnlocked(itemID, false);
 		}
 	}
 
@@ -656,7 +691,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		if (!this.m_UnlockedInNotepadItems.Contains(itemID))
 		{
 			this.m_UnlockedInNotepadItems.Add(itemID);
-			this.OnItemInNotepadUnlocked(itemID);
+			this.OnItemInNotepadUnlocked(itemID, true);
 		}
 	}
 
@@ -685,7 +720,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	public void OnItemInNotepadUnlocked(ItemID id)
+	public void OnItemInNotepadUnlocked(ItemID id, bool show_msg = true)
 	{
 		if (HUDManager.Get() == null)
 		{
@@ -716,7 +751,10 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			MenuNotepad.Get().SetActiveTab(MenuNotepad.MenuNotepadTab.ItemsTab, true);
 		}
 		MenuNotepad.Get().SetCurrentPageToItem(id);
-		hudinfoLog.AddInfo(title, text);
+		if (show_msg)
+		{
+			hudinfoLog.AddInfo(title, text);
+		}
 		PlayerAudioModule.Get().PlayNotepadEntrySound();
 	}
 
@@ -776,7 +814,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	public bool ItemExist(string item_id)
 	{
-		ItemID key = (ItemID)Enum.Parse(typeof(ItemID), item_id);
+		ItemID key = (ItemID)this.StringToItemID(item_id);
 		int num = 0;
 		Item.s_AllItemIDs.TryGetValue((int)key, out num);
 		return num > 0;
@@ -1018,6 +1056,16 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		return result;
 	}
 
+	public bool IsHeavyObject(ItemID item_id)
+	{
+		ItemInfo info = this.GetInfo(item_id);
+		if (info == null)
+		{
+			DebugUtils.Assert(DebugUtils.AssertType.Info);
+		}
+		return info.IsHeavyObject();
+	}
+
 	private Dictionary<int, ItemInfo> m_ItemInfos;
 
 	private QuadTree m_QuadTree;
@@ -1066,6 +1114,13 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	[HideInInspector]
 	public List<ItemID> m_UnlockedItemInfos = new List<ItemID>();
+
+	[HideInInspector]
+	public bool m_WasConstructionDestroyed;
+
+	private Dictionary<string, int> m_StringToItemIDMap = new Dictionary<string, int>();
+
+	private Dictionary<int, string> m_ItemIDToStringMap = new Dictionary<int, string>();
 
 	private List<Item> m_FallenObjects = new List<Item>(1000);
 

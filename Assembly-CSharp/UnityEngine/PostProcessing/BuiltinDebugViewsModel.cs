@@ -76,8 +76,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Tooltip("Opacity of the source render.")]
 			[Range(0f, 1f)]
+			[Tooltip("Opacity of the source render.")]
 			public float sourceOpacity;
 
 			[Range(0f, 1f)]
@@ -92,12 +92,12 @@ namespace UnityEngine.PostProcessing
 			[Range(0f, 1f)]
 			public float motionVectorsOpacity;
 
-			[Range(8f, 64f)]
 			[Tooltip("The arrow density on screen.")]
+			[Range(8f, 64f)]
 			public int motionVectorsResolution;
 
-			[Tooltip("Tweaks the arrows length.")]
 			[Min(0f)]
+			[Tooltip("Tweaks the arrows length.")]
 			public float motionVectorsAmplitude;
 		}
 

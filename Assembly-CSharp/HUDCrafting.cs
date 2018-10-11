@@ -35,7 +35,7 @@ public class HUDCrafting : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return CraftingManager.Get().gameObject.activeSelf && Inventory3DManager.Get().m_InventoryImage.enabled;
+		return CraftingManager.Get().gameObject.activeSelf;
 	}
 
 	protected override void OnShow()

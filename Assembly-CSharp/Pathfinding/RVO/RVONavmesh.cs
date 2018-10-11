@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Pathfinding.RVO
 {
-	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Navmesh")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_navmesh.php")]
+	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Navmesh")]
 	public class RVONavmesh : GraphModifier
 	{
 		public override void OnPostCacheLoad()

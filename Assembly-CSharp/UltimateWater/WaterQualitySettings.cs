@@ -274,12 +274,12 @@ namespace UltimateWater
 		[SerializeField]
 		private WaterQualityLevel[] _QualityLevels;
 
-		[FormerlySerializedAs("synchronizeWithUnity")]
 		[SerializeField]
+		[FormerlySerializedAs("synchronizeWithUnity")]
 		private bool _SynchronizeWithUnity = true;
 
-		[SerializeField]
 		[FormerlySerializedAs("savedCustomQualityLevel")]
+		[SerializeField]
 		private int _SavedCustomQualityLevel;
 
 		private int _WaterQualityIndex;

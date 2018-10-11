@@ -915,8 +915,8 @@ public class AmplifyColorBase : MonoBehaviour
 	[HideInInspector]
 	public VolumeEffectFlags EffectFlags = new VolumeEffectFlags();
 
-	[HideInInspector]
 	[SerializeField]
+	[HideInInspector]
 	private string sharedInstanceID = string.Empty;
 
 	private bool silentError;

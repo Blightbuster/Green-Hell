@@ -367,8 +367,8 @@ namespace UltimateWater
 		[Tooltip("Optional.")]
 		public Transform ScrollDirectionPointer;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _WorldPosShader;
 
 		[SerializeField]
@@ -379,8 +379,8 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _NormalMapperShader;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Shader _CausticUtilShader;
 
 		[SerializeField]
@@ -392,8 +392,8 @@ namespace UltimateWater
 		[SerializeField]
 		private Blur _Blur;
 
-		[Tooltip("Causes minor allocation per frame (no way around it), but makes caustics rendering a lot faster. Disable it, if you don't use terrains.")]
 		[SerializeField]
+		[Tooltip("Causes minor allocation per frame (no way around it), but makes caustics rendering a lot faster. Disable it, if you don't use terrains.")]
 		private bool _SkipTerrainTrees = true;
 
 		private Camera _RenderCamera;

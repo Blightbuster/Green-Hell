@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Cinemachine
 {
+	[DisallowMultipleComponent]
 	[ExecuteInEditMode]
-	[AddComponentMenu("Cinemachine/CinemachineExternalCamera")]
 	[DocumentationSorting(14f, DocumentationSortingAttribute.Level.UserRef)]
 	[RequireComponent(typeof(Camera))]
-	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineExternalCamera")]
 	public class CinemachineExternalCamera : CinemachineVirtualCameraBase
 	{
 		public override CameraState State
@@ -58,8 +58,8 @@ namespace Cinemachine
 			}
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("The object that the camera is looking at.  Setting this will improve the quality of the blends to and from this camera")]
+		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
 		private Camera m_Camera;

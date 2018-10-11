@@ -40,7 +40,6 @@ public class HarvestingSmallAnimalController : PlayerController
 		this.m_InInventory = Inventory3DManager.Get().gameObject.activeSelf;
 		if (this.m_InInventory)
 		{
-			Inventory3DManager.Get().m_InputsBlocked = true;
 			Inventory3DManager.Get().Deactivate();
 		}
 		this.m_Animator.SetBool(this.m_HarvestingHash, true);
@@ -54,7 +53,6 @@ public class HarvestingSmallAnimalController : PlayerController
 		this.m_AudioSource.Stop();
 		if (this.m_InInventory)
 		{
-			Inventory3DManager.Get().m_InputsBlocked = false;
 			Player.Get().m_OpenBackpackSheduled = true;
 		}
 		if (this.m_Item != null)
@@ -79,7 +77,6 @@ public class HarvestingSmallAnimalController : PlayerController
 			if (this.m_InInventory)
 			{
 				Inventory3DManager.Get().Activate();
-				Inventory3DManager.Get().m_InputsBlocked = false;
 			}
 			this.Stop();
 		}
@@ -88,6 +85,11 @@ public class HarvestingSmallAnimalController : PlayerController
 	private void PlayHarvestingSound()
 	{
 		this.m_AudioSource.PlayOneShot(this.m_HarvestingClips[UnityEngine.Random.Range(0, this.m_HarvestingClips.Count)]);
+	}
+
+	public bool BlockInventoryInputs()
+	{
+		return base.enabled && this.m_Animator.GetBool(this.m_HarvestingHash);
 	}
 
 	private int m_HarvestingHash = Animator.StringToHash("Craft");

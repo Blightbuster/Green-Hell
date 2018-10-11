@@ -37,7 +37,7 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			if (!AI.IsSnake(this.m_AI.m_ID))
+			if (this.m_AI.m_ID == AI.AIID.GoliathBirdEater)
 			{
 				this.m_AI.m_PathModule.CalcPath(PathModule.PathType.MoveToEnemy);
 				base.AddToPlan(this.m_Attack);
@@ -56,7 +56,7 @@ namespace AIs
 			{
 				this.m_Target = this.m_AI.m_EnemyModule.m_Enemy.m_RFoot.gameObject;
 			}
-			if (!AI.IsSnake(this.m_AI.m_ID))
+			if (this.m_AI.m_ID == AI.AIID.GoliathBirdEater)
 			{
 				this.m_AI.m_AnimationModule.SetForcedSpeed(10f);
 			}

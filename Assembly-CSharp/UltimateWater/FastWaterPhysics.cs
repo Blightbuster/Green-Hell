@@ -163,8 +163,8 @@ namespace UltimateWater
 		[Range(0f, 3f)]
 		private float _DragCoefficient = 0.9f;
 
-		[Tooltip("Horizontal flow force intensity.")]
 		[SerializeField]
+		[Tooltip("Horizontal flow force intensity.")]
 		private float _FlowIntensity = 1f;
 
 		private Rigidbody _RigidBody;

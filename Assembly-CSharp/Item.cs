@@ -326,9 +326,10 @@ public class Item : Trigger
 		}
 		this.m_PhxStaticRequests = 0;
 		this.m_StaticPhx = false;
+		bool result = true;
 		if (this.m_Info.IsHeavyObject())
 		{
-			this.PickUp(false);
+			result = this.PickUp(false);
 		}
 		else
 		{
@@ -343,7 +344,17 @@ public class Item : Trigger
 			}
 		}
 		this.OnTake();
-		return true;
+		return result;
+	}
+
+	public virtual bool Take3()
+	{
+		return false;
+	}
+
+	public virtual bool TakeAll()
+	{
+		return false;
 	}
 
 	public void AddItemsCountMessage(Item item)
@@ -414,12 +425,12 @@ public class Item : Trigger
 		this.Take();
 	}
 
-	public void PickUp(bool show_msg = true)
+	public bool PickUp(bool show_msg = true)
 	{
 		if (this.m_Hallucination)
 		{
 			base.Disappear(true);
-			return;
+			return false;
 		}
 		this.m_StaticPhx = false;
 		if (CraftingManager.Get().gameObject.activeSelf && CraftingManager.Get().ContainsItem(this))
@@ -432,13 +443,15 @@ public class Item : Trigger
 		}
 		Item currentItem = Player.Get().GetCurrentItem();
 		Item currentItem2 = Player.Get().GetCurrentItem(Hand.Right);
+		bool result;
 		if (this.m_Info.IsHeavyObject() && currentItem2 != null && this.m_Info.m_ID == currentItem2.m_Info.m_ID)
 		{
-			((HeavyObject)currentItem2).AttachHeavyObject((HeavyObject)this);
+			result = ((HeavyObject)currentItem2).AttachHeavyObject((HeavyObject)this);
 		}
 		else
 		{
 			Player.Get().SetWantedItem(Hand.Right, this, true);
+			result = true;
 		}
 		if (currentItem && !currentItem.IsFireTool() && !currentItem.m_Info.IsHeavyObject())
 		{
@@ -463,6 +476,7 @@ public class Item : Trigger
 		{
 			this.m_Rigidbody.WakeUp();
 		}
+		return result;
 	}
 
 	public void Harvest()

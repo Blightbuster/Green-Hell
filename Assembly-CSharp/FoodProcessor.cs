@@ -189,7 +189,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 		{
 			return;
 		}
-		if (!slot.m_Item.m_Info.IsFood())
+		if (!slot.m_Item || !slot.m_Item.m_Info.IsFood())
 		{
 			return;
 		}

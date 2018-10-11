@@ -89,10 +89,13 @@ public class CraftingManager : MonoBehaviour
 		this.m_PossibleResults.Clear();
 		this.m_Table.SetActive(false);
 		base.gameObject.SetActive(false);
-		Player.Get().StopController(PlayerControllerType.Crafting);
-		if (Player.Get().m_ControllerToStart != PlayerControllerType.Unknown)
+		if (!CraftingController.Get().BlockInventoryInputs())
 		{
-			Player.Get().StartControllerInternal();
+			Player.Get().StopController(PlayerControllerType.Crafting);
+			if (Player.Get().m_ControllerToStart != PlayerControllerType.Unknown)
+			{
+				Player.Get().StartControllerInternal();
+			}
 		}
 		this.UpdateHints();
 	}
@@ -130,6 +133,14 @@ public class CraftingManager : MonoBehaviour
 		}
 		this.CheckResult();
 		HUDCrafting.Get().Setup();
+	}
+
+	public void RemoveAllItems()
+	{
+		while (this.m_Items.Count > 0)
+		{
+			this.RemoveItem(this.m_Items[0]);
+		}
 	}
 
 	public void RemoveItem(Item item)
@@ -209,41 +220,41 @@ public class CraftingManager : MonoBehaviour
 	public void StartCrafting(ItemID item_id)
 	{
 		this.m_Result = item_id;
-		CraftingController.Get().StartCrafting();
+		CraftingController.Get().StartCrafting(this.m_Items);
 	}
 
-	public void Craft()
+	public void Craft(List<Item> items)
 	{
 		if (this.m_Result == ItemID.None)
 		{
 			DebugUtils.Assert("ERROR - Missing result ItemID! Can't craft item!", true, DebugUtils.AssertType.Info);
 			return;
 		}
-		Item item = this.CreateItem(this.m_Result);
+		foreach (Item item in items)
+		{
+			UnityEngine.Object.Destroy(item.gameObject);
+		}
+		Item item2 = this.CreateItem(this.m_Result);
 		ItemsManager.Get().OnCrafted(this.m_Result);
 		this.m_Result = ItemID.None;
-		InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(item, null, null, true, false, true, true, true);
+		InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(item2, null, null, true, false, true, true, true);
 		if (insertResult != InventoryBackpack.InsertResult.Ok)
 		{
-			this.AddItem(item, true);
+			this.Activate();
+			this.AddItem(item2, true);
 		}
 		else
 		{
-			item.OnTake();
+			item2.OnTake();
 		}
-		InventoryBackpack.Get().SetupPocket(item.m_Info.m_BackpackPocket);
-		Inventory3DManager.Get().SetNewCraftedItem(item);
+		InventoryBackpack.Get().SetupPocket(item2.m_Info.m_BackpackPocket);
+		Inventory3DManager.Get().SetNewCraftedItem(item2);
 		this.CheckResult();
 		HUDCrafting.Get().Setup();
 	}
 
 	private Item CreateItem(ItemID item_id)
 	{
-		while (this.m_Items.Count > 0)
-		{
-			UnityEngine.Object.Destroy(this.m_Items[0].gameObject);
-			this.m_Items.RemoveAt(0);
-		}
 		Item item = ItemsManager.Get().CreateItem(item_id, false, Vector3.zero, Quaternion.identity);
 		this.CalcHealth(item);
 		Player.Get().AddKnownItem(item_id);

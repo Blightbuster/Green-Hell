@@ -142,7 +142,7 @@ namespace AIs
 
 		private void InitFootstepsData()
 		{
-			for (int i = 0; i < 12; i++)
+			for (int i = 0; i < 13; i++)
 			{
 				this.m_FootstepDatas.Add(i, new AIFootstepData());
 			}
@@ -204,7 +204,7 @@ namespace AIs
 
 		private void InitializeGoalParsers()
 		{
-			for (int i = 0; i < 39; i++)
+			for (int i = 0; i < 40; i++)
 			{
 				List<TextAssetParser> list = new List<TextAssetParser>();
 				AI.AIID aiid = (AI.AIID)i;
@@ -242,7 +242,7 @@ namespace AIs
 
 		private void InitializeAnimEventsParsers()
 		{
-			for (int i = 0; i < 39; i++)
+			for (int i = 0; i < 40; i++)
 			{
 				List<TextAssetParser> list = new List<TextAssetParser>();
 				AI.AIID aiid = (AI.AIID)i;
@@ -265,7 +265,7 @@ namespace AIs
 
 		private void InitializeAnimatorDataParsers()
 		{
-			for (int i = 0; i < 39; i++)
+			for (int i = 0; i < 40; i++)
 			{
 				List<TextAssetParser> list = new List<TextAssetParser>();
 				AI.AIID aiid = (AI.AIID)i;
@@ -466,7 +466,24 @@ namespace AIs
 			this.m_AIWaveManager.Update();
 			this.UpdateActivity(false);
 			this.UpdateFishTanksActivity();
+			this.UpdateSpawners();
 			this.UpdateDebug();
+		}
+
+		private void UpdateSpawners()
+		{
+			for (int i = 0; i < 10; i++)
+			{
+				if (this.m_SpawnerIdx >= this.m_Spawners.Count)
+				{
+					this.m_SpawnerIdx = 0;
+				}
+				if (this.m_Spawners.Count > 0 && this.m_SpawnerIdx < this.m_Spawners.Count && this.m_Spawners[this.m_SpawnerIdx] != null)
+				{
+					this.m_Spawners[this.m_SpawnerIdx].UpdateSpawner();
+				}
+				this.m_SpawnerIdx++;
+			}
 		}
 
 		private void UpdateActivity(bool force = false)
@@ -700,6 +717,8 @@ namespace AIs
 		public List<AI.AIID> m_ProcessedAnimEventsReceivers = new List<AI.AIID>();
 
 		private static AIManager s_Instance;
+
+		private int m_SpawnerIdx;
 
 		public enum BloodFXType
 		{

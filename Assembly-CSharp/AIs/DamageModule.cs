@@ -28,7 +28,7 @@ namespace AIs
 			{
 				num2 *= 1.5f;
 			}
-			if (num <= num2)
+			if (num <= num2 || this.m_AI.m_ID == AI.AIID.BrasilianWanderingSpider)
 			{
 				Vector3 hit_dir = Player.Get().transform.position + Vector3.up * Player.Get().GetComponent<CharacterController>().height * 0.5f - this.m_AI.transform.position;
 				float damage = this.m_AI.m_Params.m_Damage;
@@ -75,7 +75,9 @@ namespace AIs
 					num2 = ((WeaponInfo)weapon.m_Info).m_PlayerDamage;
 					damageType = weapon.GetDamageType();
 				}
-				humanAI.m_SelectedConstruction.TakeDamage(10f);
+				DamageInfo damageInfo = new DamageInfo();
+				damageInfo.m_Damage = 10f;
+				humanAI.m_SelectedConstruction.TakeDamage(damageInfo);
 			}
 		}
 	}

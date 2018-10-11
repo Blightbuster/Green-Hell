@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E9FA6E45-5053-47B5-A419-53A36720D334}</ProjectGuid>
+    <ProjectGuid>{0412668B-D48E-4690-BC14-8B4EC605066B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Assembly-CSharp</RootNamespace>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -156,7 +156,6 @@
     <Compile Include="AIs\AIPathPoint.cs" />
     <Compile Include="AIs\AIPathsManager.cs" />
     <Compile Include="AIs\AISoundModule.cs" />
-    <Compile Include="AIs\AISpawnData.cs" />
     <Compile Include="AIs\AISpawner.cs" />
     <Compile Include="AIs\AISpawnersGroup.cs" />
     <Compile Include="AIs\AIWavesManager.cs" />
@@ -185,6 +184,7 @@
     <Compile Include="AIs\GoalDontMove.cs" />
     <Compile Include="AIs\GoalEat.cs" />
     <Compile Include="AIs\GoalFlank.cs" />
+    <Compile Include="AIs\GoalHide.cs" />
     <Compile Include="AIs\GoalHuman.cs" />
     <Compile Include="AIs\GoalHumanAttack.cs" />
     <Compile Include="AIs\GoalHumanAttackConstruction.cs" />
@@ -237,6 +237,7 @@
     <Compile Include="AIs\GoalStrafe.cs" />
     <Compile Include="AIs\HealthModule.cs" />
     <Compile Include="AIs\HearingModule.cs" />
+    <Compile Include="AIs\Hide.cs" />
     <Compile Include="AIs\HitReaction.cs" />
     <Compile Include="AIs\HostileStateModule.cs" />
     <Compile Include="AIs\HumanAI.cs" />
@@ -284,6 +285,7 @@
     <Compile Include="AIs\RotateTo.cs" />
     <Compile Include="AIs\Shaman.cs" />
     <Compile Include="AIs\ShamanManager.cs" />
+    <Compile Include="AIs\Show.cs" />
     <Compile Include="AIs\SightModule.cs" />
     <Compile Include="AIs\SitDown.cs" />
     <Compile Include="AIs\SitDownIdle.cs" />
@@ -546,6 +548,7 @@
     <Compile Include="ConstructionGhost.cs" />
     <Compile Include="ConstructionGhostManager.cs" />
     <Compile Include="ConstructionInfo.cs" />
+    <Compile Include="ConstructionSlot.cs" />
     <Compile Include="ConstructionsTab.cs" />
     <Compile Include="Consumable.cs" />
     <Compile Include="ConsumableInfo.cs" />
@@ -555,6 +558,7 @@
     <Compile Include="CraftingSkill.cs" />
     <Compile Include="CraftingSlotData.cs" />
     <Compile Include="CursorManager.cs" />
+    <Compile Include="CustomConstructionsTab.cs" />
     <Compile Include="CustomCursor.cs" />
     <Compile Include="CutData.cs" />
     <Compile Include="CutsceneController.cs" />
@@ -722,6 +726,7 @@
     <Compile Include="Herb.cs" />
     <Compile Include="HerbalismSkill.cs" />
     <Compile Include="HerbInfo.cs" />
+    <Compile Include="HiddenAIHarvestTrigger.cs" />
     <Compile Include="Hint.cs" />
     <Compile Include="HintsManager.cs" />
     <Compile Include="HitCollisionType.cs" />
@@ -787,6 +792,10 @@
     <Compile Include="HUDWeight.cs" />
     <Compile Include="HUDWheel.cs" />
     <Compile Include="HUHealingWoundIndicator.cs" />
+    <Compile Include="HumanTrap.cs" />
+    <Compile Include="HumanTrapArea.cs" />
+    <Compile Include="HumanTrapInfo.cs" />
+    <Compile Include="HunterChallenge.cs" />
     <Compile Include="IAnimationEventsReceiver.cs" />
     <Compile Include="IAttachable.cs" />
     <Compile Include="IBulletParent.cs" />
@@ -1467,6 +1476,8 @@
     <Compile Include="SpriteMaskController.cs" />
     <Compile Include="StalkerManager.cs" />
     <Compile Include="StaminaDecreaseReason.cs" />
+    <Compile Include="Stand.cs" />
+    <Compile Include="StandInfo.cs" />
     <Compile Include="startPlaying_stopPlaying.cs" />
     <Compile Include="State.cs" />
     <Compile Include="StateGroup.cs" />

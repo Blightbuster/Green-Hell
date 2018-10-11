@@ -1909,17 +1909,32 @@ public class BodyInspectionController : PlayerController
 		return list[UnityEngine.Random.Range(0, list.Count)];
 	}
 
-	public BIWoundSlot GetFreeWoundSlot(InjuryPlace place, InjuryType injury_type)
+	public BIWoundSlot GetFreeWoundSlot(InjuryPlace place, InjuryType injury_type, bool remove_leeches = true)
 	{
+		if (remove_leeches && injury_type != InjuryType.Leech)
+		{
+			for (int i = 0; i < this.m_WoundSlots.Count; i++)
+			{
+				if (this.m_WoundSlots[i].m_InjuryPlace == place && this.m_WoundSlots[i].m_Injury != null && this.m_WoundSlots[i].m_Injury.m_Type == InjuryType.Leech)
+				{
+					if (this.m_WoundSlots[i].m_Wound != null)
+					{
+						UnityEngine.Object.Destroy(this.m_WoundSlots[i].m_Wound);
+						this.m_WoundSlots[i].m_Wound = null;
+					}
+					PlayerInjuryModule.Get().HealInjury(this.m_WoundSlots[i].m_Injury);
+				}
+			}
+		}
 		bool flag = false;
 		bool flag2 = true;
 		List<BIWoundSlot> list = new List<BIWoundSlot>();
-		for (int i = 0; i < this.m_WoundSlots.Count; i++)
+		for (int j = 0; j < this.m_WoundSlots.Count; j++)
 		{
-			if (this.m_WoundSlots[i].m_InjuryPlace == place && this.m_WoundSlots[i].m_Wound != null)
+			if (this.m_WoundSlots[j].m_InjuryPlace == place && this.m_WoundSlots[j].m_Wound != null)
 			{
 				flag = true;
-				if (this.m_WoundSlots[i].m_Injury.m_Type != InjuryType.Leech)
+				if (this.m_WoundSlots[j].m_Injury.m_Type != InjuryType.Leech)
 				{
 					flag2 = false;
 				}
@@ -1933,11 +1948,11 @@ public class BodyInspectionController : PlayerController
 		{
 			return null;
 		}
-		for (int j = 0; j < this.m_WoundSlots.Count; j++)
+		for (int k = 0; k < this.m_WoundSlots.Count; k++)
 		{
-			if (this.m_WoundSlots[j].m_InjuryPlace == place && this.m_WoundSlots[j].m_Wound == null && this.m_WoundSlots[j].IsInjuryOfType(injury_type))
+			if (this.m_WoundSlots[k].m_InjuryPlace == place && this.m_WoundSlots[k].m_Wound == null && this.m_WoundSlots[k].IsInjuryOfType(injury_type))
 			{
-				list.Add(this.m_WoundSlots[j]);
+				list.Add(this.m_WoundSlots[k]);
 			}
 		}
 		if (list.Count == 0)

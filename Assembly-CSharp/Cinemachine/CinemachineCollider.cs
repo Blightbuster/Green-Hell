@@ -7,9 +7,9 @@ using UnityEngine.Serialization;
 namespace Cinemachine
 {
 	[DocumentationSorting(15f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	[AddComponentMenu("")]
 	[SaveDuringPlay]
-	[ExecuteInEditMode]
 	public class CinemachineCollider : CinemachineExtension
 	{
 		public bool IsTargetObscured(ICinemachineCamera vcam)
@@ -452,20 +452,20 @@ namespace Cinemachine
 		[Header("Obstacle Detection")]
 		public LayerMask m_CollideAgainst = 1;
 
-		[Tooltip("Obstacles with this tag will be ignored.  It is a good idea to set this field to the target's tag")]
 		[TagField]
+		[Tooltip("Obstacles with this tag will be ignored.  It is a good idea to set this field to the target's tag")]
 		public string m_IgnoreTag = string.Empty;
 
 		[Tooltip("Obstacles closer to the target than this will be ignored")]
 		public float m_MinimumDistanceFromTarget = 0.1f;
 
+		[Tooltip("When enabled, will attempt to resolve situations where the line of sight to the target is blocked by an obstacle")]
 		[Space]
 		[FormerlySerializedAs("m_PreserveLineOfSight")]
-		[Tooltip("When enabled, will attempt to resolve situations where the line of sight to the target is blocked by an obstacle")]
 		public bool m_AvoidObstacles = true;
 
-		[Tooltip("The maximum raycast distance when checking if the line of sight to this camera's target is clear.  If the setting is 0 or less, the current actual distance to target will be used.")]
 		[FormerlySerializedAs("m_LineOfSightFeelerDistance")]
+		[Tooltip("The maximum raycast distance when checking if the line of sight to this camera's target is clear.  If the setting is 0 or less, the current actual distance to target will be used.")]
 		public float m_DistanceLimit;
 
 		[Tooltip("Camera will try to maintain this distance from any obstacle.  Try to keep this value small.  Increase it if you are seeing inside obstacles due to a large FOV on the camera.")]

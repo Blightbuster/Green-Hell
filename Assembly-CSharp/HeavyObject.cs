@@ -54,11 +54,17 @@ public class HeavyObject : Item
 		}
 	}
 
-	public void AttachHeavyObject(HeavyObject ho)
+	public bool CanAttach()
+	{
+		Transform x = this.FindFreeSlot();
+		return x != null;
+	}
+
+	public bool AttachHeavyObject(HeavyObject ho)
 	{
 		if (!ho)
 		{
-			return;
+			return false;
 		}
 		Transform transform = this.FindFreeSlot();
 		if (transform)
@@ -66,14 +72,16 @@ public class HeavyObject : Item
 			HeavyObject x = null;
 			if (!this.m_Attached.TryGetValue(transform, out x) || x == null)
 			{
-				Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), ho.GetComponent<Collider>(), true);
+				Physics.IgnoreCollision(Player.Get().m_Collider, ho.m_Collider, true);
 				ho.transform.position = transform.position;
 				ho.transform.rotation = transform.rotation;
 				ho.gameObject.transform.parent = transform;
 				this.m_Attached[transform] = ho;
 				ho.OnItemAttachedToHand();
+				return true;
 			}
 		}
+		return false;
 	}
 
 	public void DetachHeavyObjects()
@@ -97,7 +105,7 @@ public class HeavyObject : Item
 			return;
 		}
 		HeavyObject heavyObject = this.m_Attached[transform];
-		Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), heavyObject.GetComponent<Collider>(), false);
+		Physics.IgnoreCollision(Player.Get().m_Collider, heavyObject.m_Collider, false);
 		heavyObject.gameObject.transform.parent = null;
 		heavyObject.OnItemDetachedFromHand();
 		this.m_Attached.Remove(transform);
@@ -172,7 +180,17 @@ public class HeavyObject : Item
 		bool flag = this.m_PhxStaticRequests > 0;
 		if (!flag)
 		{
-			flag = (CraftingManager.Get().ContainsItem(this) || (base.gameObject.transform.parent != null && (base.gameObject.transform.parent.GetComponent<PlayerHolder>() != null || base.gameObject.transform.parent.name.Contains("Attach"))));
+			PlayerHolder x = null;
+			this.m_TempList.Clear();
+			if (base.gameObject.transform.parent != null)
+			{
+				base.gameObject.transform.parent.GetComponents<PlayerHolder>(this.m_TempList);
+			}
+			if (this.m_TempList.Count > 0)
+			{
+				x = this.m_TempList[0];
+			}
+			flag = (CraftingManager.Get().ContainsItem(this) || (base.gameObject.transform.parent != null && (x != null || base.gameObject.transform.parent.name.Contains("Attach"))));
 		}
 		if (this.m_BoxCollider)
 		{
@@ -243,4 +261,6 @@ public class HeavyObject : Item
 	private List<AudioClip> m_CollisionClips = new List<AudioClip>();
 
 	private AudioSource m_AudioSource;
+
+	private List<PlayerHolder> m_TempList = new List<PlayerHolder>(10);
 }

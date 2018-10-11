@@ -6,8 +6,8 @@ using UnityEngine.Serialization;
 
 namespace UltimateWater
 {
-	[AddComponentMenu("Water/Waves Particle System", 1)]
 	[RequireComponent(typeof(DynamicWater))]
+	[AddComponentMenu("Water/Waves Particle System", 1)]
 	public sealed class WaveParticleSystem : MonoBehaviour, IOverlaysRenderer
 	{
 		public WaveParticleSystem()
@@ -246,8 +246,8 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _WaterWavesParticlesShader;
 
-		[SerializeField]
 		[FormerlySerializedAs("maxParticles")]
+		[SerializeField]
 		private int _MaxParticles = 50000;
 
 		[FormerlySerializedAs("maxParticlesPerTile")]

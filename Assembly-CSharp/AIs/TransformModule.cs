@@ -27,7 +27,7 @@ namespace AIs
 			}
 			base.transform.rotation *= this.m_AI.m_Animator.deltaRotation;
 			Vector3 vector = this.m_AI.m_Animator.rootPosition;
-			if ((this.m_AI.m_Params.m_Human || this.m_AI.m_ID == AI.AIID.Jaguar) && this.m_AI.m_Animator.deltaPosition.magnitude > 0.01f)
+			if ((this.m_AI.m_Params.m_Human || this.m_AI.IsCat()) && this.m_AI.m_Animator.deltaPosition.magnitude > 0.01f)
 			{
 				Vector3 vector2 = Player.Get().transform.TransformPoint(Player.Get().m_CharacterController.center);
 				Vector3 vector3 = vector;

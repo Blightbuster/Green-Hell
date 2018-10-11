@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace Medvedya.VertexPainter
 {
-	[RequireComponent(typeof(MeshRenderer))]
-	[AddComponentMenu("Vertex painter/Vertex painter instance")]
 	[DisallowMultipleComponent]
 	[ExecuteInEditMode]
+	[AddComponentMenu("Vertex painter/Vertex painter instance")]
+	[RequireComponent(typeof(MeshRenderer))]
 	[RequireComponent(typeof(MeshFilter))]
 	public class VertexPainterInstance : MonoBehaviour, IPainting
 	{

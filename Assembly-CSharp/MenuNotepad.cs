@@ -23,8 +23,8 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		{
 			this.m_ActiveTab = MenuNotepad.MenuNotepadTab.ConstructionsTab;
 		}
-		this.m_WasTabActivated = new bool[11];
-		for (int i = 0; i < 11; i++)
+		this.m_WasTabActivated = new bool[12];
+		for (int i = 0; i < 12; i++)
 		{
 			this.m_WasTabActivated[i] = false;
 		}
@@ -115,7 +115,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	private void OnDisable()
 	{
-		for (int i = 0; i < 11; i++)
+		for (int i = 0; i < 12; i++)
 		{
 			this.m_Tabs[(MenuNotepad.MenuNotepadTab)i].gameObject.SetActive(false);
 			this.m_Tabs[(MenuNotepad.MenuNotepadTab)i].OnHide();
@@ -228,6 +228,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (num2 < 0)
 		{
 			this.m_NotepadCanvasCursorPos = Vector2.one * 0.5f;
+			this.m_CollisionFound = false;
 			return;
 		}
 		Vector3 vector = this.m_ClosestTriangle.p0 - b;
@@ -238,6 +239,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		float d2 = Vector3.Cross(vector3, vector).magnitude / magnitude;
 		float d3 = Vector3.Cross(vector, vector2).magnitude / magnitude;
 		this.m_NotepadCanvasCursorPos = this.m_NotepadMeshUV2[this.m_NotepadMeshTriangles[num2]] * d + this.m_NotepadMeshUV2[this.m_NotepadMeshTriangles[num2 + 1]] * d2 + this.m_NotepadMeshUV2[this.m_NotepadMeshTriangles[num2 + 2]] * d3;
+		this.m_CollisionFound = true;
 	}
 
 	private void UpdateInputs()
@@ -325,6 +327,10 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.PlantsTab;
 			}
+			else if (array[j].collider == this.m_Notepad.m_CustomConstructionsTabCollider)
+			{
+				menuNotepadTab = MenuNotepad.MenuNotepadTab.CustomConstructionsTab;
+			}
 			else if (array[j].collider == this.m_Notepad.m_PrevPage || array[j].collider == this.m_PrevMap)
 			{
 				num = -1;
@@ -401,6 +407,11 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 			this.SetActiveTab(MenuNotepad.MenuNotepadTab.PlantsTab, false);
 			return;
 		}
+		if (tab == MenuNotepad.MenuNotepadTab.CustomConstructionsTab)
+		{
+			this.SetActiveTab(MenuNotepad.MenuNotepadTab.CustomConstructionsTab, false);
+			return;
+		}
 		if (page == -1)
 		{
 			this.SetPrevPage();
@@ -424,7 +435,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		{
 			this.PlaySwitchTabSound();
 		}
-		for (int i = 0; i < 11; i++)
+		for (int i = 0; i < 12; i++)
 		{
 			if (tab == (MenuNotepad.MenuNotepadTab)i)
 			{
@@ -523,7 +534,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	public void Save()
 	{
-		for (int i = 0; i < 11; i++)
+		for (int i = 0; i < 12; i++)
 		{
 			SaveGame.SaveVal("NotepadWasActive" + i, this.m_WasTabActivated[i]);
 		}
@@ -531,7 +542,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	public void Load()
 	{
-		for (int i = 0; i < 11; i++)
+		for (int i = 0; i < 12; i++)
 		{
 			this.m_WasTabActivated[i] = SaveGame.LoadBVal("NotepadWasActive" + i);
 		}
@@ -664,6 +675,8 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	public Vector2 m_NotepadCanvasCursorPos = Vector2.zero;
 
+	public bool m_CollisionFound;
+
 	private bool[] m_WasTabActivated;
 
 	private AudioSource m_AudioSource;
@@ -704,6 +717,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		WaterConstructionsTab,
 		HealingItemsTab,
 		PlantsTab,
+		CustomConstructionsTab,
 		Count
 	}
 }

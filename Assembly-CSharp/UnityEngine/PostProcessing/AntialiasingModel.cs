@@ -47,8 +47,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("The amount of desired sub-pixel aliasing removal. Effects the sharpeness of the output.")]
 			public float subpixelAliasingRemovalAmount;
 
-			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
 			[Range(0.063f, 0.333f)]
+			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
 			public float edgeDetectionThreshold;
 
 			[Range(0f, 0.0833f)]
@@ -93,16 +93,16 @@ namespace UnityEngine.PostProcessing
 		[Serializable]
 		public struct FxaaConsoleSettings
 		{
-			[Tooltip("The amount of spread applied to the sampling coordinates while sampling for subpixel information.")]
 			[Range(0.33f, 0.5f)]
+			[Tooltip("The amount of spread applied to the sampling coordinates while sampling for subpixel information.")]
 			public float subpixelSpreadAmount;
 
 			[Range(2f, 8f)]
 			[Tooltip("This value dictates how sharp the edges in the image are kept; a higher value implies sharper edges.")]
 			public float edgeSharpnessAmount;
 
-			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
 			[Range(0.125f, 0.25f)]
+			[Tooltip("The minimum amount of local contrast required to qualify a region as containing an edge.")]
 			public float edgeDetectionThreshold;
 
 			[Range(0.04f, 0.06f)]
@@ -183,20 +183,20 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Range(0.1f, 1f)]
 			[Tooltip("The diameter (in texels) inside which jitter samples are spread. Smaller values result in crisper but more aliased output, while larger values result in more stable but blurrier output.")]
+			[Range(0.1f, 1f)]
 			public float jitterSpread;
 
-			[Range(0f, 3f)]
 			[Tooltip("Controls the amount of sharpening applied to the color buffer.")]
+			[Range(0f, 3f)]
 			public float sharpen;
 
 			[Tooltip("The blend coefficient for a stationary fragment. Controls the percentage of history sample blended into the final color.")]
 			[Range(0f, 0.99f)]
 			public float stationaryBlending;
 
-			[Range(0f, 0.99f)]
 			[Tooltip("The blend coefficient for a fragment with significant motion. Controls the percentage of history sample blended into the final color.")]
+			[Range(0f, 0.99f)]
 			public float motionBlending;
 		}
 

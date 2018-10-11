@@ -44,8 +44,8 @@ namespace UltimateWater
 		[Header("Smooth")]
 		public float Sigma;
 
-		[Header("Normals")]
 		[Tooltip("How strong are wave normals")]
+		[Header("Normals")]
 		public float Multiplier = 1f;
 
 		[Tooltip("How wide is sampling distance for normal calculations")]

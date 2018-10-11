@@ -172,32 +172,32 @@ namespace UltimateWater.Internal
 			this._ColliderVerticesBuffer.SetData(array);
 		}
 
-		[FormerlySerializedAs("colliderInteractionShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("colliderInteractionShader")]
 		private ComputeShader _ColliderInteractionShader;
 
-		[FormerlySerializedAs("maskDisplayShader")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("maskDisplayShader")]
 		private Shader _MaskDisplayShader;
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("baseShader")]
+		[SerializeField]
+		[HideInInspector]
 		private Shader _BaseShader;
 
-		[FormerlySerializedAs("foam")]
 		[SerializeField]
+		[FormerlySerializedAs("foam")]
 		[Header("Contact Foam")]
 		private bool _Foam = true;
 
-		[FormerlySerializedAs("foamPatternTiling")]
 		[SerializeField]
+		[FormerlySerializedAs("foamPatternTiling")]
 		private float _FoamPatternTiling = 1f;
 
-		[SerializeField]
 		[FormerlySerializedAs("foamRange")]
+		[SerializeField]
 		private float _FoamRange = 1.6f;
 
 		[FormerlySerializedAs("uniformFoamAmount")]
@@ -208,8 +208,8 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private float _NoisyFoamAmount = 30.5f;
 
-		[Range(0f, 1f)]
 		[FormerlySerializedAs("foamIntensity")]
+		[Range(0f, 1f)]
 		[SerializeField]
 		private float _FoamIntensity = 0.45f;
 
@@ -229,9 +229,9 @@ namespace UltimateWater.Internal
 		[SerializeField]
 		private MeshFilter[] _MeshFilters;
 
-		[SerializeField]
-		[Header("Waves")]
 		[FormerlySerializedAs("waves")]
+		[Header("Waves")]
+		[SerializeField]
 		private bool _Waves = true;
 
 		[FormerlySerializedAs("water")]
@@ -239,8 +239,8 @@ namespace UltimateWater.Internal
 		private WaveParticlesSystemGPU _Water;
 
 		[FormerlySerializedAs("waveEmissionFrequency")]
-		[SerializeField]
 		[Range(0f, 4f)]
+		[SerializeField]
 		private float _WaveEmissionFrequency = 1f;
 
 		private Material _Material;

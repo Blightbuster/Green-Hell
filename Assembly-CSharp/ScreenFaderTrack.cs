@@ -4,8 +4,8 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
 
-[TrackClipType(typeof(ScreenFaderClip))]
 [TrackBindingType(typeof(Image))]
+[TrackClipType(typeof(ScreenFaderClip))]
 [TrackColor(0.875f, 0.5944853f, 0.1737132f)]
 public class ScreenFaderTrack : TrackAsset
 {

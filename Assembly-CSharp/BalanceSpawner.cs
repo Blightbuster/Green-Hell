@@ -15,8 +15,9 @@ public class BalanceSpawner : MonoBehaviour
 		return null;
 	}
 
-	public virtual void Attach(ItemID item_id, int child_num, int active_children_mask)
+	public virtual Item Attach(ItemID item_id, int child_num, int active_children_mask)
 	{
+		return null;
 	}
 
 	public bool m_StaticSystem;

@@ -420,8 +420,8 @@ namespace UltimateWater
 				this._PreviousPosition = vector;
 			}
 
-			[SerializeField]
 			[Header("Force multipliers")]
+			[SerializeField]
 			private float _Translation;
 
 			[SerializeField]

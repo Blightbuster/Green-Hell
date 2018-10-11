@@ -147,5 +147,5 @@ public class MainMenuOptions : MainMenuScreen
 
 	public Button m_BackButton;
 
-	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate2;
+	private bool m_EarlyAccess = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate4;
 }

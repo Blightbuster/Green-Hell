@@ -57,22 +57,22 @@ namespace UltimateWater
 			return new NormalMapAnimation(a._Speed + b._Speed, a._Deviation + b._Deviation, a._Intensity + b._Intensity, a._Tiling + b._Tiling);
 		}
 
-		[FormerlySerializedAs("speed")]
 		[SerializeField]
+		[FormerlySerializedAs("speed")]
 		private float _Speed;
 
-		[Tooltip("Angular deviation from the wind direction.")]
 		[SerializeField]
+		[Tooltip("Angular deviation from the wind direction.")]
 		[FormerlySerializedAs("deviation")]
 		private float _Deviation;
 
-		[Range(0f, 4f)]
 		[FormerlySerializedAs("intensity")]
+		[Range(0f, 4f)]
 		[SerializeField]
 		private float _Intensity;
 
-		[SerializeField]
 		[FormerlySerializedAs("tiling")]
+		[SerializeField]
 		private Vector2 _Tiling;
 	}
 }

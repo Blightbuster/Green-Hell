@@ -7,6 +7,7 @@ public class ItemSlotStack : ItemSlot
 	protected override void Awake()
 	{
 		base.Awake();
+		this.m_StackDummies.Clear();
 		for (int i = 0; i < base.transform.childCount; i++)
 		{
 			this.m_StackDummies.Add(base.transform.GetChild(i).gameObject);
@@ -112,5 +113,6 @@ public class ItemSlotStack : ItemSlot
 
 	public List<Item> m_Items = new List<Item>();
 
+	[HideInInspector]
 	public List<GameObject> m_StackDummies = new List<GameObject>();
 }

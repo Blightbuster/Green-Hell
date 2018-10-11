@@ -243,12 +243,22 @@ public class ItemInfo
 		return false;
 	}
 
+	public virtual bool IsHumanTrap()
+	{
+		return false;
+	}
+
 	public virtual bool IsTorch()
 	{
 		return false;
 	}
 
 	public virtual bool IsSpear()
+	{
+		return false;
+	}
+
+	public virtual bool IsStand()
 	{
 		return false;
 	}
@@ -276,6 +286,11 @@ public class ItemInfo
 	public bool IsShelter()
 	{
 		return this.m_ID == ItemID.Hut_Shelter || this.m_ID == ItemID.Medium_Bamboo_Shelter || this.m_ID == ItemID.Medium_Shelter || this.m_ID == ItemID.Small_Bamboo_Shelter || this.m_ID == ItemID.Small_Shelter;
+	}
+
+	public bool IsHammock()
+	{
+		return this.m_ID == ItemID.Hammock || this.m_ID == ItemID.hammock_a || this.m_ID == ItemID.village_hammock_a || this.m_ID == ItemID.village_hammock_b;
 	}
 
 	public bool IsFishingRod()

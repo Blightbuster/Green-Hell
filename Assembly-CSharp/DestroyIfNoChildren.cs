@@ -4,6 +4,31 @@ using UnityEngine;
 
 public class DestroyIfNoChildren : MonoBehaviour
 {
+	private void Start()
+	{
+		this.UpdateCount();
+	}
+
+	private void UpdateCount()
+	{
+		if (this.m_OnlySelected)
+		{
+			int num = 0;
+			for (int i = 0; i < this.m_Children.Count; i++)
+			{
+				if (this.m_Children[i] != null)
+				{
+					num++;
+				}
+			}
+			this.m_NumChildren = num;
+		}
+		else
+		{
+			this.m_NumChildren = base.gameObject.transform.childCount;
+		}
+	}
+
 	public void OnObjectDestroyed()
 	{
 		base.Invoke("Check", 2f);
@@ -11,6 +36,7 @@ public class DestroyIfNoChildren : MonoBehaviour
 
 	private void Check()
 	{
+		this.UpdateCount();
 		if (this.m_OnlySelected)
 		{
 			for (int i = 0; i < this.m_Children.Count; i++)
@@ -53,4 +79,6 @@ public class DestroyIfNoChildren : MonoBehaviour
 	public bool m_OnlySelected;
 
 	public List<GameObject> m_Children = new List<GameObject>();
+
+	public int m_NumChildren;
 }

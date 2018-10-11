@@ -41,6 +41,10 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 				this.m_Bowl.OnFirecampRemove(this.m_Firecamp);
 			}
 		}
+		if (this.m_Info.m_ID == ItemID.Stone_Ring)
+		{
+			firecmap.m_StoneRing = this;
+		}
 	}
 
 	public bool CanInsertItem(Item item)

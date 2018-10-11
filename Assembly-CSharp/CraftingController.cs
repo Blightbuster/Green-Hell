@@ -43,8 +43,18 @@ public class CraftingController : PlayerController
 	{
 		base.OnDisable();
 		this.m_Animator.SetBool(this.m_CraftHash, false);
-		this.m_InProgress = false;
 		this.m_AudioSource.Stop();
+		if (this.m_InProgress)
+		{
+			Player.Get().UnblockMoves();
+			Player.Get().UnblockRotation();
+			this.m_InProgress = false;
+		}
+		foreach (Item item in this.m_Items)
+		{
+			item.gameObject.SetActive(true);
+			Inventory3DManager.Get().DropItem(item);
+		}
 	}
 
 	public override void ControllerUpdate()
@@ -59,8 +69,15 @@ public class CraftingController : PlayerController
 		}
 	}
 
-	public void StartCrafting()
+	public void StartCrafting(List<Item> items)
 	{
+		this.m_Items.Clear();
+		foreach (Item item in items)
+		{
+			this.m_Items.Add(item);
+			item.gameObject.SetActive(false);
+		}
+		CraftingManager.Get().RemoveAllItems();
 		this.m_Animator.SetBool(this.m_CraftHash, true);
 		if (this.m_Player.GetCurrentItem(Hand.Right))
 		{
@@ -70,10 +87,9 @@ public class CraftingController : PlayerController
 		{
 			this.m_Player.GetCurrentItem(Hand.Left).gameObject.SetActive(false);
 		}
-		Inventory3DManager.Get().m_InputsBlocked = true;
-		Inventory3DManager.Get().m_InventoryImage.enabled = false;
-		InventoryBackpack.Get().m_Backpack.gameObject.SetActive(false);
-		CursorManager.Get().ShowCursor(false);
+		Inventory3DManager.Get().Deactivate();
+		Player.Get().BlockMoves();
+		Player.Get().BlockRotation();
 		this.m_InProgress = true;
 		this.PlayCraftingSound();
 	}
@@ -83,11 +99,9 @@ public class CraftingController : PlayerController
 		base.OnAnimEvent(id);
 		if (id == AnimEventID.CraftingEnd)
 		{
-			Inventory3DManager.Get().m_InventoryImage.enabled = true;
-			InventoryBackpack.Get().m_Backpack.gameObject.SetActive(true);
-			CursorManager.Get().ShowCursor(true);
-			Inventory3DManager.Get().m_InputsBlocked = false;
-			CraftingManager.Get().Craft();
+			Inventory3DManager.Get().Activate();
+			CraftingManager.Get().Craft(this.m_Items);
+			this.m_Items.Clear();
 			this.m_Animator.SetBool(this.m_CraftHash, false);
 			this.m_AudioSource.Stop();
 			this.m_InProgress = false;
@@ -107,6 +121,11 @@ public class CraftingController : PlayerController
 		this.m_AudioSource.PlayOneShot(this.m_CraftingClips[UnityEngine.Random.Range(0, this.m_CraftingClips.Count)]);
 	}
 
+	public bool BlockInventoryInputs()
+	{
+		return base.enabled && this.m_Animator.GetBool(this.m_CraftHash);
+	}
+
 	private int m_CraftHash = Animator.StringToHash("Craft");
 
 	[HideInInspector]
@@ -117,4 +136,6 @@ public class CraftingController : PlayerController
 	private AudioSource m_AudioSource;
 
 	private List<AudioClip> m_CraftingClips = new List<AudioClip>();
+
+	private List<Item> m_Items = new List<Item>();
 }

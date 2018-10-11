@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_alternative_path.php")]
 	[AddComponentMenu("Pathfinding/Modifiers/Alternative Path")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_alternative_path.php")]
 	[Serializable]
 	public class AlternativePath : MonoModifier
 	{

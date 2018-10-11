@@ -385,16 +385,16 @@ namespace Cinemachine
 		[Tooltip("Force all child cameras to be enabled.  This is useful if animating them in Timeline, but consumes extra resources")]
 		public bool m_EnableAllChildCameras;
 
-		[SerializeField]
-		[HideInInspector]
 		[NoSaveDuringPlay]
+		[HideInInspector]
+		[SerializeField]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("The set of instructions associating virtual cameras with states.  These instructions are used to choose the live child at any given moment")]
 		public CinemachineStateDrivenCamera.Instruction[] m_Instructions;
 
-		[CinemachineBlendDefinitionProperty]
 		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Camera children")]
+		[CinemachineBlendDefinitionProperty]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.EaseInOut, 0.5f);
 
 		[Tooltip("This is the asset which contains custom settings for specific child blends")]

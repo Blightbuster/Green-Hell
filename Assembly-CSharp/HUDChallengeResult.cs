@@ -134,22 +134,14 @@ public class HUDChallengeResult : HUDBase
 
 	private void SetupCurrentResult(Challenge challenge)
 	{
-		if (challenge.m_CurrentScore > 0f)
-		{
-			this.m_CurrentTimeText.text = GreenHellGame.Instance.GetLocalization().Get("ChallengeResult_CurrTime");
-			Text currentTimeText = this.m_CurrentTimeText;
-			currentTimeText.text += " - ";
-			DateTime date = challenge.m_StartDate.AddHours((double)challenge.m_CurrentScore);
-			Text currentTimeText2 = this.m_CurrentTimeText;
-			currentTimeText2.text += ChallengesManager.Get().DateTimeToLocalizedString(date, false);
-			float fillAmount = challenge.m_CurrentScore / challenge.m_Duration;
-			this.m_CurrentResultBelt.fillAmount = fillAmount;
-		}
-		else
-		{
-			this.m_CurrentTimeText.text = string.Empty;
-			this.m_CurrentResultBelt.fillAmount = 0f;
-		}
+		this.m_CurrentTimeText.text = GreenHellGame.Instance.GetLocalization().Get("ChallengeResult_CurrTime");
+		Text currentTimeText = this.m_CurrentTimeText;
+		currentTimeText.text += " - ";
+		DateTime date = challenge.m_StartDate.AddHours((double)challenge.m_CurrentScore);
+		Text currentTimeText2 = this.m_CurrentTimeText;
+		currentTimeText2.text += ChallengesManager.Get().DateTimeToLocalizedString(date, false);
+		float fillAmount = challenge.m_CurrentScore / challenge.m_Duration;
+		this.m_CurrentResultBelt.fillAmount = fillAmount;
 	}
 
 	public void OnButtonQuit()

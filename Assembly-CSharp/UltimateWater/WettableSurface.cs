@@ -242,9 +242,9 @@ namespace UltimateWater
 			return this._WettingCamera;
 		}
 
-		[HideInInspector]
-		[SerializeField]
 		[FormerlySerializedAs("wettableUtilShader")]
+		[SerializeField]
+		[HideInInspector]
 		private Shader _WettableUtilShader;
 
 		[FormerlySerializedAs("wettableUtilNearShader")]
@@ -252,22 +252,22 @@ namespace UltimateWater
 		[HideInInspector]
 		private Shader _WettableUtilNearShader;
 
-		[FormerlySerializedAs("water")]
 		[SerializeField]
+		[FormerlySerializedAs("water")]
 		private Water _Water;
 
-		[FormerlySerializedAs("mainCamera")]
 		[SerializeField]
+		[FormerlySerializedAs("mainCamera")]
 		[Tooltip("Surface wetting near this camera will be more precise.")]
 		private WaterCamera _MainCamera;
 
+		[SerializeField]
 		[FormerlySerializedAs("mode")]
 		[Tooltip("Texture space is good for small objects, especially convex ones.\nNear camera mode is better for terrains and big meshes that are static and don't have geometry at the bottom.")]
-		[SerializeField]
 		private WettableSurface.Mode _Mode;
 
-		[FormerlySerializedAs("resolution")]
 		[SerializeField]
+		[FormerlySerializedAs("resolution")]
 		private int _Resolution = 512;
 
 		[FormerlySerializedAs("meshRenderers")]

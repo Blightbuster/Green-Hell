@@ -90,7 +90,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 				float num = 1f;
 				if (SleepController.Get().IsActive())
 				{
-					num = PlayerInjuryModule.GetSleepTimeFactor();
+					num = Player.GetSleepTimeFactor();
 					this.m_DamageInfo.m_Damage = injury.m_HealthDecreasePerSec * num;
 				}
 				else
@@ -272,7 +272,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		}
 		for (int i = 0; i < num; i++)
 		{
-			BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place, injuryType);
+			BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place, injuryType, true);
 			if (freeWoundSlot == null)
 			{
 				return;
@@ -287,7 +287,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		InjuryType injuryType = (InjuryType)Enum.Parse(typeof(InjuryType), type);
 		InjuryPlace place2 = (InjuryPlace)Enum.Parse(typeof(InjuryPlace), place);
 		InjuryState injuryState = (InjuryState)Enum.Parse(typeof(InjuryState), state);
-		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place2, injuryType);
+		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place2, injuryType, true);
 		Injury injury = null;
 		if (freeWoundSlot != null)
 		{
@@ -520,31 +520,31 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			BIWoundSlot freeWoundSlot;
 			if (info.m_DamageType == DamageType.Insects && GreenHellGame.TWITCH_DEMO)
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType);
+				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
 			}
 			else if (num < 45f && num > -45f)
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LLeg, injuryType);
+				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LLeg, injuryType, true);
 				if (freeWoundSlot == null)
 				{
-					freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RLeg, injuryType);
+					freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RLeg, injuryType, true);
 				}
 			}
 			else if (num >= 45f && num < 135f)
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType);
+				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
 			}
 			else if (num >= 135f || num < -135f)
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType);
+				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
 				if (freeWoundSlot == null)
 				{
-					freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType);
+					freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType, true);
 				}
 			}
 			else
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType);
+				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType, true);
 			}
 			if (freeWoundSlot != null)
 			{
@@ -647,7 +647,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 	public void AddWorm(string place)
 	{
 		InjuryPlace place2 = (InjuryPlace)Enum.Parse(typeof(InjuryPlace), place);
-		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place2, InjuryType.Worm);
+		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place2, InjuryType.Worm, true);
 		this.AddInjury(InjuryType.Worm, place2, freeWoundSlot, InjuryState.Open, 0, null);
 	}
 
@@ -950,23 +950,6 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 				this.m_Injuries[i].OpenWound();
 			}
 		}
-	}
-
-	public static float GetSleepTimeFactor()
-	{
-		TOD_Sky todsky = MainLevel.Instance.m_TODSky;
-		TOD_Time todtime = MainLevel.Instance.m_TODTime;
-		bool flag = todsky.Cycle.Hour > 6f && todsky.Cycle.Hour <= 18f;
-		float num;
-		if (flag)
-		{
-			num = todtime.m_DayLengthInMinutes / 12f * 60f;
-		}
-		else
-		{
-			num = todtime.m_NightLengthInMinutes / 12f * 60f;
-		}
-		return num * SleepController.Get().m_HoursDelta;
 	}
 
 	[HideInInspector]

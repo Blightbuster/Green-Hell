@@ -661,6 +661,30 @@ public class PlayerAudioModule : PlayerModule
 		this.PlayRandomSound(this.m_ToolDestroyedSounds, 1f, false, Noise.Type.None);
 	}
 
+	public void PlayMakeFireSound()
+	{
+		this.m_MakeFireSource = this.PlayRandomSound(this.m_MakeFireSounds, 1f, false, Noise.Type.None);
+	}
+
+	public void StopMakeFireSound()
+	{
+		if (this.m_MakeFireSource)
+		{
+			this.m_MakeFireSource.Stop();
+			this.m_MakeFireSource = null;
+		}
+	}
+
+	public void PlayMakeFireSuccessSound()
+	{
+		this.PlayRandomSound(this.m_MakeFireSuccessSounds, 1f, false, Noise.Type.None);
+	}
+
+	public void PlayMakeFireFailSound()
+	{
+		this.PlayRandomSound(this.m_MakeFireFailSounds, 1f, false, Noise.Type.None);
+	}
+
 	private int m_AudioSourcesCount = 16;
 
 	private AudioSource[] m_AudioSources;
@@ -906,6 +930,15 @@ public class PlayerAudioModule : PlayerModule
 	[HideInInspector]
 	public List<AudioClip> m_ToolDestroyedSounds;
 
+	[HideInInspector]
+	public List<AudioClip> m_MakeFireSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_MakeFireSuccessSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_MakeFireFailSounds;
+
 	public AudioSource m_PlayingBreathSoundSource;
 
 	public AudioSource m_PlayingLowStaminaSoundSource;
@@ -918,6 +951,8 @@ public class PlayerAudioModule : PlayerModule
 	private static PlayerAudioModule s_Instance;
 
 	private FPPController m_FPPController;
+
+	private AudioSource m_MakeFireSource;
 
 	private AudioSource m_HeartBeatSoundAS;
 

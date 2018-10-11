@@ -50,7 +50,7 @@ namespace AIs
 			{
 				actions.Add(TriggerAction.TYPE.RemoveFromSnareTrap);
 			}
-			else if (!GreenHellGame.ROADSHOW_DEMO)
+			else if (!GreenHellGame.ROADSHOW_DEMO && (!this.RequiresToolToHarvest() || Player.Get().HasBlade()))
 			{
 				actions.Add(TriggerAction.TYPE.Harvest);
 			}
@@ -136,15 +136,23 @@ namespace AIs
 			}
 		}
 
+		public void AddForceToRagdoll(Vector3 force)
+		{
+			foreach (Rigidbody rigidbody in this.m_RagdollBones)
+			{
+				rigidbody.AddForce(force);
+			}
+		}
+
 		protected override void Update()
 		{
 			base.Update();
 			if (this.m_RagdollBones != null && this.m_RagdollBones.Count > 0)
 			{
-				Bounds bounds = new Bounds(this.m_RagdollBones[0].position, Vector3.zero);
-				foreach (Transform transform in this.m_RagdollBones)
+				Bounds bounds = new Bounds(this.m_RagdollBones[0].transform.position, Vector3.zero);
+				foreach (Rigidbody rigidbody in this.m_RagdollBones)
 				{
-					bounds.Encapsulate(transform.position);
+					bounds.Encapsulate(rigidbody.transform.position);
 				}
 				this.m_BoxCollider.size = bounds.size * 1.5f;
 				this.m_BoxCollider.center = base.transform.InverseTransformPoint(bounds.center);
@@ -184,6 +192,21 @@ namespace AIs
 			}
 		}
 
+		public override bool ShowAdditionalInfo()
+		{
+			return this.RequiresToolToHarvest() && !Player.Get().HasBlade();
+		}
+
+		public override string GetAdditionalInfoLocalized()
+		{
+			return GreenHellGame.Instance.GetLocalization().Get("HUDAddInfo_BladeRequired");
+		}
+
+		public override bool RequiresToolToHarvest()
+		{
+			return true;
+		}
+
 		public AI.AIID m_AIID = AI.AIID.None;
 
 		public ItemID m_AddHarvestingItem = ItemID.None;
@@ -205,7 +228,7 @@ namespace AIs
 
 		private SkinnedMeshRenderer m_Renderer;
 
-		public List<Transform> m_RagdollBones;
+		public List<Rigidbody> m_RagdollBones;
 
 		private ItemInfo m_ItemInfo;
 

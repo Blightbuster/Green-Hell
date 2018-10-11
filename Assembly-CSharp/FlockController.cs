@@ -101,7 +101,16 @@ public class FlockController : MonoBehaviour
 
 	private void UpdateTimeOfDay()
 	{
-		if (MainLevel.Instance.IsNight())
+		bool flag = false;
+		if (MainLevel.Instance.IsNight() && this._childPrefab.m_TimeOfDay == FlockChild.TimeOfDay.Day)
+		{
+			flag = true;
+		}
+		if (!MainLevel.Instance.IsNight() && this._childPrefab.m_TimeOfDay == FlockChild.TimeOfDay.Night)
+		{
+			flag = true;
+		}
+		if (flag)
 		{
 			int i = 0;
 			while (i < this._roamers.Count)

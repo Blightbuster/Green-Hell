@@ -91,6 +91,7 @@ public class MenuOptionsControlsKeysBinding : MenuScreen, IYesNoDialogOwner
 		list2.Add(TriggerAction.TYPE.ClimbHold);
 		list2.Add(TriggerAction.TYPE.SwapHold);
 		list2.Add(TriggerAction.TYPE.SaveGame);
+		list2.Add(TriggerAction.TYPE.InsertToStand);
 		this.m_ActionButton.SetTriggerActions(list2);
 		this.m_QuitButton.SetInputAction(InputsManager.InputAction.AdditionalQuit);
 		this.m_ReadButton.SetInputAction(InputsManager.InputAction.Read);

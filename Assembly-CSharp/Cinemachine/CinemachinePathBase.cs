@@ -253,8 +253,8 @@ namespace Cinemachine
 			}
 		}
 
-		[Range(1f, 100f)]
 		[Tooltip("Path samples per waypoint.  This is used for calculating path distances.")]
+		[Range(1f, 100f)]
 		public int m_Resolution = 20;
 
 		[Tooltip("The settings that control how the path will appear in the editor scene view.")]
@@ -282,8 +282,8 @@ namespace Cinemachine
 			[Tooltip("The color of the path itself when it is inactive in the editor")]
 			public Color inactivePathColor = Color.gray;
 
-			[Range(0f, 10f)]
 			[Tooltip("The width of the railroad-tracks that are drawn to represent the path")]
+			[Range(0f, 10f)]
 			public float width = 0.2f;
 		}
 

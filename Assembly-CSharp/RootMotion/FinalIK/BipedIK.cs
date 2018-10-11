@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[HelpURL("http://www.root-motion.com/finalikdox/html/page2.html")]
 	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Biped IK")]
+	[HelpURL("http://www.root-motion.com/finalikdox/html/page2.html")]
 	public class BipedIK : SolverManager
 	{
 		[ContextMenu("User Manual")]

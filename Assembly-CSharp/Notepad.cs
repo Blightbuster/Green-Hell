@@ -66,6 +66,11 @@ public class Notepad : MonoBehaviour
 		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_PlantsTabCollider.gameObject.transform.parent.gameObject);
 		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_PlantsTabCollider.gameObject.transform.parent.gameObject);
 		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.PlantsTab] = notepadObjectTab;
+		notepadObjectTab = new NotepadObjectTab();
+		notepadObjectTab.m_MenuTab = MenuNotepad.MenuNotepadTab.CustomConstructionsTab;
+		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_CustomConstructionsTabCollider.gameObject.transform.parent.gameObject);
+		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_CustomConstructionsTabCollider.gameObject.transform.parent.gameObject);
+		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.CustomConstructionsTab] = notepadObjectTab;
 	}
 
 	private GameObject GetOnObject(GameObject parent)
@@ -146,6 +151,8 @@ public class Notepad : MonoBehaviour
 	public Collider m_HealingItemsTabCollider;
 
 	public Collider m_PlantsTabCollider;
+
+	public Collider m_CustomConstructionsTabCollider;
 
 	private Dictionary<MenuNotepad.MenuNotepadTab, NotepadObjectTab> m_ObjetcTabs = new Dictionary<MenuNotepad.MenuNotepadTab, NotepadObjectTab>();
 

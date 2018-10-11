@@ -45,8 +45,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Enable the use of colored grain.")]
 			public bool colored;
 
-			[Tooltip("Grain strength. Higher means more visible grain.")]
 			[Range(0f, 1f)]
+			[Tooltip("Grain strength. Higher means more visible grain.")]
 			public float intensity;
 
 			[Tooltip("Grain particle size.")]

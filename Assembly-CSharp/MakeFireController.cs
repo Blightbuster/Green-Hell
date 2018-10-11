@@ -28,6 +28,10 @@ public class MakeFireController : PlayerController
 		lookDev.y = 0f;
 		this.m_Player.m_FPPController.SetLookDev(lookDev);
 		this.InitializeAudio();
+		if (CraftingManager.Get().IsActive())
+		{
+			CraftingManager.Get().Deactivate();
+		}
 	}
 
 	private void InitializeAudio()
@@ -164,6 +168,7 @@ public class MakeFireController : PlayerController
 			Inventory3DManager.Get().Deactivate();
 			this.CalcStaminaConsumption();
 			this.PlaySound();
+			PlayerAudioModule.Get().PlayMakeFireSound();
 			break;
 		case MakeFireController.State.Fail:
 			this.m_Tool.OnFailMakeFireGame();
@@ -173,6 +178,8 @@ public class MakeFireController : PlayerController
 			this.m_FireTool.m_Animator.SetBool(this.m_ToolAnimHash, false);
 			this.StopSound();
 			HintsManager.Get().ShowHint("MakeFire_Fail", 10f);
+			PlayerAudioModule.Get().StopMakeFireSound();
+			PlayerAudioModule.Get().PlayMakeFireFailSound();
 			break;
 		case MakeFireController.State.Success:
 			Skill.Get<MakeFireSkill>().OnSkillAction();
@@ -182,6 +189,8 @@ public class MakeFireController : PlayerController
 			this.m_Animator.SetBool(this.m_SuccessHash, true);
 			this.m_FireTool.m_Animator.SetBool(this.m_ToolAnimHash, false);
 			this.StopSound();
+			PlayerAudioModule.Get().StopMakeFireSound();
+			PlayerAudioModule.Get().PlayMakeFireSuccessSound();
 			break;
 		}
 	}
@@ -193,7 +202,7 @@ public class MakeFireController : PlayerController
 
 	public override void OnInputAction(InputsManager.InputAction action)
 	{
-		if (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit)
+		if ((action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && (this.m_State == MakeFireController.State.WaitingForKindling || this.m_State == MakeFireController.State.Game))
 		{
 			this.SetState(MakeFireController.State.Fail);
 		}
@@ -372,6 +381,20 @@ public class MakeFireController : PlayerController
 		}
 		this.m_AudioSource.Stop();
 		this.m_AudioSource.clip = null;
+	}
+
+	public bool CanUseItemAsKindling(Item item)
+	{
+		return this.m_FireTool && this.m_FireTool.m_KindlingSlot.CanInsertItem(item);
+	}
+
+	public void InsertItemToKindlingSlot(Item item)
+	{
+		if (!this.m_FireTool)
+		{
+			return;
+		}
+		this.m_FireTool.m_KindlingSlot.InsertItem(item);
 	}
 
 	private int m_ToolAnimHash = Animator.StringToHash("MakeFire");

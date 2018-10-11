@@ -55,12 +55,12 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Tooltip("Filters the dark part of the histogram when computing the average luminance to avoid very dark pixels from contributing to the auto exposure. Unit is in percent.")]
 			[Range(1f, 99f)]
+			[Tooltip("Filters the dark part of the histogram when computing the average luminance to avoid very dark pixels from contributing to the auto exposure. Unit is in percent.")]
 			public float lowPercent;
 
-			[Tooltip("Filters the bright part of the histogram when computing the average luminance to avoid very dark pixels from contributing to the auto exposure. Unit is in percent.")]
 			[Range(1f, 99f)]
+			[Tooltip("Filters the bright part of the histogram when computing the average luminance to avoid very dark pixels from contributing to the auto exposure. Unit is in percent.")]
 			public float highPercent;
 
 			[Tooltip("Minimum average luminance to consider for auto exposure (in EV).")]
@@ -79,16 +79,16 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Use \"Progressive\" if you want the auto exposure to be animated. Use \"Fixed\" otherwise.")]
 			public EyeAdaptationModel.EyeAdaptationType adaptationType;
 
-			[Tooltip("Adaptation speed from a dark to a light environment.")]
 			[Min(0f)]
+			[Tooltip("Adaptation speed from a dark to a light environment.")]
 			public float speedUp;
 
-			[Tooltip("Adaptation speed from a light to a dark environment.")]
 			[Min(0f)]
+			[Tooltip("Adaptation speed from a light to a dark environment.")]
 			public float speedDown;
 
-			[Tooltip("Lower bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			[Range(-16f, -1f)]
+			[Tooltip("Lower bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			public int logMin;
 
 			[Tooltip("Upper bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]

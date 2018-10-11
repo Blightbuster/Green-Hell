@@ -8,9 +8,9 @@ using Pathfinding.Util;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[ExecuteInEditMode]
 [HelpURL("http://arongranberg.com/astar/docs/class_astar_path.php")]
 [AddComponentMenu("Pathfinding/Pathfinder")]
+[ExecuteInEditMode]
 public class AstarPath : VersionedMonoBehaviour
 {
 	private AstarPath()

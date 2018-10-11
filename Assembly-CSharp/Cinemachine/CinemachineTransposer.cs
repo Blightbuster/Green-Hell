@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
+	[AddComponentMenu("")]
 	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(5f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("")]
 	public class CinemachineTransposer : CinemachineComponentBase
 	{
 		protected virtual void OnValidate()
@@ -204,12 +204,12 @@ namespace Cinemachine
 		[Tooltip("The distance vector that the transposer will attempt to maintain from the Follow target")]
 		public Vector3 m_FollowOffset = Vector3.back * 10f;
 
-		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to maintain the offset in the X-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
+		[Range(0f, 20f)]
 		public float m_XDamping = 1f;
 
-		[Tooltip("How aggressively the camera tries to maintain the offset in the Y-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain the offset in the Y-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_YDamping = 1f;
 
 		[Range(0f, 20f)]
@@ -220,8 +220,8 @@ namespace Cinemachine
 		[Range(0f, 20f)]
 		public float m_PitchDamping;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_YawDamping;
 
 		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]

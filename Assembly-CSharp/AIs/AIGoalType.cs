@@ -39,6 +39,7 @@ namespace AIs
 		SnakeLookAtEnemy,
 		JumpBack,
 		PunchBack,
+		Hide,
 		StalkerMoveAround,
 		StalkerRunAway,
 		HumanRest,

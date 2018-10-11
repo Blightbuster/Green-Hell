@@ -18,7 +18,11 @@ public class FlockChildSound : MonoBehaviour
 
 	public void PlayRandomSound()
 	{
-		if (MainLevel.Instance.IsNight())
+		if (MainLevel.Instance.IsNight() && this._flockChild.m_TimeOfDay == FlockChild.TimeOfDay.Day)
+		{
+			return;
+		}
+		if (!MainLevel.Instance.IsNight() && this._flockChild.m_TimeOfDay == FlockChild.TimeOfDay.Night)
 		{
 			return;
 		}
@@ -48,7 +52,11 @@ public class FlockChildSound : MonoBehaviour
 
 	public void ScareSound()
 	{
-		if (MainLevel.Instance.IsNight())
+		if (MainLevel.Instance.IsNight() && this._flockChild.m_TimeOfDay == FlockChild.TimeOfDay.Day)
+		{
+			return;
+		}
+		if (!MainLevel.Instance.IsNight() && this._flockChild.m_TimeOfDay == FlockChild.TimeOfDay.Night)
 		{
 			return;
 		}

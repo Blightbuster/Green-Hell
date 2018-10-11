@@ -13,4 +13,6 @@ public class Hint
 	public int m_ShowNTimes = 1;
 
 	public int m_ShowedNTimes;
+
+	public float m_LastShowTime;
 }

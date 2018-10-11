@@ -688,16 +688,16 @@ public class Streamer : MonoBehaviour
 	[Tooltip("Number of empty frames between loading actions.")]
 	public int sceneLoadWaitFrames = 2;
 
-	[Space(10f)]
 	[Tooltip("If you want to fix small holes from LODs system at unity terrain borders, drag and drop object here from scene hierarchy that contains our \"Terrain Neighbours\" script.")]
+	[Space(10f)]
 	public TerrainNeighbours terrainNeighbours;
 
-	[Tooltip("Enable looping system, each layer is streamed independently, so if you want to synchronize them, they should have the same XYZ size. More info at manual.")]
 	[Space(10f)]
+	[Tooltip("Enable looping system, each layer is streamed independently, so if you want to synchronize them, they should have the same XYZ size. More info at manual.")]
 	public bool looping;
 
-	[Header("Player Settings")]
 	[Space(10f)]
+	[Header("Player Settings")]
 	[Tooltip("Drag and drop here, an object that system have to follow during streaming process.")]
 	public Transform player;
 

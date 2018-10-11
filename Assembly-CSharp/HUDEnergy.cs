@@ -178,12 +178,19 @@ public class HUDEnergy : HUDBase
 		}
 		int num2 = 0;
 		bool flag2 = false;
+		Injury injury = null;
+		float num3 = float.MaxValue;
 		for (int i = 0; i < this.m_PIM.m_Injuries.Count; i++)
 		{
 			if (this.m_PIM.m_Injuries[i].m_Type == InjuryType.VenomBite || this.m_PIM.m_Injuries[i].m_Type == InjuryType.SnakeBite)
 			{
 				num2 += this.m_PIM.m_Injuries[i].m_PoisonLevel;
 				flag2 = true;
+				if (this.m_PIM.m_Injuries[i].m_StartTimeInMinutes < num3)
+				{
+					injury = this.m_PIM.m_Injuries[i];
+					num3 = this.m_PIM.m_Injuries[i].m_StartTimeInMinutes;
+				}
 			}
 			if (this.m_PIM.m_Injuries[i].m_HealthDecreasePerSec > 0f)
 			{
@@ -206,11 +213,14 @@ public class HUDEnergy : HUDBase
 			{
 				this.m_EnergyPoisonLevelText.enabled = false;
 			}
+			this.m_EnergyPoisonRadial.enabled = true;
+			this.m_EnergyPoisonRadial.fillAmount = 1f - (MainLevel.Instance.GetCurrentTimeMinutes() - injury.m_StartTimeInMinutes) / Injury.s_PoisonAutoDebufTime;
 		}
 		else
 		{
 			this.m_isIconPoisonEnabled = false;
 			this.m_EnergyPoisonLevelText.enabled = false;
+			this.m_EnergyPoisonRadial.enabled = false;
 		}
 		disease = this.m_PDM.GetDisease(ConsumeEffect.FoodPoisoning);
 		if (disease.IsActive())
@@ -365,7 +375,7 @@ public class HUDEnergy : HUDBase
 
 	private void UpdateOxygenBar()
 	{
-		bool flag = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate2;
+		bool flag = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate4;
 		if (flag)
 		{
 			this.m_OxygenBar.gameObject.SetActive(false);
@@ -538,6 +548,8 @@ public class HUDEnergy : HUDBase
 	public Text m_EnergyFoodPoisonLevel;
 
 	public RawImage m_EnergyPoisonIcon;
+
+	public Image m_EnergyPoisonRadial;
 
 	public Text m_EnergyPoisonLevelText;
 

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[AddComponentMenu("")]
+	[ExecuteInEditMode]
 	[SaveDuringPlay]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(4f, DocumentationSortingAttribute.Level.UserRef)]
@@ -119,8 +119,8 @@ namespace Cinemachine
 		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]
 		public CinemachineGroupComposer.FramingMode m_FramingMode = CinemachineGroupComposer.FramingMode.HorizontalAndVertical;
 
-		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to frame the group. Small numbers are more responsive, rapidly adjusting the camera to keep the group in the frame.  Larger numbers give a more heavy slowly responding camera.")]
+		[Range(0f, 20f)]
 		public float m_FrameDamping = 2f;
 
 		[Tooltip("How to adjust the camera to get the desired framing.  You can zoom, dolly in/out, or do both.")]
@@ -138,8 +138,8 @@ namespace Cinemachine
 		[Tooltip("Set this to limit how far from the target the camera can get.")]
 		public float m_MaximumDistance = 5000f;
 
-		[Range(1f, 179f)]
 		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
+		[Range(1f, 179f)]
 		public float m_MinimumFOV = 3f;
 
 		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]

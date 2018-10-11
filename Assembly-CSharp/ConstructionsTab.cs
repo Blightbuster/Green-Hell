@@ -68,7 +68,7 @@ public class ConstructionsTab : ItemsTab, IInputsReceiver
 		for (int i = 0; i < this.m_Masks.Count; i++)
 		{
 			RectTransform component = this.m_Masks[i].gameObject.GetComponent<RectTransform>();
-			if (RectTransformUtility.RectangleContainsScreenPoint(component, notepadCanvasCursorPos) && this.m_Masks[i].gameObject.transform.parent.gameObject.activeSelf)
+			if (RectTransformUtility.RectangleContainsScreenPoint(component, notepadCanvasCursorPos) && this.m_Masks[i].gameObject.transform.parent.gameObject.activeSelf && MenuNotepad.Get().m_CollisionFound)
 			{
 				this.m_Masks[i].gameObject.SetActive(true);
 				mouseOverConstruction = true;

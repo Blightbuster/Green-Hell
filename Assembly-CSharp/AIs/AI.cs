@@ -18,6 +18,31 @@ namespace AIs
 			return id == AI.AIID.SouthAmericanRattlesnake || id == AI.AIID.GreenAnaconda || id == AI.AIID.BoaConstrictor;
 		}
 
+		public static bool IsArmadillo(AI.AIID id)
+		{
+			return id == AI.AIID.Armadillo || id == AI.AIID.ArmadilloThreeBanded;
+		}
+
+		public static bool IsTurtle(AI.AIID id)
+		{
+			return id == AI.AIID.RedFootedTortoise || id == AI.AIID.MudTurtle;
+		}
+
+		public static bool IsCat(AI.AIID id)
+		{
+			return id == AI.AIID.Puma || id == AI.AIID.Jaguar;
+		}
+
+		public static bool IsCat(AI ai)
+		{
+			return ai.m_ID == AI.AIID.Puma || ai.m_ID == AI.AIID.Jaguar;
+		}
+
+		public bool IsCat()
+		{
+			return this.m_ID == AI.AIID.Puma || this.m_ID == AI.AIID.Jaguar;
+		}
+
 		protected override void Awake()
 		{
 			base.Awake();
@@ -58,6 +83,14 @@ namespace AIs
 			if (this.m_Params.m_BigAnimal)
 			{
 				this.m_SoundModule = base.gameObject.AddComponent<BigAnimalSoundModule>();
+			}
+			else if (this.m_ID == AI.AIID.Mouse || this.m_ID == AI.AIID.CaneToad)
+			{
+				this.m_SoundModule = base.gameObject.AddComponent<AISoundModule>();
+			}
+			if (this.m_SoundModule && this.m_Trap)
+			{
+				this.m_SoundModule.RequestSound(AISoundType.Panic);
 			}
 			AIManager.Get().RegisterAI(this);
 			base.Start();
@@ -207,7 +240,7 @@ namespace AIs
 			base.OnEnable();
 			AIManager.Get().OnEnableAI(this);
 			NoiseManager.RegisterReceiver(this);
-			if (!this.IsHuman() && this.m_ID != AI.AIID.Jaguar)
+			if (!this.IsHuman() && !this.IsCat())
 			{
 				Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), this.m_BoxCollider);
 				this.m_BoxCollider.isTrigger = true;
@@ -278,7 +311,7 @@ namespace AIs
 
 		public virtual void OnPlayerStartAttack()
 		{
-			if (this.m_ID == AI.AIID.Jaguar)
+			if (this.IsCat())
 			{
 				this.TryJumpBack();
 			}
@@ -419,7 +452,7 @@ namespace AIs
 			{
 				this.m_Trap.UpdateEffect();
 			}
-			if (this.m_ID == AI.AIID.Jaguar)
+			if (this.IsCat())
 			{
 				float num = 0.2f;
 				Vector3 size = this.m_BoxCollider.size;
@@ -428,6 +461,19 @@ namespace AIs
 				Vector3 center = this.m_BoxCollider.center;
 				center.y = size.y * 0.5f;
 				this.m_BoxCollider.center = center;
+			}
+			this.UpdateInvisibleDuration();
+		}
+
+		private void UpdateInvisibleDuration()
+		{
+			if (!this.m_Renderer.isVisible)
+			{
+				this.m_InvisibleDuration += Time.deltaTime;
+			}
+			else
+			{
+				this.m_InvisibleDuration = 0f;
 			}
 		}
 
@@ -639,10 +685,10 @@ namespace AIs
 			deadBody.m_AddHarvestingItem = this.m_AddHarvestingItem;
 			deadBody.m_AIID = this.m_ID;
 			deadBody.m_Trap = this.m_Trap;
-			deadBody.m_RagdollBones = new List<Transform>();
-			foreach (Collider collider in this.m_RagdollBones.Keys)
+			deadBody.m_RagdollBones = new List<Rigidbody>();
+			foreach (Collider key in this.m_RagdollBones.Keys)
 			{
-				deadBody.m_RagdollBones.Add(collider.transform);
+				deadBody.m_RagdollBones.Add(this.m_RagdollBones[key]);
 			}
 			deadBody.m_AI = this;
 		}
@@ -952,6 +998,9 @@ namespace AIs
 		[HideInInspector]
 		public AI.SoundPreset m_SoundPreset = AI.SoundPreset.None;
 
+		[HideInInspector]
+		public float m_InvisibleDuration;
+
 		private string m_LiquidSourceName = "LiquidSource";
 
 		private Collider[] m_CollidersTemp = new Collider[10];
@@ -1002,6 +1051,7 @@ namespace AIs
 			Thug,
 			Savage,
 			ArmadilloThreeBanded,
+			CaimanLizard,
 			Count
 		}
 

@@ -26,7 +26,7 @@ public class FlockChild : MonoBehaviour
 		this.m_Renderer = base.gameObject.GetComponentInChildren<Renderer>();
 	}
 
-	private Animation GetAnimation()
+	public Animation GetAnimation()
 	{
 		if (!this.m_Animation)
 		{
@@ -446,5 +446,14 @@ public class FlockChild : MonoBehaviour
 	[HideInInspector]
 	public float m_InvisibleDuration;
 
-	private Animation m_Animation;
+	public Animation m_Animation;
+
+	public FlockChild.TimeOfDay m_TimeOfDay;
+
+	public enum TimeOfDay
+	{
+		Day,
+		Night,
+		DayAndNight
+	}
 }

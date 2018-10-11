@@ -908,12 +908,12 @@ namespace RootMotion.FinalIK
 			[Tooltip("The elbow will be bent towards this Transform if 'Bend Goal Weight' > 0.")]
 			public Transform bendGoal;
 
-			[Tooltip("Positional weight of the hand target.")]
 			[Range(0f, 1f)]
+			[Tooltip("Positional weight of the hand target.")]
 			public float positionWeight = 1f;
 
-			[Tooltip("Rotational weight of the hand target")]
 			[Range(0f, 1f)]
+			[Tooltip("Rotational weight of the hand target")]
 			public float rotationWeight = 1f;
 
 			[Tooltip("Different techniques for shoulder bone rotation.")]
@@ -923,12 +923,12 @@ namespace RootMotion.FinalIK
 			[Range(0f, 1f)]
 			public float shoulderRotationWeight = 1f;
 
-			[Tooltip("If greater than 0, will bend the elbow towards the 'Bend Goal' Transform.")]
 			[Range(0f, 1f)]
+			[Tooltip("If greater than 0, will bend the elbow towards the 'Bend Goal' Transform.")]
 			public float bendGoalWeight;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Angular offset of the elbow bending direction.")]
+			[Range(-180f, 180f)]
 			public float swivelOffset;
 
 			[Tooltip("Local axis of the hand bone that points from the wrist towards the palm. Used for defining hand bone orientation.")]
@@ -1408,20 +1408,20 @@ namespace RootMotion.FinalIK
 			[Tooltip("The knee will be bent towards this Transform if 'Bend Goal Weight' > 0.")]
 			public Transform bendGoal;
 
-			[Tooltip("Positional weight of the toe/foot target.")]
 			[Range(0f, 1f)]
+			[Tooltip("Positional weight of the toe/foot target.")]
 			public float positionWeight;
 
 			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the toe/foot target.")]
 			public float rotationWeight;
 
-			[Tooltip("If greater than 0, will bend the knee towards the 'Bend Goal' Transform.")]
 			[Range(0f, 1f)]
+			[Tooltip("If greater than 0, will bend the knee towards the 'Bend Goal' Transform.")]
 			public float bendGoalWeight;
 
-			[Tooltip("Angular offset of the knee bending direction.")]
 			[Range(-180f, 180f)]
+			[Tooltip("Angular offset of the knee bending direction.")]
 			public float swivelOffset;
 
 			[HideInInspector]
@@ -1772,8 +1772,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("The height offset of the heel by normalized step progress (0 - 1).")]
 			public AnimationCurve heelHeight;
 
-			[Range(0f, 180f)]
 			[Tooltip("Rotates the foot while the leg is not stepping to relax the twist rotation of the leg if ideal rotation is past this angle.")]
+			[Range(0f, 180f)]
 			public float relaxLegTwistMinAngle = 20f;
 
 			[Tooltip("The speed of rotating the foot while the leg is not stepping to relax the twist rotation of the leg.")]
@@ -2245,8 +2245,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Rotational weight of the head target.")]
 			public float rotationWeight = 1f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Positional weight of the pelvis target.")]
+			[Range(0f, 1f)]
 			public float pelvisPositionWeight;
 
 			[Range(0f, 1f)]
@@ -2256,15 +2256,15 @@ namespace RootMotion.FinalIK
 			[Tooltip("If 'Chest Goal Weight' is greater than 0, the chest will be turned towards this Transform.")]
 			public Transform chestGoal;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the chest target.")]
+			[Range(0f, 1f)]
 			public float chestGoalWeight;
 
 			[Tooltip("Minimum height of the head from the root of the character.")]
 			public float minHeadHeight = 0.8f;
 
-			[Tooltip("Determines how much the body will follow the position of the head.")]
 			[Range(0f, 1f)]
+			[Tooltip("Determines how much the body will follow the position of the head.")]
 			public float bodyPosStiffness = 0.55f;
 
 			[Tooltip("Determines how much the body will follow the rotation of the head.")]
@@ -2272,12 +2272,12 @@ namespace RootMotion.FinalIK
 			public float bodyRotStiffness = 0.1f;
 
 			[Tooltip("Determines how much the chest will rotate to the rotation of the head.")]
-			[Range(0f, 1f)]
 			[FormerlySerializedAs("chestRotationWeight")]
+			[Range(0f, 1f)]
 			public float neckStiffness = 0.2f;
 
-			[Tooltip("Clamps chest rotation.")]
 			[Range(0f, 1f)]
+			[Tooltip("Clamps chest rotation.")]
 			public float chestClampWeight = 0.5f;
 
 			[Tooltip("Clamps head rotation.")]

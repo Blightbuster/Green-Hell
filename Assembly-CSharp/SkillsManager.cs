@@ -22,6 +22,7 @@ public class SkillsManager : MonoBehaviour
 	public void LoadScript()
 	{
 		Skill.s_Instances.Clear();
+		this.m_StringToSkillType.Clear();
 		TextAssetParser textAssetParser = new TextAssetParser(this.m_SkillsScript);
 		for (int i = 0; i < textAssetParser.GetKeysCount(); i++)
 		{
@@ -37,21 +38,22 @@ public class SkillsManager : MonoBehaviour
 					skill.Load(key.GetKey(j));
 				}
 				this.m_Skills.Add(skill);
+				this.m_StringToSkillType.Add(svalue, type);
 			}
 		}
 	}
 
 	public bool SkillGreater(string name, float value)
 	{
-		Type type = Type.GetType(name + "Skill");
-		Skill skill = Skill.s_Instances[type];
+		Type key = this.m_StringToSkillType[name];
+		Skill skill = Skill.s_Instances[key];
 		return skill.m_Value > value;
 	}
 
 	public bool SkillGreaterOrEqual(string name, float value)
 	{
-		Type type = Type.GetType(name + "Skill");
-		Skill skill = Skill.s_Instances[type];
+		Type key = this.m_StringToSkillType[name];
+		Skill skill = Skill.s_Instances[key];
 		return skill.m_Value >= value;
 	}
 
@@ -76,4 +78,6 @@ public class SkillsManager : MonoBehaviour
 	public List<Skill> m_Skills = new List<Skill>();
 
 	private static SkillsManager s_Instance;
+
+	private Dictionary<string, Type> m_StringToSkillType = new Dictionary<string, Type>();
 }

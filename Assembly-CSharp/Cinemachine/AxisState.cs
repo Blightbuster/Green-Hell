@@ -120,8 +120,8 @@ namespace Cinemachine
 			return this.m_MaxSpeed;
 		}
 
-		[Tooltip("The current value of the axis.")]
 		[NoSaveDuringPlay]
+		[Tooltip("The current value of the axis.")]
 		public float Value;
 
 		[Tooltip("The maximum speed of this axis in units/second")]
@@ -133,8 +133,8 @@ namespace Cinemachine
 		[Tooltip("The amount of time in seconds it takes to decelerate the axis to zero if the supplied axis is in a neutral position")]
 		public float m_DecelTime;
 
-		[Tooltip("The name of this axis as specified in Unity Input manager. Setting to an empty string will disable the automatic updating of this axis")]
 		[FormerlySerializedAs("m_AxisName")]
+		[Tooltip("The name of this axis as specified in Unity Input manager. Setting to an empty string will disable the automatic updating of this axis")]
 		public string m_InputAxisName;
 
 		[Tooltip("The value of the input axis.  A value of 0 means no input.  You can drive this directly from a custom input system, or you can set the Axis Name and have the value driven by the internal Input Manager")]

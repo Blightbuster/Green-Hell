@@ -209,10 +209,14 @@ public class Scenario : ISaveLoad
 	{
 		this.m_ActionObjectsToLoad.Clear();
 		this.m_ActionComponentToLoad.Clear();
-		this.m_IsLoading = true;
 		foreach (ScenarioNode scenarioNode in this.m_Nodes)
 		{
-			scenarioNode.Load();
+			scenarioNode.Reset();
+		}
+		this.m_IsLoading = true;
+		foreach (ScenarioNode scenarioNode2 in this.m_Nodes)
+		{
+			scenarioNode2.Load();
 		}
 		foreach (GameObject gameObject in this.m_ActionObjectsToLoad)
 		{
@@ -236,6 +240,13 @@ public class Scenario : ISaveLoad
 					Behaviour behaviour = gameObject2.GetComponent(this.m_ActionComponentToLoad[gameObject2]) as Behaviour;
 					behaviour.enabled = SaveGame.LoadBVal("AOC" + gameObject2.name);
 				}
+			}
+		}
+		foreach (ScenarioNode scenarioNode3 in this.m_Nodes)
+		{
+			if (scenarioNode3.m_State == ScenarioNode.State.None && scenarioNode3.m_Parents.Count == 0)
+			{
+				scenarioNode3.Activate();
 			}
 		}
 		this.m_IsLoading = false;

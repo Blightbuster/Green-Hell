@@ -70,6 +70,39 @@ public class ConstructionController : PlayerController
 		this.m_Ghost.SetState(ConstructionGhost.GhostState.Dragging);
 	}
 
+	public override void ControllerUpdate()
+	{
+		base.ControllerUpdate();
+		this.UpdateGhostToReplace();
+	}
+
+	public void ReplaceGhost(string new_ghost_name)
+	{
+		this.m_GhostToReplace = new_ghost_name;
+	}
+
+	private void UpdateGhostToReplace()
+	{
+		if (this.m_GhostToReplace == string.Empty)
+		{
+			return;
+		}
+		GameObject prefab = GreenHellGame.Instance.GetPrefab(this.m_GhostToReplace);
+		if (!prefab)
+		{
+			this.m_GhostToReplace = string.Empty;
+			DebugUtils.Assert("Can't find prefab - " + this.m_GhostToReplace, true, DebugUtils.AssertType.Info);
+			return;
+		}
+		this.m_GhostPrefab = prefab;
+		GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_GhostPrefab, this.m_Ghost.transform.position, this.m_Ghost.transform.rotation);
+		gameObject.name = this.m_GhostPrefab.name;
+		UnityEngine.Object.Destroy(this.m_Ghost.gameObject);
+		this.m_Ghost = gameObject.GetComponent<ConstructionGhost>();
+		this.m_Ghost.SetState(ConstructionGhost.GhostState.Dragging);
+		this.m_GhostToReplace = string.Empty;
+	}
+
 	public bool CanCreateConstruction()
 	{
 		return this.m_Ghost != null && this.m_Ghost.GetState() == ConstructionGhost.GhostState.Dragging && this.m_Ghost.CanBePlaced();
@@ -83,6 +116,8 @@ public class ConstructionController : PlayerController
 	private ConstructionGhost m_Ghost;
 
 	private GameObject m_GhostPrefab;
+
+	private string m_GhostToReplace = string.Empty;
 
 	private static ConstructionController s_Instance;
 }

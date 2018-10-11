@@ -179,18 +179,18 @@ namespace UltimateWater.Internal
 		[HideInInspector]
 		private Shader _BlurShader;
 
-		[FormerlySerializedAs("computeShaderKernelIndex")]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[FormerlySerializedAs("computeShaderKernelIndex")]
 		private int _ComputeShaderKernelIndex;
 
-		[FormerlySerializedAs("iterations")]
-		[SerializeField]
 		[Range(0f, 10f)]
+		[SerializeField]
+		[FormerlySerializedAs("iterations")]
 		private int _Iterations = 1;
 
-		[SerializeField]
 		[FormerlySerializedAs("size")]
+		[SerializeField]
 		private float _Size = 0.005f;
 
 		private Material _BlurMaterial;

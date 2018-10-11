@@ -14,5 +14,6 @@ public enum EObjectMaterial
 	Soil,
 	Moss,
 	Water,
+	TurtleShell,
 	Count
 }

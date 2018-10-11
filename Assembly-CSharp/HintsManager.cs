@@ -51,7 +51,7 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	private Hint FindHint(string hint_name)
+	public Hint FindHint(string hint_name)
 	{
 		for (int i = 0; i < this.m_Hints.Count; i++)
 		{

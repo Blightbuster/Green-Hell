@@ -443,16 +443,21 @@ public class BalanceSystem : MonoBehaviour, ISaveLoad
 		BalanceSystemObject objectInPos = this.m_QuadTree.GetObjectInPos(obj.transform.position);
 		if (objectInPos != null)
 		{
-			if (Time.time - objectInPos.m_LastSpawnObjectTime < BalanceSystem.s_BalanceSpawnerCooldown)
-			{
-				return;
-			}
 			if (objectInPos.m_GameObject == null)
 			{
 				if (bs.m_StaticSystem)
 				{
-					bs.Attach(objectInPos.m_ItemID, objectInPos.m_ChildNum, objectInPos.m_ActiveChildrenMask);
-					objectInPos.m_LastSpawnObjectTime = Time.time;
+					if (!objectInPos.m_AllChildrenDestroyed)
+					{
+						Item item = bs.Attach(objectInPos.m_ItemID, objectInPos.m_ChildNum, objectInPos.m_ActiveChildrenMask);
+						objectInPos.m_GameObject = item.gameObject;
+						objectInPos.m_BalanceSpawner = bs.gameObject;
+						this.m_ObjectsInArea[objectInPos.m_Group].Add(objectInPos);
+					}
+					else if (Time.time - objectInPos.m_LastSpawnObjectTime > BalanceSystem.s_BalanceSpawnerCooldown)
+					{
+						this.TryToAttach(bs, objectInPos);
+					}
 				}
 				else
 				{
@@ -484,6 +489,7 @@ public class BalanceSystem : MonoBehaviour, ISaveLoad
 				balanceSystemObject.m_BalanceSpawner = bs.gameObject;
 				balanceSystemObject.m_GameObject = gameObject;
 				balanceSystemObject.m_Position = bs.transform.position;
+				balanceSystemObject.m_AllChildrenDestroyed = false;
 				this.m_ObjectsInArea[empty].Add(balanceSystemObject);
 				this.m_QuadTree.InsertObject(balanceSystemObject);
 				if (empty == "Sanity")
@@ -744,6 +750,10 @@ public class BalanceSystem : MonoBehaviour, ISaveLoad
 						{
 							DebugUtils.Assert(DebugUtils.AssertType.Info);
 						}
+						if (component2.m_NumChildren == 0)
+						{
+							balanceSystemObject.m_AllChildrenDestroyed = true;
+						}
 						if (component2.CheckNoChildren())
 						{
 							balanceSystemObject.m_ActiveChildrenMask = -1;
@@ -955,6 +965,15 @@ public class BalanceSystem : MonoBehaviour, ISaveLoad
 		Debug.Log("m_TimeToNextSpawnJaguar - " + this.m_TimeToNextSpawnJaguar);
 		Debug.Log("m_AISpawnCooldown - " + this.m_AISpawnCooldown);
 		Debug.Log("m_HumanAISpawnBlocked - " + this.m_HumanAISpawnBlocked.ToString());
+	}
+
+	public void OnFullLoadEnd()
+	{
+		foreach (string key in this.m_Groups.Keys)
+		{
+			this.m_ObjectsInArea[key] = new List<BalanceSystemObject>();
+		}
+		this.InitializeQuadTree();
 	}
 
 	private Dictionary<string, int> m_Groups = new Dictionary<string, int>();

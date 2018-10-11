@@ -8,8 +8,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 [RequireComponent(typeof(TOD_Components))]
-[ExecuteInEditMode]
 [RequireComponent(typeof(TOD_Resources))]
+[ExecuteInEditMode]
 public class TOD_Sky : MonoBehaviour
 {
 	private void UpdateScattering()

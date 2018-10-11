@@ -163,8 +163,8 @@ namespace RootMotion.FinalIK
 		[HideInInspector]
 		public Vector3 IKPosition;
 
-		[Tooltip("The positional or the master weight of the solver.")]
 		[Range(0f, 1f)]
+		[Tooltip("The positional or the master weight of the solver.")]
 		public float IKPositionWeight = 1f;
 
 		public IKSolver.UpdateDelegate OnPreInitiate;
@@ -177,8 +177,8 @@ namespace RootMotion.FinalIK
 
 		protected bool firstInitiation = true;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		protected Transform root;
 
 		[Serializable]
