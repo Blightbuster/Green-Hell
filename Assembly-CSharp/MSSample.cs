@@ -49,7 +49,7 @@ public class MSSample
 		this.m_WavName = key.GetVariable(0).SValue;
 		if (Application.isPlaying)
 		{
-			this.m_AudioSource = MainLevel.Instance.gameObject.AddComponent<AudioSource>();
+			this.m_AudioSource = new GameObject("MS_" + this.m_WavName).AddComponent<AudioSource>();
 			this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Enviro);
 			this.m_AudioSource.clip = (Resources.Load(MSSample.s_SamplesPath + this.m_WavName) as AudioClip);
 			this.m_AudioSource.loop = true;
@@ -91,28 +91,20 @@ public class MSSample
 
 	public void Save(Key key)
 	{
-		CJVariable cjvariable = key.AddVariable();
-		cjvariable.SValue = this.m_WavName;
+		key.AddVariable().SValue = this.m_WavName;
 		foreach (MSCurveData mscurveData in this.m_Curves.Keys)
 		{
 			Key key2 = key.AddKey("Curve");
-			cjvariable = key2.AddVariable();
-			cjvariable.SValue = mscurveData.m_Name;
-			cjvariable = key2.AddVariable();
-			cjvariable.SValue = this.m_Curves[mscurveData].preWrapMode.ToString();
-			cjvariable = key2.AddVariable();
-			cjvariable.SValue = this.m_Curves[mscurveData].postWrapMode.ToString();
+			key2.AddVariable().SValue = mscurveData.m_Name;
+			key2.AddVariable().SValue = this.m_Curves[mscurveData].preWrapMode.ToString();
+			key2.AddVariable().SValue = this.m_Curves[mscurveData].postWrapMode.ToString();
 			foreach (Keyframe keyframe in this.m_Curves[mscurveData].keys)
 			{
 				Key key3 = key2.AddKey("Key");
-				cjvariable = key3.AddVariable();
-				cjvariable.FValue = keyframe.time;
-				cjvariable = key3.AddVariable();
-				cjvariable.FValue = keyframe.value;
-				cjvariable = key3.AddVariable();
-				cjvariable.FValue = keyframe.inTangent;
-				cjvariable = key3.AddVariable();
-				cjvariable.FValue = keyframe.outTangent;
+				key3.AddVariable().FValue = keyframe.time;
+				key3.AddVariable().FValue = keyframe.value;
+				key3.AddVariable().FValue = keyframe.inTangent;
+				key3.AddVariable().FValue = keyframe.outTangent;
 			}
 		}
 	}
@@ -147,6 +139,15 @@ public class MSSample
 		}
 		num = Mathf.Clamp01(num);
 		this.m_AudioSource.volume = num * volume_mul;
+		if (this.m_AudioSource.isPlaying && this.m_AudioSource.volume <= 0f)
+		{
+			this.m_AudioSource.Stop();
+			return;
+		}
+		if (!MainLevel.Instance.IsPause() && Time.deltaTime > 0f && !this.m_AudioSource.isPlaying && this.m_AudioSource.volume > 0f)
+		{
+			this.m_AudioSource.Play();
+		}
 	}
 
 	private void UpdatePitchShift()
@@ -162,6 +163,16 @@ public class MSSample
 			}
 		}
 		this.m_AudioSource.pitch = num;
+	}
+
+	public void SetSpatialBlend(float spatial_blend, Vector3? source_position)
+	{
+		this.m_AudioSource.spatialize = (spatial_blend > 0f);
+		this.m_AudioSource.spatialBlend = spatial_blend;
+		if (source_position != null)
+		{
+			this.m_AudioSource.gameObject.transform.position = source_position.Value;
+		}
 	}
 
 	private static string s_DefaultWavName = "Wav_Name";

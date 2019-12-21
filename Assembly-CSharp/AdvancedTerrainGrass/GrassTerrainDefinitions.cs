@@ -7,8 +7,8 @@ namespace AdvancedTerrainGrass
 	[Serializable]
 	public class GrassTerrainDefinitions : ScriptableObject
 	{
-		[SerializeField]
 		[Header("Serialized Grass Data")]
+		[SerializeField]
 		public List<DetailLayerMap> DensityMaps;
 
 		public GrassCell[] Cells;

@@ -6,24 +6,16 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class IKMappingSpine : IKMapping
 	{
-		public IKMappingSpine()
-		{
-		}
-
-		public IKMappingSpine(Transform[] spineBones, Transform leftUpperArmBone, Transform rightUpperArmBone, Transform leftThighBone, Transform rightThighBone)
-		{
-			this.SetBones(spineBones, leftUpperArmBone, rightUpperArmBone, leftThighBone, rightThighBone);
-		}
-
 		public override bool IsValid(IKSolver solver, ref string message)
 		{
 			if (!base.IsValid(solver, ref message))
 			{
 				return false;
 			}
-			foreach (Transform x in this.spineBones)
+			Transform[] array = this.spineBones;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x == null)
+				if (array[i] == null)
 				{
 					message = "Spine bones contains a null reference.";
 					return false;
@@ -83,6 +75,15 @@ namespace RootMotion.FinalIK
 				return false;
 			}
 			return true;
+		}
+
+		public IKMappingSpine()
+		{
+		}
+
+		public IKMappingSpine(Transform[] spineBones, Transform leftUpperArmBone, Transform rightUpperArmBone, Transform leftThighBone, Transform rightThighBone)
+		{
+			this.SetBones(spineBones, leftUpperArmBone, rightUpperArmBone, leftThighBone, rightThighBone);
 		}
 
 		public void SetBones(Transform[] spineBones, Transform leftUpperArmBone, Transform rightUpperArmBone, Transform leftThighBone, Transform rightThighBone)

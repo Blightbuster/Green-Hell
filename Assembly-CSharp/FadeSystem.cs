@@ -31,7 +31,7 @@ public class FadeSystem : MonoBehaviour
 			rawImage.enabled = true;
 		}
 		this.m_FadeLevel1[0] = 1f;
-		this.UpdateAlpha();
+		this.UpdateAlpha(false);
 	}
 
 	public void SetFadeOut()
@@ -41,7 +41,7 @@ public class FadeSystem : MonoBehaviour
 			rawImage.enabled = true;
 		}
 		this.m_FadeLevel1[0] = 1f;
-		this.UpdateAlpha();
+		this.UpdateAlpha(false);
 		this.m_FadeIn = false;
 		this.m_FadingIn = false;
 		this.m_FadeOut = false;
@@ -52,7 +52,8 @@ public class FadeSystem : MonoBehaviour
 	{
 		if (!this.m_FirstFadeIn && LoadingScreen.Get() != null && !LoadingScreen.Get().m_Active)
 		{
-			this.m_FirstFadeInDelay += Time.deltaTime;
+			float num = (HUDMovie.Get() != null && HUDMovie.Get().m_Active) ? Time.unscaledDeltaTime : Time.deltaTime;
+			this.m_FirstFadeInDelay += num;
 			if (this.m_FirstFadeInDelay >= 1f)
 			{
 				this.FadeIn(FadeType.Vis, null, 1.5f);
@@ -86,7 +87,7 @@ public class FadeSystem : MonoBehaviour
 		}
 		if (this.m_ScreenFadingIn || this.m_ScreenFadingOut)
 		{
-			this.UpdateAlpha();
+			this.UpdateAlpha(true);
 		}
 	}
 
@@ -100,9 +101,9 @@ public class FadeSystem : MonoBehaviour
 		return this.m_FadeType == FadeType.All || this.m_FadeType == FadeType.Sound;
 	}
 
-	public void FadeIn(FadeType type, VDelegate callback = null, float speed = 1.5f)
+	public void FadeIn(FadeType type, VDelegate callback = null, float duration = 1.5f)
 	{
-		this.m_FadeSpeed = speed;
+		this.m_FadeDuration = duration;
 		Debug.Log(string.Concat(new string[]
 		{
 			"FadeSystem FadIn m_FadeIn = ",
@@ -126,27 +127,30 @@ public class FadeSystem : MonoBehaviour
 			this.m_StartScreenFadeAlpha = this.m_ScreenAlphaController.alpha;
 			this.m_StartScreenFadeTime = Time.time;
 		}
+		this.m_FadeInTime = 0f;
 	}
 
 	private void FadeIn()
 	{
+		float num = (HUDMovie.Get() != null && HUDMovie.Get().m_Active) ? Time.unscaledDeltaTime : Time.deltaTime;
+		this.m_FadeInTime += num;
 		if (this.ShouldFadeImage())
 		{
-			this.m_FadeLevel1[0] = Mathf.Lerp(this.m_FadeLevel1[0], 0f, this.m_FadeSpeed * Time.deltaTime);
-			this.UpdateAlpha();
+			this.m_FadeLevel1[0] = CJTools.Math.GetProportionalClamp(1f, 0f, this.m_FadeInTime, 0f, this.m_FadeDuration);
+			this.UpdateAlpha(false);
 		}
 		if (this.ShouldFadeSounds())
 		{
-			this.m_FadeLevel1[1] = Mathf.Lerp(this.m_FadeLevel1[1], 0f, this.m_FadeSpeed * Time.deltaTime);
+			this.m_FadeLevel1[1] = CJTools.Math.GetProportionalClamp(1f, 0f, this.m_FadeInTime, 0f, this.m_FadeDuration);
 			this.UpdateSounds();
 		}
 		this.m_VisFadeLevel = this.m_FadeLevel1[0];
 		this.m_SoundFadeLevel = this.m_FadeLevel1[1];
 	}
 
-	public void FadeOut(FadeType type, VDelegate callback = null, float speed = 1.5f, GameObject screen_prefab = null)
+	public void FadeOut(FadeType type, VDelegate callback = null, float duration = 1.5f, GameObject screen_prefab = null)
 	{
-		this.m_FadeSpeed = speed;
+		this.m_FadeDuration = duration;
 		Debug.Log(string.Concat(new string[]
 		{
 			"FadeSystem FadOut m_FadeIn = ",
@@ -177,25 +181,28 @@ public class FadeSystem : MonoBehaviour
 			this.m_Screen = gameObject;
 			this.m_ScreenAlphaController = gameObject.GetComponent<CanvasGroup>();
 		}
+		this.m_FadeOutTime = 0f;
 	}
 
 	private void FadeOut()
 	{
+		float num = (HUDMovie.Get() != null && HUDMovie.Get().m_Active) ? Time.unscaledDeltaTime : Time.deltaTime;
+		this.m_FadeOutTime += num;
 		if (this.ShouldFadeImage())
 		{
-			this.m_FadeLevel1[0] = Mathf.Lerp(this.m_FadeLevel1[0], 1.1f, this.m_FadeSpeed * Time.deltaTime);
-			this.UpdateAlpha();
+			this.m_FadeLevel1[0] = CJTools.Math.GetProportionalClamp(0f, 1f, this.m_FadeOutTime, 0f, this.m_FadeDuration);
+			this.UpdateAlpha(false);
 		}
 		if (this.ShouldFadeSounds())
 		{
-			this.m_FadeLevel1[1] = Mathf.Lerp(this.m_FadeLevel1[1], 1.1f, this.m_FadeSpeed * Time.deltaTime);
+			this.m_FadeLevel1[1] = CJTools.Math.GetProportionalClamp(0f, 1f, this.m_FadeOutTime, 0f, this.m_FadeDuration);
 			this.UpdateSounds();
 		}
 		this.m_VisFadeLevel = this.m_FadeLevel1[0];
 		this.m_SoundFadeLevel = this.m_FadeLevel1[1];
 	}
 
-	private void UpdateAlpha()
+	private void UpdateAlpha(bool update_time = false)
 	{
 		this.m_Color.a = this.m_FadeLevel1[0];
 		this.m_Color.a = Mathf.Clamp01(this.m_Color.a);
@@ -205,19 +212,28 @@ public class FadeSystem : MonoBehaviour
 		}
 		if (this.m_ScreenFadingOut)
 		{
-			float b = (1f - this.m_StartScreenFadeAlpha) * 1.5f;
-			this.m_ScreenAlphaController.alpha = CJTools.Math.GetProportionalClamp(this.m_StartScreenFadeAlpha, 1f, Time.time - this.m_StartScreenFadeTime, 0f, b);
+			if (update_time)
+			{
+				float num = (HUDMovie.Get() != null && HUDMovie.Get().m_Active) ? Time.unscaledDeltaTime : Time.deltaTime;
+				this.m_FadeOutTime += num;
+			}
+			this.m_ScreenAlphaController.alpha = CJTools.Math.GetProportionalClamp(this.m_StartScreenFadeAlpha, 1f, this.m_FadeOutTime, 0f, this.m_FadeDuration);
 			if (this.m_ScreenAlphaController.alpha >= 1f)
 			{
 				this.m_ScreenAlphaController.alpha = 1f;
 				this.m_ScreenFadingOut = false;
+				return;
 			}
 		}
 		else if (this.m_ScreenFadingIn)
 		{
-			float b2 = this.m_StartScreenFadeAlpha * 1.5f;
-			this.m_ScreenAlphaController.alpha = CJTools.Math.GetProportionalClamp(this.m_StartScreenFadeAlpha, 0f, Time.time - this.m_StartScreenFadeTime, 0f, b2);
-			if (this.m_ScreenAlphaController.alpha == 0f)
+			if (update_time)
+			{
+				float num2 = (HUDMovie.Get() != null && HUDMovie.Get().m_Active) ? Time.unscaledDeltaTime : Time.deltaTime;
+				this.m_FadeInTime += num2;
+			}
+			this.m_ScreenAlphaController.alpha = CJTools.Math.GetProportionalClamp(this.m_StartScreenFadeAlpha, 0f, this.m_FadeInTime, 0f, this.m_FadeDuration);
+			if (this.m_ScreenAlphaController.alpha <= 0f)
 			{
 				this.m_ScreenFadingIn = false;
 			}
@@ -245,52 +261,38 @@ public class FadeSystem : MonoBehaviour
 			return;
 		}
 		this.FadeIn();
-		float num = 0.05f;
+		float num = 0f;
 		bool flag = false;
-		FadeType fadeType = this.m_FadeType;
-		if (fadeType != FadeType.All)
+		switch (this.m_FadeType)
 		{
-			if (fadeType != FadeType.Vis)
-			{
-				if (fadeType == FadeType.Sound)
-				{
-					flag = (this.m_FadeLevel1[1] <= num);
-				}
-			}
-			else
-			{
-				flag = (this.m_FadeLevel1[0] <= num);
-			}
-		}
-		else
-		{
+		case FadeType.Vis:
+			flag = (this.m_FadeLevel1[0] <= num);
+			break;
+		case FadeType.Sound:
+			flag = (this.m_FadeLevel1[1] <= num);
+			break;
+		case FadeType.All:
 			flag = (this.m_FadeLevel1[0] <= num && this.m_FadeLevel1[1] <= num);
+			break;
 		}
 		if (flag)
 		{
-			FadeType fadeType2 = this.m_FadeType;
-			if (fadeType2 != FadeType.All)
+			switch (this.m_FadeType)
 			{
-				if (fadeType2 != FadeType.Vis)
-				{
-					if (fadeType2 == FadeType.Sound)
-					{
-						this.m_FadeLevel1[1] = 0f;
-					}
-				}
-				else
-				{
-					this.m_FadeLevel1[0] = 0f;
-				}
-			}
-			else
-			{
+			case FadeType.Vis:
+				this.m_FadeLevel1[0] = 0f;
+				break;
+			case FadeType.Sound:
+				this.m_FadeLevel1[1] = 0f;
+				break;
+			case FadeType.All:
 				this.m_FadeLevel1[0] = 0f;
 				this.m_FadeLevel1[1] = 0f;
+				break;
 			}
 			this.m_VisFadeLevel = this.m_FadeLevel1[0];
 			this.m_SoundFadeLevel = this.m_FadeLevel1[1];
-			this.UpdateAlpha();
+			this.UpdateAlpha(false);
 			foreach (RawImage rawImage in this.m_FadeImages)
 			{
 				rawImage.enabled = false;
@@ -324,50 +326,36 @@ public class FadeSystem : MonoBehaviour
 	{
 		float num = 1f;
 		bool flag = false;
-		FadeType fadeType = this.m_FadeType;
-		if (fadeType != FadeType.All)
+		switch (this.m_FadeType)
 		{
-			if (fadeType != FadeType.Vis)
-			{
-				if (fadeType == FadeType.Sound)
-				{
-					flag = (this.m_FadeLevel1[1] >= num);
-				}
-			}
-			else
-			{
-				flag = (this.m_FadeLevel1[0] >= num);
-			}
-		}
-		else
-		{
+		case FadeType.Vis:
+			flag = (this.m_FadeLevel1[0] >= num);
+			break;
+		case FadeType.Sound:
+			flag = (this.m_FadeLevel1[1] >= num);
+			break;
+		case FadeType.All:
 			flag = (this.m_FadeLevel1[0] >= num && this.m_FadeLevel1[1] >= num);
+			break;
 		}
 		if (flag)
 		{
-			FadeType fadeType2 = this.m_FadeType;
-			if (fadeType2 != FadeType.All)
+			switch (this.m_FadeType)
 			{
-				if (fadeType2 != FadeType.Vis)
-				{
-					if (fadeType2 == FadeType.Sound)
-					{
-						this.m_FadeLevel1[1] = 1f;
-					}
-				}
-				else
-				{
-					this.m_FadeLevel1[0] = 1f;
-				}
-			}
-			else
-			{
+			case FadeType.Vis:
+				this.m_FadeLevel1[0] = 1f;
+				break;
+			case FadeType.Sound:
+				this.m_FadeLevel1[1] = 1f;
+				break;
+			case FadeType.All:
 				this.m_FadeLevel1[0] = 1f;
 				this.m_FadeLevel1[1] = 1f;
+				break;
 			}
 			this.m_VisFadeLevel = this.m_FadeLevel1[0];
 			this.m_SoundFadeLevel = this.m_FadeLevel1[1];
-			this.UpdateAlpha();
+			this.UpdateAlpha(false);
 			this.m_FadingOut = false;
 			Debug.Log("FadeSystem FadeOutCoroutine m_FadingOut = false");
 			if (this.m_Callback != null)
@@ -392,33 +380,38 @@ public class FadeSystem : MonoBehaviour
 
 	public void SetFadeLevel(FadeType type, float val)
 	{
-		FadeType fadeType = this.m_FadeType;
-		if (fadeType != FadeType.All)
+		switch (this.m_FadeType)
 		{
-			if (fadeType != FadeType.Vis)
-			{
-				if (fadeType == FadeType.Sound)
-				{
-					this.m_FadeLevel1[1] = val;
-				}
-			}
-			else
-			{
-				this.m_FadeLevel1[0] = val;
-			}
-		}
-		else
-		{
+		case FadeType.Vis:
+			this.m_FadeLevel1[0] = val;
+			return;
+		case FadeType.Sound:
+			this.m_FadeLevel1[1] = val;
+			return;
+		case FadeType.All:
 			this.m_FadeLevel1[0] = val;
 			this.m_FadeLevel1[1] = val;
+			return;
+		default:
+			return;
 		}
+	}
+
+	public bool GetFirstFadeIn()
+	{
+		return this.m_FirstFadeIn;
+	}
+
+	public bool IsFadeVisible()
+	{
+		return this.m_Color.a > 0.05f;
 	}
 
 	public List<RawImage> m_FadeImages;
 
-	public float m_FadeSpeed = 1.5f;
+	public float m_FadeDuration = 1.5f;
 
-	private const float m_FadeSpeedDefault = 1.5f;
+	private const float m_FadeDurationDefault = 1.5f;
 
 	[NonSerialized]
 	public bool m_FadeIn;
@@ -463,4 +456,8 @@ public class FadeSystem : MonoBehaviour
 	private float m_FirstFadeInDelay;
 
 	private static FadeSystem s_Instance;
+
+	private float m_FadeInTime;
+
+	private float m_FadeOutTime;
 }

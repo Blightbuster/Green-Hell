@@ -5,12 +5,6 @@ namespace Cinemachine.Utility
 {
 	internal abstract class GaussianWindow1d<T>
 	{
-		public GaussianWindow1d(float sigma, int maxKernelRadius = 10)
-		{
-			this.GenerateKernel(sigma, maxKernelRadius);
-			this.mCurrentPos = 0;
-		}
-
 		public float Sigma { get; private set; }
 
 		public int KernelSize
@@ -43,6 +37,12 @@ namespace Cinemachine.Utility
 
 		protected abstract T Compute(int windowPos);
 
+		public GaussianWindow1d(float sigma, int maxKernelRadius = 10)
+		{
+			this.GenerateKernel(sigma, maxKernelRadius);
+			this.mCurrentPos = 0;
+		}
+
 		public void Reset()
 		{
 			this.mData = null;
@@ -65,7 +65,9 @@ namespace Cinemachine.Utility
 				this.mCurrentPos = Mathf.Min(1, this.KernelSize - 1);
 			}
 			this.mData[this.mCurrentPos] = v;
-			if (++this.mCurrentPos == this.KernelSize)
+			int num = this.mCurrentPos + 1;
+			this.mCurrentPos = num;
+			if (num == this.KernelSize)
 			{
 				this.mCurrentPos = 0;
 			}

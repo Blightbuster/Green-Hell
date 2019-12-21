@@ -6,9 +6,10 @@ using UnityEngine;
 
 public class PocketGrid
 {
-	public void Initialize()
+	public void Initialize(GameObject cell_prefab, BackpackPocket pocket)
 	{
 		this.m_CellLayer = LayerMask.NameToLayer("3DInventory");
+		this.m_Pocked = pocket;
 		Vector3 one = Vector3.one;
 		one.x = 1f / (float)((int)this.m_GridSize.x);
 		one.y = 1f / (float)((int)this.m_GridSize.y);
@@ -23,10 +24,9 @@ public class PocketGrid
 				InventoryCell inventoryCell = new InventoryCell();
 				inventoryCell.m_IndexX = j;
 				inventoryCell.m_IndexY = i;
-				inventoryCell.pocket = BackpackPocket.Main;
-				inventoryCell.m_Object = UnityEngine.Object.Instantiate<GameObject>(InventoryBackpack.Get().m_Backpack.m_GridCellPrefab);
-				GameObject @object = inventoryCell.m_Object;
-				@object.name += num.ToString();
+				inventoryCell.pocket = this.m_Pocked;
+				inventoryCell.m_Object = UnityEngine.Object.Instantiate<GameObject>(cell_prefab);
+				inventoryCell.m_Object.name = this.m_Pocked.ToString() + num.ToString();
 				inventoryCell.m_Object.layer = this.m_CellLayer;
 				inventoryCell.m_Renderer = inventoryCell.m_Object.GetComponent<Renderer>();
 				inventoryCell.m_Renderer.enabled = false;
@@ -43,51 +43,75 @@ public class PocketGrid
 		}
 	}
 
-	public bool InsertItem(Item item, ItemSlot slot, InventoryCellsGroup group, bool can_stack, bool can_auto_select_group)
+	public void Reset()
 	{
+		for (int i = 0; i < (int)this.m_GridSize.y; i++)
+		{
+			for (int j = 0; j < (int)this.m_GridSize.x; j++)
+			{
+				this.m_Cells[j, i].m_Items.Clear();
+			}
+		}
+	}
+
+	public bool InsertItem(Item item, ItemSlot slot, InventoryCellsGroup group, bool can_stack, bool can_auto_select_group, Storage storage = null)
+	{
+		if (item.m_Info.m_FakeItem)
+		{
+			return true;
+		}
 		if (slot)
 		{
 			if (slot.CanInsertItem(item))
 			{
+				if (slot.IsStack() && slot.m_ItemParent && slot.m_ItemParent.m_Info.m_InventoryRotated != item.m_Info.m_InventoryRotated)
+				{
+					Inventory3DManager.Get().RotateItem(item, true);
+				}
 				slot.InsertItem(item);
 				return true;
 			}
-			return false;
-		}
-		else
-		{
-			if (group == null)
+			if (!slot.IsOccupied())
 			{
-				if (can_stack)
+				return false;
+			}
+		}
+		if (group == null)
+		{
+			if (can_stack)
+			{
+				List<Item> list = storage ? storage.m_Items : InventoryBackpack.Get().m_Items;
+				for (int i = 0; i < list.Count; i++)
 				{
-					for (int i = 0; i < InventoryBackpack.Get().m_Items.Count; i++)
+					Item item2 = list[i];
+					if (item2.m_InventorySlot && !item2.m_CurrentSlot && item2.m_InventorySlot.CanInsertItem(item))
 					{
-						Item item2 = InventoryBackpack.Get().m_Items[i];
-						if (item2.m_InventorySlot && !item2.m_CurrentSlot && item2.m_InventorySlot.CanInsertItem(item))
+						if (item2.m_Info.m_InventoryRotated != item.m_Info.m_InventoryRotated)
 						{
-							item2.m_InventorySlot.InsertItem(item);
-							return true;
+							Inventory3DManager.Get().RotateItem(item, true);
 						}
-					}
-				}
-				if (can_auto_select_group)
-				{
-					group = this.FindFreeGroup(item);
-					if (group != null && group.IsFree())
-					{
-						group.Insert(item, this.m_Grid);
+						item2.m_InventorySlot.InsertItem(item);
 						return true;
 					}
 				}
-				return false;
 			}
-			if (group.IsFree())
+			if (can_auto_select_group)
 			{
-				group.Insert(item, this.m_Grid);
-				return true;
+				group = this.FindFreeGroup(item);
+				if (group != null && group.IsFree())
+				{
+					group.Insert(item, this.m_Grid);
+					return true;
+				}
 			}
 			return false;
 		}
+		if (group.IsFree())
+		{
+			group.Insert(item, this.m_Grid);
+			return true;
+		}
+		return false;
 	}
 
 	public void RemoveItem(Item item)
@@ -98,19 +122,17 @@ public class PocketGrid
 		}
 	}
 
-	private void CalcRequiredCells(Item item, ref int x, ref int y)
+	public void CalcRequiredCells(Item item, ref int x, ref int y)
 	{
 		Vector3 inventoryLocalScale = item.m_InventoryLocalScale;
 		if (item.m_Info.m_InventoryRotated)
 		{
-			x = Mathf.CeilToInt(item.m_DefaultSize.z * inventoryLocalScale.x / this.m_CellSize.x);
-			y = Mathf.CeilToInt(item.m_DefaultSize.x * inventoryLocalScale.z / this.m_CellSize.y);
+			x = Mathf.CeilToInt(item.m_DefaultSize.z * inventoryLocalScale.z / this.m_CellSize.x);
+			y = Mathf.CeilToInt(item.m_DefaultSize.x * inventoryLocalScale.x / this.m_CellSize.y);
+			return;
 		}
-		else
-		{
-			x = Mathf.CeilToInt(item.m_DefaultSize.x * inventoryLocalScale.x / this.m_CellSize.x);
-			y = Mathf.CeilToInt(item.m_DefaultSize.z * inventoryLocalScale.z / this.m_CellSize.y);
-		}
+		x = Mathf.CeilToInt(item.m_DefaultSize.x * inventoryLocalScale.x / this.m_CellSize.x);
+		y = Mathf.CeilToInt(item.m_DefaultSize.z * inventoryLocalScale.z / this.m_CellSize.y);
 	}
 
 	public void Setup()
@@ -121,38 +143,35 @@ public class PocketGrid
 		{
 			return;
 		}
-		if (carriedItem.m_Info.m_InventoryCellsGroup != null)
+		if (this.m_Pocked == BackpackPocket.Storage && !Storage3D.Get().CanInsertItem(Inventory3DManager.Get().m_CarriedItem))
 		{
-			carriedItem.m_Info.m_InventoryCellsGroup.Remove(carriedItem);
+			return;
 		}
 		int num = 0;
 		int num2 = 0;
 		this.CalcRequiredCells(carriedItem, ref num, ref num2);
 		InventoryCell[,] cells = this.m_Cells;
-		int length = cells.GetLength(0);
-		int length2 = cells.GetLength(1);
-		for (int i = 0; i < length; i++)
+		int upperBound = cells.GetUpperBound(0);
+		int upperBound2 = cells.GetUpperBound(1);
+		for (int i = cells.GetLowerBound(0); i <= upperBound; i++)
 		{
-			for (int j = 0; j < length2; j++)
+			for (int j = cells.GetLowerBound(1); j <= upperBound2; j++)
 			{
 				InventoryCell inventoryCell = cells[i, j];
-				if (inventoryCell.m_IndexX + num <= (int)this.m_GridSize.x)
+				if (inventoryCell.m_IndexX + num <= (int)this.m_GridSize.x && inventoryCell.m_IndexY + num2 <= (int)this.m_GridSize.y)
 				{
-					if (inventoryCell.m_IndexY + num2 <= (int)this.m_GridSize.y)
+					InventoryCellsGroup inventoryCellsGroup = new InventoryCellsGroup(this.m_Pocked);
+					for (int k = inventoryCell.m_IndexX; k < inventoryCell.m_IndexX + num; k++)
 					{
-						InventoryCellsGroup inventoryCellsGroup = new InventoryCellsGroup();
-						for (int k = inventoryCell.m_IndexX; k < inventoryCell.m_IndexX + num; k++)
+						for (int l = inventoryCell.m_IndexY; l < inventoryCell.m_IndexY + num2; l++)
 						{
-							for (int l = inventoryCell.m_IndexY; l < inventoryCell.m_IndexY + num2; l++)
-							{
-								inventoryCellsGroup.m_Cells.Add(this.m_Cells[k, l]);
-							}
+							inventoryCellsGroup.m_Cells.Add(this.m_Cells[k, l]);
 						}
-						if (inventoryCellsGroup.m_Cells.Count != 0)
-						{
-							inventoryCellsGroup.Setup();
-							this.m_MatchingGroups.Add(inventoryCellsGroup);
-						}
+					}
+					if (inventoryCellsGroup.m_Cells.Count != 0)
+					{
+						inventoryCellsGroup.Setup();
+						this.m_MatchingGroups.Add(inventoryCellsGroup);
 					}
 				}
 			}
@@ -165,16 +184,15 @@ public class PocketGrid
 		{
 			return null;
 		}
-		int num = 0;
-		int num2 = 0;
-		item.m_Info.m_InventoryRotated = false;
-		item.transform.rotation = Quaternion.identity;
-		this.CalcRequiredCells(item, ref num, ref num2);
-		InventoryCellsGroup inventoryCellsGroup = this.FindFreeGroup(item, num, num2);
+		int req_x = 0;
+		int req_y = 0;
+		this.CalcRequiredCells(item, ref req_x, ref req_y);
+		InventoryCellsGroup inventoryCellsGroup = this.FindFreeGroup(item, req_x, req_y);
 		if (inventoryCellsGroup == null)
 		{
-			Inventory3DManager.Get().RotateItem(item);
-			inventoryCellsGroup = this.FindFreeGroup(item, num2, num);
+			Inventory3DManager.Get().RotateItem(item, true);
+			this.CalcRequiredCells(item, ref req_x, ref req_y);
+			inventoryCellsGroup = this.FindFreeGroup(item, req_x, req_y);
 		}
 		return inventoryCellsGroup;
 	}
@@ -182,30 +200,27 @@ public class PocketGrid
 	private InventoryCellsGroup FindFreeGroup(Item item, int req_x, int req_y)
 	{
 		InventoryCell[,] cells = this.m_Cells;
-		int length = cells.GetLength(0);
-		int length2 = cells.GetLength(1);
-		for (int i = 0; i < length; i++)
+		int upperBound = cells.GetUpperBound(0);
+		int upperBound2 = cells.GetUpperBound(1);
+		for (int i = cells.GetLowerBound(0); i <= upperBound; i++)
 		{
-			for (int j = 0; j < length2; j++)
+			for (int j = cells.GetLowerBound(1); j <= upperBound2; j++)
 			{
 				InventoryCell inventoryCell = cells[i, j];
-				if (inventoryCell.m_IndexX + req_x <= (int)this.m_GridSize.x)
+				if (inventoryCell.m_IndexX + req_x <= (int)this.m_GridSize.x && inventoryCell.m_IndexY + req_y <= (int)this.m_GridSize.y)
 				{
-					if (inventoryCell.m_IndexY + req_y <= (int)this.m_GridSize.y)
+					InventoryCellsGroup inventoryCellsGroup = new InventoryCellsGroup(this.m_Pocked);
+					for (int k = inventoryCell.m_IndexX; k < inventoryCell.m_IndexX + req_x; k++)
 					{
-						InventoryCellsGroup inventoryCellsGroup = new InventoryCellsGroup();
-						for (int k = inventoryCell.m_IndexX; k < inventoryCell.m_IndexX + req_x; k++)
+						for (int l = inventoryCell.m_IndexY; l < inventoryCell.m_IndexY + req_y; l++)
 						{
-							for (int l = inventoryCell.m_IndexY; l < inventoryCell.m_IndexY + req_y; l++)
-							{
-								inventoryCellsGroup.m_Cells.Add(this.m_Cells[k, l]);
-							}
+							inventoryCellsGroup.m_Cells.Add(this.m_Cells[k, l]);
 						}
-						if (inventoryCellsGroup.m_Cells.Count != 0 && inventoryCellsGroup.IsFree())
-						{
-							inventoryCellsGroup.Setup();
-							return inventoryCellsGroup;
-						}
+					}
+					if (inventoryCellsGroup.m_Cells.Count != 0 && inventoryCellsGroup.IsFree())
+					{
+						inventoryCellsGroup.Setup();
+						return inventoryCellsGroup;
 					}
 				}
 			}
@@ -230,14 +245,14 @@ public class PocketGrid
 		zero.y = CJTools.Math.GetProportionalClamp(0f, 1f, zero2.y, -rectTransform.sizeDelta.y * 0.5f, rectTransform.sizeDelta.y * 0.5f);
 		GameObject gameObject = null;
 		Vector3 vector = Vector3.zero;
-		Ray ray = Inventory3DManager.Get().m_Camera.ViewportPointToRay(zero);
-		RaycastHit[] array = Physics.RaycastAll(ray, 5f);
-		for (int i = 0; i < array.Length; i++)
+		Inventory3DManager.Get().m_Camera.ViewportPointToRay(zero);
+		RaycastHit[] backpackHits = Inventory3DManager.Get().m_BackpackHits;
+		for (int i = 0; i < Inventory3DManager.Get().m_BackpackHitsCnt; i++)
 		{
-			if (array[i].collider.gameObject.transform.parent == this.m_Grid.transform)
+			if (backpackHits[i].collider.gameObject.transform.parent == this.m_Grid.transform)
 			{
-				gameObject = array[i].collider.gameObject;
-				vector = array[i].point;
+				gameObject = backpackHits[i].collider.gameObject;
+				vector = backpackHits[i].point;
 				break;
 			}
 		}
@@ -274,44 +289,50 @@ public class PocketGrid
 	public void OnSetSelectedGroup(InventoryCellsGroup group)
 	{
 		InventoryCell[,] cells = this.m_Cells;
-		int length = cells.GetLength(0);
-		int length2 = cells.GetLength(1);
-		for (int i = 0; i < length; i++)
+		int upperBound = cells.GetUpperBound(0);
+		int upperBound2 = cells.GetUpperBound(1);
+		for (int i = cells.GetLowerBound(0); i <= upperBound; i++)
 		{
-			for (int j = 0; j < length2; j++)
+			for (int j = cells.GetLowerBound(1); j <= upperBound2; j++)
 			{
-				InventoryCell inventoryCell = cells[i, j];
-				inventoryCell.m_Renderer.enabled = false;
+				cells[i, j].m_Renderer.enabled = false;
 			}
 		}
 		if (group == null)
 		{
 			return;
 		}
-		bool flag = group.IsFree();
-		if (flag)
+		for (int k = 0; k < (int)this.m_GridSize.y; k++)
 		{
-			for (int k = 0; k < group.m_Cells.Count; k++)
+			for (int l = 0; l < (int)this.m_GridSize.x; l++)
 			{
-				group.m_Cells[k].m_Renderer.enabled = true;
-				group.m_Cells[k].m_Renderer.material.color = InventoryBackpack.Get().m_FreeColor;
+				this.m_Cells[l, k].m_Renderer.material.color = Color.white;
 			}
 		}
-		else
+		if (group.IsFree())
 		{
-			for (int l = 0; l < group.m_Cells.Count; l++)
+			for (int m = 0; m < group.m_Cells.Count; m++)
 			{
-				group.m_Cells[l].m_Renderer.enabled = true;
-				group.m_Cells[l].m_Renderer.material.color = InventoryBackpack.Get().m_OccupiedColor;
-				if (group.m_Cells[l].m_Items.Count > 0)
+				group.m_Cells[m].m_Renderer.enabled = true;
+				group.m_Cells[m].m_Renderer.material.color = InventoryBackpack.Get().m_FreeColor;
+			}
+			return;
+		}
+		for (int n = 0; n < group.m_Cells.Count; n++)
+		{
+			group.m_Cells[n].m_Renderer.enabled = true;
+			group.m_Cells[n].m_Renderer.material.color = InventoryBackpack.Get().m_OccupiedColor;
+			if (group.m_Cells[n].m_Items.Count > 0)
+			{
+				for (int num = 0; num < group.m_Cells[n].m_Items.Count; num++)
 				{
-					for (int m = 0; m < group.m_Cells[l].m_Items.Count; m++)
+					InventoryCellsGroup inventoryCellsGroup = group.m_Cells[n].m_Items[num].m_Info.m_InventoryCellsGroup;
+					if (this.m_Pocked != BackpackPocket.Storage || !group.m_Cells[n].m_Items[num].m_Storage || !(group.m_Cells[n].m_Items[num].m_Storage != Storage3D.Get().m_Storage))
 					{
-						InventoryCellsGroup inventoryCellsGroup = group.m_Cells[l].m_Items[m].m_Info.m_InventoryCellsGroup;
-						for (int n = 0; n < inventoryCellsGroup.m_Cells.Count; n++)
+						for (int num2 = 0; num2 < inventoryCellsGroup.m_Cells.Count; num2++)
 						{
-							inventoryCellsGroup.m_Cells[n].m_Renderer.enabled = true;
-							inventoryCellsGroup.m_Cells[n].m_Renderer.material.color = InventoryBackpack.Get().m_OccupiedColor;
+							inventoryCellsGroup.m_Cells[num2].m_Renderer.enabled = true;
+							inventoryCellsGroup.m_Cells[num2].m_Renderer.material.color = InventoryBackpack.Get().m_OccupiedColor;
 						}
 					}
 				}
@@ -322,11 +343,11 @@ public class PocketGrid
 	public InventoryCell GetCellByName(string name)
 	{
 		InventoryCell[,] cells = this.m_Cells;
-		int length = cells.GetLength(0);
-		int length2 = cells.GetLength(1);
-		for (int i = 0; i < length; i++)
+		int upperBound = cells.GetUpperBound(0);
+		int upperBound2 = cells.GetUpperBound(1);
+		for (int i = cells.GetLowerBound(0); i <= upperBound; i++)
 		{
-			for (int j = 0; j < length2; j++)
+			for (int j = cells.GetLowerBound(1); j <= upperBound2; j++)
 			{
 				InventoryCell inventoryCell = cells[i, j];
 				if (inventoryCell.m_Object.name == name)
@@ -341,14 +362,13 @@ public class PocketGrid
 	public void OnCloseBackpack()
 	{
 		InventoryCell[,] cells = this.m_Cells;
-		int length = cells.GetLength(0);
-		int length2 = cells.GetLength(1);
-		for (int i = 0; i < length; i++)
+		int upperBound = cells.GetUpperBound(0);
+		int upperBound2 = cells.GetUpperBound(1);
+		for (int i = cells.GetLowerBound(0); i <= upperBound; i++)
 		{
-			for (int j = 0; j < length2; j++)
+			for (int j = cells.GetLowerBound(1); j <= upperBound2; j++)
 			{
-				InventoryCell inventoryCell = cells[i, j];
-				inventoryCell.m_Renderer.enabled = false;
+				cells[i, j].m_Renderer.enabled = false;
 			}
 		}
 	}
@@ -362,6 +382,8 @@ public class PocketGrid
 	public InventoryCell[,] m_Cells;
 
 	private List<InventoryCellsGroup> m_MatchingGroups = new List<InventoryCellsGroup>();
+
+	private BackpackPocket m_Pocked = BackpackPocket.None;
 
 	private int m_CellLayer = -1;
 }

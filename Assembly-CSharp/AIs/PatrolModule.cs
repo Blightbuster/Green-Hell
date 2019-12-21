@@ -7,9 +7,9 @@ namespace AIs
 {
 	public class PatrolModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_TempPath = new NavMeshPath();
 			this.m_PathShift = UnityEngine.Random.Range(-3f, 3f);
 		}
@@ -25,11 +25,9 @@ namespace AIs
 				}
 				this.UpdateOnPath();
 				this.UpdateSpeed();
+				return;
 			}
-			else
-			{
-				this.m_CalcPathPending = false;
-			}
+			this.m_CalcPathPending = false;
 		}
 
 		public void CalcPath()
@@ -39,26 +37,20 @@ namespace AIs
 				this.m_CalcPathPending = true;
 				return;
 			}
-			Vector3 normalized = (this.m_CurrentPathPoint.transform.position - this.m_CurrentPathPoint.m_Prev.transform.position).normalized;
-			Vector3 a = Vector3.Cross(normalized, Vector3.up);
-			Vector3 sourcePosition = this.m_CurrentPathPoint.transform.position + a * this.m_PathShift;
-			if (NavMesh.SamplePosition(sourcePosition, out this.m_TempHit, 2f, AIManager.s_WalkableAreaMask))
-			{
-				if (!NavMesh.CalculatePath(base.transform.position, this.m_TempHit.position, AIManager.s_WalkableAreaMask, this.m_TempPath) || this.m_TempPath.status == NavMeshPathStatus.PathInvalid || this.m_TempPath.status == NavMeshPathStatus.PathPartial)
-				{
-					this.m_CalcPathPending = true;
-				}
-				else
-				{
-					this.m_AI.m_PathModule.m_Agent.ResetPath();
-					this.m_AI.m_PathModule.m_Agent.SetPath(this.m_TempPath);
-					this.m_CalcPathPending = false;
-				}
-			}
-			else
+			Vector3 a = Vector3.Cross((this.m_CurrentPathPoint.transform.position - this.m_CurrentPathPoint.m_Prev.transform.position).normalized, Vector3.up);
+			if (!NavMesh.SamplePosition(this.m_CurrentPathPoint.transform.position + a * this.m_PathShift, out this.m_TempHit, 2f, AIManager.s_WalkableAreaMask))
 			{
 				this.m_CalcPathPending = true;
+				return;
 			}
+			if (!NavMesh.CalculatePath(base.transform.position, this.m_TempHit.position, AIManager.s_WalkableAreaMask, this.m_TempPath) || this.m_TempPath.status == NavMeshPathStatus.PathInvalid || this.m_TempPath.status == NavMeshPathStatus.PathPartial)
+			{
+				this.m_CalcPathPending = true;
+				return;
+			}
+			this.m_AI.m_PathModule.m_Agent.ResetPath();
+			this.m_AI.m_PathModule.m_Agent.SetPath(this.m_TempPath);
+			this.m_CalcPathPending = false;
 		}
 
 		private void UpdateOnPath()
@@ -95,11 +87,9 @@ namespace AIs
 			if (this.m_Patrol.m_Leader.m_PatrolModule.m_Progress > this.m_Progress)
 			{
 				this.m_AI.m_AnimationModule.SetForcedSpeed(CJTools.Math.GetProportionalClamp(1f, 1.2f, num, 3f, 6f));
+				return;
 			}
-			else
-			{
-				this.m_AI.m_AnimationModule.SetForcedSpeed(CJTools.Math.GetProportionalClamp(1f, 0.8f, num, 3f, 6f));
-			}
+			this.m_AI.m_AnimationModule.SetForcedSpeed(CJTools.Math.GetProportionalClamp(1f, 0.8f, num, 3f, 6f));
 		}
 
 		private void PassPathpoint()

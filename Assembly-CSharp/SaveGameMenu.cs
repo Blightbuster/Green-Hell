@@ -7,85 +7,73 @@ public class SaveGameMenu : LoadSaveGameMenuCommon, IYesNoDialogOwner
 	public override void OnShow()
 	{
 		base.OnShow();
-		this.m_Loading = false;
+		this.m_IsBusy = false;
+		this.m_SlotIdx = -1;
 	}
 
 	protected override void OnSlotSelected(int slot_idx)
 	{
+		if (this.m_IsBusy)
+		{
+			return;
+		}
+		if (this.m_SlotIdx == slot_idx)
+		{
+			return;
+		}
 		this.m_SlotIdx = slot_idx;
 		if (!this.m_Slots[slot_idx].m_Empty)
 		{
-			GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Warning"), GreenHellGame.Instance.GetLocalization().Get("MenuSaveGame_OverwriteWarning"), true);
-			this.m_Loading = true;
+			GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Warning", true), GreenHellGame.Instance.GetLocalization().Get("MenuSaveGame_OverwriteWarning", true), !this.m_IsIngame);
+			this.m_IsBusy = true;
+			return;
 		}
-		else
-		{
-			SaveGame.s_MainSaveName = "Slot" + this.m_SlotIdx.ToString() + ".sav";
-			base.Invoke("OnPreStartGame", 0.3f);
-			this.m_Loading = true;
-		}
+		this.DoSaveGame();
 	}
 
 	public void OnYesFromDialog()
 	{
-		SaveGame.s_MainSaveName = "Slot" + this.m_SlotIdx.ToString() + ".sav";
-		base.Invoke("OnPreStartGame", 0.3f);
+		Debug.Log("SaveGameMenu:OnYesFromDialog - " + base.GetSelectedSlotFileName());
+		this.DoSaveGame();
 	}
 
 	public void OnNoFromDialog()
 	{
-		this.m_Loading = false;
+		this.m_IsBusy = false;
+		this.m_SlotIdx = -1;
 	}
 
 	public void OnOkFromDialog()
 	{
-		this.m_Loading = false;
+		this.m_IsBusy = false;
 	}
 
-	private void OnPreStartGame()
+	public void OnCloseDialog()
 	{
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeOut(FadeType.All, new VDelegate(this.OnStartGame), 2f, null);
-		CursorManager.Get().ShowCursor(false);
 	}
 
-	public void OnStartGame()
+	private void DoSaveGame()
 	{
-		LoadingScreen.Get().Show(LoadingScreenState.StartGame);
-		GreenHellGame.Instance.m_FromSave = false;
-		Music.Get().Stop(1f);
-		MainMenuManager.Get().HideAllScreens();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 2f);
-		base.Invoke("OnStartGameDelayed", 1f);
-	}
-
-	private void OnStartGameDelayed()
-	{
-		Music.Get().PlayByName("loading_screen", false);
-		Music.Get().m_Source.loop = true;
-		GreenHellGame.Instance.StartGame();
-	}
-
-	protected override void Update()
-	{
-		base.Update();
-		if (Input.GetKeyDown(KeyCode.Escape))
+		this.m_IsBusy = true;
+		if (this.m_IsIngame)
 		{
-			this.OnBack();
+			SaveGame.Save(base.GetSlotSaveName(this.m_SlotIdx));
+			this.m_MenuInGameManager.HideMenu();
+			return;
 		}
+		SaveGame.s_MainSaveName = base.GetSlotSaveName(this.m_SlotIdx);
+		Debug.Log("SaveGameMenu:DoSaveGame - " + SaveGame.s_MainSaveName);
+		MainMenuManager.Get().CallStartGameFadeSequence();
 	}
 
-	public void OnBack()
+	public override void OnBack()
 	{
-		if (this.m_Loading)
+		if (this.m_IsBusy)
 		{
 			return;
 		}
-		MainMenuManager.Get().SetActiveScreen(typeof(MainMenuDifficultyLevel), true);
+		this.ShowPreviousScreen();
 	}
 
-	private int m_SlotIdx = -1;
-
-	private bool m_Loading;
+	private bool m_IsBusy;
 }

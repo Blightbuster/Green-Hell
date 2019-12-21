@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TriggersManager : MonoBehaviour, ISaveLoad
@@ -23,29 +24,25 @@ public class TriggersManager : MonoBehaviour, ISaveLoad
 		return Trigger.s_AllTriggers.Count;
 	}
 
+	public HashSet<Trigger> GetActiveTriggers()
+	{
+		return Trigger.s_ActiveTriggers;
+	}
+
 	public int GetActiveTriggersCount()
 	{
 		return Trigger.s_ActiveTriggers.Count;
 	}
 
-	public Trigger GetTrigger(int i, bool only_active = false)
-	{
-		if (i >= this.GetActiveTriggersCount())
-		{
-			return null;
-		}
-		return Trigger.s_ActiveTriggers[i];
-	}
-
 	public bool IsTriggered(GameObject obj)
 	{
-		Trigger trigger = (!obj) ? null : obj.GetComponent<Trigger>();
+		Trigger trigger = obj ? obj.GetComponent<Trigger>() : null;
 		return trigger && trigger.WasTriggered();
 	}
 
 	public void ResetTrigger(GameObject obj)
 	{
-		Trigger trigger = (!obj) ? null : obj.GetComponent<Trigger>();
+		Trigger trigger = obj ? obj.GetComponent<Trigger>() : null;
 		if (trigger)
 		{
 			trigger.ResetTrigger();

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using AmplifyMotion;
 using UnityEngine;
@@ -80,8 +79,7 @@ public class AmplifyMotionObjectBase : MonoBehaviour
 		Renderer component = base.GetComponent<Renderer>();
 		if (AmplifyMotionEffectBase.CanRegister(base.gameObject, false))
 		{
-			ParticleSystem component2 = base.GetComponent<ParticleSystem>();
-			if (component2 != null)
+			if (base.GetComponent<ParticleSystem>() != null)
 			{
 				this.m_type = ObjectType.Particle;
 				AmplifyMotionEffectBase.RegisterObject(this);
@@ -129,23 +127,9 @@ public class AmplifyMotionObjectBase : MonoBehaviour
 		}
 		if (this.m_applyToChildren)
 		{
-			IEnumerator enumerator = base.gameObject.transform.GetEnumerator();
-			try
+			foreach (object obj in base.gameObject.transform)
 			{
-				while (enumerator.MoveNext())
-				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					AmplifyMotionEffectBase.RegisterRecursivelyS(transform.gameObject);
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
-				}
+				AmplifyMotionEffectBase.RegisterRecursivelyS(((Transform)obj).gameObject);
 			}
 		}
 		if (!flag)
@@ -194,23 +178,10 @@ public class AmplifyMotionObjectBase : MonoBehaviour
 		{
 			obj.m_resetAtFrame = frame;
 		}
-		IEnumerator enumerator = transform.GetEnumerator();
-		try
+		foreach (object obj2 in transform)
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj2 = enumerator.Current;
-				Transform transform2 = (Transform)obj2;
-				AmplifyMotionObjectBase.RecursiveResetMotionAtFrame(transform2, transform2.GetComponent<AmplifyMotionObjectBase>(), frame);
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			Transform transform2 = (Transform)obj2;
+			AmplifyMotionObjectBase.RecursiveResetMotionAtFrame(transform2, transform2.GetComponent<AmplifyMotionObjectBase>(), frame);
 		}
 	}
 

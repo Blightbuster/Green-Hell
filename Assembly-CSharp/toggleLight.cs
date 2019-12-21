@@ -13,8 +13,9 @@ public class toggleLight : MonoBehaviour
 		{
 			this.lightOn = true;
 			this.playerLight.SetActive(true);
+			return;
 		}
-		else if (this.lightOn && Input.GetKeyDown(KeyCode.Return))
+		if (this.lightOn && Input.GetKeyDown(KeyCode.Return))
 		{
 			this.lightOn = false;
 			this.playerLight.SetActive(false);

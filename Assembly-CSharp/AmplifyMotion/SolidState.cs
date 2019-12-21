@@ -67,7 +67,7 @@ namespace AmplifyMotion
 				bool flag = (this.m_owner.Instance.CullingMask & 1 << this.m_obj.gameObject.layer) != 0;
 				if (!flag || (flag && this.m_moved))
 				{
-					int num = (!flag) ? 255 : this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject);
+					int num = flag ? this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject) : 255;
 					Matrix4x4 value;
 					if (this.m_obj.FixedStep)
 					{
@@ -79,12 +79,12 @@ namespace AmplifyMotion
 					}
 					renderCB.SetGlobalMatrix("_AM_MATRIX_PREV_MVP", value);
 					renderCB.SetGlobalFloat("_AM_OBJECT_ID", (float)num * 0.003921569f);
-					renderCB.SetGlobalFloat("_AM_MOTION_SCALE", (!flag) ? 0f : scale);
-					int num2 = (quality != Quality.Mobile) ? 2 : 0;
+					renderCB.SetGlobalFloat("_AM_MOTION_SCALE", flag ? scale : 0f);
+					int num2 = (quality == Quality.Mobile) ? 0 : 2;
 					for (int i = 0; i < this.m_sharedMaterials.Length; i++)
 					{
 						MotionState.MaterialDesc materialDesc = this.m_sharedMaterials[i];
-						int shaderPass = num2 + ((!materialDesc.coverage) ? 0 : 1);
+						int shaderPass = num2 + (materialDesc.coverage ? 1 : 0);
 						if (materialDesc.coverage)
 						{
 							Texture mainTexture = materialDesc.material.mainTexture;

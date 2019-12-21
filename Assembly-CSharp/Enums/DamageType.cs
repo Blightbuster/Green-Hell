@@ -13,6 +13,7 @@ namespace Enums
 		Insects = 32,
 		Fall = 64,
 		Critical = 128,
-		SnakePoison = 256
+		SnakePoison = 256,
+		Infection = 512
 	}
 }

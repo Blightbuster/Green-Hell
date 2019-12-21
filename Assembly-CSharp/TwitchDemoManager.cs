@@ -5,15 +5,15 @@ using UnityEngine.Playables;
 
 public class TwitchDemoManager
 {
+	public static TwitchDemoManager Get()
+	{
+		return TwitchDemoManager.s_Instance;
+	}
+
 	public TwitchDemoManager()
 	{
 		TwitchDemoManager.s_Instance = this;
 		this.m_StartTime = Time.time;
-	}
-
-	public static TwitchDemoManager Get()
-	{
-		return TwitchDemoManager.s_Instance;
 	}
 
 	public void Destroy()

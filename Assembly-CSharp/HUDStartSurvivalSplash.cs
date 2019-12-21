@@ -53,60 +53,65 @@ public class HUDStartSurvivalSplash : HUDBase
 	protected override void Update()
 	{
 		base.Update();
-		HUDStartSurvivalSplash.State state = this.m_State;
-		if (state != HUDStartSurvivalSplash.State.Enter)
+		switch (this.m_State)
 		{
-			if (state != HUDStartSurvivalSplash.State.Normal)
+		case HUDStartSurvivalSplash.State.Enter:
+		{
+			if (this.m_CanvasGroup.alpha < 1f)
 			{
-				if (state == HUDStartSurvivalSplash.State.Exit)
-				{
-					if (this.m_Text.color.a > 0f)
-					{
-						Color color = this.m_Text.color;
-						color.a -= Time.deltaTime;
-						color.a = Mathf.Clamp01(color.a);
-						this.m_Text.color = color;
-					}
-					else if (this.m_CanvasGroup.alpha > 0f)
-					{
-						this.m_CanvasGroup.alpha -= Time.deltaTime;
-						this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
-						if (this.m_CanvasGroup.alpha == 0f)
-						{
-							this.m_Active = false;
-						}
-					}
-				}
+				this.m_CanvasGroup.alpha += Time.deltaTime;
+				this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
+				return;
 			}
-			else if (Input.GetKeyDown(KeyCode.Space))
+			Color color = this.m_Text.color;
+			color.a += Time.deltaTime;
+			color.a = Mathf.Clamp01(color.a);
+			this.m_Text.color = color;
+			if (color.a == 1f)
+			{
+				this.m_State = HUDStartSurvivalSplash.State.Normal;
+				return;
+			}
+			break;
+		}
+		case HUDStartSurvivalSplash.State.Normal:
+			if (Input.GetKeyDown(KeyCode.Space))
 			{
 				if (this.m_WasPause)
 				{
 					MainLevel.Instance.Pause(false);
 				}
 				this.m_State = HUDStartSurvivalSplash.State.Exit;
+				return;
 			}
-			else if (!MainLevel.Instance.IsPause() && FadeSystem.Get().CanStartFade())
+			if (!MainLevel.Instance.IsPause() && FadeSystem.Get().CanStartFade())
 			{
 				this.m_WasPause = true;
 				MainLevel.Instance.Pause(true);
+				return;
 			}
-		}
-		else if (this.m_CanvasGroup.alpha < 1f)
-		{
-			this.m_CanvasGroup.alpha += Time.deltaTime;
-			this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
-		}
-		else
-		{
-			Color color2 = this.m_Text.color;
-			color2.a += Time.deltaTime;
-			color2.a = Mathf.Clamp01(color2.a);
-			this.m_Text.color = color2;
-			if (color2.a == 1f)
+			break;
+		case HUDStartSurvivalSplash.State.Exit:
+			if (this.m_Text.color.a > 0f)
 			{
-				this.m_State = HUDStartSurvivalSplash.State.Normal;
+				Color color2 = this.m_Text.color;
+				color2.a -= Time.deltaTime;
+				color2.a = Mathf.Clamp01(color2.a);
+				this.m_Text.color = color2;
+				return;
 			}
+			if (this.m_CanvasGroup.alpha > 0f)
+			{
+				this.m_CanvasGroup.alpha -= Time.deltaTime;
+				this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
+				if (this.m_CanvasGroup.alpha == 0f)
+				{
+					this.m_Active = false;
+				}
+			}
+			break;
+		default:
+			return;
 		}
 	}
 

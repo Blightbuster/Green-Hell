@@ -30,11 +30,9 @@ namespace MirzaBeig.ParticleSystems.Demos
 			{
 				this.Add(15f, 1f, 2f, CameraShakeTarget.Rotation, CameraShakeAmplitudeCurve.FadeInOut25);
 			}
-			if (Input.GetKey(KeyCode.H))
-			{
-			}
+			Input.GetKey(KeyCode.H);
 			Vector3 vector = Vector3.zero;
-			Vector3 a = Vector3.zero;
+			Vector3 vector2 = Vector3.zero;
 			for (int i = 0; i < this.shakes.Count; i++)
 			{
 				this.shakes[i].Update();
@@ -44,15 +42,15 @@ namespace MirzaBeig.ParticleSystems.Demos
 				}
 				else
 				{
-					a += this.shakes[i].noise;
+					vector2 += this.shakes[i].noise;
 				}
 			}
 			this.shakes.RemoveAll((CameraShake.Shake x) => !x.IsAlive());
 			base.transform.localPosition = Vector3.SmoothDamp(base.transform.localPosition, vector, ref this.smoothDampPositionVelocity, this.smoothDampTime);
 			Vector3 localEulerAngles = base.transform.localEulerAngles;
-			localEulerAngles.x = Mathf.SmoothDampAngle(localEulerAngles.x, a.x, ref this.smoothDampRotationVelocityX, this.smoothDampTime);
-			localEulerAngles.y = Mathf.SmoothDampAngle(localEulerAngles.y, a.y, ref this.smoothDampRotationVelocityY, this.smoothDampTime);
-			localEulerAngles.z = Mathf.SmoothDampAngle(localEulerAngles.z, a.z, ref this.smoothDampRotationVelocityZ, this.smoothDampTime);
+			localEulerAngles.x = Mathf.SmoothDampAngle(localEulerAngles.x, vector2.x, ref this.smoothDampRotationVelocityX, this.smoothDampTime);
+			localEulerAngles.y = Mathf.SmoothDampAngle(localEulerAngles.y, vector2.y, ref this.smoothDampRotationVelocityY, this.smoothDampTime);
+			localEulerAngles.z = Mathf.SmoothDampAngle(localEulerAngles.z, vector2.z, ref this.smoothDampRotationVelocityZ, this.smoothDampTime);
 			base.transform.localEulerAngles = localEulerAngles;
 		}
 
@@ -71,49 +69,6 @@ namespace MirzaBeig.ParticleSystems.Demos
 		[Serializable]
 		public class Shake
 		{
-			public Shake(float amplitude, float frequency, float duration, CameraShakeTarget target, AnimationCurve amplitudeOverLifetimeCurve)
-			{
-				this.Init(amplitude, frequency, duration, target);
-				this.amplitudeOverLifetimeCurve = amplitudeOverLifetimeCurve;
-			}
-
-			public Shake(float amplitude, float frequency, float duration, CameraShakeTarget target, CameraShakeAmplitudeCurve amplitudeOverLifetimeCurve)
-			{
-				this.Init(amplitude, frequency, duration, target);
-				switch (amplitudeOverLifetimeCurve)
-				{
-				case CameraShakeAmplitudeCurve.Constant:
-					this.amplitudeOverLifetimeCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
-					break;
-				case CameraShakeAmplitudeCurve.FadeInOut25:
-					this.amplitudeOverLifetimeCurve = new AnimationCurve(new Keyframe[]
-					{
-						new Keyframe(0f, 0f),
-						new Keyframe(0.25f, 1f),
-						new Keyframe(1f, 0f)
-					});
-					break;
-				case CameraShakeAmplitudeCurve.FadeInOut50:
-					this.amplitudeOverLifetimeCurve = new AnimationCurve(new Keyframe[]
-					{
-						new Keyframe(0f, 0f),
-						new Keyframe(0.5f, 1f),
-						new Keyframe(1f, 0f)
-					});
-					break;
-				case CameraShakeAmplitudeCurve.FadeInOut75:
-					this.amplitudeOverLifetimeCurve = new AnimationCurve(new Keyframe[]
-					{
-						new Keyframe(0f, 0f),
-						new Keyframe(0.75f, 1f),
-						new Keyframe(1f, 0f)
-					});
-					break;
-				default:
-					throw new Exception("Unknown enum.");
-				}
-			}
-
 			public void Init()
 			{
 				this.timeRemaining = this.duration;
@@ -139,6 +94,49 @@ namespace MirzaBeig.ParticleSystems.Demos
 				this.perlinNoiseY.y = UnityEngine.Random.Range(-num, num);
 				this.perlinNoiseZ.x = UnityEngine.Random.Range(-num, num);
 				this.perlinNoiseZ.y = UnityEngine.Random.Range(-num, num);
+			}
+
+			public Shake(float amplitude, float frequency, float duration, CameraShakeTarget target, AnimationCurve amplitudeOverLifetimeCurve)
+			{
+				this.Init(amplitude, frequency, duration, target);
+				this.amplitudeOverLifetimeCurve = amplitudeOverLifetimeCurve;
+			}
+
+			public Shake(float amplitude, float frequency, float duration, CameraShakeTarget target, CameraShakeAmplitudeCurve amplitudeOverLifetimeCurve)
+			{
+				this.Init(amplitude, frequency, duration, target);
+				switch (amplitudeOverLifetimeCurve)
+				{
+				case CameraShakeAmplitudeCurve.Constant:
+					this.amplitudeOverLifetimeCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
+					return;
+				case CameraShakeAmplitudeCurve.FadeInOut25:
+					this.amplitudeOverLifetimeCurve = new AnimationCurve(new Keyframe[]
+					{
+						new Keyframe(0f, 0f),
+						new Keyframe(0.25f, 1f),
+						new Keyframe(1f, 0f)
+					});
+					return;
+				case CameraShakeAmplitudeCurve.FadeInOut50:
+					this.amplitudeOverLifetimeCurve = new AnimationCurve(new Keyframe[]
+					{
+						new Keyframe(0f, 0f),
+						new Keyframe(0.5f, 1f),
+						new Keyframe(1f, 0f)
+					});
+					return;
+				case CameraShakeAmplitudeCurve.FadeInOut75:
+					this.amplitudeOverLifetimeCurve = new AnimationCurve(new Keyframe[]
+					{
+						new Keyframe(0f, 0f),
+						new Keyframe(0.75f, 1f),
+						new Keyframe(1f, 0f)
+					});
+					return;
+				default:
+					throw new Exception("Unknown enum.");
+				}
 			}
 
 			public bool IsAlive()

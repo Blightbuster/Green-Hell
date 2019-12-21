@@ -4,6 +4,11 @@ using UnityEngine.UI;
 
 public class HUDPassOut : HUDBase
 {
+	public static HUDPassOut Get()
+	{
+		return HUDPassOut.s_Instance;
+	}
+
 	public override void SetupGroups()
 	{
 		base.SetupGroups();
@@ -15,6 +20,7 @@ public class HUDPassOut : HUDBase
 		base.Awake();
 		DebugUtils.Assert(this.m_Text, true);
 		DebugUtils.Assert(this.m_BG, true);
+		HUDPassOut.s_Instance = this;
 	}
 
 	protected override bool ShouldShow()
@@ -57,8 +63,9 @@ public class HUDPassOut : HUDBase
 				color.a = Mathf.Clamp01(color.a);
 			}
 			this.m_BG.color = color;
+			return;
 		}
-		else if (this.m_Text.color.a < 1f)
+		if (this.m_Text.color.a < 1f)
 		{
 			Color color2 = this.m_Text.color;
 			color2.a += Time.deltaTime;
@@ -70,4 +77,6 @@ public class HUDPassOut : HUDBase
 	public Text m_Text;
 
 	public RawImage m_BG;
+
+	private static HUDPassOut s_Instance;
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -25,12 +24,13 @@ public class ScenarioCndTF : ScenarioElement
 		}
 		string text = array[1];
 		Type type = Type.GetType(text);
-		UnityEngine.Object @object = Resources.FindObjectsOfTypeAll(type)[0];
-		DebugUtils.Assert(@object != null, "[ScenarioCndTF:Setup] ERROR - Can't find object " + text, true, DebugUtils.AssertType.Info);
+		UnityEngine.Object objectOfType = ScenarioManager.Get().GetObjectOfType(type);
+		DebugUtils.Assert(objectOfType != null, "[ScenarioCndTF:Setup] ERROR - Can't find object " + text, true, DebugUtils.AssertType.Info);
 		MethodInfo method = type.GetMethod(array[2]);
 		if (method == null)
 		{
-			Debug.Log(text + ", " + array[2]);
+			DebugUtils.Assert("[ScenarioCndTF:Setup] - missing method - " + array[2], true, DebugUtils.AssertType.Info);
+			return;
 		}
 		string a = array[3].ToLower();
 		if (a != "true" && a != "false")
@@ -50,7 +50,7 @@ public class ScenarioCndTF : ScenarioElement
 		switch (parameters.Length)
 		{
 		case 0:
-			this.m_Method = (BDelegate)Delegate.CreateDelegate(typeof(BDelegate), @object, method, false);
+			this.m_Method = (BDelegate)Delegate.CreateDelegate(typeof(BDelegate), objectOfType, method, false);
 			break;
 		case 1:
 		{
@@ -58,17 +58,28 @@ public class ScenarioCndTF : ScenarioElement
 			if (parameterType == typeof(string))
 			{
 				this.m_ParamS1 = array[4];
-				this.m_MethodS = (BDelegateS)Delegate.CreateDelegate(typeof(BDelegateS), @object, method, false);
+				this.m_MethodS = (BDelegateS)Delegate.CreateDelegate(typeof(BDelegateS), objectOfType, method, false);
 			}
 			else if (parameterType.IsAssignableFrom(typeof(GameObject)))
 			{
 				this.m_IsGO1 = true;
-				this.m_ParamO1 = MainLevel.Instance.FindObject(array[4], (array.Length <= 5) ? string.Empty : array[5]);
+				this.m_ParamO1Name = array[4];
+				this.m_ParamO1 = MainLevel.Instance.FindObject(array[4], (array.Length > 5) ? array[5] : string.Empty);
 				if (this.m_ParamO1 == null)
 				{
-					ScenarioCndTF.s_NullObjects.Add(this);
+					this.m_HasNullObject = true;
 				}
-				this.m_MethodO = (BDelegateO)Delegate.CreateDelegate(typeof(BDelegateO), @object, method, false);
+				this.m_MethodO = (BDelegateO)Delegate.CreateDelegate(typeof(BDelegateO), objectOfType, method, false);
+			}
+			else if (parameterType == typeof(int))
+			{
+				this.m_ParamI1 = int.Parse(array[4]);
+				this.m_MethodI = (BDelegateI)Delegate.CreateDelegate(typeof(BDelegateI), objectOfType, method, false);
+			}
+			else if (parameterType == typeof(float))
+			{
+				this.m_ParamF1 = float.Parse(array[4]);
+				this.m_MethodF = (BDelegateF)Delegate.CreateDelegate(typeof(BDelegateF), objectOfType, method, false);
 			}
 			break;
 		}
@@ -87,21 +98,27 @@ public class ScenarioCndTF : ScenarioElement
 						return;
 					}
 					this.m_ParamS2 = array[5];
-					this.m_MethodSS = (BDelegateSS)Delegate.CreateDelegate(typeof(BDelegateSS), @object, method, false);
+					this.m_MethodSS = (BDelegateSS)Delegate.CreateDelegate(typeof(BDelegateSS), objectOfType, method, false);
 				}
 				else if (parameterType2 == typeof(float))
 				{
 					this.m_ParamF2 = float.Parse(array[5]);
-					this.m_MethodSF = (BDelegateSF)Delegate.CreateDelegate(typeof(BDelegateSF), @object, method, false);
+					this.m_MethodSF = (BDelegateSF)Delegate.CreateDelegate(typeof(BDelegateSF), objectOfType, method, false);
+				}
+				else if (parameterType2 == typeof(int))
+				{
+					this.m_ParamI2 = int.Parse(array[5]);
+					this.m_MethodSI = (BDelegateSI)Delegate.CreateDelegate(typeof(BDelegateSI), objectOfType, method, false);
 				}
 			}
 			else if (parameterType.IsAssignableFrom(typeof(GameObject)))
 			{
 				this.m_IsGO1 = true;
+				this.m_ParamO1Name = array[4];
 				this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(array[4]);
 				if (this.m_ParamO1 == null)
 				{
-					ScenarioCndTF.s_NullObjects.Add(this);
+					this.m_HasNullObject = true;
 					Debug.Log("ScenarioCndTF + null object added" + array[4]);
 				}
 				if (array.Length < 6)
@@ -109,82 +126,25 @@ public class ScenarioCndTF : ScenarioElement
 					DebugUtils.Assert("Too little parameters " + this.m_Content + "CheckSyntax.", true, DebugUtils.AssertType.Info);
 				}
 				this.m_ParamF2 = float.Parse(array[5]);
-				this.m_MethodOF = (BDelegateOF)Delegate.CreateDelegate(typeof(BDelegateOF), @object, method, false);
+				this.m_MethodOF = (BDelegateOF)Delegate.CreateDelegate(typeof(BDelegateOF), objectOfType, method, false);
 			}
 			break;
 		}
 		case 3:
 			this.m_IsGO1 = true;
 			this.m_IsGO2 = true;
+			this.m_ParamO1Name = array[4];
 			this.m_ParamO1 = MainLevel.Instance.GetUniqueObject(array[4]);
+			this.m_ParamO2Name = array[5];
 			this.m_ParamO2 = MainLevel.Instance.GetUniqueObject(array[5]);
 			this.m_ParamF3 = float.Parse(array[6]);
-			this.m_MethodOOF = (BDelegateOOF)Delegate.CreateDelegate(typeof(BDelegateOOF), @object, method, false);
+			this.m_MethodOOF = (BDelegateOOF)Delegate.CreateDelegate(typeof(BDelegateOOF), objectOfType, method, false);
 			break;
 		default:
 			DebugUtils.Assert(DebugUtils.AssertType.Info);
 			break;
 		}
-		DebugUtils.Assert(this.m_Method != null || this.m_MethodO != null || this.m_MethodS != null || this.m_MethodSS != null || this.m_MethodSF != null || this.m_MethodOF != null || this.m_MethodOOF != null, this.m_EncodedContent, true, DebugUtils.AssertType.Info);
-	}
-
-	public static void OnItemCreated(GameObject go)
-	{
-		int i = 0;
-		while (i < ScenarioCndTF.s_NullObjects.Count)
-		{
-			if (ScenarioCndTF.CheckObjects(ScenarioCndTF.s_NullObjects[i], go))
-			{
-				ScenarioCndTF.s_NullObjects.RemoveAt(i);
-			}
-			else
-			{
-				i++;
-			}
-		}
-	}
-
-	private static bool CheckObjects(ScenarioCndTF action, GameObject go)
-	{
-		string[] array = action.m_EncodedContent.Split(new char[]
-		{
-			':'
-		});
-		if (array.Length < 4 || array.Length > 7)
-		{
-			DebugUtils.Assert(string.Concat(new string[]
-			{
-				"[ScenarioAction:Setup] Error in element - ",
-				action.m_Content,
-				", node - ",
-				action.m_Node.m_Name,
-				". Check spelling!"
-			}), true, DebugUtils.AssertType.Info);
-		}
-		string typeName = array[1];
-		Type type = Type.GetType(typeName);
-		MethodInfo method = type.GetMethod(array[2]);
-		bool result = false;
-		ParameterInfo[] parameters = method.GetParameters();
-		if (parameters.Length > 0)
-		{
-			Type parameterType = parameters[0].ParameterType;
-			if (parameterType.IsAssignableFrom(typeof(GameObject)) && go.name == array[4])
-			{
-				action.m_ParamO1 = go;
-				result = true;
-			}
-		}
-		if (parameters.Length > 1)
-		{
-			Type parameterType2 = parameters[1].ParameterType;
-			if (parameterType2.IsAssignableFrom(typeof(GameObject)) && go.name == array[5])
-			{
-				action.m_ParamO2 = go;
-				result = true;
-			}
-		}
-		return result;
+		DebugUtils.Assert(this.m_Method != null || this.m_MethodO != null || this.m_MethodS != null || this.m_MethodSS != null || this.m_MethodSF != null || this.m_MethodOF != null || this.m_MethodOOF != null || this.m_MethodSI != null || this.m_MethodF != null || this.m_MethodI != null, this.m_EncodedContent, true, DebugUtils.AssertType.Info);
 	}
 
 	protected override bool ShouldComplete()
@@ -196,7 +156,7 @@ public class ScenarioCndTF : ScenarioElement
 		}
 		else if (this.m_MethodO != null)
 		{
-			flag = this.m_MethodO(this.m_ParamO1);
+			flag = (this.m_ParamO1 != null && this.m_MethodO(this.m_ParamO1));
 		}
 		else if (this.m_MethodS != null)
 		{
@@ -212,16 +172,28 @@ public class ScenarioCndTF : ScenarioElement
 		}
 		else if (this.m_MethodOF != null)
 		{
-			flag = this.m_MethodOF(this.m_ParamO1, this.m_ParamF2);
+			flag = (this.m_ParamO1 != null && this.m_MethodOF(this.m_ParamO1, this.m_ParamF2));
+		}
+		else if (this.m_MethodOOF != null)
+		{
+			flag = (this.m_ParamO1 != null && this.m_ParamO2 != null && this.m_MethodOOF(this.m_ParamO1, this.m_ParamO2, this.m_ParamF3));
+		}
+		else if (this.m_MethodI != null)
+		{
+			flag = this.m_MethodI(this.m_ParamI1);
+		}
+		else if (this.m_MethodSI != null)
+		{
+			flag = this.m_MethodSI(this.m_ParamS1, this.m_ParamI2);
 		}
 		else
 		{
-			if (this.m_MethodOOF == null)
+			if (this.m_MethodF == null)
 			{
 				DebugUtils.Assert(DebugUtils.AssertType.Info);
 				return true;
 			}
-			flag = this.m_MethodOOF(this.m_ParamO1, this.m_ParamO2, this.m_ParamF3);
+			flag = this.m_MethodF(this.m_ParamF1);
 		}
 		return flag == this.m_Result;
 	}
@@ -229,13 +201,13 @@ public class ScenarioCndTF : ScenarioElement
 	public override void Load(ScenarioNode node, int index)
 	{
 		base.Load(node, index);
-		if (ScenarioCndTF.s_NullObjects.Contains(this))
+		if (this.m_HasNullObject)
 		{
 			return;
 		}
 		if ((this.m_IsGO1 && this.m_ParamO1 == null) || (this.m_IsGO2 && this.m_ParamO2 == null))
 		{
-			ScenarioCndTF.s_NullObjects.Add(this);
+			this.m_HasNullObject = true;
 		}
 	}
 
@@ -253,7 +225,15 @@ public class ScenarioCndTF : ScenarioElement
 
 	private BDelegateOOF m_MethodOOF;
 
+	private BDelegateI m_MethodI;
+
+	private BDelegateF m_MethodF;
+
+	private BDelegateSI m_MethodSI;
+
 	private bool m_Result = true;
+
+	private int m_ParamI2;
 
 	private float m_ParamF2;
 
@@ -263,13 +243,7 @@ public class ScenarioCndTF : ScenarioElement
 
 	private string m_ParamS2 = string.Empty;
 
-	private GameObject m_ParamO1;
+	private int m_ParamI1;
 
-	private GameObject m_ParamO2;
-
-	private bool m_IsGO1;
-
-	private bool m_IsGO2;
-
-	private static List<ScenarioCndTF> s_NullObjects = new List<ScenarioCndTF>();
+	private float m_ParamF1;
 }

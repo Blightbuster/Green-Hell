@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace UnityEngine.AI
 {
-	[AddComponentMenu("Navigation/NavMeshLink", 33)]
-	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
 	[ExecuteInEditMode]
 	[DefaultExecutionOrder(-101)]
+	[AddComponentMenu("Navigation/NavMeshLink", 33)]
+	[HelpURL("https://github.com/Unity-Technologies/NavMeshComponents#documentation-draft")]
 	public class NavMeshLink : MonoBehaviour
 	{
 		public int agentTypeID
@@ -138,12 +137,7 @@ namespace UnityEngine.AI
 		{
 			if (NavMeshLink.s_Tracked.Count == 0)
 			{
-				Delegate onPreUpdate = NavMesh.onPreUpdate;
-				if (NavMeshLink.<>f__mg$cache0 == null)
-				{
-					NavMeshLink.<>f__mg$cache0 = new NavMesh.OnNavMeshPreUpdate(NavMeshLink.UpdateTrackedInstances);
-				}
-				NavMesh.onPreUpdate = (NavMesh.OnNavMeshPreUpdate)Delegate.Combine(onPreUpdate, NavMeshLink.<>f__mg$cache0);
+				NavMesh.onPreUpdate = (NavMesh.OnNavMeshPreUpdate)Delegate.Combine(NavMesh.onPreUpdate, new NavMesh.OnNavMeshPreUpdate(NavMeshLink.UpdateTrackedInstances));
 			}
 			NavMeshLink.s_Tracked.Add(link);
 		}
@@ -153,12 +147,7 @@ namespace UnityEngine.AI
 			NavMeshLink.s_Tracked.Remove(link);
 			if (NavMeshLink.s_Tracked.Count == 0)
 			{
-				Delegate onPreUpdate = NavMesh.onPreUpdate;
-				if (NavMeshLink.<>f__mg$cache1 == null)
-				{
-					NavMeshLink.<>f__mg$cache1 = new NavMesh.OnNavMeshPreUpdate(NavMeshLink.UpdateTrackedInstances);
-				}
-				NavMesh.onPreUpdate = (NavMesh.OnNavMeshPreUpdate)Delegate.Remove(onPreUpdate, NavMeshLink.<>f__mg$cache1);
+				NavMesh.onPreUpdate = (NavMesh.OnNavMeshPreUpdate)Delegate.Remove(NavMesh.onPreUpdate, new NavMesh.OnNavMeshPreUpdate(NavMeshLink.UpdateTrackedInstances));
 			}
 		}
 
@@ -172,11 +161,9 @@ namespace UnityEngine.AI
 			if (value)
 			{
 				NavMeshLink.AddTracking(this);
+				return;
 			}
-			else
-			{
-				NavMeshLink.RemoveTracking(this);
-			}
+			NavMeshLink.RemoveTracking(this);
 		}
 
 		private void AddLink()
@@ -244,18 +231,12 @@ namespace UnityEngine.AI
 		[SerializeField]
 		private int m_Area;
 
-		private NavMeshLinkInstance m_LinkInstance = default(NavMeshLinkInstance);
+		private NavMeshLinkInstance m_LinkInstance;
 
 		private Vector3 m_LastPosition = Vector3.zero;
 
 		private Quaternion m_LastRotation = Quaternion.identity;
 
 		private static readonly List<NavMeshLink> s_Tracked = new List<NavMeshLink>();
-
-		[CompilerGenerated]
-		private static NavMesh.OnNavMeshPreUpdate <>f__mg$cache0;
-
-		[CompilerGenerated]
-		private static NavMesh.OnNavMeshPreUpdate <>f__mg$cache1;
 	}
 }

@@ -22,20 +22,20 @@ public class RTPObjExporter
 		}
 		stringBuilder.Append("\n");
 		Vector2[] uv = sharedMesh.uv;
-		for (int k = 0; k < uv.Length; k++)
+		for (int i = 0; i < uv.Length; i++)
 		{
-			Vector3 vector3 = uv[k];
+			Vector3 vector3 = uv[i];
 			stringBuilder.Append(string.Format("vt {0} {1}\n", vector3.x, vector3.y));
 		}
-		for (int l = 0; l < sharedMesh.subMeshCount; l++)
+		for (int j = 0; j < sharedMesh.subMeshCount; j++)
 		{
 			stringBuilder.Append("\n");
-			stringBuilder.Append("usemtl ").Append(sharedMaterials[l].name).Append("\n");
-			stringBuilder.Append("usemap ").Append(sharedMaterials[l].name).Append("\n");
-			int[] triangles = sharedMesh.GetTriangles(l);
-			for (int m = 0; m < triangles.Length; m += 3)
+			stringBuilder.Append("usemtl ").Append(sharedMaterials[j].name).Append("\n");
+			stringBuilder.Append("usemap ").Append(sharedMaterials[j].name).Append("\n");
+			int[] triangles = sharedMesh.GetTriangles(j);
+			for (int k = 0; k < triangles.Length; k += 3)
 			{
-				stringBuilder.Append(string.Format("f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}\n", triangles[m + 2] + 1, triangles[m + 1] + 1, triangles[m] + 1));
+				stringBuilder.Append(string.Format("f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}\n", triangles[k + 2] + 1, triangles[k + 1] + 1, triangles[k] + 1));
 			}
 		}
 		return stringBuilder.ToString();

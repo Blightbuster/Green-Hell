@@ -140,9 +140,8 @@ public class Torch : Weapon
 		{
 			return;
 		}
-		this.m_Fuel = 1f;
 		this.m_Burning = true;
-		this.m_StartBurningTime = MainLevel.Instance.GetCurrentTimeMinutes();
+		this.m_StartBurningTime = Time.time - this.m_BurningDuration;
 		this.SetupEffects();
 		this.PlayIgniteSound();
 	}
@@ -172,12 +171,29 @@ public class Torch : Weapon
 		{
 			this.m_Renderer = base.gameObject.GetComponent<Renderer>();
 		}
-		this.m_Renderer.materials = ((!this.m_Burning) ? this.m_NoEmissionMaterials.ToArray() : this.m_EmissionMaterials.ToArray());
+		this.m_Renderer.materials = (this.m_Burning ? this.m_EmissionMaterials.ToArray() : this.m_NoEmissionMaterials.ToArray());
+	}
+
+	public override void UpdateHealth()
+	{
+		if (!this.ReplIsOwner())
+		{
+			return;
+		}
+		this.m_Info.m_Health = this.m_Fuel * this.m_Info.m_MaxHealth;
+		if (this.m_Fuel == 0f)
+		{
+			base.UpdateHealth();
+		}
 	}
 
 	protected override void Update()
 	{
 		base.Update();
+		if (base.IsInWater())
+		{
+			this.Extinguish();
+		}
 		this.CheckRain();
 		this.UpdateBurning();
 		this.UpdateLightNoise();
@@ -190,7 +206,7 @@ public class Torch : Weapon
 		{
 			return;
 		}
-		if (RainManager.Get().IsRain() && !RainManager.Get().IsInRainCutter(base.transform.position))
+		if (RainManager.Get().IsRain() && Time.time - this.m_StartBurningTime > 1f && !RainManager.Get().IsInRainCutter(base.transform.position))
 		{
 			this.Extinguish();
 		}
@@ -202,7 +218,9 @@ public class Torch : Weapon
 		{
 			return;
 		}
-		this.m_Fuel = (((TorchInfo)this.m_Info).m_BurningDurationInMinutes - (MainLevel.Instance.GetCurrentTimeMinutes() - this.m_StartBurningTime)) / ((TorchInfo)this.m_Info).m_BurningDurationInMinutes;
+		this.m_BurningDuration += Time.deltaTime;
+		float num = ((TorchInfo)this.m_Info).m_BurningDurationInMinutes * 60f;
+		this.m_Fuel = (num - (Time.time - this.m_StartBurningTime)) / num;
 		if (this.m_Fuel <= 0f)
 		{
 			this.m_Fuel = 0f;
@@ -247,6 +265,7 @@ public class Torch : Weapon
 		SaveGame.SaveVal("TorchBurn" + index, this.m_Burning);
 		SaveGame.SaveVal("TorchSTime" + index, this.m_StartBurningTime);
 		SaveGame.SaveVal("TorchFuel" + index, this.m_Fuel);
+		SaveGame.SaveVal("TorchBurningDuration" + index, this.m_BurningDuration);
 	}
 
 	public override void Load(int index)
@@ -255,6 +274,14 @@ public class Torch : Weapon
 		this.m_Burning = SaveGame.LoadBVal("TorchBurn" + index);
 		this.m_StartBurningTime = SaveGame.LoadFVal("TorchSTime" + index);
 		this.m_Fuel = SaveGame.LoadFVal("TorchFuel" + index);
+		if (GreenHellGame.s_GameVersion >= GreenHellGame.s_GameVersionMasterShelters1_3)
+		{
+			this.m_BurningDuration = SaveGame.LoadFVal("TorchBurningDuration" + index);
+		}
+		else
+		{
+			this.m_BurningDuration = 0f;
+		}
 		this.SetupEffects();
 	}
 
@@ -264,45 +291,40 @@ public class Torch : Weapon
 		{
 			return;
 		}
-		bool flag = InventoryBackpack.Get().Contains(this);
-		if (flag)
-		{
-			if (Inventory3DManager.Get().m_ActivePocket != BackpackPocket.Left)
-			{
-				for (int i = 0; i < this.m_Lights.Count; i++)
-				{
-					this.m_Lights[i].m_Light.gameObject.SetActive(false);
-				}
-				for (int j = 0; j < this.m_ParticlesRenderers.Count; j++)
-				{
-					this.m_ParticlesRenderers[j].enabled = false;
-				}
-			}
-			else
-			{
-				for (int k = 0; k < this.m_Lights.Count; k++)
-				{
-					this.m_Lights[k].m_Light.gameObject.SetActive(this.m_Burning);
-				}
-				for (int l = 0; l < this.m_ParticlesRenderers.Count; l++)
-				{
-					this.m_ParticlesRenderers[l].enabled = this.m_Burning;
-				}
-			}
-		}
-		else
+		if (!InventoryBackpack.Get().Contains(this))
 		{
 			if (InventoryBackpack.Get().Contains(this) != this.m_WasInBackPackLastFrame)
 			{
-				for (int m = 0; m < this.m_Lights.Count; m++)
+				for (int i = 0; i < this.m_Lights.Count; i++)
 				{
-					this.m_Lights[m].m_Light.gameObject.SetActive(this.m_Burning);
+					this.m_Lights[i].m_Light.gameObject.SetActive(this.m_Burning);
 				}
 			}
-			for (int n = 0; n < this.m_ParticlesRenderers.Count; n++)
+			for (int j = 0; j < this.m_ParticlesRenderers.Count; j++)
 			{
-				this.m_ParticlesRenderers[n].enabled = this.m_Burning;
+				this.m_ParticlesRenderers[j].enabled = this.m_Burning;
 			}
+			return;
+		}
+		if (Inventory3DManager.Get().m_ActivePocket != BackpackPocket.Left)
+		{
+			for (int k = 0; k < this.m_Lights.Count; k++)
+			{
+				this.m_Lights[k].m_Light.gameObject.SetActive(false);
+			}
+			for (int l = 0; l < this.m_ParticlesRenderers.Count; l++)
+			{
+				this.m_ParticlesRenderers[l].enabled = false;
+			}
+			return;
+		}
+		for (int m = 0; m < this.m_Lights.Count; m++)
+		{
+			this.m_Lights[m].m_Light.gameObject.SetActive(this.m_Burning);
+		}
+		for (int n = 0; n < this.m_ParticlesRenderers.Count; n++)
+		{
+			this.m_ParticlesRenderers[n].enabled = this.m_Burning;
 		}
 	}
 
@@ -313,6 +335,7 @@ public class Torch : Weapon
 		{
 			this.m_ParticlesParent.gameObject.SetActive(true);
 		}
+		this.SetupEffects();
 	}
 
 	protected override void OnDisable()
@@ -402,6 +425,8 @@ public class Torch : Weapon
 	private bool m_WasInBackPackLastFrame;
 
 	private float m_StartBurningTime;
+
+	private float m_BurningDuration;
 
 	[HideInInspector]
 	public float m_Fuel = 1f;

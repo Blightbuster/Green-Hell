@@ -87,6 +87,7 @@ namespace AmplifyMotion
 				if (this.m_threadPoolIndex >= this.m_threadPoolSize)
 				{
 					this.m_threadPoolIndex = 0;
+					return;
 				}
 			}
 			else
@@ -97,8 +98,7 @@ namespace AmplifyMotion
 
 		private static void AsyncUpdateCallback(object obj)
 		{
-			MotionState motionState = (MotionState)obj;
-			motionState.AsyncUpdate();
+			((MotionState)obj).AsyncUpdate();
 		}
 
 		private static void AsyncUpdateThread(object obj)
@@ -111,26 +111,26 @@ namespace AmplifyMotion
 				try
 				{
 					workerThreadPool.m_threadPoolContinueSignals[value].WaitOne();
-					if (workerThreadPool.m_threadPoolTerminateSignal.WaitOne(0))
+					if (!workerThreadPool.m_threadPoolTerminateSignal.WaitOne(0))
 					{
-						break;
-					}
-					for (;;)
-					{
-						MotionState motionState = null;
-						object obj2 = workerThreadPool.m_threadStateQueueLocks[value];
-						lock (obj2)
+						for (;;)
 						{
-							if (workerThreadPool.m_threadStateQueues[value].Count > 0)
+							MotionState motionState = null;
+							object obj2 = workerThreadPool.m_threadStateQueueLocks[value];
+							lock (obj2)
 							{
-								motionState = workerThreadPool.m_threadStateQueues[value].Dequeue();
+								if (workerThreadPool.m_threadStateQueues[value].Count > 0)
+								{
+									motionState = workerThreadPool.m_threadStateQueues[value].Dequeue();
+								}
 							}
+							if (motionState == null)
+							{
+								break;
+							}
+							motionState.AsyncUpdate();
 						}
-						if (motionState == null)
-						{
-							break;
-						}
-						motionState.AsyncUpdate();
+						continue;
 					}
 				}
 				catch (Exception ex)
@@ -139,7 +139,9 @@ namespace AmplifyMotion
 					{
 						Debug.LogWarning(ex);
 					}
+					continue;
 				}
+				break;
 			}
 		}
 

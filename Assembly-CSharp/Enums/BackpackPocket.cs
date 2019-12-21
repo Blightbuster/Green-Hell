@@ -10,6 +10,7 @@ namespace Enums
 		Top,
 		Left,
 		Right,
-		Count
+		BackpackCount,
+		Storage
 	}
 }

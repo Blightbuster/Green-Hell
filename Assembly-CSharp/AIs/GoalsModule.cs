@@ -7,9 +7,9 @@ namespace AIs
 {
 	public class GoalsModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			if (this.m_ActiveGoal != null)
 			{
 				this.m_ActiveGoal.Deactivate();
@@ -36,7 +36,7 @@ namespace AIs
 				{
 					AIGoal aigoal = this.CreateGoal(key.GetVariable(0).SValue);
 					aigoal.m_Priority = key.GetVariable(1).IValue;
-					aigoal.m_Probability = ((key.GetVariablesCount() <= 2) ? 1f : key.GetVariable(2).FValue);
+					aigoal.m_Probability = ((key.GetVariablesCount() > 2) ? key.GetVariable(2).FValue : 1f);
 					if (aigoal.m_Type == AIGoalType.HumanJumpBack || aigoal.m_Type == AIGoalType.JumpBack)
 					{
 						this.m_JumpBackGoal = aigoal;
@@ -107,7 +107,7 @@ namespace AIs
 				}
 				return;
 			}
-			int num = (this.m_ActiveGoal == null) ? int.MaxValue : this.m_ActiveGoal.m_Priority;
+			int num = (this.m_ActiveGoal != null) ? this.m_ActiveGoal.m_Priority : int.MaxValue;
 			for (int j = 0; j < this.m_Goals.Count; j++)
 			{
 				AIGoal aigoal = this.m_Goals[j];
@@ -115,14 +115,10 @@ namespace AIs
 				{
 					break;
 				}
-				float num2 = (aigoal.m_Probability != 1f) ? UnityEngine.Random.Range(0f, 1f) : 1f;
-				if (num2 <= aigoal.m_Probability)
+				if (aigoal.m_Probability != 0f && ((aigoal.m_Probability == 1f) ? 1f : UnityEngine.Random.Range(0f, 1f)) <= aigoal.m_Probability && aigoal.ShouldPerform())
 				{
-					if (aigoal.ShouldPerform())
-					{
-						this.ActivateGoal(aigoal);
-						break;
-					}
+					this.ActivateGoal(aigoal);
+					break;
 				}
 			}
 			if (this.m_ActiveGoal == null)
@@ -131,8 +127,7 @@ namespace AIs
 				if (this.m_ActiveGoal == null)
 				{
 					DebugUtils.Assert("[GoalsModule::SetupActiveGoal] Can't find proper goal - " + this.m_AI.name, true, DebugUtils.AssertType.Info);
-					bool flag = false;
-					if (flag)
+					if (false)
 					{
 						this.SetupActiveGoal();
 					}
@@ -152,7 +147,7 @@ namespace AIs
 				if (this.m_Goals[i].m_Type == type)
 				{
 					this.ActivateGoal(this.m_Goals[i]);
-					break;
+					return;
 				}
 			}
 		}
@@ -174,6 +169,10 @@ namespace AIs
 			{
 				this.m_AI.m_BodyRotationModule.m_LookAtPlayer = this.m_ActiveGoal.ShouldLookAtPlayer();
 				this.m_AI.m_BodyRotationModule.m_RotateToPlayer = this.m_ActiveGoal.ShouldLookAtPlayer();
+			}
+			if (goal.m_Type == AIGoalType.MoveToEnemy && this.m_AI.m_ID == AI.AIID.BlackCaiman)
+			{
+				this.m_AI.m_SoundModule.PlayRandomGrowlSound();
 			}
 		}
 

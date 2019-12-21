@@ -38,7 +38,7 @@ namespace RootMotion.FinalIK
 			{
 				this.stopLookTime += Time.deltaTime;
 			}
-			float num = (Time.time >= this.stopLookTime) ? (-this.weightSpeed) : this.weightSpeed;
+			float num = (Time.time < this.stopLookTime) ? this.weightSpeed : (-this.weightSpeed);
 			this.weight = Mathf.Clamp(this.weight + num * Time.deltaTime, 0f, 1f);
 			this.ik.solver.IKPositionWeight = Interp.Float(this.weight, InterpolationMode.InOutQuintic);
 			this.ik.solver.IKPosition = Vector3.Lerp(this.ik.solver.IKPosition, this.lookAtTarget.position, this.lerpSpeed * Time.deltaTime);

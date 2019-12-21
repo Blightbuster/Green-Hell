@@ -98,16 +98,14 @@ namespace RootMotion.FinalIK
 			}
 			Vector3 vector = this.references.rightUpperArm.position - this.references.leftUpperArm.position;
 			Vector3 vector2 = this.solver.rootNode.position - this.references.leftUpperArm.position;
-			float num = Vector3.Dot(vector.normalized, vector2.normalized);
-			if (num > 0.95f)
+			if (Vector3.Dot(vector.normalized, vector2.normalized) > 0.95f)
 			{
 				warningMessage = "The root node, the left upper arm and the right upper arm bones should ideally form a triangle that is as close to equilateral as possible. Currently the root node bone seems to be very close to the line between the left upper arm and the right upper arm bones. This might cause unwanted behaviour like the spine turning upside down when pulled by a hand effector.Please set the root node bone to be one of the lower bones in the spine.";
 				return true;
 			}
 			Vector3 vector3 = this.references.rightThigh.position - this.references.leftThigh.position;
 			Vector3 vector4 = this.solver.rootNode.position - this.references.leftThigh.position;
-			num = Vector3.Dot(vector3.normalized, vector4.normalized);
-			if (num > 0.95f)
+			if (Vector3.Dot(vector3.normalized, vector4.normalized) > 0.95f)
 			{
 				warningMessage = "The root node, the left thigh and the right thigh bones should ideally form a triangle that is as close to equilateral as possible. Currently the root node bone seems to be very close to the line between the left thigh and the right thigh bones. This might cause unwanted behaviour like the hip turning upside down when pulled by an effector.Please set the root node bone to be one of the higher bones in the spine.";
 				return true;

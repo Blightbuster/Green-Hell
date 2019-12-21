@@ -16,8 +16,7 @@ public class ScreenFaderClip : PlayableAsset, ITimelineClipAsset
 
 	public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
 	{
-		ScriptPlayable<ScreenFaderBehaviour> playable = ScriptPlayable<ScreenFaderBehaviour>.Create(graph, this.template, 0);
-		return playable;
+		return ScriptPlayable<ScreenFaderBehaviour>.Create(graph, this.template, 0);
 	}
 
 	public ScreenFaderBehaviour template = new ScreenFaderBehaviour();

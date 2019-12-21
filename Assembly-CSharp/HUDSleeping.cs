@@ -30,7 +30,7 @@ public class HUDSleeping : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return SleepController.Get().IsSleeping() && !Player.Get().m_DreamActive;
+		return (SleepController.Get().IsSleeping() || this.m_BG.color.a > 0f) && !Player.Get().m_DreamActive;
 	}
 
 	protected override void OnShow()
@@ -49,14 +49,23 @@ public class HUDSleeping : HUDBase
 		text = string.Format("{0}:{1:00}", num, num2);
 		this.m_EndTime.text = text;
 		this.SetBGAlpha(0f);
-		CursorManager.Get().ShowCursor(true);
+		if (GreenHellGame.IsPCControllerActive())
+		{
+			CursorManager.Get().ShowCursor(true, true);
+			this.m_CursorVisible = true;
+		}
+		this.m_State = HUDSleepingState.FadeIn;
 	}
 
 	protected override void OnHide()
 	{
 		base.OnHide();
-		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
-		CursorManager.Get().ShowCursor(false);
+		if (this.m_CursorVisible)
+		{
+			CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
+			CursorManager.Get().ShowCursor(false, false);
+			this.m_CursorVisible = false;
+		}
 	}
 
 	private void SetBGAlpha(float alpha)
@@ -81,14 +90,46 @@ public class HUDSleeping : HUDBase
 
 	private void UpdateAlpha()
 	{
-		if (this.m_BG.color.a < 1f)
+		switch (this.m_State)
 		{
-			this.SetBGAlpha(this.m_BG.color.a + Time.deltaTime);
-		}
-		else if (this.m_CanvasGroup.alpha < 1f)
-		{
-			this.m_CanvasGroup.alpha += Time.deltaTime;
-			this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
+		case HUDSleepingState.FadeIn:
+			if (this.m_BG.color.a < 1f)
+			{
+				this.SetBGAlpha(this.m_BG.color.a + Time.deltaTime);
+				return;
+			}
+			if (this.m_CanvasGroup.alpha < 1f)
+			{
+				this.m_CanvasGroup.alpha += Time.deltaTime;
+				if (this.m_CanvasGroup.alpha >= 1f)
+				{
+					this.m_State = HUDSleepingState.Progress;
+				}
+				this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
+				return;
+			}
+			break;
+		case HUDSleepingState.Progress:
+			if (!SleepController.Get().IsSleeping())
+			{
+				this.m_State = HUDSleepingState.FadeOut;
+				return;
+			}
+			break;
+		case HUDSleepingState.FadeOut:
+			if (this.m_CanvasGroup.alpha > 0f)
+			{
+				this.m_CanvasGroup.alpha -= Time.deltaTime * 5f;
+				this.m_CanvasGroup.alpha = Mathf.Clamp01(this.m_CanvasGroup.alpha);
+				return;
+			}
+			if (this.m_BG.color.a > 0f)
+			{
+				this.SetBGAlpha(this.m_BG.color.a - Time.deltaTime * 2f);
+			}
+			break;
+		default:
+			return;
 		}
 	}
 
@@ -104,7 +145,10 @@ public class HUDSleeping : HUDBase
 
 	public void OnWakeUpButton()
 	{
-		SleepController.Get().WakeUp(false, true);
+		if (!Player.Get().IsDead())
+		{
+			SleepController.Get().WakeUp(false, true);
+		}
 	}
 
 	private void UpdateProgress()
@@ -130,6 +174,11 @@ public class HUDSleeping : HUDBase
 		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
 	}
 
+	public HUDSleepingState GetState()
+	{
+		return this.m_State;
+	}
+
 	private Text m_Time;
 
 	private Text m_StartTime;
@@ -143,4 +192,8 @@ public class HUDSleeping : HUDBase
 	private CanvasGroup m_CanvasGroup;
 
 	private static HUDSleeping s_Instance;
+
+	private HUDSleepingState m_State;
+
+	private bool m_CursorVisible;
 }

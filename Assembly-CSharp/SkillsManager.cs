@@ -46,15 +46,13 @@ public class SkillsManager : MonoBehaviour
 	public bool SkillGreater(string name, float value)
 	{
 		Type key = this.m_StringToSkillType[name];
-		Skill skill = Skill.s_Instances[key];
-		return skill.m_Value > value;
+		return Skill.s_Instances[key].m_Value > value;
 	}
 
 	public bool SkillGreaterOrEqual(string name, float value)
 	{
 		Type key = this.m_StringToSkillType[name];
-		Skill skill = Skill.s_Instances[key];
-		return skill.m_Value >= value;
+		return Skill.s_Instances[key].m_Value >= value;
 	}
 
 	public void Save()

@@ -24,9 +24,10 @@ namespace UnityEngine.PostProcessing
 
 		public override void OnDisable()
 		{
-			foreach (RenderTexture obj in this.m_AutoExposurePool)
+			RenderTexture[] autoExposurePool = this.m_AutoExposurePool;
+			for (int i = 0; i < autoExposurePool.Length; i++)
 			{
-				GraphicsUtils.Destroy(obj);
+				GraphicsUtils.Destroy(autoExposurePool[i]);
 			}
 			if (this.m_HistogramBuffer != null)
 			{
@@ -104,7 +105,7 @@ namespace UnityEngine.PostProcessing
 			else
 			{
 				int num = this.m_AutoExposurePingPing;
-				RenderTexture source2 = this.m_AutoExposurePool[++num % 2];
+				Texture source2 = this.m_AutoExposurePool[++num % 2];
 				RenderTexture renderTexture2 = this.m_AutoExposurePool[++num % 2];
 				Graphics.Blit(source2, renderTexture2, material, (int)settings.adaptationType);
 				this.m_AutoExposurePingPing = (num + 1) % 2;
@@ -133,8 +134,7 @@ namespace UnityEngine.PostProcessing
 			{
 				return;
 			}
-			Rect position = new Rect(this.context.viewport.x * (float)Screen.width + 8f, 8f, (float)this.m_DebugHistogram.width, (float)this.m_DebugHistogram.height);
-			GUI.DrawTexture(position, this.m_DebugHistogram);
+			GUI.DrawTexture(new Rect(this.context.viewport.x * (float)Screen.width + 8f, 8f, (float)this.m_DebugHistogram.width, (float)this.m_DebugHistogram.height), this.m_DebugHistogram);
 		}
 
 		private ComputeShader m_EyeCompute;

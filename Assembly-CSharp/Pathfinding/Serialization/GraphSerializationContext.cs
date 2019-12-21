@@ -21,7 +21,7 @@ namespace Pathfinding.Serialization
 
 		public void SerializeNodeReference(GraphNode node)
 		{
-			this.writer.Write((node != null) ? node.NodeIndex : -1);
+			this.writer.Write((node == null) ? -1 : node.NodeIndex);
 		}
 
 		public GraphNode DeserializeNodeReference()
@@ -87,8 +87,7 @@ namespace Pathfinding.Serialization
 
 		public UnityEngine.Object DeserializeUnityObject()
 		{
-			int num = this.reader.ReadInt32();
-			if (num == 2147483647)
+			if (this.reader.ReadInt32() == 2147483647)
 			{
 				return null;
 			}

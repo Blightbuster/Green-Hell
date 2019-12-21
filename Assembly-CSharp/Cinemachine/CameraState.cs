@@ -159,23 +159,23 @@ namespace Cinemachine
 			{
 			case 0:
 				this.mCustom0 = b;
-				break;
+				return;
 			case 1:
 				this.mCustom1 = b;
-				break;
+				return;
 			case 2:
 				this.mCustom2 = b;
-				break;
+				return;
 			case 3:
 				this.mCustom3 = b;
-				break;
+				return;
 			default:
 				if (this.m_CustomOverflow == null)
 				{
 					this.m_CustomOverflow = new List<CameraState.CustomBlendable>();
 				}
 				this.m_CustomOverflow.Add(b);
-				break;
+				return;
 			}
 		}
 
@@ -207,8 +207,7 @@ namespace Cinemachine
 					t2 = Mathf.Abs((lens.FieldOfView - fieldOfView) / (fieldOfView2 - fieldOfView));
 				}
 				result.ReferenceLookAt = Vector3.Lerp(stateA.ReferenceLookAt, stateB.ReferenceLookAt, t2);
-				float num = Quaternion.Angle(stateA.RawOrientation, stateB.RawOrientation);
-				if (num > 0.0001f)
+				if (Quaternion.Angle(stateA.RawOrientation, stateB.RawOrientation) > 0.0001f)
 				{
 					vector = result.ReferenceLookAt - result.CorrectedPosition;
 				}

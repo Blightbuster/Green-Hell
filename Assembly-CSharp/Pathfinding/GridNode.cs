@@ -63,12 +63,12 @@ namespace Pathfinding
 
 		public void SetConnectionInternal(int dir, bool value)
 		{
-			this.gridFlags = (ushort)(((int)this.gridFlags & ~(1 << dir)) | ((!value) ? 0 : 1) << 0 << (dir & 31));
+			this.gridFlags = (ushort)(((int)this.gridFlags & ~(1 << dir)) | (value ? 1 : 0) << (dir & 31));
 		}
 
 		public void SetAllConnectionInternal(int connections)
 		{
-			this.gridFlags = (ushort)(((int)this.gridFlags & -256) | connections << 0);
+			this.gridFlags = (ushort)(((int)this.gridFlags & -256) | connections);
 		}
 
 		public void ResetConnectionsInternal()
@@ -80,11 +80,11 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (this.gridFlags & 1024) != 0;
+				return (this.gridFlags & 1024) > 0;
 			}
 			set
 			{
-				this.gridFlags = (ushort)(((int)this.gridFlags & -1025) | ((!value) ? 0 : 1024));
+				this.gridFlags = (ushort)(((int)this.gridFlags & -1025) | (value ? 1024 : 0));
 			}
 		}
 
@@ -107,7 +107,7 @@ namespace Pathfinding
 					GridNode gridNode = this.GetNeighbourAlongDirection(i) as GridNode;
 					if (gridNode != null)
 					{
-						gridNode.SetConnectionInternal((i >= 4) ? ((i - 2) % 4 + 4) : ((i + 2) % 4), false);
+						gridNode.SetConnectionInternal((i < 4) ? ((i + 2) % 4) : ((i - 2) % 4 + 4), false);
 					}
 				}
 			}
@@ -195,8 +195,8 @@ namespace Pathfinding
 					Vector3 vector2 = Vector3.Cross(gridGraph.collision.up, (Vector3)(other.position - this.position));
 					vector2.Normalize();
 					vector2 *= gridGraph.nodeSize * 1.4142f;
-					left.Add(a2 - ((!flag2) ? Vector3.zero : vector2));
-					right.Add(a2 + ((!flag) ? Vector3.zero : vector2));
+					left.Add(a2 - (flag2 ? vector2 : Vector3.zero));
+					right.Add(a2 + (flag ? vector2 : Vector3.zero));
 					return true;
 				}
 			}

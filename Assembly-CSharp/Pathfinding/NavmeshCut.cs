@@ -6,8 +6,8 @@ using UnityEngine.Serialization;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_navmesh_cut.php")]
 	[AddComponentMenu("Pathfinding/Navmesh/Navmesh Cut")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_navmesh_cut.php")]
 	public class NavmeshCut : NavmeshClipper
 	{
 		protected override void Awake()
@@ -102,18 +102,18 @@ namespace Pathfinding
 						}
 					}
 					while (num2 != l);
-					IL_20C:
+					IL_1E4:
 					if (list2.Count > 0)
 					{
 						list.Add(list2.ToArray());
-						goto IL_227;
+						goto IL_1F9;
 					}
-					goto IL_227;
+					goto IL_1F9;
 					Block_9:
 					Debug.LogError("Invalid Mesh '" + this.mesh.name + " in " + base.gameObject.name);
-					goto IL_20C;
+					goto IL_1E4;
 				}
-				IL_227:;
+				IL_1F9:;
 			}
 			ListPool<Vector3>.Release(list2);
 			this.contours = list.ToArray();
@@ -153,48 +153,9 @@ namespace Pathfinding
 			{
 				this.circleResolution = 3;
 			}
-			NavmeshCut.MeshType meshType = this.type;
-			if (meshType != NavmeshCut.MeshType.Rectangle)
+			switch (this.type)
 			{
-				if (meshType != NavmeshCut.MeshType.Circle)
-				{
-					if (meshType == NavmeshCut.MeshType.CustomMesh)
-					{
-						if (this.mesh != this.lastMesh || this.contours == null)
-						{
-							this.CalculateMeshContour();
-							this.lastMesh = this.mesh;
-						}
-						if (this.contours != null)
-						{
-							bool reverse = this.meshScale < 0f;
-							for (int i = 0; i < this.contours.Length; i++)
-							{
-								Vector3[] array = this.contours[i];
-								List<Vector3> list = ListPool<Vector3>.Claim(array.Length);
-								for (int j = 0; j < array.Length; j++)
-								{
-									list.Add(array[j] * this.meshScale);
-								}
-								this.TransformBuffer(list, reverse);
-								buffer.Add(list);
-							}
-						}
-					}
-				}
-				else
-				{
-					List<Vector3> list = ListPool<Vector3>.Claim(this.circleResolution);
-					for (int k = 0; k < this.circleResolution; k++)
-					{
-						list.Add(new Vector3(Mathf.Cos((float)(k * 2) * 3.14159274f / (float)this.circleResolution), 0f, Mathf.Sin((float)(k * 2) * 3.14159274f / (float)this.circleResolution)) * this.circleRadius);
-					}
-					bool reverse = this.circleRadius < 0f;
-					this.TransformBuffer(list, reverse);
-					buffer.Add(list);
-				}
-			}
-			else
+			case NavmeshCut.MeshType.Rectangle:
 			{
 				List<Vector3> list = ListPool<Vector3>.Claim();
 				list.Add(new Vector3(-this.rectangleSize.x, 0f, -this.rectangleSize.y) * 0.5f);
@@ -204,6 +165,44 @@ namespace Pathfinding
 				bool reverse = this.rectangleSize.x < 0f ^ this.rectangleSize.y < 0f;
 				this.TransformBuffer(list, reverse);
 				buffer.Add(list);
+				return;
+			}
+			case NavmeshCut.MeshType.Circle:
+			{
+				List<Vector3> list = ListPool<Vector3>.Claim(this.circleResolution);
+				for (int i = 0; i < this.circleResolution; i++)
+				{
+					list.Add(new Vector3(Mathf.Cos((float)(i * 2) * 3.14159274f / (float)this.circleResolution), 0f, Mathf.Sin((float)(i * 2) * 3.14159274f / (float)this.circleResolution)) * this.circleRadius);
+				}
+				bool reverse = this.circleRadius < 0f;
+				this.TransformBuffer(list, reverse);
+				buffer.Add(list);
+				return;
+			}
+			case NavmeshCut.MeshType.CustomMesh:
+				if (this.mesh != this.lastMesh || this.contours == null)
+				{
+					this.CalculateMeshContour();
+					this.lastMesh = this.mesh;
+				}
+				if (this.contours != null)
+				{
+					bool reverse = this.meshScale < 0f;
+					for (int j = 0; j < this.contours.Length; j++)
+					{
+						Vector3[] array = this.contours[j];
+						List<Vector3> list = ListPool<Vector3>.Claim(array.Length);
+						for (int k = 0; k < array.Length; k++)
+						{
+							list.Add(array[k] * this.meshScale);
+						}
+						this.TransformBuffer(list, reverse);
+						buffer.Add(list);
+					}
+				}
+				return;
+			default:
+				return;
 			}
 		}
 
@@ -224,8 +223,8 @@ namespace Pathfinding
 				vector += this.tr.position;
 				for (int j = 0; j < buffer.Count; j++)
 				{
-					int index;
-					buffer[index = j] = buffer[index] + vector;
+					int index = j;
+					buffer[index] += vector;
 				}
 			}
 			if (reverse)
@@ -258,7 +257,7 @@ namespace Pathfinding
 
 		internal float GetY(GraphTransform transform)
 		{
-			return transform.InverseTransform((!this.useRotationAndScale) ? (this.tr.position + this.center) : this.tr.TransformPoint(this.center)).y;
+			return transform.InverseTransform(this.useRotationAndScale ? this.tr.TransformPoint(this.center) : (this.tr.position + this.center)).y;
 		}
 
 		public void OnDrawGizmosSelected()
@@ -268,8 +267,8 @@ namespace Pathfinding
 			Color color = Color.Lerp(NavmeshCut.GizmoColor, Color.white, 0.5f);
 			color.a *= 0.5f;
 			Gizmos.color = color;
-			NavmeshBase navmeshBase = (!(AstarPath.active != null)) ? null : (AstarPath.active.data.recastGraph ?? AstarPath.active.data.navmesh);
-			GraphTransform graphTransform = (navmeshBase == null) ? GraphTransform.identityTransform : navmeshBase.transform;
+			NavmeshBase navmeshBase = (AstarPath.active != null) ? (AstarPath.active.data.recastGraph ?? AstarPath.active.data.navmesh) : null;
+			GraphTransform graphTransform = (navmeshBase != null) ? navmeshBase.transform : GraphTransform.identityTransform;
 			float y = this.GetY(graphTransform);
 			float y2 = y - this.height * 0.5f;
 			float y3 = y + this.height * 0.5f;
@@ -324,8 +323,8 @@ namespace Pathfinding
 		[Tooltip("How many degrees rotation that is required for an update to the navmesh. Should be between 0 and 180.")]
 		public float updateRotationDistance = 10f;
 
-		[FormerlySerializedAs("useRotation")]
 		[Tooltip("Includes rotation in calculations. This is slower since a lot more matrix multiplications are needed but gives more flexibility.")]
+		[FormerlySerializedAs("useRotation")]
 		public bool useRotationAndScale;
 
 		private Vector3[][] contours;

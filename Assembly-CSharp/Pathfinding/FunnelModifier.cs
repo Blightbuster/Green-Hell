@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_funnel_modifier.php")]
 	[AddComponentMenu("Pathfinding/Modifiers/Funnel")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_funnel_modifier.php")]
 	[Serializable]
 	public class FunnelModifier : MonoModifier
 	{
@@ -28,11 +28,10 @@ namespace Pathfinding
 			List<Funnel.PathPart> list2 = Funnel.SplitIntoParts(p);
 			for (int i = 0; i < list2.Count; i++)
 			{
-				Funnel.PathPart part = list2[i];
-				if (!part.isLink)
+				Funnel.PathPart pathPart = list2[i];
+				if (!pathPart.isLink)
 				{
-					Funnel.FunnelPortals funnel = Funnel.ConstructFunnelPortals(p.path, part);
-					List<Vector3> list3 = Funnel.Calculate(funnel, this.unwrap, this.splitAtEveryPortal);
+					List<Vector3> list3 = Funnel.Calculate(Funnel.ConstructFunnelPortals(p.path, pathPart), this.unwrap, this.splitAtEveryPortal);
 					list.AddRange(list3);
 					ListPool<Vector3>.Release(list3);
 				}

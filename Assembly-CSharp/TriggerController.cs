@@ -5,7 +5,8 @@ using UnityEngine;
 
 public class TriggerController : PlayerController
 {
-	public bool m_TriggerInAction { get; protected set; }
+	[HideInInspector]
+	public bool m_TriggerInAction { get; set; }
 
 	public static TriggerController Get()
 	{
@@ -16,7 +17,7 @@ public class TriggerController : PlayerController
 	{
 		base.Awake();
 		TriggerController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Trigger;
+		base.m_ControllerType = PlayerControllerType.Trigger;
 		this.m_BestTrigger = default(TriggerController.TriggerData);
 		this.m_BestTrigger.actions = new List<TriggerAction.TYPE>();
 		this.m_BestTrigger.Reset();
@@ -30,6 +31,7 @@ public class TriggerController : PlayerController
 		}
 		this.SetupAudio();
 		this.m_BalanceSpawnerLayer = LayerMask.NameToLayer("BalanceSpawner");
+		this.m_Proxy = this.m_Player.GetComponent<CharacterControllerProxy>();
 	}
 
 	private void SetupAudio()
@@ -77,6 +79,16 @@ public class TriggerController : PlayerController
 		return this.m_AdditionalTrigger.hit_pos;
 	}
 
+	public bool IsValidBestTriggerAction(TriggerAction.TYPE action)
+	{
+		return this.m_BestTrigger.trigger && this.m_BestTrigger.actions.Contains(action) && this.m_BestTrigger.trigger.CanExecuteActions();
+	}
+
+	public bool IsValidAdditionalTriggerAction(TriggerAction.TYPE action)
+	{
+		return this.m_AdditionalTrigger.trigger && this.m_AdditionalTrigger.actions.Contains(action) && this.m_AdditionalTrigger.trigger.CanExecuteActions();
+	}
+
 	public override void ControllerUpdate()
 	{
 		base.ControllerUpdate();
@@ -89,7 +101,14 @@ public class TriggerController : PlayerController
 
 	public void OnTriggerAction(TriggerAction.TYPE action)
 	{
-		if (this.m_Player.GetRotationBlocked())
+		if (GreenHellGame.IsPadControllerActive())
+		{
+			if ((Inventory3DManager.Get().IsActive() || this.m_Player.GetRotationBlocked()) && action != TriggerAction.TYPE.Expand && action != TriggerAction.TYPE.InventoryExpand && action != TriggerAction.TYPE.Use && action != TriggerAction.TYPE.Pick && action != TriggerAction.TYPE.Remove)
+			{
+				return;
+			}
+		}
+		else if (this.m_Player.GetRotationBlocked())
 		{
 			return;
 		}
@@ -115,26 +134,19 @@ public class TriggerController : PlayerController
 				for (int i = 0; i < data.actions.Count; i++)
 				{
 					InputActionData inputActionData2 = InputsManager.Get().GetInputActionData(data.actions[i]);
-					if (inputActionData2.m_TriggerAction != action)
+					if (inputActionData2 != null && inputActionData2.m_TriggerAction != action && inputActionData2.m_KeyCode == inputActionData.m_KeyCode && inputActionData2.m_Hold > 0f)
 					{
-						if (inputActionData2.m_KeyCode == inputActionData.m_KeyCode)
-						{
-							if (inputActionData2.m_Hold > 0f)
-							{
-								type = inputActionData2.m_TriggerAction;
-								break;
-							}
-						}
+						type = inputActionData2.m_TriggerAction;
+						break;
 					}
 				}
 				if (type != TriggerAction.TYPE.None)
 				{
 					hold_data.Add(new TriggerHoldData(action, type));
+					return;
 				}
-				else
-				{
-					this.ExecuteTrigger(data.trigger, action);
-				}
+				this.ExecuteTrigger(data.trigger, action);
+				return;
 			}
 			else
 			{
@@ -178,42 +190,48 @@ public class TriggerController : PlayerController
 		}
 	}
 
+	public void ResetTrigger()
+	{
+		this.m_BestTrigger.Reset();
+		this.m_AdditionalTrigger.Reset();
+	}
+
 	private void UpdateBestTrigger()
 	{
-		if (HUDReadableItem.Get().enabled)
+		if (HUDReadableItem.Get() != null && HUDReadableItem.Get().enabled)
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
+			this.ResetTrigger();
 			return;
 		}
-		if (Camera.main == null)
+		if (this.m_CameraMain == null)
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
+			this.ResetTrigger();
+			this.m_CameraMain = Camera.main;
 			return;
 		}
 		if (CutscenesManager.Get().IsCutscenePlaying())
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
+			this.ResetTrigger();
 			return;
 		}
 		if (MakeFireController.Get().IsActive() && (MakeFireController.Get().ShouldBlockTriggers() || !Inventory3DManager.Get().gameObject.activeSelf))
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
+			this.ResetTrigger();
 			return;
 		}
 		if (CraftingController.Get().IsActive() && CraftingController.Get().m_InProgress)
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
+			this.ResetTrigger();
 			return;
 		}
-		if (this.m_Player.m_ActiveFightController && this.m_Player.m_ActiveFightController.IsBlock())
+		if (this.m_Player.m_ActiveFightController && (this.m_Player.m_ActiveFightController.IsBlock() || this.m_Player.m_ActiveFightController.IsAttack()))
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
+			this.ResetTrigger();
+			return;
+		}
+		if (VomitingController.Get().IsActive())
+		{
+			this.ResetTrigger();
 			return;
 		}
 		if (HUDItem.Get().m_Active && HUDItem.Get().m_Item)
@@ -223,203 +241,214 @@ public class TriggerController : PlayerController
 		}
 		if (Inventory3DManager.Get().gameObject.activeSelf)
 		{
-			if (Inventory3DManager.Get().m_FocusedItem)
+			if (!Inventory3DManager.Get().m_FocusedItem)
 			{
-				this.SetBestTrigger(Inventory3DManager.Get().m_FocusedItem, Inventory3DManager.Get().m_FocusedItem.transform.position);
+				this.ResetTrigger();
+				return;
 			}
-			else
+			if (BodyInspectionController.Get().IsActive() && Inventory3DManager.Get().m_FocusedItem.IsStorage())
 			{
-				this.m_BestTrigger.Reset();
-				this.m_AdditionalTrigger.Reset();
+				this.ResetTrigger();
+				return;
 			}
+			this.SetBestTrigger(Inventory3DManager.Get().m_FocusedItem, Inventory3DManager.Get().m_FocusedItem.transform.position);
 			return;
 		}
-		if (BodyInspectionController.Get().IsActive())
+		else
 		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
-			return;
-		}
-		if (Player.Get().m_Aim)
-		{
-			this.m_BestTrigger.Reset();
-			this.m_AdditionalTrigger.Reset();
-			return;
-		}
-		if (WeaponSpearController.Get().IsActive() && WeaponSpearController.Get().m_ItemBody)
-		{
-			this.SetBestTrigger(WeaponSpearController.Get().m_ItemBody, WeaponSpearController.Get().m_ItemBody.transform.position);
-			return;
-		}
-		TriggerController.s_AllPotentialTriggers.Clear();
-		TriggerController.s_OffCrosshairTriggers.Clear();
-		TriggerController.s_ColldersEnabledMap.Clear();
-		Vector3 crossHairOrigin = this.GetCrossHairOrigin();
-		Vector3 position = Player.Get().transform.position;
-		float num = 0.8f;
-		float num2 = -1f;
-		float num3 = -1f;
-		float num4 = float.MinValue;
-		Vector3 vector = Vector3.zero;
-		Vector3 vector2 = Vector3.zero;
-		TriggersManager triggersManager = TriggersManager.Get();
-		bool flag = false;
-		Trigger trigger = null;
-		Vector3 hit_pos = Vector3.zero;
-		Trigger trigger2 = null;
-		Vector3 hit_pos2 = Vector3.zero;
-		float num5 = float.MinValue;
-		for (int i = 0; i < triggersManager.GetActiveTriggersCount(); i++)
-		{
-			Trigger trigger3 = triggersManager.GetTrigger(i, false);
-			if (trigger3 && trigger3.enabled)
+			if (BodyInspectionController.Get().IsActive())
 			{
-				if (!trigger3.m_IsCut)
+				this.ResetTrigger();
+				return;
+			}
+			if (Player.Get().m_Aim)
+			{
+				this.ResetTrigger();
+				return;
+			}
+			if (HUDWheel.Get().m_Active)
+			{
+				this.ResetTrigger();
+				return;
+			}
+			if (this.m_Animator.GetBool(Player.Get().m_CleanUpHash))
+			{
+				this.ResetTrigger();
+				return;
+			}
+			if (this.m_Animator.GetBool(TriggerController.Get().m_BDrinkWater))
+			{
+				this.ResetTrigger();
+				return;
+			}
+			if (WeaponSpearController.Get().IsActive() && WeaponSpearController.Get().m_ItemBody)
+			{
+				this.SetBestTrigger(WeaponSpearController.Get().m_ItemBody, WeaponSpearController.Get().m_ItemBody.transform.position);
+				return;
+			}
+			TriggerController.s_AllPotentialTriggers.Clear();
+			TriggerController.s_OffCrosshairTriggers.Clear();
+			TriggerController.s_ColldersEnabledMap.Clear();
+			Vector3 crossHairOrigin = this.GetCrossHairOrigin();
+			Vector3 position = Player.Get().transform.position;
+			float num = 0.8f;
+			float num2 = -1f;
+			float num3 = -1f;
+			float num4 = float.MinValue;
+			Vector3 vector = Vector3.zero;
+			Vector3 vector2 = Vector3.zero;
+			TriggersManager triggersManager = TriggersManager.Get();
+			bool flag = false;
+			Trigger trigger = null;
+			Vector3 hit_pos = Vector3.zero;
+			Trigger trigger2 = null;
+			Vector3 hit_pos2 = Vector3.zero;
+			float num5 = float.MinValue;
+			HashSet<Trigger>.Enumerator enumerator = triggersManager.GetActiveTriggers().GetEnumerator();
+			Item currentItem = Player.Get().GetCurrentItem();
+			while (enumerator.MoveNext())
+			{
+				Trigger trigger3 = enumerator.Current;
+				if (trigger3 != null && trigger3.enabled && !trigger3.m_IsCut && trigger3.m_Initialized && trigger3.CanTrigger() && (!currentItem || currentItem.GetInfoID() != ItemID.Fire || trigger3.IsFIrecamp() || trigger3.IsCharcoalFurnace() || trigger3.IsForge()))
 				{
-					if (trigger3.CanTrigger())
+					Collider collider = null;
+					trigger3.gameObject.GetComponents<Collider>(TriggerController.s_ColliderCache);
+					if (TriggerController.s_ColliderCache.Count > 0)
 					{
-						Collider collider = null;
-						trigger3.gameObject.GetComponents<Collider>(TriggerController.s_ColliderCache);
-						if (TriggerController.s_ColliderCache.Count > 0)
+						collider = TriggerController.s_ColliderCache[0];
+					}
+					if (collider != null)
+					{
+						if (trigger3.CheckInsideCollider() && collider.bounds.Contains(this.m_CameraMain.transform.position) && trigger3.IsAdditionalTrigger() && (!trigger3.CheckDot() || num4 > num3))
 						{
-							collider = TriggerController.s_ColliderCache[0];
+							hit_pos2 = collider.bounds.center;
+							trigger2 = trigger3;
+							num3 = num4;
 						}
-						if (collider)
+						float num6 = (trigger3.m_TriggerCheckRange > 0f) ? trigger3.m_TriggerCheckRange : this.m_Player.GetParams().GetTriggerCheckRange();
+						if (trigger3.CheckRange())
 						{
-							if (trigger3.CheckInsideCollider() && collider.bounds.Contains(Camera.main.transform.position) && trigger3.IsAdditionalTrigger() && (!trigger3.CheckDot() || num4 > num3))
+							vector2 = ((collider != null) ? collider.ClosestPointOnBounds(position) : trigger3.gameObject.transform.position);
+							if (Vector3.Distance(position, vector2) > num6)
 							{
-								hit_pos2 = collider.bounds.center;
-								trigger2 = trigger3;
-								num3 = num4;
+								continue;
 							}
-							float num6 = (trigger3.m_TriggerCheckRange <= 0f) ? this.m_Player.GetParams().GetTriggerCheckRange() : trigger3.m_TriggerCheckRange;
-							if (trigger3.CheckRange())
+						}
+						vector2 = ((collider != null) ? collider.bounds.center : trigger3.gameObject.transform.position);
+						vector = vector2 - crossHairOrigin;
+						vector.Normalize();
+						if (trigger3.CheckDot())
+						{
+							num4 = Vector3.Dot(this.m_CameraMain.transform.forward, vector);
+							if (num4 < num || (trigger3.m_TriggerMaxDot > 0f && num4 < trigger3.m_TriggerMaxDot))
 							{
-								vector2 = ((!collider) ? trigger3.gameObject.transform.position : collider.ClosestPointOnBounds(position));
-								float num7 = Vector3.Distance(position, vector2);
-								if (num7 > num6)
-								{
-									goto IL_539;
-								}
+								continue;
 							}
-							vector2 = ((!collider) ? trigger3.gameObject.transform.position : collider.bounds.center);
-							vector = vector2 - crossHairOrigin;
-							vector.Normalize();
-							if (trigger3.CheckDot())
-							{
-								num4 = Vector3.Dot(Camera.main.transform.forward, vector);
-								if (num4 < num)
-								{
-									goto IL_539;
-								}
-							}
-							TriggerController.s_AllPotentialTriggers.Add(trigger3);
-							if (!trigger3.OnlyInCrosshair())
-							{
-								TriggerController.s_OffCrosshairTriggers.Add(trigger3);
-							}
-							TriggerController.s_ColldersEnabledMap[collider] = collider.enabled;
-							collider.enabled = true;
-							if (num6 > num5)
-							{
-								num5 = num6;
-							}
+						}
+						TriggerController.s_AllPotentialTriggers.Add(trigger3);
+						if (!trigger3.OnlyInCrosshair())
+						{
+							TriggerController.s_OffCrosshairTriggers.Add(trigger3);
+						}
+						TriggerController.s_ColldersEnabledMap[collider] = collider.enabled;
+						collider.enabled = true;
+						if (num6 > num5)
+						{
+							num5 = num6;
 						}
 					}
 				}
 			}
-			IL_539:;
-		}
-		int num8 = Physics.RaycastNonAlloc(crossHairOrigin, this.GetCrossHairDir(), TriggerController.s_RaycastHitCache, num5);
-		if ((float)num8 > 0f)
-		{
-			TriggerController.s_CrosshairOrigin = this.GetCrossHairOrigin();
-			Array.Sort<RaycastHit>(TriggerController.s_RaycastHitCache, 0, num8, TriggerController.s_DistComparer);
-			for (int j = 0; j < TriggerController.s_AllPotentialTriggers.Count; j++)
+			Vector3 crossHairDir = this.GetCrossHairDir();
+			int num7 = (num5 > 0f) ? Physics.RaycastNonAlloc(crossHairOrigin, crossHairDir, TriggerController.s_RaycastHitCache, num5) : 0;
+			if (num7 > 0)
 			{
-				Trigger trigger4 = TriggerController.s_AllPotentialTriggers[j];
-				Collider collider2 = null;
-				trigger4.gameObject.GetComponents<Collider>(TriggerController.s_ColliderCache);
-				if (TriggerController.s_ColliderCache.Count > 0)
+				TriggerController.s_CrosshairOrigin = crossHairOrigin;
+				Array.Sort<RaycastHit>(TriggerController.s_RaycastHitCache, 0, num7, TriggerController.s_DistComparer);
+				for (int i = 0; i < TriggerController.s_AllPotentialTriggers.Count; i++)
 				{
-					collider2 = TriggerController.s_ColliderCache[0];
-				}
-				if (collider2)
-				{
-					for (int k = 0; k < num8; k++)
+					Trigger trigger4 = TriggerController.s_AllPotentialTriggers[i];
+					Collider collider2 = null;
+					trigger4.gameObject.GetComponents<Collider>(TriggerController.s_ColliderCache);
+					if (TriggerController.s_ColliderCache.Count > 0)
 					{
-						RaycastHit raycastHit = TriggerController.s_RaycastHitCache[k];
-						if (raycastHit.collider)
+						collider2 = TriggerController.s_ColliderCache[0];
+					}
+					if (collider2 != null)
+					{
+						for (int j = 0; j < num7; j++)
 						{
-							if (!(raycastHit.collider.gameObject == base.gameObject))
+							RaycastHit raycastHit = TriggerController.s_RaycastHitCache[j];
+							if (raycastHit.collider != null && !(raycastHit.collider.gameObject == base.gameObject) && !(raycastHit.collider == FistFightController.Get().m_RightHandCollider) && !(raycastHit.collider == FistFightController.Get().m_LeftHandCollider) && !(raycastHit.collider.gameObject == this.m_Proxy.m_Controller.gameObject))
 							{
-								if (!(raycastHit.collider == FistFightController.Get().m_RightHandCollider))
+								GhostSlot ghostSlot = null;
+								raycastHit.collider.gameObject.GetComponents<GhostSlot>(TriggerController.s_GhostSlotCache);
+								if (TriggerController.s_GhostSlotCache.Count > 0)
 								{
-									if (!(raycastHit.collider == FistFightController.Get().m_LeftHandCollider))
+									ghostSlot = TriggerController.s_GhostSlotCache[0];
+								}
+								if (!flag || ghostSlot != null || trigger4.IsAdditionalTrigger())
+								{
+									if (collider2 == raycastHit.collider || trigger4.IsAdditionalCollider(raycastHit.collider))
 									{
-										GhostSlot x = null;
-										raycastHit.collider.gameObject.GetComponents<GhostSlot>(TriggerController.s_GhostSlotCache);
-										if (TriggerController.s_GhostSlotCache.Count > 0)
+										if (trigger4.IsAdditionalTrigger())
 										{
-											x = TriggerController.s_GhostSlotCache[0];
-										}
-										if (!flag || !(x == null) || trigger4.IsAdditionalTrigger())
-										{
-											if (collider2 == raycastHit.collider || trigger4.IsAdditionalCollider(raycastHit.collider))
+											if (!trigger4.CheckDot() || num4 > num3 || (trigger4.m_TriggerMaxDot > 0f && num4 >= trigger4.m_TriggerMaxDot))
 											{
-												if (trigger4.IsAdditionalTrigger())
-												{
-													if (!trigger4.CheckDot() || num4 > num3)
-													{
-														hit_pos2 = raycastHit.point;
-														trigger2 = trigger4;
-														num3 = num4;
-													}
-												}
-												else if (!trigger4.CheckDot() || num4 >= num2)
-												{
-													hit_pos = raycastHit.point;
-													trigger = trigger4;
-													if (!trigger || !trigger.IsLiquidSource())
-													{
-														num2 = num4;
-													}
-												}
+												hit_pos2 = raycastHit.point;
+												trigger2 = trigger4;
+												num3 = num4;
 												break;
 											}
-											ITriggerThrough triggerThrough = null;
-											raycastHit.collider.gameObject.GetComponents<ITriggerThrough>(TriggerController.s_TriggerThroughCache);
-											if (TriggerController.s_TriggerThroughCache.Count > 0)
+											break;
+										}
+										else
+										{
+											if (trigger4.CheckDot() && num4 < num2 && (trigger4.m_TriggerMaxDot <= 0f || num4 < trigger4.m_TriggerMaxDot))
 											{
-												triggerThrough = TriggerController.s_TriggerThroughCache[0];
+												break;
 											}
-											if (triggerThrough == null)
+											hit_pos = raycastHit.point;
+											trigger = trigger4;
+											if (!trigger || !trigger.IsLiquidSource())
 											{
-												if (!trigger || !trigger.IsLiquidSource() || !(trigger.gameObject == raycastHit.collider.gameObject))
+												num2 = num4;
+												break;
+											}
+											break;
+										}
+									}
+									else
+									{
+										ITriggerThrough triggerThrough = null;
+										raycastHit.collider.gameObject.GetComponents<ITriggerThrough>(TriggerController.s_TriggerThroughCache);
+										if (TriggerController.s_TriggerThroughCache.Count > 0)
+										{
+											triggerThrough = TriggerController.s_TriggerThroughCache[0];
+										}
+										if (triggerThrough == null && !raycastHit.collider.gameObject.GetComponent<TriggerThrough>() && (!trigger || !trigger.IsLiquidSource() || !(trigger.gameObject == raycastHit.collider.gameObject)))
+										{
+											if (ghostSlot != null)
+											{
+												flag = true;
+											}
+											else
+											{
+												Item currentItem2 = this.m_Player.GetCurrentItem(Hand.Right);
+												if (currentItem2 == null || !(currentItem2.gameObject == raycastHit.collider.gameObject))
 												{
-													if (x != null)
+													currentItem2 = this.m_Player.GetCurrentItem(Hand.Left);
+													if ((currentItem2 == null || !(currentItem2.gameObject == raycastHit.collider.gameObject)) && !(raycastHit.collider.gameObject == this.m_Proxy.m_Controller.gameObject))
 													{
-														flag = true;
-													}
-													else
-													{
-														Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
-														if (!currentItem || !(currentItem.gameObject == raycastHit.collider.gameObject))
+														Trigger trigger5 = null;
+														raycastHit.collider.gameObject.GetComponents<Trigger>(TriggerController.s_OtherTriggerCache);
+														if (TriggerController.s_OtherTriggerCache.Count > 0)
 														{
-															currentItem = this.m_Player.GetCurrentItem(Hand.Left);
-															if (!currentItem || !(currentItem.gameObject == raycastHit.collider.gameObject))
-															{
-																Trigger trigger5 = null;
-																raycastHit.collider.gameObject.GetComponents<Trigger>(TriggerController.s_OtherTriggerCache);
-																if (TriggerController.s_OtherTriggerCache.Count > 0)
-																{
-																	trigger5 = TriggerController.s_OtherTriggerCache[0];
-																}
-																if (!trigger5 || !trigger5.TriggerThrough())
-																{
-																	break;
-																}
-															}
+															trigger5 = TriggerController.s_OtherTriggerCache[0];
+														}
+														if (trigger5 == null || !trigger5.TriggerThrough())
+														{
+															break;
 														}
 													}
 												}
@@ -432,81 +461,79 @@ public class TriggerController : PlayerController
 					}
 				}
 			}
-		}
-		if (trigger == null || trigger.IsLiquidSource())
-		{
-			TriggerController.s_CrosshairDir = this.GetCrossHairDir();
-			TriggerController.s_CrosshairOrigin = this.GetCrossHairOrigin();
-			TriggerController.s_OffCrosshairTriggers.Sort(TriggerController.s_DotComparer);
-			bool flag2 = false;
-			int num9 = 0;
-			while (num9 < TriggerController.s_OffCrosshairTriggers.Count && !flag2)
+			if (trigger == null || trigger.IsLiquidSource())
 			{
-				Trigger trigger6 = TriggerController.s_OffCrosshairTriggers[num9];
-				Collider collider3 = null;
-				trigger6.gameObject.GetComponents<Collider>(TriggerController.s_ColliderCache);
-				if (TriggerController.s_ColliderCache.Count > 0)
+				TriggerController.s_CrosshairDir = crossHairDir;
+				TriggerController.s_CrosshairOrigin = crossHairOrigin;
+				TriggerController.s_OffCrosshairTriggers.Sort(TriggerController.s_DotComparer);
+				bool flag2 = false;
+				int num8 = 0;
+				while (num8 < TriggerController.s_OffCrosshairTriggers.Count && !flag2)
 				{
-					collider3 = TriggerController.s_ColliderCache[0];
-				}
-				if (collider3)
-				{
-					float maxDistance = (trigger6.m_TriggerCheckRange <= 0f) ? this.m_Player.GetParams().GetTriggerCheckRange() : trigger6.m_TriggerCheckRange;
-					vector2 = ((!collider3) ? trigger6.gameObject.transform.position : collider3.bounds.center);
-					vector = vector2 - crossHairOrigin;
-					vector.Normalize();
-					num8 = Physics.RaycastNonAlloc(crossHairOrigin, vector, TriggerController.s_RaycastHitCache, maxDistance);
-					if ((float)num8 > 0f)
+					Trigger trigger6 = TriggerController.s_OffCrosshairTriggers[num8];
+					Collider collider3 = null;
+					trigger6.gameObject.GetComponents<Collider>(TriggerController.s_ColliderCache);
+					if (TriggerController.s_ColliderCache.Count > 0)
 					{
-						TriggerController.s_CrosshairOrigin = this.GetCrossHairOrigin();
-						Array.Sort<RaycastHit>(TriggerController.s_RaycastHitCache, 0, num8, TriggerController.s_DistComparer);
-						for (int l = 0; l < num8; l++)
+						collider3 = TriggerController.s_ColliderCache[0];
+					}
+					if (collider3 != null)
+					{
+						float maxDistance = (trigger6.m_TriggerCheckRange > 0f) ? trigger6.m_TriggerCheckRange : this.m_Player.GetParams().GetTriggerCheckRange();
+						vector2 = ((collider3 != null) ? collider3.bounds.center : trigger6.gameObject.transform.position);
+						vector = vector2 - crossHairOrigin;
+						vector.Normalize();
+						num7 = Physics.RaycastNonAlloc(crossHairOrigin, vector, TriggerController.s_RaycastHitCache, maxDistance);
+						if ((float)num7 > 0f)
 						{
-							RaycastHit raycastHit2 = TriggerController.s_RaycastHitCache[l];
-							if (!(raycastHit2.collider.gameObject == base.gameObject))
+							TriggerController.s_CrosshairOrigin = crossHairOrigin;
+							Array.Sort<RaycastHit>(TriggerController.s_RaycastHitCache, 0, num7, TriggerController.s_DistComparer);
+							for (int k = 0; k < num7; k++)
 							{
-								GhostSlot x2 = null;
-								raycastHit2.collider.gameObject.GetComponents<GhostSlot>(TriggerController.s_GhostSlotCache);
-								if (TriggerController.s_GhostSlotCache.Count > 0)
+								RaycastHit raycastHit2 = TriggerController.s_RaycastHitCache[k];
+								if (!(raycastHit2.collider.gameObject == base.gameObject))
 								{
-									x2 = TriggerController.s_GhostSlotCache[0];
-								}
-								if (!flag || !(x2 == null) || trigger6.IsAdditionalTrigger())
-								{
-									if (collider3 == raycastHit2.collider)
+									GhostSlot ghostSlot2 = null;
+									raycastHit2.collider.gameObject.GetComponents<GhostSlot>(TriggerController.s_GhostSlotCache);
+									if (TriggerController.s_GhostSlotCache.Count > 0)
 									{
-										if (!trigger6.CheckDot() || num4 > num2)
-										{
-											hit_pos = raycastHit2.point;
-											trigger = trigger6;
-											num2 = num4;
-											flag2 = true;
-										}
-										break;
+										ghostSlot2 = TriggerController.s_GhostSlotCache[0];
 									}
-									ITriggerThrough triggerThrough2 = null;
-									raycastHit2.collider.gameObject.GetComponents<ITriggerThrough>(TriggerController.s_TriggerThroughCache);
-									if (TriggerController.s_TriggerThroughCache.Count > 0)
+									if (!flag || ghostSlot2 != null || trigger6.IsAdditionalTrigger())
 									{
-										triggerThrough2 = TriggerController.s_TriggerThroughCache[0];
-									}
-									if (triggerThrough2 == null)
-									{
-										if (raycastHit2.collider.gameObject.layer != this.m_BalanceSpawnerLayer)
+										if (collider3 == raycastHit2.collider)
 										{
-											if (!trigger || !trigger.IsLiquidSource() || !(trigger.gameObject == raycastHit2.collider.gameObject))
+											if (!trigger6.CheckDot() || num4 > num2 || (trigger6.m_TriggerMaxDot > 0f && num4 >= trigger6.m_TriggerMaxDot))
 											{
-												if (x2 != null)
+												hit_pos = raycastHit2.point;
+												trigger = trigger6;
+												num2 = num4;
+												flag2 = true;
+												break;
+											}
+											break;
+										}
+										else
+										{
+											ITriggerThrough triggerThrough2 = null;
+											raycastHit2.collider.gameObject.GetComponents<ITriggerThrough>(TriggerController.s_TriggerThroughCache);
+											if (TriggerController.s_TriggerThroughCache.Count > 0)
+											{
+												triggerThrough2 = TriggerController.s_TriggerThroughCache[0];
+											}
+											if (triggerThrough2 == null && raycastHit2.collider.gameObject.layer != this.m_BalanceSpawnerLayer && (trigger == null || !trigger.IsLiquidSource() || !(trigger.gameObject == raycastHit2.collider.gameObject)))
+											{
+												if (ghostSlot2 != null)
 												{
 													flag = true;
 												}
 												else
 												{
-													Item currentItem2 = this.m_Player.GetCurrentItem(Hand.Right);
-													if (!currentItem2 || !(currentItem2.gameObject == raycastHit2.collider.gameObject))
+													Item currentItem3 = this.m_Player.GetCurrentItem(Hand.Right);
+													if (currentItem3 == null || !(currentItem3.gameObject == raycastHit2.collider.gameObject))
 													{
-														currentItem2 = this.m_Player.GetCurrentItem(Hand.Left);
-														if (!currentItem2 || !(currentItem2.gameObject == raycastHit2.collider.gameObject))
+														currentItem3 = this.m_Player.GetCurrentItem(Hand.Left);
+														if (currentItem3 == null || !(currentItem3.gameObject == raycastHit2.collider.gameObject))
 														{
 															Trigger trigger7 = null;
 															raycastHit2.collider.gameObject.GetComponents<Trigger>(TriggerController.s_OtherTriggerCache);
@@ -514,13 +541,14 @@ public class TriggerController : PlayerController
 															{
 																trigger7 = TriggerController.s_OtherTriggerCache[0];
 															}
-															if (!trigger7 || !trigger7.TriggerThrough())
+															if (trigger7 == null || !trigger7.TriggerThrough())
 															{
-																if (trigger7 && TriggerController.s_OffCrosshairTriggers.Contains(trigger7))
+																if (trigger7 != null && TriggerController.s_OffCrosshairTriggers.Contains(trigger7))
 																{
 																	trigger = trigger7;
 																	hit_pos = raycastHit2.point;
 																	flag2 = true;
+																	break;
 																}
 																break;
 															}
@@ -534,33 +562,59 @@ public class TriggerController : PlayerController
 							}
 						}
 					}
+					num8++;
 				}
-				num9++;
 			}
-		}
-		this.SetBestTrigger(trigger, hit_pos);
-		if (this.m_AdditionalTrigger.trigger != trigger2)
-		{
-			this.m_AdditionalTrigger.trigger = trigger2;
-			this.m_AdditionalTrigger.actions.Clear();
-			if (this.m_AdditionalTrigger.trigger)
+			Trigger trigger8 = null;
+			if (trigger != this.m_BestTrigger.trigger && this.m_BestTrigger.trigger)
 			{
-				this.m_AdditionalTrigger.trigger.GetActions(this.m_AdditionalTrigger.actions);
+				trigger8 = this.m_BestTrigger.trigger;
 			}
-			this.m_AdditionalTrigger.hit_pos = hit_pos2;
-		}
-		foreach (KeyValuePair<Collider, bool> keyValuePair in TriggerController.s_ColldersEnabledMap)
-		{
-			Collider key = keyValuePair.Key;
-			Collider collider4 = key;
-			Dictionary<Collider, bool>.Enumerator enumerator;
-			KeyValuePair<Collider, bool> keyValuePair2 = enumerator.Current;
-			collider4.enabled = keyValuePair2.Value;
+			this.SetBestTrigger(trigger, hit_pos);
+			if (trigger)
+			{
+				trigger.UpdateLayer();
+			}
+			if (trigger8)
+			{
+				trigger8.UpdateLayer();
+			}
+			if (this.m_AdditionalTrigger.trigger != trigger2)
+			{
+				if (trigger2 != this.m_AdditionalTrigger.trigger && this.m_AdditionalTrigger.trigger)
+				{
+					trigger8 = this.m_AdditionalTrigger.trigger;
+				}
+				this.m_AdditionalTrigger.trigger = trigger2;
+				this.m_AdditionalTrigger.actions.Clear();
+				if (this.m_AdditionalTrigger.trigger)
+				{
+					this.m_AdditionalTrigger.trigger.GetActions(this.m_AdditionalTrigger.actions);
+				}
+				this.m_AdditionalTrigger.hit_pos = hit_pos2;
+				if (this.m_AdditionalTrigger.trigger)
+				{
+					this.m_AdditionalTrigger.trigger.UpdateLayer();
+				}
+				if (trigger8)
+				{
+					trigger8.UpdateLayer();
+				}
+			}
+			foreach (KeyValuePair<Collider, bool> keyValuePair in TriggerController.s_ColldersEnabledMap)
+			{
+				Collider key = keyValuePair.Key;
+				Dictionary<Collider, bool>.Enumerator enumerator2;
+				keyValuePair = enumerator2.Current;
+				key.enabled = keyValuePair.Value;
+			}
+			return;
 		}
 	}
 
 	private void SetBestTrigger(Trigger trigger, Vector3 hit_pos)
 	{
+		Trigger trigger2 = this.m_BestTrigger.trigger;
 		this.m_BestTrigger.trigger = trigger;
 		this.m_BestTrigger.actions.Clear();
 		if (this.m_BestTrigger.trigger)
@@ -568,11 +622,27 @@ public class TriggerController : PlayerController
 			this.m_BestTrigger.trigger.GetActions(this.m_BestTrigger.actions);
 		}
 		this.m_BestTrigger.hit_pos = hit_pos;
+		if (trigger2 && trigger2 != trigger)
+		{
+			trigger2.UpdateLayer();
+		}
+		if (trigger && trigger2 != trigger)
+		{
+			trigger.UpdateLayer();
+		}
+		if (trigger && trigger.m_SetWasTriggeredWhenLookAt)
+		{
+			trigger.m_WasTriggered = true;
+		}
 	}
 
 	public void ExecuteTrigger(Trigger trigger, TriggerAction.TYPE action)
 	{
 		if (this.IsGrabInProgress())
+		{
+			return;
+		}
+		if (HUDSelectDialog.Get().enabled)
 		{
 			return;
 		}
@@ -595,6 +665,10 @@ public class TriggerController : PlayerController
 		}
 		if (trigger.PlayGrabAnimOnExecute(action))
 		{
+			if (WalkieTalkieController.Get().IsActive())
+			{
+				WalkieTalkieController.Get().Stop();
+			}
 			this.m_TriggerToExecute = trigger;
 			this.m_TriggerActionToExecute = action;
 			this.m_TriggerToExecuteTime = Time.time;
@@ -604,52 +678,49 @@ public class TriggerController : PlayerController
 			trigger.OnExecute(action);
 			this.m_LastTrigerExecutionTime = Time.time;
 		}
-		if (action == TriggerAction.TYPE.Use)
+		if (action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold || action == TriggerAction.TYPE.TakeHoldLong || action == TriggerAction.TYPE.PickUp)
 		{
-			HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
-			string text = GreenHellGame.Instance.GetLocalization().Get(TriggerAction.GetTextPerfect(action)) + ": " + GreenHellGame.Instance.GetLocalization().Get(trigger.GetName());
-			if (action == TriggerAction.TYPE.Drink && trigger.IsItem() && ((Item)trigger).m_Info.IsLiquidContainer())
+			Item currentItem = this.m_Player.GetCurrentItem(Hand.Left);
+			if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bow)
 			{
-				Localization localization = GreenHellGame.Instance.GetLocalization();
-				LiquidContainerInfo liquidContainerInfo = (LiquidContainerInfo)((Item)trigger).m_Info;
-				text += liquidContainerInfo.m_Amount.ToString("F1");
-				text += localization.Get("HUD_Hydration");
+				this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
+				return;
 			}
-			hudmessages.AddMessage(text, null, (action != TriggerAction.TYPE.Drink) ? HUDMessageIcon.None : HUDMessageIcon.Hydration, string.Empty);
+			if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bamboo_Bow)
+			{
+				this.m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, true);
+				return;
+			}
+			if (currentItem && currentItem.m_Info.IsBow())
+			{
+				this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
+				return;
+			}
+			if (trigger.PlayGrabAnimOnExecute(action))
+			{
+				if (WalkieTalkieController.Get().IsActive())
+				{
+					WalkieTalkieController.Get().Stop();
+				}
+				this.m_Animator.SetBool(TriggerController.s_BGrabItem, true);
+				return;
+			}
 		}
-		else if (action != TriggerAction.TYPE.Eat)
+		else if (action == TriggerAction.TYPE.DrinkHold)
 		{
-			if (action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold || action == TriggerAction.TYPE.PickUp)
-			{
-				Item currentItem = this.m_Player.GetCurrentItem(Hand.Left);
-				if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bow)
-				{
-					this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
-				}
-				else if (currentItem != null && currentItem.m_Info.m_ID == ItemID.Bamboo_Bow)
-				{
-					this.m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, true);
-				}
-				else if (currentItem && currentItem.m_Info.IsBow())
-				{
-					this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, true);
-				}
-				else if (trigger.PlayGrabAnimOnExecute(action))
-				{
-					this.m_Animator.SetBool(TriggerController.s_BGrabItem, true);
-				}
-			}
-			else if (action == TriggerAction.TYPE.DrinkHold)
-			{
-				this.m_Animator.SetBool(this.m_BDrinkWater, true);
-				this.m_TriggerInAction = true;
-			}
+			this.m_Animator.SetBool(this.m_BDrinkWater, true);
+			this.m_TriggerInAction = true;
 		}
 	}
 
 	public bool IsGrabInProgress()
 	{
 		return this.m_Animator.GetBool(TriggerController.s_BGrabItemBow) || this.m_Animator.GetBool(TriggerController.s_BGrabItem) || this.m_Animator.GetBool(TriggerController.s_BGrabItemBambooBow);
+	}
+
+	public bool IsAyuaskaSeasoningInProgress()
+	{
+		return this.m_Animator.GetCurrentAnimatorStateInfo(1).shortNameHash == this.m_AyuaskaSeasoning;
 	}
 
 	public override void OnAnimEvent(AnimEventID id)
@@ -663,30 +734,42 @@ public class TriggerController : PlayerController
 				this.m_TriggerActionToExecute = TriggerAction.TYPE.None;
 				this.m_LastTrigerExecutionTime = Time.time;
 				this.m_TriggerToExecute = null;
+				return;
 			}
 		}
-		else if (id == AnimEventID.GrabItemEnd)
+		else
 		{
-			this.m_Animator.SetBool(TriggerController.s_BGrabItem, false);
-			this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, false);
-			this.m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, false);
-			this.m_TriggerToExecute = null;
-		}
-		else if (id == AnimEventID.DrinkLiquidEnd)
-		{
-			this.m_Animator.SetBool(this.m_BDrinkWater, false);
-			this.m_TriggerInAction = false;
+			if (id == AnimEventID.GrabItemEnd)
+			{
+				this.m_Animator.SetBool(TriggerController.s_BGrabItem, false);
+				this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, false);
+				this.m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, false);
+				this.m_TriggerToExecute = null;
+				return;
+			}
+			if (id == AnimEventID.DrinkLiquidEnd)
+			{
+				this.m_Animator.SetBool(this.m_BDrinkWater, false);
+				this.m_TriggerInAction = false;
+				return;
+			}
+			if (id == AnimEventID.DrinkLiquidStart)
+			{
+				Vector3 pos = base.transform.position + base.transform.forward * 0.6f;
+				pos.y = this.m_BestTrigger.hit_pos.y;
+				ParticlesManager.Get().Spawn("SmallSplash_Size_C", pos, Quaternion.identity, Vector3.zero, null, -1f, false);
+			}
 		}
 	}
 
 	public Vector3 GetCrossHairOrigin()
 	{
-		return Camera.main.transform.position;
+		return this.m_CameraMain.transform.position;
 	}
 
 	public Vector3 GetCrossHairDir()
 	{
-		return Camera.main.transform.forward;
+		return this.m_CameraMain.transform.forward;
 	}
 
 	public void OnTriggerHoldStart(TriggerAction.TYPE action)
@@ -735,6 +818,8 @@ public class TriggerController : PlayerController
 
 	private AudioSource m_AudioSource;
 
+	private CharacterControllerProxy m_Proxy;
+
 	public static Vector3 s_CrosshairDir = Vector3.one;
 
 	public static Vector3 s_CrosshairOrigin = Vector3.zero;
@@ -757,19 +842,28 @@ public class TriggerController : PlayerController
 
 	private static List<Trigger> s_OtherTriggerCache = new List<Trigger>(10);
 
-	private static CompareArrayByDist s_DistComparer = new CompareArrayByDist();
+	public static CompareArrayByDist s_DistComparer = new CompareArrayByDist();
 
 	private static CompareListByDot s_DotComparer = new CompareListByDot();
 
+	private Camera m_CameraMain;
+
 	private float m_TriggerToExecuteTime;
+
+	private int m_AyuaskaSeasoning = Animator.StringToHash("Ayuaska_Seasoning");
 
 	private struct TriggerData
 	{
 		public void Reset()
 		{
+			Trigger trigger = this.trigger;
 			this.trigger = null;
 			this.hit_pos = Vector3.zero;
 			this.actions.Clear();
+			if (trigger != null)
+			{
+				trigger.UpdateLayer();
+			}
 		}
 
 		public Trigger trigger;

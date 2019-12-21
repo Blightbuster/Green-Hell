@@ -25,6 +25,7 @@ namespace MirzaBeig.Demos.Wallpapers
 				{
 					this.gravityClock = UnityEngine.Object.Instantiate<ParticleSystem>(this.gravityClockPrefab, base.transform);
 					this.gravityClock.transform.localPosition = Vector3.zero;
+					return;
 				}
 			}
 			else if (this.gravityClock)
@@ -42,6 +43,7 @@ namespace MirzaBeig.Demos.Wallpapers
 				{
 					this.forceAffectors.gameObject.SetActive(true);
 					this.forceAffectors2.gameObject.SetActive(true);
+					return;
 				}
 			}
 			else

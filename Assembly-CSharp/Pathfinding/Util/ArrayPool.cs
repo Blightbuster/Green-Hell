@@ -20,7 +20,7 @@ namespace Pathfinding.Util
 			{
 				throw new ArgumentException("Too high minimum length");
 			}
-			object obj = ArrayPool<T>.pool;
+			Stack<T[]>[] obj = ArrayPool<T>.pool;
 			lock (obj)
 			{
 				if (ArrayPool<T>.pool[num] == null)
@@ -39,12 +39,11 @@ namespace Pathfinding.Util
 
 		public static T[] ClaimWithExactLength(int length)
 		{
-			bool flag = length != 0 && (length & length - 1) == 0;
-			if (flag)
+			if (length != 0 && (length & length - 1) == 0)
 			{
 				return ArrayPool<T>.Claim(length);
 			}
-			object obj = ArrayPool<T>.pool;
+			Stack<T[]>[] obj = ArrayPool<T>.pool;
 			lock (obj)
 			{
 				Stack<T[]> stack;
@@ -81,7 +80,7 @@ namespace Pathfinding.Util
 			{
 				throw new ArgumentException("Length is not a power of 2");
 			}
-			object obj = ArrayPool<T>.pool;
+			Stack<T[]>[] obj = ArrayPool<T>.pool;
 			lock (obj)
 			{
 				if (flag)

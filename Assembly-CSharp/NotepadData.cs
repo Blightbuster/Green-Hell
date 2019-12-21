@@ -11,4 +11,16 @@ public class NotepadData : MonoBehaviour
 	{
 		return true;
 	}
+
+	public void Save(string name)
+	{
+		SaveGame.SaveVal(name, this.m_WasActive);
+	}
+
+	public void Load(string name)
+	{
+		this.m_WasActive = SaveGame.LoadBVal(name);
+	}
+
+	public bool m_WasActive;
 }

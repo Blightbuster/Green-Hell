@@ -16,9 +16,9 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 		PlayerDiseasesModule.s_Instance = this;
 	}
 
-	public override void Initialize()
+	public override void Initialize(Being being)
 	{
-		base.Initialize();
+		base.Initialize(being);
 		this.LoadScript();
 	}
 
@@ -31,8 +31,7 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			Key key = scriptParser.GetKey(i);
 			if (key.GetName() == "Disease")
 			{
-				string svalue = key.GetVariable(0).SValue;
-				Type type = Type.GetType(svalue);
+				Type type = Type.GetType(key.GetVariable(0).SValue);
 				if (type == null)
 				{
 					DebugUtils.Assert(DebugUtils.AssertType.Info);
@@ -40,8 +39,8 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 				else
 				{
 					Disease disease = Activator.CreateInstance(type) as Disease;
-					string svalue2 = key.GetVariable(0).SValue;
-					disease.m_Type = (ConsumeEffect)Enum.Parse(typeof(ConsumeEffect), svalue2);
+					string svalue = key.GetVariable(0).SValue;
+					disease.m_Type = (ConsumeEffect)Enum.Parse(typeof(ConsumeEffect), svalue);
 					for (int j = 0; j < key.GetKeysCount(); j++)
 					{
 						Key key2 = key.GetKey(j);
@@ -52,8 +51,7 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			}
 			else if (key.GetName() == "Symptom")
 			{
-				string svalue3 = key.GetVariable(0).SValue;
-				Type type2 = Type.GetType(svalue3);
+				Type type2 = Type.GetType(key.GetVariable(0).SValue);
 				if (type2 == null)
 				{
 					DebugUtils.Assert(DebugUtils.AssertType.Info);
@@ -73,11 +71,14 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 	public bool ScenarioHasSymptom(string symptom_type)
 	{
 		Enums.DiseaseSymptom item = (Enums.DiseaseSymptom)Enum.Parse(typeof(Enums.DiseaseSymptom), symptom_type);
-		foreach (Disease disease in this.m_Diseases.Values)
+		using (Dictionary<int, Disease>.ValueCollection.Enumerator enumerator = this.m_Diseases.Values.GetEnumerator())
 		{
-			if (disease.m_Symptoms.Contains(item))
+			while (enumerator.MoveNext())
 			{
-				return true;
+				if (enumerator.Current.m_Symptoms.Contains(item))
+				{
+					return true;
+				}
 			}
 		}
 		return false;
@@ -95,8 +96,8 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			if (keyValuePair.Key == (int)type)
 			{
 				Dictionary<int, Disease>.Enumerator enumerator;
-				KeyValuePair<int, Disease> keyValuePair2 = enumerator.Current;
-				return keyValuePair2.Value;
+				keyValuePair = enumerator.Current;
+				return keyValuePair.Value;
 			}
 		}
 		return null;
@@ -125,10 +126,7 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 
 	private void UpdateDebug()
 	{
-		if (!GreenHellGame.DEBUG)
-		{
-			return;
-		}
+		bool debug = GreenHellGame.DEBUG;
 	}
 
 	private void UpdateRequests()
@@ -174,9 +172,9 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 				}
 			}
 		}
-		foreach (KeyValuePair<int, global::DiseaseSymptom> keyValuePair3 in this.m_Symptoms)
+		foreach (KeyValuePair<int, global::DiseaseSymptom> keyValuePair in this.m_Symptoms)
 		{
-			global::DiseaseSymptom value3 = keyValuePair3.Value;
+			global::DiseaseSymptom value3 = keyValuePair.Value;
 			if (value3.IsActive())
 			{
 				value3.Update();
@@ -192,6 +190,10 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			if (value.IsActive())
 			{
 				value.Update();
+			}
+			else
+			{
+				value.Check();
 			}
 		}
 	}
@@ -216,6 +218,22 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 		this.UpdateRequests();
 	}
 
+	private bool IsRequested(Disease disease)
+	{
+		if (disease == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < this.m_Requests.Count; i++)
+		{
+			if (this.m_Requests[i].m_Disease == disease)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public void OnEat(ConsumableInfo info)
 	{
 		using (Dictionary<int, Disease>.KeyCollection.Enumerator enumerator = this.m_Diseases.Keys.GetEnumerator())
@@ -224,7 +242,10 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			{
 				ConsumeEffect key = (ConsumeEffect)enumerator.Current;
 				Disease disease = this.m_Diseases[(int)key];
-				disease.OnEat(info);
+				if (disease.IsActive() || this.IsRequested(disease))
+				{
+					disease.OnEat(info);
+				}
 			}
 		}
 		using (Dictionary<int, global::DiseaseSymptom>.KeyCollection.Enumerator enumerator2 = this.m_Symptoms.Keys.GetEnumerator())
@@ -249,7 +270,10 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			{
 				ConsumeEffect key = (ConsumeEffect)enumerator.Current;
 				Disease disease = this.m_Diseases[(int)key];
-				disease.OnDrink(liquid_type);
+				if (disease.IsActive())
+				{
+					disease.OnDrink(liquid_type);
+				}
 			}
 		}
 		using (Dictionary<int, global::DiseaseSymptom>.KeyCollection.Enumerator enumerator2 = this.m_Symptoms.Keys.GetEnumerator())
@@ -273,8 +297,7 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 			while (enumerator.MoveNext())
 			{
 				ConsumeEffect key = (ConsumeEffect)enumerator.Current;
-				Disease disease = this.m_Diseases[(int)key];
-				if (disease.IsActive())
+				if (this.m_Diseases[(int)key].IsActive())
 				{
 					return true;
 				}
@@ -317,7 +340,14 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 		}
 		for (int j = 0; j < this.m_Diseases.Count; j++)
 		{
-			this.m_Diseases.ElementAt(j).Value.Load(j);
+			if (j < 4)
+			{
+				this.m_Diseases.ElementAt(j).Value.Load(j);
+			}
+			else if (j == 4 && SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate11)
+			{
+				this.m_Diseases.ElementAt(j).Value.Load(j);
+			}
 		}
 	}
 
@@ -390,28 +420,28 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 		{
 			this.m_KnownDiseases.Add(disease_type);
 			HUDInfoLog hudinfoLog = (HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog));
-			string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry");
+			string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry", true);
 			string key = string.Empty;
-			if (disease_type != ConsumeEffect.Fever)
+			switch (disease_type)
 			{
-				if (disease_type != ConsumeEffect.FoodPoisoning)
-				{
-					if (disease_type == ConsumeEffect.ParasiteSickness)
-					{
-						key = "Parasite Sickness";
-					}
-				}
-				else
-				{
-					key = "Food Poisoning";
-				}
-			}
-			else
-			{
+			case ConsumeEffect.FoodPoisoning:
+				key = "Food Poisoning";
+				break;
+			case ConsumeEffect.Fever:
 				key = "Fever";
+				break;
+			case ConsumeEffect.ParasiteSickness:
+				key = "Parasite Sickness";
+				break;
+			case ConsumeEffect.Insomnia:
+				key = "Insomnia";
+				break;
+			case ConsumeEffect.DirtSickness:
+				key = "Dirt Sickness";
+				break;
 			}
-			string text = GreenHellGame.Instance.GetLocalization().Get(key);
-			hudinfoLog.AddInfo(title, text);
+			string text = GreenHellGame.Instance.GetLocalization().Get(key, true);
+			hudinfoLog.AddInfo(title, text, HUDInfoLogTextureType.Notepad);
 		}
 	}
 
@@ -478,6 +508,21 @@ public class PlayerDiseasesModule : PlayerModule, ISaveLoad
 		for (int i = 0; i < values.Length; i++)
 		{
 			this.UnlockKnownDiseaseTreatment((NotepadKnownDiseaseTreatment)values.GetValue(i));
+		}
+	}
+
+	public void HealAllDiseases()
+	{
+		using (Dictionary<int, Disease>.KeyCollection.Enumerator enumerator = this.m_Diseases.Keys.GetEnumerator())
+		{
+			while (enumerator.MoveNext())
+			{
+				ConsumeEffect key = (ConsumeEffect)enumerator.Current;
+				Disease disease = this.m_Diseases[(int)key];
+				disease.Deactivate();
+				disease.m_Level = 0;
+				disease.DeactivateSymptoms();
+			}
 		}
 	}
 

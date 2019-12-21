@@ -78,7 +78,7 @@ namespace Pathfinding
 
 		public static string FormatBytesBinary(int bytes)
 		{
-			double num = (bytes < 0) ? -1.0 : 1.0;
+			double num = (bytes >= 0) ? 1.0 : -1.0;
 			bytes = Mathf.Abs(bytes);
 			if (bytes < 1024)
 			{
@@ -102,10 +102,10 @@ namespace Pathfinding
 
 		public static Color IntToColor(int i, float a)
 		{
-			int num = AstarMath.Bit(i, 2) + AstarMath.Bit(i, 3) * 2 + 1;
+			float num = (float)(AstarMath.Bit(i, 2) + AstarMath.Bit(i, 3) * 2 + 1);
 			int num2 = AstarMath.Bit(i, 1) + AstarMath.Bit(i, 4) * 2 + 1;
 			int num3 = AstarMath.Bit(i, 0) + AstarMath.Bit(i, 5) * 2 + 1;
-			return new Color((float)num * 0.25f, (float)num2 * 0.25f, (float)num3 * 0.25f, a);
+			return new Color(num * 0.25f, (float)num2 * 0.25f, (float)num3 * 0.25f, a);
 		}
 
 		public static Color HSVToRGB(float h, float s, float v)

@@ -14,7 +14,7 @@ public class RainCone : MonoBehaviour
 			return;
 		}
 		Vector3 position = this.m_Camera.transform.position;
-		position.y = position.y;
+		position.y += 0f;
 		base.transform.position = position;
 	}
 

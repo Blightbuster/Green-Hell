@@ -15,8 +15,7 @@ public class WaterCollector : Construction, ITriggerThrough, IItemSlotParent
 			BowlInfo bowlInfo = (BowlInfo)slot.m_Item.m_Info;
 			if (bowlInfo.m_LiquidType != LiquidType.Water)
 			{
-				Bowl bowl = (Bowl)slot.m_Item;
-				bowl.Spill(-1f);
+				((Bowl)slot.m_Item).Spill(-1f);
 				bowlInfo.m_LiquidType = LiquidType.Water;
 			}
 		}

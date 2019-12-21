@@ -10,7 +10,7 @@ namespace Pathfinding.Util
 		{
 			get
 			{
-				float t = (this.currentSegmentLength <= 0.0001f) ? 0f : ((this.currentDistance - this.distanceToSegmentStart) / this.currentSegmentLength);
+				float t = (this.currentSegmentLength > 0.0001f) ? ((this.currentDistance - this.distanceToSegmentStart) / this.currentSegmentLength) : 0f;
 				return Vector3.Lerp(this.path[this.segmentIndex], this.path[this.segmentIndex + 1], t);
 			}
 		}
@@ -44,8 +44,12 @@ namespace Pathfinding.Util
 			set
 			{
 				this.currentDistance = value;
-				while (this.currentDistance < this.distanceToSegmentStart && this.segmentIndex > 0)
+				while (this.currentDistance < this.distanceToSegmentStart)
 				{
+					if (this.segmentIndex <= 0)
+					{
+						break;
+					}
 					this.PrevSegment();
 				}
 				while (this.currentDistance > this.distanceToSegmentStart + this.currentSegmentLength && this.segmentIndex < this.path.Count - 2)
@@ -125,8 +129,12 @@ namespace Pathfinding.Util
 
 		public void MoveToLocallyClosestPoint(Vector3 point, bool allowForwards = true, bool allowBackwards = true)
 		{
-			while (allowForwards && this.segmentIndex < this.path.Count - 2 && (this.path[this.segmentIndex + 1] - point).sqrMagnitude <= (this.path[this.segmentIndex] - point).sqrMagnitude)
+			while (allowForwards && this.segmentIndex < this.path.Count - 2)
 			{
+				if ((this.path[this.segmentIndex + 1] - point).sqrMagnitude > (this.path[this.segmentIndex] - point).sqrMagnitude)
+				{
+					break;
+				}
 				this.NextSegment();
 			}
 			while (allowBackwards && this.segmentIndex > 0 && (this.path[this.segmentIndex - 1] - point).sqrMagnitude <= (this.path[this.segmentIndex] - point).sqrMagnitude)
@@ -150,11 +158,9 @@ namespace Pathfinding.Util
 			if (num3 < num4)
 			{
 				this.MoveToSegment(this.segmentIndex - 1, num);
+				return;
 			}
-			else
-			{
-				this.MoveToSegment(this.segmentIndex, num2);
-			}
+			this.MoveToSegment(this.segmentIndex, num2);
 		}
 
 		public void MoveToCircleIntersection2D(Vector3 circleCenter3D, float radius, IMovementPlane transform)
@@ -170,14 +176,16 @@ namespace Pathfinding.Util
 
 		protected virtual void PrevSegment()
 		{
-			this.segmentIndex--;
+			int segmentIndex = this.segmentIndex;
+			this.segmentIndex = segmentIndex - 1;
 			this.currentSegmentLength = (this.path[this.segmentIndex + 1] - this.path[this.segmentIndex]).magnitude;
 			this.distanceToSegmentStart -= this.currentSegmentLength;
 		}
 
 		protected virtual void NextSegment()
 		{
-			this.segmentIndex++;
+			int segmentIndex = this.segmentIndex;
+			this.segmentIndex = segmentIndex + 1;
 			this.distanceToSegmentStart += this.currentSegmentLength;
 			this.currentSegmentLength = (this.path[this.segmentIndex + 1] - this.path[this.segmentIndex]).magnitude;
 		}

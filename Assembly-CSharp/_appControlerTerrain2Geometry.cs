@@ -43,16 +43,15 @@ public class _appControlerTerrain2Geometry : MonoBehaviour
 			return;
 		}
 		GUILayout.Space(10f);
-		GUILayout.BeginVertical("box", new GUILayoutOption[0]);
-		GUILayout.Label(string.Empty + FPSmeter.fps, new GUILayoutOption[0]);
+		GUILayout.BeginVertical("box", Array.Empty<GUILayoutOption>());
+		GUILayout.Label(string.Concat(FPSmeter.fps), Array.Empty<GUILayoutOption>());
 		if (this.panel_enabled)
 		{
-			this.shadows = GUILayout.Toggle(this.shadows, "disable Unity's shadows", new GUILayoutOption[0]);
+			this.shadows = GUILayout.Toggle(this.shadows, "disable Unity's shadows", Array.Empty<GUILayoutOption>());
 			Light component = GameObject.Find("Directional light").GetComponent<Light>();
-			component.shadows = ((!this.shadows) ? LightShadows.Soft : LightShadows.None);
-			this.forward_path = GUILayout.Toggle(this.forward_path, "forward rendering", new GUILayoutOption[0]);
-			Camera component2 = GameObject.Find("Main Camera").GetComponent<Camera>();
-			component2.renderingPath = ((!this.forward_path) ? RenderingPath.DeferredShading : RenderingPath.Forward);
+			component.shadows = (this.shadows ? LightShadows.None : LightShadows.Soft);
+			this.forward_path = GUILayout.Toggle(this.forward_path, "forward rendering", Array.Empty<GUILayoutOption>());
+			GameObject.Find("Main Camera").GetComponent<Camera>().renderingPath = (this.forward_path ? RenderingPath.Forward : RenderingPath.DeferredShading);
 			if (this.forward_path)
 			{
 				RenderSettings.ambientLight = new Color32(25, 25, 25, 0);
@@ -63,64 +62,58 @@ public class _appControlerTerrain2Geometry : MonoBehaviour
 			}
 			TerrainShaderLod rtp_LODlevel = this.LODmanager.RTP_LODlevel;
 			TerrainShaderLod terrainShaderLod = rtp_LODlevel;
-			if (rtp_LODlevel != TerrainShaderLod.POM)
+			switch (rtp_LODlevel)
 			{
-				if (rtp_LODlevel != TerrainShaderLod.PM)
+			case TerrainShaderLod.POM:
+				if (GUILayout.Button("POM shading", Array.Empty<GUILayoutOption>()))
 				{
-					if (rtp_LODlevel == TerrainShaderLod.SIMPLE)
-					{
-						if (GUILayout.Button("SIMPLE shading", new GUILayoutOption[0]))
-						{
-							terrainShaderLod = TerrainShaderLod.POM;
-						}
-					}
+					terrainShaderLod = TerrainShaderLod.PM;
 				}
-				else if (GUILayout.Button("PM shading", new GUILayoutOption[0]))
+				break;
+			case TerrainShaderLod.PM:
+				if (GUILayout.Button("PM shading", Array.Empty<GUILayoutOption>()))
 				{
 					terrainShaderLod = TerrainShaderLod.SIMPLE;
 				}
-			}
-			else if (GUILayout.Button("POM shading", new GUILayoutOption[0]))
-			{
-				terrainShaderLod = TerrainShaderLod.PM;
-			}
-			if (terrainShaderLod != TerrainShaderLod.POM)
-			{
-				if (terrainShaderLod != TerrainShaderLod.PM)
+				break;
+			case TerrainShaderLod.SIMPLE:
+				if (GUILayout.Button("SIMPLE shading", Array.Empty<GUILayoutOption>()))
 				{
-					if (terrainShaderLod == TerrainShaderLod.SIMPLE)
-					{
-						if (terrainShaderLod != rtp_LODlevel)
-						{
-							GameObject gameObject = GameObject.Find("terrainMesh");
-							ReliefTerrain reliefTerrain = gameObject.GetComponent(typeof(ReliefTerrain)) as ReliefTerrain;
-							reliefTerrain.globalSettingsHolder.Refresh(null, null);
-							this.LODmanager.RTP_LODlevel = TerrainShaderLod.SIMPLE;
-							this.LODmanager.RefreshLODlevel();
-						}
-					}
+					terrainShaderLod = TerrainShaderLod.POM;
 				}
-				else if (terrainShaderLod != rtp_LODlevel)
+				break;
+			}
+			switch (terrainShaderLod)
+			{
+			case TerrainShaderLod.POM:
+				if (terrainShaderLod != rtp_LODlevel)
 				{
-					GameObject gameObject2 = GameObject.Find("terrainMesh");
-					ReliefTerrain reliefTerrain2 = gameObject2.GetComponent(typeof(ReliefTerrain)) as ReliefTerrain;
-					reliefTerrain2.globalSettingsHolder.Refresh(null, null);
+					(GameObject.Find("terrainMesh").GetComponent(typeof(ReliefTerrain)) as ReliefTerrain).globalSettingsHolder.Refresh(null, null);
+					this.LODmanager.RTP_LODlevel = TerrainShaderLod.POM;
+					this.LODmanager.RefreshLODlevel();
+				}
+				break;
+			case TerrainShaderLod.PM:
+				if (terrainShaderLod != rtp_LODlevel)
+				{
+					(GameObject.Find("terrainMesh").GetComponent(typeof(ReliefTerrain)) as ReliefTerrain).globalSettingsHolder.Refresh(null, null);
 					this.LODmanager.RTP_LODlevel = TerrainShaderLod.PM;
 					this.LODmanager.RefreshLODlevel();
 				}
-			}
-			else if (terrainShaderLod != rtp_LODlevel)
-			{
-				GameObject gameObject3 = GameObject.Find("terrainMesh");
-				ReliefTerrain reliefTerrain3 = gameObject3.GetComponent(typeof(ReliefTerrain)) as ReliefTerrain;
-				reliefTerrain3.globalSettingsHolder.Refresh(null, null);
-				this.LODmanager.RTP_LODlevel = TerrainShaderLod.POM;
-				this.LODmanager.RefreshLODlevel();
+				break;
+			case TerrainShaderLod.SIMPLE:
+				if (terrainShaderLod != rtp_LODlevel)
+				{
+					(GameObject.Find("terrainMesh").GetComponent(typeof(ReliefTerrain)) as ReliefTerrain).globalSettingsHolder.Refresh(null, null);
+					this.LODmanager.RTP_LODlevel = TerrainShaderLod.SIMPLE;
+					this.LODmanager.RefreshLODlevel();
+				}
+				break;
 			}
 			if (terrainShaderLod == TerrainShaderLod.POM)
 			{
 				this.terrain_self_shadow = this.LODmanager.RTP_SHADOWS;
-				bool flag = GUILayout.Toggle(this.terrain_self_shadow, "self shadowing", new GUILayoutOption[0]);
+				bool flag = GUILayout.Toggle(this.terrain_self_shadow, "self shadowing", Array.Empty<GUILayoutOption>());
 				if (flag != this.terrain_self_shadow)
 				{
 					this.LODmanager.RTP_SHADOWS = flag;
@@ -130,7 +123,7 @@ public class _appControlerTerrain2Geometry : MonoBehaviour
 				if (this.terrain_self_shadow)
 				{
 					this.terrain_smooth_shadows = this.LODmanager.RTP_SOFT_SHADOWS;
-					bool flag2 = GUILayout.Toggle(this.terrain_smooth_shadows, "smooth shadows", new GUILayoutOption[0]);
+					bool flag2 = GUILayout.Toggle(this.terrain_smooth_shadows, "smooth shadows", Array.Empty<GUILayoutOption>());
 					if (flag2 != this.terrain_smooth_shadows)
 					{
 						this.LODmanager.RTP_SOFT_SHADOWS = flag2;
@@ -141,18 +134,17 @@ public class _appControlerTerrain2Geometry : MonoBehaviour
 			}
 			if (this.LODmanager.RTP_SNOW_FIRST)
 			{
-				GameObject gameObject4 = GameObject.Find("terrainMesh");
-				ReliefTerrain reliefTerrain4 = gameObject4.GetComponent(typeof(ReliefTerrain)) as ReliefTerrain;
-				GUILayout.BeginHorizontal(new GUILayoutOption[0]);
+				ReliefTerrain reliefTerrain = GameObject.Find("terrainMesh").GetComponent(typeof(ReliefTerrain)) as ReliefTerrain;
+				GUILayout.BeginHorizontal(Array.Empty<GUILayoutOption>());
 				GUILayout.Label("Snow", new GUILayoutOption[]
 				{
 					GUILayout.MaxWidth(40f)
 				});
-				float num = GUILayout.HorizontalSlider(reliefTerrain4.globalSettingsHolder._snow_strength, 0f, 1f, new GUILayoutOption[0]);
-				if (num != reliefTerrain4.globalSettingsHolder._snow_strength)
+				float num = GUILayout.HorizontalSlider(reliefTerrain.globalSettingsHolder._snow_strength, 0f, 1f, Array.Empty<GUILayoutOption>());
+				if (num != reliefTerrain.globalSettingsHolder._snow_strength)
 				{
-					reliefTerrain4.globalSettingsHolder._snow_strength = num;
-					reliefTerrain4.globalSettingsHolder.Refresh(null, null);
+					reliefTerrain.globalSettingsHolder._snow_strength = num;
+					reliefTerrain.globalSettingsHolder.Refresh(null, null);
 				}
 				GUILayout.EndHorizontal();
 			}
@@ -160,12 +152,12 @@ public class _appControlerTerrain2Geometry : MonoBehaviour
 			{
 				GUILayout.MaxWidth(40f)
 			});
-			this.light_dir = GUILayout.HorizontalSlider(this.light_dir, 0f, 360f, new GUILayoutOption[0]);
+			this.light_dir = GUILayout.HorizontalSlider(this.light_dir, 0f, 360f, Array.Empty<GUILayoutOption>());
 			component.transform.rotation = Quaternion.Euler(40f, this.light_dir, 0f);
-			GUILayout.Label("  F (hold) - freeze camera", new GUILayoutOption[0]);
-			GUILayout.Label("  ,/. - change cam position", new GUILayoutOption[0]);
+			GUILayout.Label("  F (hold) - freeze camera", Array.Empty<GUILayoutOption>());
+			GUILayout.Label("  ,/. - change cam position", Array.Empty<GUILayoutOption>());
 		}
-		GUILayout.Label("  P - toggle panel", new GUILayoutOption[0]);
+		GUILayout.Label("  P - toggle panel", Array.Empty<GUILayoutOption>());
 		GUILayout.EndVertical();
 	}
 

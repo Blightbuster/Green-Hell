@@ -73,7 +73,7 @@ namespace UnityEngine.PostProcessing
 			if (antialiasCoC)
 			{
 				material.SetTexture(DepthOfFieldComponent.Uniforms._CoCTex, renderTexture);
-				float z = (!this.CheckHistory(this.context.width, this.context.height)) ? 0f : taaBlending;
+				float z = this.CheckHistory(this.context.width, this.context.height) ? taaBlending : 0f;
 				material.SetVector(DepthOfFieldComponent.Uniforms._TaaParams, new Vector3(taaJitter.x, taaJitter.y, z));
 				RenderTexture temporary = RenderTexture.GetTemporary(this.context.width, this.context.height, 0, format2);
 				Graphics.Blit(this.m_CoCHistory, temporary, material, 1);

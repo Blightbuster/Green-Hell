@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
+[RequireComponent(typeof(Camera))]
 public class DeluxeTonemapper : MonoBehaviour
 {
 	public FTDLut LutTool
@@ -162,7 +162,7 @@ public class DeluxeTonemapper : MonoBehaviour
 		{
 			this.ConvertAndApply2dLut();
 		}
-		float value = (QualitySettings.activeColorSpace != ColorSpace.Linear) ? 1f : 0.5f;
+		float value = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? 0.5f : 1f;
 		if (this.m_Use2DLut && this.m_2DLut0 != null)
 		{
 			this.m_2DLut0.filterMode = FilterMode.Bilinear;
@@ -170,8 +170,9 @@ public class DeluxeTonemapper : MonoBehaviour
 			this.m_Material.SetTexture("_2dLut0", this.m_2DLut0);
 			this.m_Material.SetVector("_Lut0Params", new Vector4(this.m_Lut0Amount, 1f / (float)this.m_2DLut0.width, 1f / (float)this.m_2DLut0.height, num - 1f));
 			this.m_Material.SetFloat("_IsLinear", value);
+			return;
 		}
-		else if (this.m_3DLut0 != null)
+		if (this.m_3DLut0 != null)
 		{
 			int width = this.m_3DLut0.width;
 			float y = (float)(width - 1) / (1f * (float)width);
@@ -180,11 +181,9 @@ public class DeluxeTonemapper : MonoBehaviour
 			this.m_Material.SetVector("_Lut0Params", new Vector4(this.m_Lut0Amount, y, z, 0f));
 			this.m_Material.SetTexture("_Lut0", this.m_3DLut0);
 			this.m_Material.SetFloat("_IsLinear", value);
+			return;
 		}
-		else
-		{
-			this.m_Material.SetVector("_Lut0Params", Vector4.zero);
-		}
+		this.m_Material.SetVector("_Lut0Params", Vector4.zero);
 	}
 
 	public void ReloadShaders()
@@ -245,11 +244,9 @@ public class DeluxeTonemapper : MonoBehaviour
 		if (this.m_EnableLut0)
 		{
 			Graphics.Blit(source, destination, this.m_Material, 1);
+			return;
 		}
-		else
-		{
-			Graphics.Blit(source, destination, this.m_Material, 0);
-		}
+		Graphics.Blit(source, destination, this.m_Material, 0);
 	}
 
 	[SerializeField]

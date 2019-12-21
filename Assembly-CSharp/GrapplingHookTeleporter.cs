@@ -21,23 +21,16 @@ public class GrapplingHookTeleporter : Trigger
 		{
 			Player.Get().BlockMoves();
 			Player.Get().BlockRotation();
-			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-			fadeSystem.FadeOut(FadeType.All, new VDelegate(this.Teleport), 1.5f, null);
+			GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, new VDelegate(this.Teleport), 1.5f, null);
 		}
 	}
 
 	private void Teleport()
 	{
-		Player.Get().gameObject.transform.position = this.m_TeleportPos.transform.position;
+		Player.Get().Reposition(this.m_TeleportPos.transform.position, null);
 		Player.Get().UnblockMoves();
 		Player.Get().UnblockRotation();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 1.5f);
-	}
-
-	public override bool CanExecuteActions()
-	{
-		return base.CanExecuteActions();
+		GreenHellGame.GetFadeSystem().FadeIn(FadeType.All, null, 1.5f);
 	}
 
 	public GameObject m_TeleportPos;

@@ -6,18 +6,18 @@ namespace Pathfinding
 {
 	public class PathHandler
 	{
-		public PathHandler(int threadID, int totalThreadCount)
-		{
-			this.threadID = threadID;
-			this.totalThreadCount = totalThreadCount;
-		}
-
 		public ushort PathID
 		{
 			get
 			{
 				return this.pathID;
 			}
+		}
+
+		public PathHandler(int threadID, int totalThreadCount)
+		{
+			this.threadID = threadID;
+			this.totalThreadCount = totalThreadCount;
 		}
 
 		public void InitializeForPath(Path p)
@@ -85,8 +85,7 @@ namespace Pathfinding
 				}
 				this.filledBuckets++;
 			}
-			PathNode pathNode = this.nodes[num][num2];
-			pathNode.node = node;
+			this.nodes[num][num2].node = node;
 		}
 
 		public PathNode GetPathNode(int nodeIndex)

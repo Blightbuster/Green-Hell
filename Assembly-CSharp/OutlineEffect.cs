@@ -38,11 +38,9 @@ public class OutlineEffect : MonoBehaviour
 		if (this.EdgeDetectShader != null)
 		{
 			Graphics.Blit(src, dst, this.material);
+			return;
 		}
-		else
-		{
-			Graphics.Blit(src, dst);
-		}
+		Graphics.Blit(src, dst);
 	}
 
 	public Shader EdgeDetectShader;

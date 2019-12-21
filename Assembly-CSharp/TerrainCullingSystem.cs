@@ -36,11 +36,9 @@ public class TerrainCullingSystem : MonoBehaviour
 			this.mainCamera = Camera.main;
 			this.group.SetDistanceReferencePoint(Camera.main.transform);
 			base.Invoke("CheckVisibility", 0.1f);
+			return;
 		}
-		else
-		{
-			Debug.LogError("TerrainCullingSystem: no terrain on game object " + base.gameObject.name);
-		}
+		Debug.LogError("TerrainCullingSystem: no terrain on game object " + base.gameObject.name);
 	}
 
 	private void OnDrawGizmosSelected()
@@ -103,6 +101,7 @@ public class TerrainCullingSystem : MonoBehaviour
 			if (this.disableTrees)
 			{
 				this.terrain.drawTreesAndFoliage = true;
+				return;
 			}
 		}
 		else

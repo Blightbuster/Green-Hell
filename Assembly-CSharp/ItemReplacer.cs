@@ -5,6 +5,30 @@ using UnityEngine;
 
 public class ItemReplacer : Trigger
 {
+	protected override void Awake()
+	{
+		base.Awake();
+		ItemReplacer.s_AllReplacers.Add(this);
+	}
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+		ItemReplacer.s_AllReplacers.Remove(this);
+	}
+
+	public static ItemReplacer FindByResult(ItemID id)
+	{
+		foreach (ItemReplacer itemReplacer in ItemReplacer.s_AllReplacers)
+		{
+			if (itemReplacer.m_ReplaceInfo.m_ID == id)
+			{
+				return itemReplacer;
+			}
+		}
+		return null;
+	}
+
 	protected override void Start()
 	{
 		base.Start();
@@ -26,13 +50,18 @@ public class ItemReplacer : Trigger
 		if (HeavyObjectController.Get().IsActive())
 		{
 			Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
-			if (!this.m_ReplaceInfo.IsHeavyObject() || currentItem.m_Info.m_ID != this.m_ReplaceInfo.m_ID)
+			if (!this.m_ReplaceInfo.IsHeavyObject() || currentItem == null || currentItem.m_Info.m_ID != this.m_ReplaceInfo.m_ID)
 			{
 				return;
 			}
 		}
 		actions.Add(TriggerAction.TYPE.Take);
 		actions.Add(TriggerAction.TYPE.Expand);
+	}
+
+	public override bool CanTrigger()
+	{
+		return !ScenarioManager.Get().IsDreamOrPreDream() && base.CanTrigger();
 	}
 
 	public override string GetName()
@@ -42,6 +71,10 @@ public class ItemReplacer : Trigger
 
 	public override string GetIconName()
 	{
+		if (this.m_ReplaceInfo == null)
+		{
+			return string.Empty;
+		}
 		return this.m_ReplaceInfo.m_IconName;
 	}
 
@@ -51,17 +84,15 @@ public class ItemReplacer : Trigger
 		if (action == TriggerAction.TYPE.Expand)
 		{
 			HUDItem.Get().Activate(this);
+			return;
 		}
-		else
+		Item item = this.ReplaceItem();
+		if (item)
 		{
-			Item item = this.ReplaceItem(true);
-			if (item)
+			item.OnExecute(action);
+			if (!item.m_InInventory && !item.m_Info.IsHeavyObject())
 			{
-				item.OnExecute(action);
-				if (!item.m_InInventory && !item.m_Info.IsHeavyObject())
-				{
-					Inventory3DManager.Get().DropItem(item);
-				}
+				Inventory3DManager.Get().DropItem(item);
 			}
 		}
 	}
@@ -77,6 +108,10 @@ public class ItemReplacer : Trigger
 		{
 			return true;
 		}
+		if (this.m_ReplaceInfo == null)
+		{
+			return false;
+		}
 		HeavyObject heavyObject = null;
 		if (this.m_ReplaceInfo.IsHeavyObject() && currentItem.m_Info.IsHeavyObject())
 		{
@@ -85,7 +120,7 @@ public class ItemReplacer : Trigger
 		return (!heavyObject || currentItem.m_Info.m_ID == this.m_ReplaceInfo.m_ID) && (!heavyObject || heavyObject.FindFreeSlot());
 	}
 
-	public Item ReplaceItem(bool can_disappear = true)
+	public Item ReplaceItem()
 	{
 		if (this.m_Hallucination)
 		{
@@ -93,10 +128,13 @@ public class ItemReplacer : Trigger
 			return null;
 		}
 		this.OnReplaceItem();
-		Item result = ItemsManager.Get().CreateItem(this.m_ReplaceInfo.m_ID, false, Vector3.zero, Quaternion.identity);
+		Vector3 position = base.transform.position;
+		position.y = Mathf.Max(MainLevel.GetTerrainY(position), position.y);
+		Item result = ItemsManager.Get().CreateItem(this.m_ReplaceInfo.m_ID, true, position, Quaternion.identity);
 		if (!this.m_IsThisUnlimited)
 		{
 			base.TryRemoveFromFallenObjectsMan();
+			this.ReplRequestOwnership(false);
 			UnityEngine.Object.Destroy(base.gameObject);
 		}
 		return result;
@@ -104,11 +142,16 @@ public class ItemReplacer : Trigger
 
 	private void OnReplaceItem()
 	{
+		if (this.m_Acre)
+		{
+			this.m_Acre.OnTake(this);
+		}
 		for (int i = 0; i < this.m_DestroyOnReplace.Count; i++)
 		{
 			GameObject gameObject = this.m_DestroyOnReplace[i];
 			if (gameObject != null)
 			{
+				gameObject.ReplRequestOwnership(false);
 				UnityEngine.Object.Destroy(gameObject);
 			}
 		}
@@ -126,8 +169,7 @@ public class ItemReplacer : Trigger
 			}
 			if (Player.Get().transform.position.Distance(ItemReplacer.s_ToreplaceByDistance[i].transform.position) > 20f)
 			{
-				ItemReplacer.s_ToreplaceByDistance[i].ReplaceItem(false);
-				ItemReplacer.s_ToreplaceByDistance.RemoveAt(i);
+				ItemReplacer.s_ToreplaceByDistance[i].ReplaceItem();
 				return;
 			}
 		}
@@ -135,11 +177,15 @@ public class ItemReplacer : Trigger
 
 	public override string GetTriggerInfoLocalized()
 	{
+		if (this.m_ReplaceInfo == null)
+		{
+			return string.Empty;
+		}
 		if (this.m_ReplaceInfo.m_LockedInfoID != string.Empty && !ItemsManager.Get().m_UnlockedItemInfos.Contains(this.m_ReplaceInfo.m_ID))
 		{
-			return GreenHellGame.Instance.GetLocalization().Get(this.m_ReplaceInfo.m_LockedInfoID);
+			return GreenHellGame.Instance.GetLocalization().Get(this.m_ReplaceInfo.m_LockedInfoID, true);
 		}
-		return GreenHellGame.Instance.GetLocalization().Get(this.GetName());
+		return GreenHellGame.Instance.GetLocalization().Get(this.GetName(), true);
 	}
 
 	public ItemInfo m_ReplaceInfo;
@@ -154,4 +200,12 @@ public class ItemReplacer : Trigger
 	public bool m_ReplaceByDistance;
 
 	public List<GameObject> m_DestroyOnReplace = new List<GameObject>();
+
+	public static List<ItemReplacer> s_AllReplacers = new List<ItemReplacer>();
+
+	[HideInInspector]
+	public bool m_FromPlant;
+
+	[HideInInspector]
+	public Acre m_Acre;
 }

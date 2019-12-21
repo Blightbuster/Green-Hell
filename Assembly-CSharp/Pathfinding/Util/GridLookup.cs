@@ -71,8 +71,7 @@ namespace Pathfinding.Util
 			{
 				throw new ArgumentException("The item has not been added to this object");
 			}
-			IntRect previousBounds = root.previousBounds;
-			if (previousBounds == bounds)
+			if (root.previousBounds == bounds)
 			{
 				return;
 			}
@@ -98,7 +97,7 @@ namespace Pathfinding.Util
 					}
 					else
 					{
-						item3 = ((this.itemPool.Count <= 0) ? new GridLookup<T>.Item() : this.itemPool.Pop());
+						item3 = ((this.itemPool.Count > 0) ? this.itemPool.Pop() : new GridLookup<T>.Item());
 						item3.root = root;
 						root.items.Add(item3);
 					}

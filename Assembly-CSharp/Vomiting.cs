@@ -42,15 +42,21 @@ public class Vomiting : global::DiseaseSymptom
 		this.m_NextVomitingTime = 0f;
 	}
 
+	private bool CanVomit()
+	{
+		return (Debug.isDebugBuild && Input.GetKey(KeyCode.RightControl) && Input.GetKeyDown(KeyCode.V)) || (Time.time >= this.m_NextVomitingTime && !TriggerController.Get().m_TriggerInAction && !SleepController.Get().IsActive());
+	}
+
 	public override void Update()
 	{
 		base.Update();
-		if ((Time.time >= this.m_NextVomitingTime && !TriggerController.Get().m_TriggerInAction) || (Input.GetKey(KeyCode.RightControl) && Input.GetKeyDown(KeyCode.V)))
+		if (this.CanVomit())
 		{
 			if (Inventory3DManager.Get().isActiveAndEnabled)
 			{
 				Inventory3DManager.Get().Deactivate();
 			}
+			Player.Get().HideWeapon();
 			Player.Get().StartController(PlayerControllerType.Vomiting);
 			this.m_NextVomitingTime = float.MaxValue;
 			this.ApplyPlayerParams();

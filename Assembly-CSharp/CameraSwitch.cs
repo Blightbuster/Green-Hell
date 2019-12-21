@@ -11,7 +11,7 @@ public class CameraSwitch : MonoBehaviour
 
 	public void NextCamera()
 	{
-		int num = (this.m_CurrentActiveObject + 1 < this.objects.Length) ? (this.m_CurrentActiveObject + 1) : 0;
+		int num = (this.m_CurrentActiveObject + 1 >= this.objects.Length) ? 0 : (this.m_CurrentActiveObject + 1);
 		for (int i = 0; i < this.objects.Length; i++)
 		{
 			this.objects[i].SetActive(i == num);

@@ -1,6 +1,5 @@
 ﻿using System;
 using CJTools;
-using UltimateWater;
 using UnityEngine;
 
 public class Floater
@@ -27,7 +26,7 @@ public class Floater
 		Collider[] array = Physics.OverlapBox(this.m_Bounds.center, this.m_Bounds.extents, this.m_Rotation);
 		for (int i = 0; i < array.Length; i++)
 		{
-			if (array[i].gameObject.GetComponent<Water>() != null)
+			if (array[i].gameObject.GetComponent<WaterCollider>() != null)
 			{
 				float num = array[i].bounds.center.y + array[i].bounds.extents.y;
 				float proportionalClamp = CJTools.Math.GetProportionalClamp(0f, 1f, num - (this.m_Bounds.center.y - this.m_Bounds.extents.y), 0f, 2f);
@@ -41,9 +40,9 @@ public class Floater
 
 	public Bounds m_Bounds;
 
-	public Vector3 m_LocalPos = default(Vector3);
+	public Vector3 m_LocalPos;
 
-	public Quaternion m_Rotation = default(Quaternion);
+	public Quaternion m_Rotation;
 
 	public bool m_InWater;
 

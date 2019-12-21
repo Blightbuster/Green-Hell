@@ -19,7 +19,7 @@ public class LookObject : Trigger
 
 	public override bool CanTrigger()
 	{
-		return (!Player.Get().m_DreamActive || !ChatterManager.Get().IsAnyChatterPlaying()) && (!this.m_OneTimeUse || !base.WasTriggered());
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && (!Player.Get().m_DreamActive || !ChatterManager.Get().IsAnyChatterPlaying()) && (!this.m_OneTimeUse || !base.WasTriggered());
 	}
 
 	public bool m_OneTimeUse = true;

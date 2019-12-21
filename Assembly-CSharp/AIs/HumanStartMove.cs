@@ -43,15 +43,14 @@ namespace AIs
 			if (num2 <= 45f)
 			{
 				this.m_Animation = "Start" + str + "Forward";
+				return;
 			}
-			else if (num2 <= 135f)
+			if (num2 <= 135f)
 			{
-				this.m_Animation = ((num < 0f) ? ("Start" + str + "Left_90") : ("Start" + str + "Right_90"));
+				this.m_Animation = ((num >= 0f) ? ("Start" + str + "Right_90") : ("Start" + str + "Left_90"));
+				return;
 			}
-			else
-			{
-				this.m_Animation = ((num < 0f) ? ("Start" + str + "Left_180") : ("Start" + str + "Right_180"));
-			}
+			this.m_Animation = ((num >= 0f) ? ("Start" + str + "Right_180") : ("Start" + str + "Left_180"));
 		}
 
 		public override void Update()

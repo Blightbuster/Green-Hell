@@ -27,10 +27,9 @@ namespace AmplifyColor
 			}
 		}
 
-		public VolumeEffectComponentFlags(Component c) : this(c.GetType() + string.Empty)
+		public VolumeEffectComponentFlags(Component c) : this(string.Concat(c.GetType()))
 		{
-			FieldInfo[] fields = c.GetType().GetFields();
-			foreach (FieldInfo fieldInfo in fields)
+			foreach (FieldInfo fieldInfo in c.GetType().GetFields())
 			{
 				if (VolumeEffectField.IsValidType(fieldInfo.FieldType.FullName))
 				{
@@ -57,10 +56,9 @@ namespace AmplifyColor
 		public void UpdateComponentFlags(Component c)
 		{
 			FieldInfo[] fields = c.GetType().GetFields();
-			FieldInfo[] array = fields;
-			for (int i = 0; i < array.Length; i++)
+			for (int i = 0; i < fields.Length; i++)
 			{
-				FieldInfo pi = array[i];
+				FieldInfo pi = fields[i];
 				if (!this.componentFields.Exists((VolumeEffectFieldFlags s) => s.fieldName == pi.Name) && VolumeEffectField.IsValidType(pi.FieldType.FullName))
 				{
 					this.componentFields.Add(new VolumeEffectFieldFlags(pi));

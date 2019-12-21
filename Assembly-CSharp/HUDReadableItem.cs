@@ -25,6 +25,8 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 	protected override void OnShow()
 	{
 		base.OnShow();
+		this.m_DetailsActive = false;
+		this.m_PageNum = 0;
 		this.m_ReadButton.gameObject.SetActive(false);
 		for (int i = 0; i < base.gameObject.transform.childCount; i++)
 		{
@@ -37,14 +39,14 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 					Text[] componentsInChildren = gameObject.GetComponentsInChildren<Text>();
 					for (int k = 0; k < componentsInChildren.Length; k++)
 					{
-						componentsInChildren[k].text = GreenHellGame.Instance.GetLocalization().Get(componentsInChildren[k].name);
+						componentsInChildren[k].text = GreenHellGame.Instance.GetLocalization().Get(componentsInChildren[k].name, true);
 					}
 				}
 			}
 			else if (base.gameObject.transform.GetChild(i).gameObject.name == "HUD_" + this.m_ElementName + "_Details")
 			{
 				this.m_ReadButton.gameObject.SetActive(true);
-				this.m_ReadButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Details");
+				this.m_ReadButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Details", true);
 				base.gameObject.transform.GetChild(i).gameObject.SetActive(false);
 			}
 			else if (base.gameObject.transform.GetChild(i).gameObject != this.m_ReadButton.gameObject && base.gameObject.transform.GetChild(i).gameObject != this.m_PagePrevButton.gameObject && base.gameObject.transform.GetChild(i).gameObject != this.m_PageNextButton.gameObject)
@@ -54,19 +56,35 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 		}
 		Player.Get().BlockMoves();
 		Player.Get().BlockRotation();
-		CursorManager.Get().ShowCursor(true);
-		this.m_PagePrevButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_PrevPage");
-		this.m_PageNextButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_NextPage");
+		this.m_ScrollValue = 1f;
+		if (GreenHellGame.IsPCControllerActive())
+		{
+			CursorManager.Get().ShowCursor(true, true);
+			this.m_CursorVisible = true;
+		}
+		this.m_PagePrevButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_PrevPage", true);
+		this.m_PageNextButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_NextPage", true);
 		this.m_PagePrevButton.gameObject.SetActive(false);
 		this.m_PageNextButton.gameObject.SetActive(false);
-		this.m_QuitButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Quit");
+		this.m_QuitButton.gameObject.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Quit", true);
 		this.m_QuitButton.gameObject.SetActive(true);
+		this.m_ReadButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Details", true);
+		this.m_ReadButtonPad.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_DetailsPad", true);
+		this.m_PadScrollIcon.SetActive(false);
 	}
 
 	protected override void OnHide()
 	{
 		base.OnHide();
-		CursorManager.Get().ShowCursor(false);
+		if (this.m_CursorVisible)
+		{
+			CursorManager.Get().ShowCursor(false, false);
+			this.m_CursorVisible = false;
+		}
+		if (this.m_ActiveItem)
+		{
+			this.m_ActiveItem.m_WasReadedAndOff = true;
+		}
 	}
 
 	protected override bool ShouldShow()
@@ -74,15 +92,17 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 		return this.m_Active;
 	}
 
-	public void Activate(string element_name)
+	public void Activate(string element_name, ReadableItem ri)
 	{
 		this.m_Active = true;
 		this.m_ElementName = element_name;
 		HUDManager.Get().PlaySound(this.m_AudioClip);
+		this.m_ActiveItem = ri;
 	}
 
 	protected override void Update()
 	{
+		this.m_PadScrollIcon.SetActive(GreenHellGame.IsPadControllerActive() && this.m_DetailsActive && this.m_DetailsScrollbar != null);
 		this.UpdateInputs();
 	}
 
@@ -90,20 +110,39 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 	{
 		if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Quit) || InputsManager.Get().IsActionActive(InputsManager.InputAction.AdditionalQuit))
 		{
-			this.Quit();
+			this.Deactivate();
+		}
+		if (GreenHellGame.IsPadControllerActive() && this.m_DetailsScrollbar)
+		{
+			if (InputsManager.Get().IsActionActive(InputsManager.InputAction.LSForward))
+			{
+				this.m_ScrollValue += Time.deltaTime * this.m_PadScrollSpeed;
+			}
+			else if (InputsManager.Get().IsActionActive(InputsManager.InputAction.LSBackward))
+			{
+				this.m_ScrollValue -= Time.deltaTime * this.m_PadScrollSpeed;
+			}
+			this.m_ScrollValue = Mathf.Clamp01(this.m_ScrollValue);
+		}
+		if (GreenHellGame.IsPadControllerActive() && this.m_DetailsScrollbar)
+		{
+			this.m_DetailsScrollbar.value = this.m_ScrollValue;
 		}
 	}
 
-	private void Quit()
+	public void Deactivate()
 	{
-		this.m_Active = false;
-		Player.Get().UnblockMoves();
-		Player.Get().UnblockRotation();
+		if (this.m_Active)
+		{
+			this.m_Active = false;
+			Player.Get().UnblockMoves();
+			Player.Get().UnblockRotation();
+		}
 	}
 
 	public void OnQuitButton()
 	{
-		this.Quit();
+		this.Deactivate();
 	}
 
 	public void OnPagePrevButton()
@@ -133,18 +172,26 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 						Text[] componentsInChildren = gameObject.GetComponentsInChildren<Text>();
 						for (int k = 0; k < componentsInChildren.Length; k++)
 						{
-							componentsInChildren[k].text = GreenHellGame.Instance.GetLocalization().Get(componentsInChildren[k].name);
+							componentsInChildren[k].text = GreenHellGame.Instance.GetLocalization().Get(componentsInChildren[k].name, true);
 						}
 					}
-					this.m_ReadButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_DetailsHide");
+					this.m_ReadButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_DetailsHide", true);
+					this.m_ReadButtonPad.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_DetailsHidePad", true);
 					this.m_DetailsActive = true;
 					this.m_DetailsObject = gameObject;
+					this.m_DetailsScrollbar = gameObject.GetComponentInChildren<Scrollbar>();
+					if (this.m_DetailsScrollbar)
+					{
+						this.m_DetailsScrollbar.value = 1f;
+					}
+					this.m_ScrollValue = 1f;
 					this.UpdatePages();
 				}
 				else
 				{
 					base.gameObject.transform.GetChild(i).gameObject.SetActive(false);
-					this.m_ReadButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Details");
+					this.m_ReadButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_Details", true);
+					this.m_ReadButtonPad.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("HUD_ReadableItem_DetailsPad", true);
 					this.m_DetailsActive = false;
 					this.m_PagePrevButton.gameObject.SetActive(false);
 					this.m_PageNextButton.gameObject.SetActive(false);
@@ -160,27 +207,37 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 		{
 			string name = this.m_DetailsObject.gameObject.transform.GetChild(i).name;
 			string s = name.Substring(name.Length - 1);
-			int num2 = int.Parse(s);
-			if (num2 + 1 > num)
+			int num2 = -1;
+			try
 			{
-				num = num2 + 1;
+				num2 = int.Parse(s);
 			}
-			if (num2 == this.m_PageNum)
+			catch
 			{
-				this.m_DetailsObject.gameObject.transform.GetChild(i).gameObject.SetActive(true);
 			}
-			else
+			if (num2 >= 0)
 			{
-				this.m_DetailsObject.gameObject.transform.GetChild(i).gameObject.SetActive(false);
+				if (num2 + 1 > num)
+				{
+					num = num2 + 1;
+				}
+				if (num2 == this.m_PageNum)
+				{
+					this.m_DetailsObject.gameObject.transform.GetChild(i).gameObject.SetActive(true);
+				}
+				else
+				{
+					this.m_DetailsObject.gameObject.transform.GetChild(i).gameObject.SetActive(false);
+				}
 			}
 		}
 		this.m_PagePrevButton.gameObject.SetActive(this.m_PageNum > 0);
 		this.m_PageNextButton.gameObject.SetActive(this.m_PageNum < num - 1);
 	}
 
-	public void OnInputAction(InputsManager.InputAction action)
+	public void OnInputAction(InputActionData action_data)
 	{
-		if (action == InputsManager.InputAction.Read)
+		if (action_data.m_Action == InputsManager.InputAction.ReadCollectable)
 		{
 			this.OnReadButton();
 		}
@@ -191,6 +248,11 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 		return base.enabled;
 	}
 
+	public bool CanReceiveActionPaused()
+	{
+		return false;
+	}
+
 	private bool m_Active;
 
 	private static HUDReadableItem s_Instance;
@@ -198,6 +260,8 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 	private string m_ElementName = string.Empty;
 
 	public Button m_ReadButton;
+
+	public GameObject m_ReadButtonPad;
 
 	public Button m_QuitButton;
 
@@ -211,5 +275,17 @@ public class HUDReadableItem : HUDBase, IInputsReceiver
 
 	private GameObject m_DetailsObject;
 
+	private Scrollbar m_DetailsScrollbar;
+
 	private AudioClip m_AudioClip;
+
+	private ReadableItem m_ActiveItem;
+
+	private bool m_CursorVisible;
+
+	public float m_PadScrollSpeed = 3f;
+
+	private float m_ScrollValue = 1f;
+
+	public GameObject m_PadScrollIcon;
 }

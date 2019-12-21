@@ -7,6 +7,20 @@ public class InventoryCell
 {
 	public bool IsOccupied()
 	{
+		if (this.pocket == BackpackPocket.Storage)
+		{
+			using (List<Item>.Enumerator enumerator = this.m_Items.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					if (enumerator.Current.gameObject.activeSelf)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 		return this.m_Items.Count > 0;
 	}
 

@@ -7,4 +7,6 @@ public interface IYesNoDialogOwner
 	void OnNoFromDialog();
 
 	void OnOkFromDialog();
+
+	void OnCloseDialog();
 }

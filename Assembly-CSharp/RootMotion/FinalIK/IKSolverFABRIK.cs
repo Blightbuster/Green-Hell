@@ -79,19 +79,17 @@ namespace RootMotion.FinalIK
 			{
 				this.IKPosition.z = this.bones[0].transform.position.z;
 			}
-			Vector3 vector = (this.maxIterations <= 1) ? Vector3.zero : base.GetSingularityOffset();
-			for (int i = 0; i < this.maxIterations; i++)
+			Vector3 vector = (this.maxIterations > 1) ? base.GetSingularityOffset() : Vector3.zero;
+			int num = 0;
+			while (num < this.maxIterations && (!(vector == Vector3.zero) || num < 1 || this.tolerance <= 0f || base.positionOffset >= this.tolerance * this.tolerance))
 			{
-				if (vector == Vector3.zero && i >= 1 && this.tolerance > 0f && base.positionOffset < this.tolerance * this.tolerance)
-				{
-					break;
-				}
 				this.lastLocalDirection = this.localDirection;
 				if (this.OnPreIteration != null)
 				{
-					this.OnPreIteration(i);
+					this.OnPreIteration(num);
 				}
-				this.Solve(this.IKPosition + ((i != 0) ? Vector3.zero : vector));
+				this.Solve(this.IKPosition + ((num == 0) ? vector : Vector3.zero));
+				num++;
 			}
 			this.OnPostSolve();
 		}
@@ -254,14 +252,12 @@ namespace RootMotion.FinalIK
 				return;
 			}
 			Vector3 solverPosition = this.bones[this.bones.Length - 1].solverPosition;
-			for (int i = rotateBone; i < this.bones.Length - 1; i++)
+			int num = rotateBone;
+			while (num < this.bones.Length - 1 && !this.limitedBones[num])
 			{
-				if (this.limitedBones[i])
-				{
-					break;
-				}
-				Quaternion rotation = Quaternion.FromToRotation(this.bones[i].solverRotation * this.bones[i].axis, this.bones[i + 1].solverPosition - this.bones[i].solverPosition);
-				this.SolverRotate(i, rotation, false);
+				Quaternion rotation = Quaternion.FromToRotation(this.bones[num].solverRotation * this.bones[num].axis, this.bones[num + 1].solverPosition - this.bones[num].solverPosition);
+				this.SolverRotate(num, rotation, false);
+				num++;
 			}
 			bool flag = false;
 			Quaternion limitedRotation = this.GetLimitedRotation(limitBone, this.bones[limitBone].solverRotation, out flag);
@@ -291,11 +287,9 @@ namespace RootMotion.FinalIK
 			if (this.useRotationLimits)
 			{
 				this.BackwardReachLimited(position);
+				return;
 			}
-			else
-			{
-				this.BackwardReachUnlimited(position);
-			}
+			this.BackwardReachUnlimited(position);
 		}
 
 		private void BackwardReachUnlimited(Vector3 position)
@@ -313,8 +307,7 @@ namespace RootMotion.FinalIK
 			for (int i = 0; i < this.bones.Length - 1; i++)
 			{
 				Vector3 a = this.SolveJoint(this.bones[i + 1].solverPosition, this.bones[i].solverPosition, this.bones[i].length);
-				Quaternion lhs = Quaternion.FromToRotation(this.bones[i].solverRotation * this.bones[i].axis, a - this.bones[i].solverPosition);
-				Quaternion quaternion = lhs * this.bones[i].solverRotation;
+				Quaternion quaternion = Quaternion.FromToRotation(this.bones[i].solverRotation * this.bones[i].axis, a - this.bones[i].solverPosition) * this.bones[i].solverRotation;
 				if (this.bones[i].rotationLimit != null)
 				{
 					bool flag = false;

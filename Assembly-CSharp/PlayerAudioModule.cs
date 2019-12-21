@@ -1,11 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using CJTools;
 using Enums;
 using UnityEngine;
 
-public class PlayerAudioModule : PlayerModule
+public class PlayerAudioModule : PlayerModule, IAnimationEventsReceiverEx, IAnimationEventsReceiver
 {
+	public PlayerAudioModule.GruntPriority m_GruntSoundPlayed { get; private set; } = PlayerAudioModule.GruntPriority.None;
+
+	private List<AudioClip> GetGruntClips(PlayerAudioModule.GruntPriority grunt)
+	{
+		switch (grunt)
+		{
+		case PlayerAudioModule.GruntPriority.Breathing:
+			return this.m_BreathSounds;
+		case PlayerAudioModule.GruntPriority.LowStamina:
+			return this.m_BreathLowStaminaSounds;
+		case PlayerAudioModule.GruntPriority.Jump:
+			return this.m_JumpSounds;
+		case PlayerAudioModule.GruntPriority.Landing:
+			return this.m_LandingSounds;
+		case PlayerAudioModule.GruntPriority.Attack:
+			return this.m_AttackSounds;
+		case PlayerAudioModule.GruntPriority.ToolDestroyed:
+			return this.m_ToolDestroyedSounds;
+		case PlayerAudioModule.GruntPriority.LeechOut:
+			return this.m_LeechOutSounds;
+		case PlayerAudioModule.GruntPriority.Drinking:
+			return this.m_DrinkingSounds;
+		case PlayerAudioModule.GruntPriority.Eating:
+			return this.m_EatingSounds;
+		case PlayerAudioModule.GruntPriority.Disgusting:
+			return this.m_EatingDisgustingSounds;
+		case PlayerAudioModule.GruntPriority.DamageInsects:
+			return this.m_DamageInsectsSounds;
+		case PlayerAudioModule.GruntPriority.HitReaction:
+			return this.m_DamageSounds;
+		case PlayerAudioModule.GruntPriority.Vomiting:
+			return this.m_VomitingSounds;
+		case PlayerAudioModule.GruntPriority.PassOut:
+			return this.m_PassOutSounds;
+		case PlayerAudioModule.GruntPriority.Death:
+			return this.m_DeathSounds;
+		default:
+			return null;
+		}
+	}
+
 	public static PlayerAudioModule Get()
 	{
 		return PlayerAudioModule.s_Instance;
@@ -13,31 +55,68 @@ public class PlayerAudioModule : PlayerModule
 
 	private void Awake()
 	{
-		PlayerAudioModule.s_Instance = this;
+		if (base.GetComponent<Player>())
+		{
+			PlayerAudioModule.s_Instance = this;
+		}
+		GreenHellGame.Instance.OnAudioSnapshotChangedEvent += this.OnAudioSnapshotChanged;
+		this.SetupWeaponAudio();
+		this.SetupHitSpecificSounds();
 	}
 
-	public override void Initialize()
+	public override void OnDestroy()
 	{
-		base.Initialize();
-		if (this.m_AudioSources == null)
+		base.OnDestroy();
+		if (GreenHellGame.Instance)
 		{
-			this.m_AudioSources = new AudioSource[this.m_AudioSourcesCount];
-			for (int i = 0; i < this.m_AudioSourcesCount; i++)
-			{
-				this.m_AudioSources[i] = this.m_Player.gameObject.AddComponent<AudioSource>();
-				this.m_AudioSources[i].outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
-			}
+			GreenHellGame.Instance.OnAudioSnapshotChangedEvent -= this.OnAudioSnapshotChanged;
 		}
-		this.m_SleepSoundSource = this.m_Player.gameObject.AddComponent<AudioSource>();
-		this.m_SleepSoundSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Sleep);
-		this.m_SleepSoundSource.playOnAwake = false;
-		this.m_PlayingLowStaminaSoundSource = this.m_Player.gameObject.AddComponent<AudioSource>();
-		this.m_PlayingLowStaminaSoundSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
-		this.m_PlayingLowStaminaSoundSource.playOnAwake = false;
+	}
+
+	public void InitSources()
+	{
+		if (this.m_SourcesInited)
+		{
+			return;
+		}
+		this.m_AudioSources = new List<AudioSource>(this.m_AudioSourcesCount);
+		for (int i = 0; i < this.m_AudioSourcesCount; i++)
+		{
+			this.m_AudioSources.Add(this.AddSource(AudioMixerGroupGame.Player));
+		}
+		this.m_SleepSoundSource = this.AddSource(AudioMixerGroupGame.Player);
+		this.m_GruntSoundSource = this.AddSource(AudioMixerGroupGame.Player);
+		this.m_MakeFireSource = this.AddSource(AudioMixerGroupGame.Player);
+		this.m_NotepadEntrySound = this.AddSource(AudioMixerGroupGame.Player);
+		for (int j = 0; j < 3; j++)
+		{
+			this.m_DiveSources.Add(this.AddSource(AudioMixerGroupGame.Enviro));
+		}
+		this.m_SourcesInited = true;
+	}
+
+	public override void Initialize(Being being)
+	{
+		this.m_Being = being;
+		this.m_Player = base.gameObject.GetComponent<Player>();
+		this.InitSources();
 		this.m_NoiseManager = MainLevel.Instance.GetComponent<NoiseManager>();
 		DebugUtils.Assert(this.m_NoiseManager, "[PlayerAudioModule::Initialize] Can't find NoiseManager", true, DebugUtils.AssertType.Info);
 		this.LoadScript();
-		this.m_FPPController = Player.Get().GetComponent<FPPController>();
+		this.InitializeDreamsAudio();
+	}
+
+	private AudioSource AddSource(AudioMixerGroupGame group = AudioMixerGroupGame.Player)
+	{
+		AudioSource audioSource = base.gameObject.AddComponent<AudioSource>();
+		audioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(group);
+		audioSource.playOnAwake = false;
+		audioSource.priority = 0;
+		if (this.m_Player == null)
+		{
+			audioSource.spatialBlend = 1f;
+		}
+		return audioSource;
 	}
 
 	public void LoadScript()
@@ -86,15 +165,35 @@ public class PlayerAudioModule : PlayerModule
 	public override void OnAnimEvent(AnimEventID id)
 	{
 		base.OnAnimEvent(id);
-		if (id == AnimEventID.FootStep)
+		if (id == AnimEventID.Dream4_WT_Click || id == AnimEventID.Dream4_WT_Raise || id == AnimEventID.Dream4_WT_Stop || id == AnimEventID.Dream4_WT_TurnOff || id == AnimEventID.Dream4_StandUp || id == AnimEventID.PreDream_Ayahuasca_Throw_Ingredients || id == AnimEventID.AIRPORT_RADIO_SFX_SWITCH_CHANNEL_1 || id == AnimEventID.AIRPORT_RADIO_SFX_SWITCH_CHANNEL_2 || id == AnimEventID.AIRPORT_RADIO_SFX_PUNCH_RADIO || id == AnimEventID.AIRPORT_RADIO_SFX_PUNCH_DESK_AND_KEY_DROPS || id == AnimEventID.AIRPORT_RADIO_SFX_CHAT_BUTTON_PRESS || id == AnimEventID.AIRPORT_RADIO_SFX_CHAT_BUTTON_RELEASE || id == AnimEventID.END1_SFX_RADIO_POWER_DOWN)
 		{
-			this.PlayFootstepSound();
+			this.PlayAnimEventSound(id);
+			return;
+		}
+		if (id == AnimEventID.MeleeRightAttackStart || id == AnimEventID.MeleeLeftAttackStart || id == AnimEventID.MeleeUpAttackStart || id == AnimEventID.MeleeThrustAttackStart)
+		{
+			this.PlayAttackSound(1f, false);
+		}
+	}
+
+	public void OnAnimEventEx(AnimationEvent anim_event)
+	{
+		if (anim_event.animatorStateInfo.shortNameHash == this.m_MoveBlendTreeHash)
+		{
+			if (anim_event.animatorClipInfo.weight < 0.5f)
+			{
+				return;
+			}
+			if (anim_event.intParameter == 0 && Player.Get().m_FootestepsSoundsEnabled)
+			{
+				this.PlayFootstepSound();
+			}
 		}
 	}
 
 	public bool IsSoundPlaying(AudioClip clip)
 	{
-		for (int i = 0; i < this.m_AudioSources.Length; i++)
+		for (int i = 0; i < this.m_AudioSources.Count; i++)
 		{
 			if (this.m_AudioSources[i].clip == clip)
 			{
@@ -120,18 +219,13 @@ public class PlayerAudioModule : PlayerModule
 	{
 		if (this.m_AudioSources == null)
 		{
-			this.m_AudioSources = new AudioSource[this.m_AudioSourcesCount];
-			for (int i = 0; i < this.m_AudioSourcesCount; i++)
-			{
-				this.m_AudioSources[i] = this.m_Player.gameObject.AddComponent<AudioSource>();
-				this.m_AudioSources[i].outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
-			}
+			this.InitSources();
 		}
-		for (int j = 0; j < this.m_AudioSources.Length; j++)
+		for (int i = 0; i < this.m_AudioSources.Count; i++)
 		{
-			if (!this.m_AudioSources[j].isPlaying)
+			if (!this.m_AudioSources[i].isPlaying && !this.m_AudioSources[i].isVirtual)
 			{
-				return this.m_AudioSources[j];
+				return this.m_AudioSources[i];
 			}
 		}
 		Debug.Log("PlayerAudioModule::GetFreeSource - no free sources.");
@@ -160,12 +254,30 @@ public class PlayerAudioModule : PlayerModule
 		return this.PlaySound(audioClip, volume, loop, noise_type);
 	}
 
+	public AudioSource PlayRandomSound(AudioSource source, List<AudioClip> clips, float volume = 1f, bool loop = false, Noise.Type noise_type = Noise.Type.None)
+	{
+		if (clips == null || clips.Count == 0)
+		{
+			return null;
+		}
+		if (clips.Count == 1)
+		{
+			return this.PlaySound(source, clips[0], volume, loop, noise_type);
+		}
+		int index = UnityEngine.Random.Range(1, clips.Count);
+		AudioClip audioClip = clips[index];
+		clips[index] = clips[0];
+		clips[0] = audioClip;
+		return this.PlaySound(source, audioClip, volume, loop, noise_type);
+	}
+
 	private AudioSource PlaySound(AudioSource source, AudioClip clip, float volume = 1f, bool loop = false, Noise.Type noise_Type = Noise.Type.None)
 	{
 		if (!source || !clip)
 		{
 			return null;
 		}
+		source.Stop();
 		source.clip = clip;
 		source.loop = loop;
 		source.volume = volume;
@@ -179,7 +291,7 @@ public class PlayerAudioModule : PlayerModule
 
 	public void StopSound(AudioClip clip)
 	{
-		for (int i = 0; i < this.m_AudioSources.Length; i++)
+		for (int i = 0; i < this.m_AudioSources.Count; i++)
 		{
 			if (this.m_AudioSources[i].clip == clip && this.m_AudioSources[i].isPlaying)
 			{
@@ -189,10 +301,67 @@ public class PlayerAudioModule : PlayerModule
 		}
 	}
 
+	public AudioSource PlayGruntSound(PlayerAudioModule.GruntPriority grunt_type, List<AudioClip> clips = null, float volume = 1f, bool loop = false, Noise.Type noise_type = Noise.Type.None, float fadein_duration = 0f)
+	{
+		DialogsManager dialogsManager = DialogsManager.Get();
+		if (dialogsManager != null && dialogsManager.IsPlayerSpeaking())
+		{
+			return null;
+		}
+		if (clips == null)
+		{
+			clips = this.GetGruntClips(grunt_type);
+		}
+		if (this.ReplIsOwner())
+		{
+			this.GetPlayerComponent<ReplicatedPlayerSounds>().ReplicateSound(new ReplicatedPlayerSounds.SSoundData
+			{
+				type = ReplicatedPlayerSounds.EReplicatedSoundType.Grunt,
+				grunt = grunt_type
+			});
+		}
+		if (!this.m_GruntSoundSource.isPlaying || grunt_type > this.m_GruntSoundPlayed)
+		{
+			if (this.m_GruntFadeoutCoroutine != null)
+			{
+				base.StopCoroutine(this.m_GruntFadeoutCoroutine);
+				this.m_GruntFadeoutCoroutine = null;
+			}
+			if (this.m_GruntFadeinCoroutine != null)
+			{
+				base.StopCoroutine(this.m_GruntFadeinCoroutine);
+				this.m_GruntFadeinCoroutine = null;
+			}
+			this.m_GruntSoundPlayed = grunt_type;
+			this.PlayRandomSound(this.m_GruntSoundSource, clips, (fadein_duration > 0f) ? 0f : volume, loop, noise_type);
+			if (fadein_duration > 0f)
+			{
+				this.m_GruntFadeinCoroutine = base.StartCoroutine(AudioFadeOut.FadeIn(this.m_GruntSoundSource, fadein_duration, volume, null));
+			}
+			return this.m_GruntSoundSource;
+		}
+		return null;
+	}
+
+	public void StopGruntSound(PlayerAudioModule.GruntPriority grunt_type, float duration = 0f)
+	{
+		if (this.m_GruntSoundPlayed == grunt_type && this.m_GruntSoundSource.isPlaying)
+		{
+			this.m_GruntSoundPlayed = PlayerAudioModule.GruntPriority.None;
+			if (duration > 0f)
+			{
+				this.m_GruntFadeoutCoroutine = base.StartCoroutine(AudioFadeOut.FadeOut(this.m_GruntSoundSource, duration, 0f, null));
+				this.m_GruntSoundSource.SetScheduledEndTime(AudioSettings.dspTime + (double)duration);
+				return;
+			}
+			this.m_GruntSoundSource.Stop();
+		}
+	}
+
 	private void MakeNoise(Noise.Type type)
 	{
 		Noise noise = new Noise();
-		noise.m_Position = this.m_Player.transform.position;
+		noise.m_Position = base.transform.position;
 		noise.m_Time = Time.time;
 		noise.m_Type = type;
 		this.m_NoiseManager.MakeNoise(noise);
@@ -200,63 +369,111 @@ public class PlayerAudioModule : PlayerModule
 
 	public void PlayJumpSound()
 	{
-		this.PlayRandomSound(this.m_JumpSounds, 1f, false, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Jump, null, 1f, false, Noise.Type.None, 0f);
 	}
 
 	public void PlayLandingSound()
 	{
-		this.PlayRandomSound(this.m_LandingSounds, 1f, false, Noise.Type.None);
+		if (this.GetPlayerComponent<ReplicatedPlayerParams>().m_IsInWater)
+		{
+			this.PlayRandomSound(this.m_LandingWaterSounds, 1f, false, Noise.Type.None);
+			return;
+		}
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Landing, null, 1f, false, Noise.Type.None, 0f);
 	}
 
 	public void PlayFeetLandingSound(float volume = 1f, bool loop = false)
 	{
-		switch (Player.Get().GetMaterial())
+		if (this.GetPlayerComponent<ReplicatedPlayerParams>().m_IsInWater)
 		{
+			this.PlayRandomSound(this.m_LandingWaterSounds, 1f, false, Noise.Type.None);
+			return;
+		}
+		switch (this.m_Being.GetMaterial())
+		{
+		case EObjectMaterial.Wood:
+			this.PlayRandomSound(this.m_WoodLandingSounds, volume, loop, Noise.Type.Action);
+			return;
 		case EObjectMaterial.Bush:
 		case EObjectMaterial.Grass:
 			this.PlayRandomSound(this.m_GrassLandingSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.Stone:
 			this.PlayRandomSound(this.m_StoneLandingSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.DryLeaves:
 			this.PlayRandomSound(this.m_DryLeavesLandingSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.Mud:
 			this.PlayRandomSound(this.m_MudLandingSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.Sand:
 			this.PlayRandomSound(this.m_SandLandingSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.Flesh:
+		case EObjectMaterial.Moss:
+		case EObjectMaterial.Water:
+		case EObjectMaterial.TurtleShell:
 			break;
 		case EObjectMaterial.Soil:
 			this.PlayRandomSound(this.m_SoilLandingSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.WoodTree:
+			this.PlayRandomSound(this.m_WoodTreeLandingSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.Metal:
+			this.PlayRandomSound(this.m_MetalLandingSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.Tent:
+			this.PlayRandomSound(this.m_TentLandingSounds, volume, loop, Noise.Type.Action);
 			break;
+		default:
+			return;
 		}
 	}
 
 	public void PlayFeetJumpSound(float volume = 1f, bool loop = false)
 	{
-		switch (Player.Get().GetMaterial())
+		switch (this.m_Being.GetMaterial())
 		{
+		case EObjectMaterial.Wood:
+			this.PlayRandomSound(this.m_WoodJumpSounds, volume, loop, Noise.Type.Action);
+			return;
 		case EObjectMaterial.Bush:
 		case EObjectMaterial.Grass:
 			this.PlayRandomSound(this.m_GrassJumpSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.Stone:
 			this.PlayRandomSound(this.m_StoneJumpSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.DryLeaves:
 			this.PlayRandomSound(this.m_DryLeavesJumpSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.Mud:
 			this.PlayRandomSound(this.m_MudJumpSounds, volume, loop, Noise.Type.Action);
-			break;
+			return;
 		case EObjectMaterial.Sand:
 			this.PlayRandomSound(this.m_SandJumpSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.Flesh:
+		case EObjectMaterial.Moss:
+		case EObjectMaterial.Water:
+		case EObjectMaterial.TurtleShell:
 			break;
 		case EObjectMaterial.Soil:
 			this.PlayRandomSound(this.m_SoilJumpSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.WoodTree:
+			this.PlayRandomSound(this.m_WoodTreeJumpSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.Metal:
+			this.PlayRandomSound(this.m_MetalJumpSounds, volume, loop, Noise.Type.Action);
+			return;
+		case EObjectMaterial.Tent:
+			this.PlayRandomSound(this.m_TentJumpSounds, volume, loop, Noise.Type.Action);
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -267,12 +484,17 @@ public class PlayerAudioModule : PlayerModule
 
 	public void PlayDamageSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_DamageSounds, volume, loop, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.HitReaction, null, volume, loop, Noise.Type.None, 0f);
+	}
+
+	public void PlayDamageInsectsSound(float volume = 1f, bool loop = false)
+	{
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.DamageInsects, null, volume, loop, Noise.Type.None, 0f);
 	}
 
 	public void PlayAttackSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_AttackSounds, volume, loop, Noise.Type.Action);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Attack, null, volume, loop, Noise.Type.Action, 0f);
 	}
 
 	public void PlayUseSound(float volume = 1f, bool loop = false)
@@ -283,6 +505,11 @@ public class PlayerAudioModule : PlayerModule
 	public void PlayHitSound(float volume = 1f, bool loop = false)
 	{
 		this.PlayRandomSound(this.m_HitSounds, volume, loop, Noise.Type.Action);
+	}
+
+	public void PlayHitArmorSound(float volume = 1f, bool loop = false)
+	{
+		this.PlayRandomSound(this.m_HitArmorSounds, volume, loop, Noise.Type.Action);
 	}
 
 	public void PlayHeartBeatSound(float volume = 1f, bool loop = false)
@@ -306,13 +533,11 @@ public class PlayerAudioModule : PlayerModule
 
 	public void PlayFootstepSound()
 	{
-		if ((Player.Get().GetFPPController().m_LastCollisionFlags & CollisionFlags.Below) == CollisionFlags.None)
+		if ((this.GetPlayerComponent<ReplicatedPlayerParams>().m_LastCollisionFlags & 4) == 0)
 		{
 			return;
 		}
-		Vector3 wantedSpeed = this.m_FPPController.m_WantedSpeed;
-		wantedSpeed.y = 0f;
-		if (wantedSpeed.magnitude < 0.1f)
+		if (this.GetPlayerComponent<ReplicatedPlayerParams>().m_WantedSpeed2d < 0.1f)
 		{
 			return;
 		}
@@ -320,48 +545,61 @@ public class PlayerAudioModule : PlayerModule
 		{
 			return;
 		}
-		List<AudioClip> list = null;
-		bool flag = Player.Get().GetFPPController().IsRunning();
+		bool isRunning = this.GetPlayerComponent<ReplicatedPlayerParams>().m_IsRunning;
 		EObjectMaterial eobjectMaterial = EObjectMaterial.Unknown;
-		if (this.m_Player.IsInWater() && !this.m_Player.m_SwimController.IsActive())
+		List<AudioClip> list;
+		if (this.GetPlayerComponent<ReplicatedPlayerParams>().m_IsInWater && !this.GetPlayerComponent<ReplicatedPlayerParams>().m_IsSwimming)
 		{
-			list = ((!flag) ? this.m_ShallowWaterWalkSounds : this.m_ShallowWaterRunSounds);
+			list = (isRunning ? this.m_ShallowWaterRunSounds : this.m_ShallowWaterWalkSounds);
 		}
 		else
 		{
-			eobjectMaterial = Player.Get().GetMaterial();
+			eobjectMaterial = this.m_Being.GetMaterial();
 			switch (eobjectMaterial)
 			{
-			case EObjectMaterial.Unknown:
-			case EObjectMaterial.Sand:
-				list = ((!flag) ? this.m_SandStepWalkSounds : this.m_SandStepRunSounds);
-				break;
+			case EObjectMaterial.Wood:
+				list = (isRunning ? this.m_WoodRunSounds : this.m_WoodWalkSounds);
+				goto IL_1B5;
 			case EObjectMaterial.Bush:
 			case EObjectMaterial.Grass:
-				list = ((!flag) ? this.m_GrassStepWalkSounds : this.m_GrassStepRunSounds);
-				break;
+				list = (isRunning ? this.m_GrassStepRunSounds : this.m_GrassStepWalkSounds);
+				goto IL_1B5;
 			case EObjectMaterial.Stone:
-				list = ((!flag) ? this.m_StoneStepWalkSounds : this.m_StoneStepRunSounds);
-				break;
+				list = (isRunning ? this.m_StoneStepRunSounds : this.m_StoneStepWalkSounds);
+				goto IL_1B5;
 			case EObjectMaterial.DryLeaves:
-				list = ((!flag) ? this.m_DryLeavesStepWalkSounds : this.m_DryLeavesStepRunSounds);
-				break;
+				list = (isRunning ? this.m_DryLeavesStepRunSounds : this.m_DryLeavesStepWalkSounds);
+				goto IL_1B5;
 			case EObjectMaterial.Mud:
-				list = ((!flag) ? this.m_MudStepWalkSounds : this.m_MudStepRunSounds);
-				break;
+				list = (isRunning ? this.m_MudStepRunSounds : this.m_MudStepWalkSounds);
+				goto IL_1B5;
 			case EObjectMaterial.Soil:
-				list = ((!flag) ? this.m_SoilStepWalkSounds : this.m_SoilStepRunSounds);
-				break;
+				list = (isRunning ? this.m_SoilStepRunSounds : this.m_SoilStepWalkSounds);
+				goto IL_1B5;
+			case EObjectMaterial.Water:
+				list = (isRunning ? this.m_ShallowWaterRunSounds : this.m_ShallowWaterWalkSounds);
+				goto IL_1B5;
+			case EObjectMaterial.WoodTree:
+				list = (isRunning ? this.m_WoodTreeRunSounds : this.m_WoodTreeWalkSounds);
+				goto IL_1B5;
+			case EObjectMaterial.Metal:
+				list = (isRunning ? this.m_MetalRunSounds : this.m_MetalWalkSounds);
+				goto IL_1B5;
+			case EObjectMaterial.Tent:
+				list = (isRunning ? this.m_TentRunSounds : this.m_TentWalkSounds);
+				goto IL_1B5;
 			}
+			list = (isRunning ? this.m_SandStepRunSounds : this.m_SandStepWalkSounds);
 		}
+		IL_1B5:
 		Noise.Type noise_type = Noise.Type.None;
 		if (FPPController.Get().IsWalking())
 		{
-			noise_type = ((!FPPController.Get().IsDuck()) ? Noise.Type.Walk : Noise.Type.Sneak);
+			noise_type = (FPPController.Get().IsDuck() ? Noise.Type.Sneak : Noise.Type.Walk);
 		}
-		else if (flag)
+		else if (isRunning)
 		{
-			noise_type = ((!FPPController.Get().IsDuck()) ? Noise.Type.Run : Noise.Type.Sneak);
+			noise_type = (FPPController.Get().IsDuck() ? Noise.Type.Sneak : Noise.Type.Run);
 		}
 		else if (SwimController.Get().IsSwimming())
 		{
@@ -369,7 +607,7 @@ public class PlayerAudioModule : PlayerModule
 		}
 		if (list == null)
 		{
-			Debug.Log("ERROR PlayerAudioModule PlayFootstepSound no sounds clips player_pos=" + Player.Get().transform.position.ToString() + " Material = " + eobjectMaterial.ToString());
+			Debug.Log("ERROR PlayerAudioModule PlayFootstepSound no sounds clips player_pos=" + base.transform.position.ToString() + " Material = " + eobjectMaterial.ToString());
 		}
 		this.PlayRandomSound(list, 1f, false, noise_type);
 		this.m_LastFootstepSound = Time.time;
@@ -377,33 +615,32 @@ public class PlayerAudioModule : PlayerModule
 
 	public void PlayEatingSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_EatingSounds, volume, loop, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Eating, null, volume, loop, Noise.Type.None, 0f);
 	}
 
 	public void PlayEatingDisgustingSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_EatingDisgustingSounds, volume, loop, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Disgusting, null, volume, loop, Noise.Type.None, 0f);
 	}
 
 	public void PlayDrinkingSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_DrinkingSounds, volume, loop, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Drinking, null, volume, loop, Noise.Type.None, 0f);
 	}
 
 	public void PlayDrinkingDisgustingSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_DrinkingDisgustingSounds, volume, loop, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Disgusting, null, volume, loop, Noise.Type.None, 0f);
 	}
 
 	public void PlayBreathingSound(float volume = 1f, bool loop = false)
 	{
-		this.m_PlayingBreathSoundSource = this.PlayRandomSound(this.m_BreathSounds, 0f, loop, Noise.Type.None);
-		base.StartCoroutine(AudioFadeOut.FadeIn(this.m_PlayingBreathSoundSource, 1f, volume));
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Breathing, null, volume, loop, Noise.Type.None, 1f);
 	}
 
 	public void PlayVomitingSound(float volume = 1f, bool loop = false)
 	{
-		this.PlayRandomSound(this.m_VomitingSounds, volume, loop, Noise.Type.Action);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Vomiting, null, volume, loop, Noise.Type.Action, 0f);
 	}
 
 	public void PlayPlantsPushingSound(float volume = 1f, bool loop = false)
@@ -423,21 +660,12 @@ public class PlayerAudioModule : PlayerModule
 
 	public void StopBreathingSound()
 	{
-		if (this.m_PlayingBreathSoundSource != null)
-		{
-			this.m_PlayingBreathSoundSource.Stop();
-		}
-		this.m_PlayingBreathSoundSource = null;
+		this.StopGruntSound(PlayerAudioModule.GruntPriority.Breathing, 0f);
 	}
 
 	public void FadeOutBreathingSound()
 	{
-		if (this.m_PlayingBreathSoundSource == null)
-		{
-			return;
-		}
-		base.StartCoroutine(AudioFadeOut.FadeOut(this.m_PlayingBreathSoundSource, 0.2f));
-		this.m_BreathFadeOutStartTime = Time.time;
+		this.StopGruntSound(PlayerAudioModule.GruntPriority.Breathing, 0.2f);
 	}
 
 	public override void OnTakeDamage(DamageInfo info)
@@ -445,45 +673,77 @@ public class PlayerAudioModule : PlayerModule
 		base.OnTakeDamage(info);
 		if (!info.m_Blocked && info.m_PlayDamageSound && Time.time - this.m_LastPlayDamageSound > 2f)
 		{
-			this.PlayDamageSound(1f, false);
+			if (info.m_DamageType == DamageType.Insects)
+			{
+				this.PlayDamageInsectsSound(1f, false);
+			}
+			else
+			{
+				this.PlayDamageSound(1f, false);
+			}
 			this.m_LastPlayDamageSound = Time.time;
+			info.m_InjuryPlace = PlayerInjuryModule.Get().GetInjuryPlaceFromHit(info);
+			Limb limb = EnumTools.ConvertInjuryPlaceToLimb(info.m_InjuryPlace);
+			if (info.m_DamageType != DamageType.Insects && info.m_DamageType != DamageType.Fall && PlayerArmorModule.Get().IsArmorActive(limb) && !PlayerArmorModule.Get().IsArmorDestroyed(limb))
+			{
+				this.PlayHitArmorSound(1f, false);
+			}
 		}
 	}
 
 	public override void Update()
 	{
 		base.Update();
+		int num = 0;
+		int i = 0;
+		while (i < this.m_AudioSources.Count)
+		{
+			AudioSource audioSource = this.m_AudioSources[i];
+			if (audioSource.isVirtual && !audioSource.isPlaying)
+			{
+				audioSource.Stop();
+				audioSource.clip = null;
+				UnityEngine.Object.Destroy(audioSource);
+				this.m_AudioSources.RemoveAt(i);
+				num++;
+			}
+			else
+			{
+				i++;
+			}
+		}
+		num = this.m_AudioSourcesCount - this.m_AudioSources.Count;
+		if (num > 0)
+		{
+			for (int j = 0; j < num; j++)
+			{
+				this.m_AudioSources.Add(this.AddSource(AudioMixerGroupGame.Player));
+			}
+		}
 		this.UpdateBreathStop();
-		this.UpdateLowStamina();
+		if (this.m_Player == Player.Get())
+		{
+			this.UpdateLowStamina();
+		}
 	}
 
 	private void UpdateBreathStop()
 	{
-		if (this.m_Player.GetComponent<SwimController>().m_State != SwimState.Dive && this.m_PlayingBreathSoundSource != null && this.m_BreathFadeOutStartTime > 0f && Time.time - this.m_BreathFadeOutStartTime > 0.2f)
-		{
-			this.StopBreathingSound();
-			this.m_BreathFadeOutStartTime = -1f;
-		}
 	}
 
 	private void UpdateLowStamina()
 	{
-		if (this.m_PlayingLowStaminaSoundSource != null && !this.m_PlayingLowStaminaSoundSource.isPlaying)
+		if (PlayerConditionModule.Get().IsLowStamina())
 		{
-			this.m_PlayingLowStaminaSoundSource = null;
-		}
-		if (PlayerConditionModule.Get().IsStaminaCriticalLevel())
-		{
-			if (this.m_PlayingLowStaminaSoundSource == null)
+			if (Time.time > this.m_LowStaminaSoundStartTime + 1f && this.PlayGruntSound(PlayerAudioModule.GruntPriority.LowStamina, null, 1f, false, Noise.Type.None, 0f))
 			{
-				this.m_PlayingLowStaminaSoundSource = this.PlayRandomSound(this.m_BreathLowStaminaSounds, 1f, false, Noise.Type.None);
+				this.m_LowStaminaSoundStartTime = Time.time;
+				return;
 			}
 		}
-		else if (this.m_PlayingLowStaminaSoundSource && this.m_PlayingLowStaminaSoundSource.isPlaying)
+		else if (this.m_GruntSoundPlayed == PlayerAudioModule.GruntPriority.LowStamina)
 		{
-			base.StartCoroutine(AudioFadeOut.FadeOut(this.m_PlayingLowStaminaSoundSource, 0.2f));
-			this.m_PlayingLowStaminaSoundSource.SetScheduledEndTime(AudioSettings.dspTime + 0.20000000298023224);
-			this.m_PlayingLowStaminaSoundSource = null;
+			this.StopGruntSound(PlayerAudioModule.GruntPriority.LowStamina, 1f);
 		}
 	}
 
@@ -492,12 +752,14 @@ public class PlayerAudioModule : PlayerModule
 		if (sound.Contains("item_grab_food"))
 		{
 			this.PlayRandomSound(this.m_item_grab_foodSounds, 1f, false, Noise.Type.None);
+			return;
 		}
-		else if (sound.Contains("item_grab_hard"))
+		if (sound.Contains("item_grab_hard"))
 		{
 			this.PlayRandomSound(this.m_item_grab_hardSounds, 1f, false, Noise.Type.None);
+			return;
 		}
-		else if (sound.Contains("item_grab_leaf_herb"))
+		if (sound.Contains("item_grab_leaf_herb"))
 		{
 			this.PlayRandomSound(this.m_item_grab_leaf_herbSounds, 1f, false, Noise.Type.None);
 		}
@@ -534,22 +796,31 @@ public class PlayerAudioModule : PlayerModule
 		{
 			return;
 		}
-		this.m_NotepadEntrySound = this.PlayRandomSound(this.m_NotepadEntrySounds, 1f, false, Noise.Type.None);
+		this.PlayRandomSound(this.m_NotepadEntrySound, this.m_NotepadEntrySounds, 1f, false, Noise.Type.None);
 	}
 
 	public void PlayDiveSound()
 	{
-		this.PlayRandomSound(this.m_DiveSounds, 1f, false, Noise.Type.None);
+		foreach (AudioSource audioSource in this.m_DiveSources)
+		{
+			if (!audioSource.isPlaying)
+			{
+				this.PlayRandomSound(audioSource, this.m_DiveSounds, 0.5f, false, Noise.Type.None);
+				break;
+			}
+		}
+		this.MakeNoise(Noise.Type.Swim);
 	}
 
 	public void PlaySwimSound()
 	{
 		this.PlayRandomSound(this.m_SwimSounds, 1f, false, Noise.Type.None);
+		this.MakeNoise(Noise.Type.Swim);
 	}
 
 	public void PlayDeathSound()
 	{
-		this.PlayRandomSound(this.m_DeathSounds, 1f, false, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Death, null, 1f, false, Noise.Type.None, 0f);
 	}
 
 	public void PlayBeforeDivingSound()
@@ -557,9 +828,19 @@ public class PlayerAudioModule : PlayerModule
 		this.PlayRandomSound(this.m_BeforeDivingSounds, 1f, false, Noise.Type.None);
 	}
 
+	public void PlayNoOxygenDivingSounds()
+	{
+		this.PlayRandomSound(this.m_NoOxygenDivingSounds, 1f, false, Noise.Type.None);
+	}
+
+	public void PlayAfterDivingSound()
+	{
+		this.PlayRandomSound(this.m_InhaleAfterDivingSounds, 1f, false, Noise.Type.None);
+	}
+
 	public void PlayUnderwaterDeathSound()
 	{
-		this.PlayRandomSound(this.m_UnderwaterDeathSounds, 1f, false, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.Death, this.m_UnderwaterDeathSounds, 1f, false, Noise.Type.None, 0f);
 	}
 
 	public void PlayPassOutSound()
@@ -622,27 +903,35 @@ public class PlayerAudioModule : PlayerModule
 
 	public void PlayBodyFallSound()
 	{
-		switch (Player.Get().GetMaterial())
+		switch (this.m_Being.GetMaterial())
 		{
 		case EObjectMaterial.Bush:
 		case EObjectMaterial.Grass:
 			this.PlayRandomSound(this.m_BodyFallGrassSounds, 1f, false, Noise.Type.None);
-			break;
+			return;
 		case EObjectMaterial.Stone:
 			this.PlayRandomSound(this.m_BodyFallStoneSounds, 1f, false, Noise.Type.None);
-			break;
+			return;
 		case EObjectMaterial.DryLeaves:
 			this.PlayRandomSound(this.m_BodyFallLeavesSounds, 1f, false, Noise.Type.None);
-			break;
+			return;
 		case EObjectMaterial.Mud:
 			this.PlayRandomSound(this.m_BodyFallMudSounds, 1f, false, Noise.Type.None);
-			break;
+			return;
 		case EObjectMaterial.Sand:
 			this.PlayRandomSound(this.m_BodyFallSandSounds, 1f, false, Noise.Type.None);
+			return;
+		case EObjectMaterial.Flesh:
+		case EObjectMaterial.Moss:
 			break;
 		case EObjectMaterial.Soil:
 			this.PlayRandomSound(this.m_BodyFallGrassSounds, 1f, false, Noise.Type.None);
+			return;
+		case EObjectMaterial.Water:
+			this.PlayRandomSound(this.m_BodyFallShalowWaterSounds, 1f, false, Noise.Type.None);
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -653,17 +942,17 @@ public class PlayerAudioModule : PlayerModule
 
 	public void PlayLeechOutSound()
 	{
-		this.PlayRandomSound(this.m_LeechOutSounds, 1f, false, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.LeechOut, null, 1f, false, Noise.Type.None, 0f);
 	}
 
 	public void PlayToolDestroyedSound()
 	{
-		this.PlayRandomSound(this.m_ToolDestroyedSounds, 1f, false, Noise.Type.None);
+		this.PlayGruntSound(PlayerAudioModule.GruntPriority.ToolDestroyed, null, 1f, false, Noise.Type.None, 0f);
 	}
 
 	public void PlayMakeFireSound()
 	{
-		this.m_MakeFireSource = this.PlayRandomSound(this.m_MakeFireSounds, 1f, false, Noise.Type.None);
+		this.PlayRandomSound(this.m_MakeFireSource, this.m_MakeFireSounds, 1f, false, Noise.Type.None);
 	}
 
 	public void StopMakeFireSound()
@@ -671,7 +960,6 @@ public class PlayerAudioModule : PlayerModule
 		if (this.m_MakeFireSource)
 		{
 			this.m_MakeFireSource.Stop();
-			this.m_MakeFireSource = null;
 		}
 	}
 
@@ -685,13 +973,322 @@ public class PlayerAudioModule : PlayerModule
 		this.PlayRandomSound(this.m_MakeFireFailSounds, 1f, false, Noise.Type.None);
 	}
 
-	private int m_AudioSourcesCount = 16;
+	public void PlayFallIntoWaterSound()
+	{
+		this.PlayRandomSound(this.m_FallIntoWaterSounds, 1f, false, Noise.Type.None);
+	}
 
-	private AudioSource[] m_AudioSources;
+	public void PlayFistsSwingSound()
+	{
+		this.PlayRandomSound(this.m_FistsSwingSounds, 1f, false, Noise.Type.None);
+	}
+
+	public void PlayFistsHitSound()
+	{
+		this.PlayRandomSound(this.m_FistsHitSounds, 1f, false, Noise.Type.None);
+	}
+
+	private void InitializeDreamsAudio()
+	{
+		AudioClip value = (AudioClip)Resources.Load("Sounds/Dreams/Dream04_telefon_odsluchanie_wiadomosci");
+		this.m_AudioClipsMap.Add(AnimEventID.Dream4_WT_Click, value);
+		value = (AudioClip)Resources.Load("Sounds/Dreams/Dream04_telefon_ciuchy_podnosi");
+		this.m_AudioClipsMap.Add(AnimEventID.Dream4_WT_Raise, value);
+		value = (AudioClip)Resources.Load("Sounds/Dreams/Dream04_telefon_ciuchy_opuszcza");
+		this.m_AudioClipsMap.Add(AnimEventID.Dream4_WT_Stop, value);
+		value = (AudioClip)Resources.Load("Sounds/Dreams/Dream04_telefon_wylacza");
+		this.m_AudioClipsMap.Add(AnimEventID.Dream4_WT_TurnOff, value);
+		value = (AudioClip)Resources.Load("Sounds/Dreams/Dream04_telefon_ciuchy_wstaje");
+		this.m_AudioClipsMap.Add(AnimEventID.Dream4_StandUp, value);
+		value = (AudioClip)Resources.Load("Sounds/PreDream/ayahuaska_throw_ingredient");
+		this.m_AudioClipsMap.Add(AnimEventID.PreDream_Ayahuasca_Throw_Ingredients, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/airport_radio_sfx_switch_channel_1");
+		this.m_AudioClipsMap.Add(AnimEventID.AIRPORT_RADIO_SFX_SWITCH_CHANNEL_1, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/airport_radio_sfx_switch_channel_2");
+		this.m_AudioClipsMap.Add(AnimEventID.AIRPORT_RADIO_SFX_SWITCH_CHANNEL_2, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/airport_radio_sfx_punch_radio");
+		this.m_AudioClipsMap.Add(AnimEventID.AIRPORT_RADIO_SFX_PUNCH_RADIO, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/airport_radio_sfx_punch_desk_and_key_drops");
+		this.m_AudioClipsMap.Add(AnimEventID.AIRPORT_RADIO_SFX_PUNCH_DESK_AND_KEY_DROPS, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/airport_radio_sfx_chat_button_press");
+		this.m_AudioClipsMap.Add(AnimEventID.AIRPORT_RADIO_SFX_CHAT_BUTTON_PRESS, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/airport_radio_sfx_chat_button_release");
+		this.m_AudioClipsMap.Add(AnimEventID.AIRPORT_RADIO_SFX_CHAT_BUTTON_RELEASE, value);
+		value = (AudioClip)Resources.Load("Sounds/Story/end1_sfx_radio_power_down");
+		this.m_AudioClipsMap.Add(AnimEventID.END1_SFX_RADIO_POWER_DOWN, value);
+	}
+
+	private void PlayAnimEventSound(AnimEventID event_id)
+	{
+		if (this.m_AudioClipsMap.ContainsKey(event_id))
+		{
+			AudioClip clip = this.m_AudioClipsMap[event_id];
+			AudioSource freeSource = this.GetFreeSource();
+			freeSource.clip = clip;
+			freeSource.Play();
+		}
+	}
+
+	public void PlayWashingHandsSound()
+	{
+		this.PlayRandomSound(this.m_WashHandsSounds, 1f, false, Noise.Type.None);
+	}
+
+	public void OnAudioSnapshotChanged(AudioMixerSnapshotGame prev_snapshot, AudioMixerSnapshotGame new_snapshot)
+	{
+		if (prev_snapshot == AudioMixerSnapshotGame.Underwater)
+		{
+			foreach (AudioSource audioSource in this.m_DiveSources)
+			{
+				if (audioSource.isPlaying)
+				{
+					base.StartCoroutine(AudioFadeOut.FadeOut(audioSource, 0.3f, 0f, null));
+				}
+			}
+		}
+	}
+
+	private void SetupWeaponAudio()
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			this.m_AudioClipsHit[i] = new List<AudioClip>();
+			for (int j = 1; j < 10; j++)
+			{
+				string str = string.Empty;
+				switch (i)
+				{
+				case 0:
+					str = "axe_unknown_0" + j.ToString();
+					break;
+				case 1:
+				case 13:
+					str = "axe_wood_0" + j.ToString();
+					break;
+				case 2:
+					str = "axe_bush_0" + j.ToString();
+					break;
+				case 3:
+					str = "axe_stone_0" + j.ToString();
+					break;
+				case 8:
+				case 15:
+					str = "axe_flesh_0" + j.ToString();
+					break;
+				case 12:
+					str = "axe_wood_0" + j.ToString();
+					break;
+				case 14:
+					str = "axe_metal_0" + j.ToString();
+					break;
+				}
+				AudioClip audioClip = (AudioClip)Resources.Load("Sounds/Hit/" + str);
+				if (!(audioClip != null))
+				{
+					break;
+				}
+				this.m_AudioClipsHit[i].Add(audioClip);
+			}
+		}
+		this.m_SwingSoundClipsDict[-1] = new List<AudioClip>();
+		AudioClip item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_01");
+		this.m_SwingSoundClipsDict[-1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_02");
+		this.m_SwingSoundClipsDict[-1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_03");
+		this.m_SwingSoundClipsDict[-1].Add(item);
+		this.m_SwingSoundClipsDict[291] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_01");
+		this.m_SwingSoundClipsDict[291].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_02");
+		this.m_SwingSoundClipsDict[291].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_03");
+		this.m_SwingSoundClipsDict[291].Add(item);
+		this.m_SwingSoundClipsDict[312] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_01");
+		this.m_SwingSoundClipsDict[312].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_02");
+		this.m_SwingSoundClipsDict[312].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_03");
+		this.m_SwingSoundClipsDict[312].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_04");
+		this.m_SwingSoundClipsDict[312].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_05");
+		this.m_SwingSoundClipsDict[312].Add(item);
+		this.m_SwingSoundClipsDict[288] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/stoneblade_swing_01");
+		this.m_SwingSoundClipsDict[288].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/stoneblade_swing_02");
+		this.m_SwingSoundClipsDict[288].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/stoneblade_swing_03");
+		this.m_SwingSoundClipsDict[288].Add(item);
+		this.m_SwingSoundClipsDict[308] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_01");
+		this.m_SwingSoundClipsDict[308].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_02");
+		this.m_SwingSoundClipsDict[308].Add(item);
+		this.m_SwingSoundClipsDict[303] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_01");
+		this.m_SwingSoundClipsDict[303].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_02");
+		this.m_SwingSoundClipsDict[303].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_03");
+		this.m_SwingSoundClipsDict[303].Add(item);
+		this.m_SwingSoundClipsDict[313] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
+		this.m_SwingSoundClipsDict[313].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
+		this.m_SwingSoundClipsDict[313].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
+		this.m_SwingSoundClipsDict[313].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
+		this.m_SwingSoundClipsDict[313].Add(item);
+	}
+
+	private void SetupHitSpecificSounds()
+	{
+		this.m_HitSpecificSounds[312] = new Dictionary<int, List<AudioClip>>();
+		this.m_HitSpecificSounds[312][1] = new List<AudioClip>();
+		AudioClip item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_01");
+		this.m_HitSpecificSounds[312][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_02");
+		this.m_HitSpecificSounds[312][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_03");
+		this.m_HitSpecificSounds[312][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_04");
+		this.m_HitSpecificSounds[312][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_05");
+		this.m_HitSpecificSounds[312][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_06");
+		this.m_HitSpecificSounds[312][1].Add(item);
+		this.m_HitSpecificSounds[313] = new Dictionary<int, List<AudioClip>>();
+		this.m_HitSpecificSounds[313][2] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_01");
+		this.m_HitSpecificSounds[313][2].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_02");
+		this.m_HitSpecificSounds[313][2].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_03");
+		this.m_HitSpecificSounds[313][2].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_04");
+		this.m_HitSpecificSounds[313][2].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_05");
+		this.m_HitSpecificSounds[313][2].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_06");
+		this.m_HitSpecificSounds[313][2].Add(item);
+		this.m_HitSpecificSounds[313][1] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_01");
+		this.m_HitSpecificSounds[313][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_02");
+		this.m_HitSpecificSounds[313][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_03");
+		this.m_HitSpecificSounds[313][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_04");
+		this.m_HitSpecificSounds[313][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_05");
+		this.m_HitSpecificSounds[313][1].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_06");
+		this.m_HitSpecificSounds[313][1].Add(item);
+		this.m_HitSpecificSounds[308] = new Dictionary<int, List<AudioClip>>();
+		this.m_HitSpecificSounds[308][8] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_01");
+		this.m_HitSpecificSounds[308][8].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_02");
+		this.m_HitSpecificSounds[308][8].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_03");
+		this.m_HitSpecificSounds[308][8].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_04");
+		this.m_HitSpecificSounds[308][8].Add(item);
+		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_05");
+		this.m_HitSpecificSounds[308][8].Add(item);
+		this.m_HitSpecificSounds[307] = this.m_HitSpecificSounds[308];
+		this.m_HitSpecificSounds[306] = this.m_HitSpecificSounds[308];
+		this.m_HitSpecificSounds[305] = this.m_HitSpecificSounds[308];
+		this.m_HitSpecificSounds[303] = this.m_HitSpecificSounds[308];
+		this.m_HitSpecificSounds[327] = this.m_HitSpecificSounds[308];
+	}
+
+	public void MakeHitSound(GameObject obj, ItemID item_id)
+	{
+		ObjectMaterial component = obj.GetComponent<ObjectMaterial>();
+		this.MakeHitSound((component != null) ? component.m_ObjectMaterial : EObjectMaterial.Unknown, item_id);
+	}
+
+	public void MakeHitSound(EObjectMaterial material, ItemID item_id)
+	{
+		AudioClip specificSound = this.GetSpecificSound(item_id, material);
+		if (specificSound)
+		{
+			this.PlaySound(specificSound, 1f, false, Noise.Type.None);
+			return;
+		}
+		if (this.m_AudioClipsHit[(int)material].Count > 0)
+		{
+			int index = UnityEngine.Random.Range(0, this.m_AudioClipsHit[(int)material].Count);
+			AudioClip clip = this.m_AudioClipsHit[(int)material][index];
+			this.PlaySound(clip, 1f, false, Noise.Type.None);
+		}
+		else
+		{
+			int index2 = UnityEngine.Random.Range(0, this.m_AudioClipsHit[0].Count);
+			AudioClip clip2 = this.m_AudioClipsHit[0][index2];
+			this.PlaySound(clip2, 1f, false, Noise.Type.None);
+		}
+		if (this.ReplIsOwner())
+		{
+			this.GetPlayerComponent<ReplicatedPlayerSounds>().ReplicateSound(new ReplicatedPlayerSounds.SSoundData
+			{
+				type = ReplicatedPlayerSounds.EReplicatedSoundType.Hit,
+				material = material,
+				item_id = item_id
+			});
+		}
+	}
+
+	public void PlaySwingSound(ItemID item_id)
+	{
+		List<AudioClip> list = null;
+		if (this.m_SwingSoundClipsDict.TryGetValue((int)item_id, out list))
+		{
+			this.PlaySound(list[UnityEngine.Random.Range(0, list.Count)], 1f, false, Noise.Type.None);
+		}
+		else if (this.m_SwingSoundClipsDict.TryGetValue(-1, out list))
+		{
+			this.PlaySound(list[UnityEngine.Random.Range(0, list.Count)], 1f, false, Noise.Type.None);
+		}
+		if (this.ReplIsOwner())
+		{
+			this.GetPlayerComponent<ReplicatedPlayerSounds>().ReplicateSound(new ReplicatedPlayerSounds.SSoundData
+			{
+				type = ReplicatedPlayerSounds.EReplicatedSoundType.Swing,
+				item_id = item_id
+			});
+		}
+	}
+
+	private AudioClip GetSpecificSound(ItemID item_id, EObjectMaterial material)
+	{
+		Dictionary<int, List<AudioClip>> dictionary;
+		if (!this.m_HitSpecificSounds.TryGetValue((int)item_id, out dictionary))
+		{
+			return null;
+		}
+		List<AudioClip> list;
+		if (!dictionary.TryGetValue((int)material, out list))
+		{
+			return null;
+		}
+		if (list.Count == 0)
+		{
+			return null;
+		}
+		return list[UnityEngine.Random.Range(0, list.Count)];
+	}
+
+	private int m_AudioSourcesCount = 15;
+
+	private List<AudioSource> m_AudioSources;
 
 	private NoiseManager m_NoiseManager;
-
-	private float m_BreathFadeOutStartTime = -1f;
 
 	[HideInInspector]
 	public List<AudioClip> m_EatingSounds;
@@ -709,6 +1306,9 @@ public class PlayerAudioModule : PlayerModule
 	public List<AudioClip> m_HitSounds;
 
 	[HideInInspector]
+	public List<AudioClip> m_HitArmorSounds;
+
+	[HideInInspector]
 	public List<AudioClip> m_UseSounds;
 
 	[HideInInspector]
@@ -718,6 +1318,9 @@ public class PlayerAudioModule : PlayerModule
 	public List<AudioClip> m_DamageSounds;
 
 	[HideInInspector]
+	public List<AudioClip> m_DamageInsectsSounds;
+
+	[HideInInspector]
 	public List<AudioClip> m_BreathSounds;
 
 	[HideInInspector]
@@ -725,6 +1328,9 @@ public class PlayerAudioModule : PlayerModule
 
 	[HideInInspector]
 	public List<AudioClip> m_LandingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_LandingWaterSounds;
 
 	[HideInInspector]
 	public List<AudioClip> m_VomitingSounds;
@@ -763,6 +1369,18 @@ public class PlayerAudioModule : PlayerModule
 	public List<AudioClip> m_ShallowWaterWalkSounds;
 
 	[HideInInspector]
+	public List<AudioClip> m_WoodWalkSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_MetalWalkSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_TentWalkSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WoodTreeWalkSounds;
+
+	[HideInInspector]
 	public List<AudioClip> m_DryLeavesStepRunSounds;
 
 	[HideInInspector]
@@ -782,6 +1400,18 @@ public class PlayerAudioModule : PlayerModule
 
 	[HideInInspector]
 	public List<AudioClip> m_ShallowWaterRunSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WoodRunSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_MetalRunSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_TentRunSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WoodTreeRunSounds;
 
 	[HideInInspector]
 	public List<AudioClip> m_JumpSounds;
@@ -805,6 +1435,18 @@ public class PlayerAudioModule : PlayerModule
 	public List<AudioClip> m_SoilJumpSounds;
 
 	[HideInInspector]
+	public List<AudioClip> m_WoodJumpSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_MetalJumpSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_TentJumpSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WoodTreeJumpSounds;
+
+	[HideInInspector]
 	public List<AudioClip> m_DryLeavesLandingSounds;
 
 	[HideInInspector]
@@ -821,6 +1463,18 @@ public class PlayerAudioModule : PlayerModule
 
 	[HideInInspector]
 	public List<AudioClip> m_SoilLandingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WoodLandingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WoodTreeLandingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_MetalLandingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_TentLandingSounds;
 
 	[HideInInspector]
 	public List<AudioClip> m_WaterSpillSounds;
@@ -863,6 +1517,12 @@ public class PlayerAudioModule : PlayerModule
 
 	[HideInInspector]
 	public List<AudioClip> m_BeforeDivingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_NoOxygenDivingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_InhaleAfterDivingSounds;
 
 	[HideInInspector]
 	public List<AudioClip> m_PassOutSounds;
@@ -939,9 +1599,17 @@ public class PlayerAudioModule : PlayerModule
 	[HideInInspector]
 	public List<AudioClip> m_MakeFireFailSounds;
 
-	public AudioSource m_PlayingBreathSoundSource;
+	[HideInInspector]
+	public List<AudioClip> m_FallIntoWaterSounds;
 
-	public AudioSource m_PlayingLowStaminaSoundSource;
+	[HideInInspector]
+	public List<AudioClip> m_FistsSwingSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_FistsHitSounds;
+
+	[HideInInspector]
+	public List<AudioClip> m_WashHandsSounds;
 
 	[HideInInspector]
 	public AudioSource m_SleepSoundSource;
@@ -950,13 +1618,55 @@ public class PlayerAudioModule : PlayerModule
 
 	private static PlayerAudioModule s_Instance;
 
-	private FPPController m_FPPController;
-
 	private AudioSource m_MakeFireSource;
+
+	private List<AudioSource> m_DiveSources = new List<AudioSource>(3);
+
+	private bool m_SourcesInited;
+
+	private int m_MoveBlendTreeHash = Animator.StringToHash("Idle");
+
+	private AudioSource m_GruntSoundSource;
+
+	private Coroutine m_GruntFadeinCoroutine;
+
+	private Coroutine m_GruntFadeoutCoroutine;
 
 	private AudioSource m_HeartBeatSoundAS;
 
 	private float m_LastFootstepSound = float.MinValue;
 
 	private float m_LastPlayDamageSound = float.MinValue;
+
+	private float m_LowStaminaSoundStartTime = float.MinValue;
+
+	private const float m_LowStaminaSoundCooldown = 1f;
+
+	private Dictionary<AnimEventID, AudioClip> m_AudioClipsMap = new Dictionary<AnimEventID, AudioClip>();
+
+	private Dictionary<int, Dictionary<int, List<AudioClip>>> m_HitSpecificSounds = new Dictionary<int, Dictionary<int, List<AudioClip>>>();
+
+	private Dictionary<int, List<AudioClip>> m_SwingSoundClipsDict = new Dictionary<int, List<AudioClip>>();
+
+	private Dictionary<int, List<AudioClip>> m_AudioClipsHit = new Dictionary<int, List<AudioClip>>();
+
+	public enum GruntPriority
+	{
+		None = -1,
+		Breathing,
+		LowStamina,
+		Jump,
+		Landing,
+		Attack,
+		ToolDestroyed,
+		LeechOut,
+		Drinking,
+		Eating,
+		Disgusting,
+		DamageInsects,
+		HitReaction,
+		Vomiting,
+		PassOut,
+		Death
+	}
 }

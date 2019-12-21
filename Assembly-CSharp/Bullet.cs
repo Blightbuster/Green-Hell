@@ -39,8 +39,7 @@ public class Bullet : MonoBehaviour
 		m.m13 = base.gameObject.transform.position.y;
 		m.SetColumn(2, Vector3.Cross(m.GetColumn(0), m.GetColumn(1)));
 		m.m23 = base.gameObject.transform.position.z;
-		Quaternion a = CJTools.Math.QuaternionFromMatrix(m);
-		Quaternion rotation = Quaternion.Slerp(a, base.gameObject.transform.rotation, 0.95f);
+		Quaternion rotation = Quaternion.Slerp(CJTools.Math.QuaternionFromMatrix(m), base.gameObject.transform.rotation, 0.95f);
 		base.gameObject.transform.rotation = rotation;
 		base.gameObject.transform.position += this.m_Velocity * Time.fixedDeltaTime;
 		if (this.CheckHit())
@@ -76,15 +75,13 @@ public class Bullet : MonoBehaviour
 		{
 			return true;
 		}
-		HitCollisionType hitCollisionType = componentDeepChild.GetHitCollisionType();
-		if (hitCollisionType == HitCollisionType.Bones)
+		if (componentDeepChild.GetHitCollisionType() == HitCollisionType.Bones)
 		{
 			Vector3 zero = Vector3.zero;
 			List<OBB> colliderBoxes = componentDeepChild.GetColliderBoxes();
 			for (int i = 0; i < colliderBoxes.Count; i++)
 			{
-				OBB obb = colliderBoxes[i];
-				if (obb.IntersectsLine(position, e, ref zero))
+				if (colliderBoxes[i].IntersectsLine(position, e, ref zero))
 				{
 					this.GiveDamage(componentDeepChild);
 					return true;

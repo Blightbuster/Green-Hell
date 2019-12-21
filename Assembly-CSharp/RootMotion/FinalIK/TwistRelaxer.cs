@@ -13,13 +13,12 @@ namespace RootMotion.FinalIK
 			}
 			Vector3 a = this.parent.rotation * this.axisRelativeToParentDefault;
 			Vector3 b = this.child.rotation * this.axisRelativeToChildDefault;
-			Vector3 point = Vector3.Slerp(a, b, this.parentChildCrossfade);
-			Quaternion rotation = Quaternion.LookRotation(base.transform.rotation * this.axis, base.transform.rotation * this.twistAxis);
-			point = Quaternion.Inverse(rotation) * point;
-			float num = Mathf.Atan2(point.x, point.z) * 57.29578f;
-			Quaternion rotation2 = this.child.rotation;
+			Vector3 vector = Vector3.Slerp(a, b, this.parentChildCrossfade);
+			vector = Quaternion.Inverse(Quaternion.LookRotation(base.transform.rotation * this.axis, base.transform.rotation * this.twistAxis)) * vector;
+			float num = Mathf.Atan2(vector.x, vector.z) * 57.29578f;
+			Quaternion rotation = this.child.rotation;
 			base.transform.rotation = Quaternion.AngleAxis(num * this.weight, base.transform.rotation * this.twistAxis) * base.transform.rotation;
-			this.child.rotation = rotation2;
+			this.child.rotation = rotation;
 		}
 
 		private void Start()
@@ -43,12 +42,12 @@ namespace RootMotion.FinalIK
 			this.Relax();
 		}
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of relaxing the twist of this Transform")]
+		[Range(0f, 1f)]
 		public float weight = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("If 0.5, this Transform will be twisted half way from parent to child. If 1, the twist angle will be locked to the child and will rotate with along with it.")]
+		[Range(0f, 1f)]
 		public float parentChildCrossfade = 0.5f;
 
 		private Vector3 twistAxis = Vector3.right;

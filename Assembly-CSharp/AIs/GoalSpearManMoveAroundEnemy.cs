@@ -26,7 +26,7 @@ namespace AIs
 		protected override bool SetupPath()
 		{
 			Vector3 a = Vector3.zero;
-			Vector3 normalized2D = (this.m_AI.transform.position - Player.Get().transform.position).GetNormalized2D();
+			Vector3 normalized2D = (this.m_AI.transform.position - this.m_AI.m_EnemyModule.m_Enemy.transform.position).GetNormalized2D();
 			if (this.m_Direction == Direction.Right)
 			{
 				a = Vector3.Cross(Vector3.up, normalized2D);
@@ -37,7 +37,7 @@ namespace AIs
 			}
 			for (int i = 0; i < 10; i++)
 			{
-				Vector3 vector = Player.Get().transform.position + normalized2D * this.m_AI.m_Params.m_AttackRange + a * 2f;
+				Vector3 vector = this.m_AI.m_EnemyModule.m_Enemy.transform.position + normalized2D * this.m_AI.m_Params.m_AttackRange + a * 2f;
 				vector.y = MainLevel.GetTerrainY(vector);
 				NavMeshHit navMeshHit;
 				if (NavMesh.SamplePosition(vector, out navMeshHit, 1f, AIManager.s_WalkableAreaMask) && NavMesh.CalculatePath(this.m_AI.m_PathModule.m_Agent.nextPosition, navMeshHit.position, AIManager.s_WalkableAreaMask, this.m_TempPath) && this.m_TempPath.status == NavMeshPathStatus.PathComplete)

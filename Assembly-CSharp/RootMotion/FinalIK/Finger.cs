@@ -114,8 +114,8 @@ namespace RootMotion.FinalIK
 			this.solver.Update();
 		}
 
-		[Range(0f, 1f)]
 		[Tooltip("Master Weight for the finger.")]
+		[Range(0f, 1f)]
 		public float weight = 1f;
 
 		[Tooltip("The first bone of the finger.")]

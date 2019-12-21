@@ -6,16 +6,6 @@ namespace Pathfinding
 	[Serializable]
 	public class AstarColor
 	{
-		public AstarColor()
-		{
-			this._NodeConnection = new Color(1f, 1f, 1f, 0.9f);
-			this._UnwalkableNode = new Color(1f, 0f, 0f, 0.5f);
-			this._BoundsHandles = new Color(0.29f, 0.454f, 0.741f, 0.9f);
-			this._ConnectionLowLerp = new Color(0f, 1f, 0f, 0.5f);
-			this._ConnectionHighLerp = new Color(1f, 0f, 0f, 0.5f);
-			this._MeshEdgeColor = new Color(0f, 0f, 0f, 0.5f);
-		}
-
 		public static Color GetAreaColor(uint area)
 		{
 			if (AstarColor.AreaColors == null || (ulong)area >= (ulong)((long)AstarColor.AreaColors.Length))
@@ -34,6 +24,16 @@ namespace Pathfinding
 			AstarColor.ConnectionHighLerp = this._ConnectionHighLerp;
 			AstarColor.MeshEdgeColor = this._MeshEdgeColor;
 			AstarColor.AreaColors = this._AreaColors;
+		}
+
+		public AstarColor()
+		{
+			this._NodeConnection = new Color(1f, 1f, 1f, 0.9f);
+			this._UnwalkableNode = new Color(1f, 0f, 0f, 0.5f);
+			this._BoundsHandles = new Color(0.29f, 0.454f, 0.741f, 0.9f);
+			this._ConnectionLowLerp = new Color(0f, 1f, 0f, 0.5f);
+			this._ConnectionHighLerp = new Color(1f, 0f, 0f, 0.5f);
+			this._MeshEdgeColor = new Color(0f, 0f, 0f, 0.5f);
 		}
 
 		public Color _NodeConnection;

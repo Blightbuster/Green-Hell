@@ -13,9 +13,9 @@ public class BIWoundSlot : ItemSlot
 
 	public bool IsVisible()
 	{
-		bool flag = Vector3.Dot(Camera.main.transform.forward, this.m_Transform.right) > 0.3f;
-		Camera main = Camera.main;
-		Vector3 vector = main.WorldToScreenPoint(this.m_Transform.position);
+		Camera mainCamera = CameraManager.Get().m_MainCamera;
+		bool flag = Vector3.Dot(mainCamera.transform.forward, this.m_Transform.right) > 0.3f;
+		Vector3 vector = mainCamera.WorldToScreenPoint(this.m_Transform.position);
 		bool flag2 = vector.x > 0f && vector.x < (float)Screen.width && vector.y > 0f && vector.y < (float)Screen.height;
 		bool flag3 = this.m_Injury != null && this.m_Injury.m_Bandage != null;
 		return flag && flag2 && !flag3;
@@ -31,12 +31,10 @@ public class BIWoundSlot : ItemSlot
 			}
 			if (injury.m_Type == InjuryType.Worm)
 			{
-				string path = "Prefabs/Items/Item/botfly";
-				GameObject gameObject = Resources.Load(path) as GameObject;
+				GameObject gameObject = Resources.Load("Prefabs/Items/Item/botfly") as GameObject;
 				if (gameObject == null)
 				{
-					path = "Prefabs/TempPrefabs/Item/Item/botfly";
-					gameObject = (Resources.Load(path) as GameObject);
+					gameObject = (Resources.Load("Prefabs/TempPrefabs/Item/Item/botfly") as GameObject);
 				}
 				if (gameObject == null)
 				{
@@ -46,14 +44,14 @@ public class BIWoundSlot : ItemSlot
 				Item component = gameObject2.GetComponent<Item>();
 				if (component != null)
 				{
-					component.m_CanSave = false;
+					component.m_CanSaveNotTriggered = false;
 				}
 				gameObject2.layer = Player.Get().gameObject.layer;
 				this.m_Wound = gameObject2;
 				gameObject2.transform.parent = this.m_Transform;
 				gameObject2.GetComponent<Parasite>().m_InBody = true;
-				List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(gameObject2);
-				for (int i = 0; i < componentsDeepChild.Count; i++)
+				Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(gameObject2);
+				for (int i = 0; i < componentsDeepChild.Length; i++)
 				{
 					componentsDeepChild[i].gameObject.layer = LayerMask.NameToLayer("Player");
 				}
@@ -61,12 +59,10 @@ public class BIWoundSlot : ItemSlot
 			}
 			else if (injury.m_Type == InjuryType.Leech)
 			{
-				string path2 = "Prefabs/Items/Item/Leech";
-				GameObject gameObject3 = Resources.Load(path2) as GameObject;
+				GameObject gameObject3 = Resources.Load("Prefabs/Items/Item/Leech") as GameObject;
 				if (gameObject3 == null)
 				{
-					path2 = "Prefabs/TempPrefabs/Items/Item/Leech";
-					gameObject3 = (Resources.Load(path2) as GameObject);
+					gameObject3 = (Resources.Load("Prefabs/TempPrefabs/Items/Item/Leech") as GameObject);
 				}
 				if (gameObject3 == null)
 				{
@@ -76,19 +72,17 @@ public class BIWoundSlot : ItemSlot
 				Item component2 = gameObject4.GetComponent<Item>();
 				if (component2 != null)
 				{
-					component2.m_CanSave = false;
+					component2.m_CanSaveNotTriggered = false;
 				}
 				gameObject4.layer = Player.Get().gameObject.layer;
-				UnityEngine.Random.InitState((int)(Time.unscaledTime * 4538.3f));
 				this.m_Wound = gameObject4;
 				gameObject4.transform.parent = this.m_Transform;
-				Animator component3 = gameObject4.GetComponent<Animator>();
-				component3.speed = UnityEngine.Random.Range(0.8f, 1.2f);
+				Physics.IgnoreCollision(gameObject4.GetComponent<Collider>(), Player.Get().m_Collider);
+				gameObject4.GetComponent<Animator>().speed = UnityEngine.Random.Range(0.8f, 1.2f);
 				gameObject4.GetComponent<Parasite>().m_InBody = true;
-				Animator component4 = gameObject4.GetComponent<Animator>();
-				component4.SetBool("Drink", true);
-				List<Renderer> componentsDeepChild2 = General.GetComponentsDeepChild<Renderer>(gameObject4);
-				for (int j = 0; j < componentsDeepChild2.Count; j++)
+				gameObject4.GetComponent<Animator>().SetBool("Drink", true);
+				Renderer[] componentsDeepChild2 = General.GetComponentsDeepChild<Renderer>(gameObject4);
+				for (int j = 0; j < componentsDeepChild2.Length; j++)
 				{
 					componentsDeepChild2[j].gameObject.layer = LayerMask.NameToLayer("Player");
 				}
@@ -111,12 +105,16 @@ public class BIWoundSlot : ItemSlot
 		{
 			if (this.m_Wound != null)
 			{
-				Item component5 = this.m_Wound.GetComponent<Item>();
-				if (component5 != null && component5.m_Info == null)
+				Item component3 = this.m_Wound.GetComponent<Item>();
+				if (component3 != null && component3.m_Info == null)
 				{
-					UnityEngine.Object.Destroy(component5.gameObject);
+					UnityEngine.Object.Destroy(component3.gameObject);
 				}
-				else if (component5 == null || (component5 != null && component5.m_Info.m_ID != ItemID.Leech && component5.m_Info.m_ID != ItemID.Botfly))
+				if (component3 != null && component3.m_Info != null && component3.m_Info.m_ID == ItemID.Leech)
+				{
+					UnityEngine.Object.Destroy(component3.gameObject);
+				}
+				else if (component3 == null || (component3 != null && component3.m_Info != null && component3.m_Info.m_ID != ItemID.Leech && component3.m_Info.m_ID != ItemID.Botfly))
 				{
 					this.m_Wound.SetActive(false);
 				}
@@ -148,11 +146,11 @@ public class BIWoundSlot : ItemSlot
 		}
 		if (this.m_Camera)
 		{
-			return Camera.main.ViewportToScreenPoint(this.m_Camera.WorldToViewportPoint(position));
+			return CameraManager.Get().m_MainCamera.ViewportToScreenPoint(this.m_Camera.WorldToViewportPoint(position));
 		}
 		if (Camera.main)
 		{
-			return Camera.main.WorldToScreenPoint(position);
+			return CameraManager.Get().m_MainCamera.WorldToScreenPoint(position);
 		}
 		return Vector3.zero;
 	}
@@ -165,82 +163,93 @@ public class BIWoundSlot : ItemSlot
 			if (item.m_Info.m_ID == ItemID.Maggots)
 			{
 				BodyInspectionController.Get().AttachMaggots(true);
+				return;
 			}
-			else
-			{
-				this.m_Injury.m_HealingResultInjuryState = InjuryState.Open;
-				BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-			}
+			this.m_Injury.m_HealingResultInjuryState = InjuryState.Open;
+			BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+			return;
 		}
-		else if (this.m_Injury.m_Type == InjuryType.Worm)
+		else
 		{
-			BodyInspectionController.Get().Deworm(item, this);
-		}
-		else if (this.m_Injury.m_Type == InjuryType.VenomBite || this.m_Injury.m_Type == InjuryType.SnakeBite || this.m_Injury.m_Type == InjuryType.SmallWoundAbrassion || this.m_Injury.m_Type == InjuryType.SmallWoundScratch || this.m_Injury.m_Type == InjuryType.Rash || this.m_Injury.m_Type == InjuryType.WormHole)
-		{
-			if (this.m_Injury.m_Type == InjuryType.VenomBite || this.m_Injury.m_Type == InjuryType.SnakeBite)
-			{
-				this.m_PoisonDebuff = item.m_Info.m_PoisonDebuff;
-			}
-			if (this.m_Injury.m_Type == InjuryType.WormHole && this.m_Injury.m_State == InjuryState.WormInside)
+			if (this.m_Injury.m_Type == InjuryType.Worm)
 			{
 				BodyInspectionController.Get().Deworm(item, this);
+				return;
 			}
-			else if (item.m_Info.m_ID != ItemID.Leech)
+			if (this.m_Injury.m_Type == InjuryType.VenomBite || this.m_Injury.m_Type == InjuryType.SnakeBite || this.m_Injury.m_Type == InjuryType.SmallWoundAbrassion || this.m_Injury.m_Type == InjuryType.SmallWoundScratch || this.m_Injury.m_Type == InjuryType.Rash || this.m_Injury.m_Type == InjuryType.WormHole)
 			{
-				BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+				if (this.m_Injury.m_Type == InjuryType.VenomBite || this.m_Injury.m_Type == InjuryType.SnakeBite)
+				{
+					this.m_PoisonDebuff = item.m_Info.m_PoisonDebuff;
+				}
+				if (this.m_Injury.m_Type == InjuryType.WormHole && this.m_Injury.m_State == InjuryState.WormInside)
+				{
+					BodyInspectionController.Get().Deworm(item, this);
+					return;
+				}
+				if (item.m_Info.m_ID != ItemID.Leech)
+				{
+					if (this.m_Injury.m_Type == InjuryType.SmallWoundAbrassion || this.m_Injury.m_Type == InjuryType.SmallWoundScratch || (this.m_Injury.m_Type == InjuryType.WormHole && this.m_Injury.m_State != InjuryState.WormInside))
+					{
+						float num = 1f;
+						if (item.m_Info.m_ID == ItemID.Honey_Dressing)
+						{
+							num = 0f;
+						}
+						this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
+						if (UnityEngine.Random.Range(0f, 1f) < num)
+						{
+							this.m_Injury.CheckInfectionFromDirt();
+						}
+					}
+					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+					return;
+				}
 			}
-		}
-		else if (this.m_Injury.m_Type == InjuryType.Laceration || this.m_Injury.m_Type == InjuryType.LacerationCat)
-		{
-			if (item.m_Info.m_ID == ItemID.Ants)
+			else if (this.m_Injury.m_Type == InjuryType.Laceration || this.m_Injury.m_Type == InjuryType.LacerationCat)
 			{
-				if (this.m_Injury.m_State == InjuryState.Bleeding || this.m_Injury.m_State == InjuryState.Open)
+				if (item.m_Info.m_ID == ItemID.Ants)
 				{
-					BodyInspectionController.Get().AttachAnts();
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.Closed;
-					BodyInspectionController.Get().HideAndShowLimb();
+					if (this.m_Injury.m_State == InjuryState.Bleeding || this.m_Injury.m_State == InjuryState.Open)
+					{
+						BodyInspectionController.Get().AttachAnts();
+						this.m_Injury.m_HealingResultInjuryState = InjuryState.Closed;
+						BodyInspectionController.Get().HideAndShowLimb();
+						return;
+					}
+				}
+				else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing || item.m_Info.m_ID == ItemID.Honey_Dressing)
+				{
+					if (this.m_Injury.m_State == InjuryState.Bleeding || this.m_Injury.m_State == InjuryState.Open)
+					{
+						this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
+						this.m_Injury.CheckInfectionFromDirt();
+						BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+						return;
+					}
+				}
+				else if (item.m_Info.m_ID == ItemID.Leaf_Bandage)
+				{
+					if (this.m_Injury.m_State == InjuryState.Bleeding)
+					{
+						this.m_Injury.m_HealingResultInjuryState = InjuryState.Infected;
+						BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+						return;
+					}
+					if (this.m_Injury.m_State == InjuryState.Closed)
+					{
+						this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
+						BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+						return;
+					}
+					if (this.m_Injury.m_State == InjuryState.Open)
+					{
+						this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
+						BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
+					}
 				}
 			}
-			else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing || item.m_Info.m_ID == ItemID.Honey_Dressing)
-			{
-				if (this.m_Injury.m_State == InjuryState.Bleeding || this.m_Injury.m_State == InjuryState.Open)
-				{
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
-					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-				}
-			}
-			else if (item.m_Info.m_ID == ItemID.Goliath_dressing || item.m_Info.m_ID == ItemID.ash_dressing || item.m_Info.m_ID == ItemID.Honey_Dressing)
-			{
-				if (this.m_Injury.m_State == InjuryState.Bleeding)
-				{
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.Open;
-					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-				}
-				else if (this.m_Injury.m_State == InjuryState.Closed)
-				{
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
-					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-				}
-			}
-			else if (item.m_Info.m_ID == ItemID.Leaf_Bandage)
-			{
-				if (this.m_Injury.m_State == InjuryState.Bleeding)
-				{
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.Infected;
-					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-				}
-				else if (this.m_Injury.m_State == InjuryState.Closed)
-				{
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
-					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-				}
-				else if (this.m_Injury.m_State == InjuryState.Open)
-				{
-					this.m_Injury.m_HealingResultInjuryState = InjuryState.None;
-					BodyInspectionController.Get().StartBandage(this.m_InjuryPlace);
-				}
-			}
+			return;
 		}
 	}
 
@@ -280,6 +289,10 @@ public class BIWoundSlot : ItemSlot
 			return false;
 		}
 		if (this.m_Injury.m_ParentInjury != null)
+		{
+			return false;
+		}
+		if (PlayerArmorModule.Get().IsArmorActive(EnumTools.ConvertInjuryPlaceToLimb(this.m_InjuryPlace)) && HUDBodyInspection.Get().m_ArmorEnabled)
 		{
 			return false;
 		}

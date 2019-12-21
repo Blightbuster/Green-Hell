@@ -12,7 +12,7 @@ public class InventoryController : PlayerController
 	{
 		base.Awake();
 		InventoryController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Inventory;
+		base.m_ControllerType = PlayerControllerType.Inventory;
 	}
 
 	protected override void OnEnable()

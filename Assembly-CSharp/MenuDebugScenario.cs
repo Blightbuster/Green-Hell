@@ -1,8 +1,8 @@
 ﻿using System;
 
-public class MenuDebugScenario : MenuScreen
+public class MenuDebugScenario : MenuDebugScreen
 {
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.m_List.SetFocus(true);
@@ -11,11 +11,10 @@ public class MenuDebugScenario : MenuScreen
 
 	public void OnButtonComplete()
 	{
-		int selectedElementData = this.m_List.GetSelectedElementData();
+		int selectedElementData = this.m_List.GetSelectedElementData<int>();
 		if (selectedElementData >= 0 && selectedElementData < Scenario.Get().m_Nodes.Count)
 		{
-			ScenarioNode scenarioNode = Scenario.Get().m_Nodes[selectedElementData];
-			scenarioNode.Complete();
+			Scenario.Get().m_Nodes[selectedElementData].Complete();
 			this.Setup();
 		}
 	}

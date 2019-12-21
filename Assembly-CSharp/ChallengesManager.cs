@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using AIs;
 using UnityEngine;
 
 public class ChallengesManager : MonoBehaviour
@@ -64,13 +65,11 @@ public class ChallengesManager : MonoBehaviour
 		}
 		BinaryFormatter binaryFormatter = new BinaryFormatter();
 		FileStream fileStream = File.Open(this.GetScoreFileName(), FileMode.Open);
-		for (int i = 0; i < 99; i++)
+		int num = 0;
+		while (num < 99 && num < this.m_Challenges.Count)
 		{
-			if (i >= this.m_Challenges.Count)
-			{
-				break;
-			}
-			this.m_Challenges[i].m_BestScore = (float)binaryFormatter.Deserialize(fileStream);
+			this.m_Challenges[num].m_BestScore = (float)binaryFormatter.Deserialize(fileStream);
+			num++;
 		}
 		fileStream.Close();
 	}
@@ -104,7 +103,9 @@ public class ChallengesManager : MonoBehaviour
 
 	public void OnLevelLoaded()
 	{
+		this.m_ChallengeMode = false;
 		this.m_ActiveChallenge = null;
+		this.m_ActiveChallengeName = string.Empty;
 		this.m_Parent = GameObject.FindGameObjectWithTag("Challenges");
 		if (!this.m_Parent)
 		{
@@ -123,23 +124,24 @@ public class ChallengesManager : MonoBehaviour
 		{
 			if (challenge.m_Name == this.m_ChallengeToActivate)
 			{
-				Transform exists = this.m_Parent.transform.Find(challenge.m_ParentName);
-				if (!exists)
+				if (!this.m_Parent.transform.Find(challenge.m_ParentName))
 				{
 					return;
 				}
 				challenge.Activate(this.m_Parent.transform.Find(challenge.m_ParentName).gameObject);
 				this.m_ActiveChallenge = challenge;
-				if (BalanceSystem.Get())
+				if (EnemyAISpawnManager.Get())
 				{
-					BalanceSystem.Get().m_HumanAIStaticCooldown = 0f;
-					BalanceSystem.Get().m_HumanAIWaveCooldown = 0f;
+					EnemyAISpawnManager.Get().m_GroupSpawnCooldown = 0f;
 					this.m_HumanAICooldownSet = true;
+					break;
 				}
 				break;
 			}
 		}
+		this.m_ActiveChallengeName = this.m_ChallengeToActivate;
 		this.m_ChallengeToActivate = string.Empty;
+		this.m_ChallengeMode = true;
 	}
 
 	private void Update()
@@ -149,12 +151,12 @@ public class ChallengesManager : MonoBehaviour
 			if (!MainLevel.Instance)
 			{
 				this.m_ActiveChallenge = null;
+				this.m_ActiveChallengeName = string.Empty;
 				return;
 			}
-			if (!this.m_HumanAICooldownSet && BalanceSystem.Get())
+			if (!this.m_HumanAICooldownSet && EnemyAISpawnManager.Get())
 			{
-				BalanceSystem.Get().m_HumanAIStaticCooldown = 0f;
-				BalanceSystem.Get().m_HumanAIWaveCooldown = 0f;
+				EnemyAISpawnManager.Get().m_GroupSpawnCooldown = 0f;
 				this.m_HumanAICooldownSet = true;
 			}
 			this.m_ActiveChallenge.Update();
@@ -164,7 +166,6 @@ public class ChallengesManager : MonoBehaviour
 	public void OnFinishChallenge(bool success)
 	{
 		this.SaveScores();
-		this.m_ActiveChallenge = null;
 	}
 
 	public string DateTimeToLocalizedString(DateTime date, bool two_lines)
@@ -176,8 +177,8 @@ public class ChallengesManager : MonoBehaviour
 			text += "0";
 		}
 		text += date.Minute;
-		text += ((!two_lines) ? " " : "\n");
-		text += ((date.Day >= 10) ? date.Day.ToString() : ("0" + date.Day.ToString()));
+		text += (two_lines ? "\n" : " ");
+		text += ((date.Day < 10) ? ("0" + date.Day.ToString()) : date.Day.ToString());
 		text += " ";
 		string key = string.Empty;
 		switch (date.Month)
@@ -219,7 +220,7 @@ public class ChallengesManager : MonoBehaviour
 			key = "Watch_December";
 			break;
 		}
-		return text + GreenHellGame.Instance.GetLocalization().Get(key);
+		return text + GreenHellGame.Instance.GetLocalization().Get(key, true);
 	}
 
 	[HideInInspector]
@@ -230,7 +231,12 @@ public class ChallengesManager : MonoBehaviour
 	[HideInInspector]
 	public string m_ChallengeToActivate = string.Empty;
 
+	[HideInInspector]
+	public string m_ActiveChallengeName = string.Empty;
+
 	private GameObject m_Parent;
+
+	public bool m_ChallengeMode;
 
 	private static ChallengesManager s_Instance;
 

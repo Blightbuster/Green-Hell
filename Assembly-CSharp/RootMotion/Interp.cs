@@ -151,9 +151,8 @@ namespace RootMotion
 
 		private static float InCubic(float t, float b, float c)
 		{
-			float num = t * t;
-			float num2 = num * t;
-			return b + c * num2;
+			float num = t * t * t;
+			return b + c * num;
 		}
 
 		private static float InQuadratic(float t, float b, float c)

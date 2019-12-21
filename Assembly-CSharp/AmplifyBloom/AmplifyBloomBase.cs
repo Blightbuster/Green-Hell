@@ -10,8 +10,7 @@ namespace AmplifyBloom
 	{
 		private void Awake()
 		{
-			bool flag = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
-			if (flag)
+			if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
 			{
 				AmplifyUtils.DebugLog("Null graphics device detected. Skipping effect silently.", LogType.Error);
 				this.silentError = true;
@@ -517,11 +516,9 @@ namespace AmplifyBloom
 				this.m_targetTexture.DiscardContents();
 				this.FinalComposition(0f, 1f, src, this.m_targetTexture, -1);
 				Graphics.Blit(src, dest);
+				return;
 			}
-			else
-			{
-				this.FinalComposition(1f, 1f, src, dest, -1);
-			}
+			this.FinalComposition(1f, 1f, src, dest, -1);
 		}
 
 		private void FinalComposition(float srcContribution, float upscaleContribution, RenderTexture src, RenderTexture dest, int forcePassId)
@@ -621,7 +618,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_lensDirtStrength = ((value >= 0f) ? value : 0f);
+				this.m_lensDirtStrength = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -669,7 +666,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_lensStarburstStrength = ((value >= 0f) ? value : 0f);
+				this.m_lensStarburstStrength = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -713,7 +710,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_bloomRange.x = ((value >= 0f) ? value : 0f);
+				this.m_bloomRange.x = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -725,7 +722,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_overallThreshold = ((value >= 0f) ? value : 0f);
+				this.m_overallThreshold = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -749,7 +746,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_bloomParams.x = ((value >= 0f) ? value : 0f);
+				this.m_bloomParams.x = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -761,7 +758,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_bloomParams.w = ((value >= 0f) ? value : 0f);
+				this.m_bloomParams.w = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -917,7 +914,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_featuresThreshold = ((value >= 0f) ? value : 0f);
+				this.m_featuresThreshold = ((value < 0f) ? 0f : value);
 			}
 		}
 

@@ -34,57 +34,58 @@ namespace Cinemachine.Utility
 		public static void ComputeSmoothControlPoints(ref Vector4[] knot, ref Vector4[] ctrl1, ref Vector4[] ctrl2)
 		{
 			int num = knot.Length;
-			if (num <= 2)
+			if (num > 2)
 			{
-				if (num == 2)
+				float[] array = new float[num];
+				float[] array2 = new float[num];
+				float[] array3 = new float[num];
+				float[] array4 = new float[num];
+				for (int i = 0; i < 4; i++)
 				{
-					ctrl1[0] = Vector4.Lerp(knot[0], knot[1], 0.33333f);
-					ctrl2[0] = Vector4.Lerp(knot[0], knot[1], 0.66666f);
-				}
-				else if (num == 1)
-				{
-					ctrl1[0] = (ctrl2[0] = knot[0]);
+					int num2 = num - 1;
+					array[0] = 0f;
+					array2[0] = 2f;
+					array3[0] = 1f;
+					array4[0] = knot[0][i] + 2f * knot[1][i];
+					for (int j = 1; j < num2 - 1; j++)
+					{
+						array[j] = 1f;
+						array2[j] = 4f;
+						array3[j] = 1f;
+						array4[j] = 4f * knot[j][i] + 2f * knot[j + 1][i];
+					}
+					array[num2 - 1] = 2f;
+					array2[num2 - 1] = 7f;
+					array3[num2 - 1] = 0f;
+					array4[num2 - 1] = 8f * knot[num2 - 1][i] + knot[num2][i];
+					for (int k = 1; k < num2; k++)
+					{
+						float num3 = array[k] / array2[k - 1];
+						array2[k] -= num3 * array3[k - 1];
+						array4[k] -= num3 * array4[k - 1];
+					}
+					ctrl1[num2 - 1][i] = array4[num2 - 1] / array2[num2 - 1];
+					for (int l = num2 - 2; l >= 0; l--)
+					{
+						ctrl1[l][i] = (array4[l] - array3[l] * ctrl1[l + 1][i]) / array2[l];
+					}
+					for (int m = 0; m < num2; m++)
+					{
+						ctrl2[m][i] = 2f * knot[m + 1][i] - ctrl1[m + 1][i];
+					}
+					ctrl2[num2 - 1][i] = 0.5f * (knot[num2][i] + ctrl1[num2 - 1][i]);
 				}
 				return;
 			}
-			float[] array = new float[num];
-			float[] array2 = new float[num];
-			float[] array3 = new float[num];
-			float[] array4 = new float[num];
-			for (int i = 0; i < 4; i++)
+			if (num == 2)
 			{
-				int num2 = num - 1;
-				array[0] = 0f;
-				array2[0] = 2f;
-				array3[0] = 1f;
-				array4[0] = knot[0][i] + 2f * knot[1][i];
-				for (int j = 1; j < num2 - 1; j++)
-				{
-					array[j] = 1f;
-					array2[j] = 4f;
-					array3[j] = 1f;
-					array4[j] = 4f * knot[j][i] + 2f * knot[j + 1][i];
-				}
-				array[num2 - 1] = 2f;
-				array2[num2 - 1] = 7f;
-				array3[num2 - 1] = 0f;
-				array4[num2 - 1] = 8f * knot[num2 - 1][i] + knot[num2][i];
-				for (int k = 1; k < num2; k++)
-				{
-					float num3 = array[k] / array2[k - 1];
-					array2[k] -= num3 * array3[k - 1];
-					array4[k] -= num3 * array4[k - 1];
-				}
-				ctrl1[num2 - 1][i] = array4[num2 - 1] / array2[num2 - 1];
-				for (int l = num2 - 2; l >= 0; l--)
-				{
-					ctrl1[l][i] = (array4[l] - array3[l] * ctrl1[l + 1][i]) / array2[l];
-				}
-				for (int m = 0; m < num2; m++)
-				{
-					ctrl2[m][i] = 2f * knot[m + 1][i] - ctrl1[m + 1][i];
-				}
-				ctrl2[num2 - 1][i] = 0.5f * (knot[num2][i] + ctrl1[num2 - 1][i]);
+				ctrl1[0] = Vector4.Lerp(knot[0], knot[1], 0.33333f);
+				ctrl2[0] = Vector4.Lerp(knot[0], knot[1], 0.66666f);
+				return;
+			}
+			if (num == 1)
+			{
+				ctrl1[0] = (ctrl2[0] = knot[0]);
 			}
 		}
 

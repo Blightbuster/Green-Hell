@@ -26,11 +26,9 @@ public class PlayerPositionUI : MonoBehaviour
 					"\nPlayer real position: ",
 					this.worldMover.playerPositionMovedLooped
 				});
+				return;
 			}
-			else
-			{
-				this.text.text = "Player position: " + this.player.transform.position + "\nPlayer real position: Not Connected to World Mover";
-			}
+			this.text.text = "Player position: " + this.player.transform.position + "\nPlayer real position: Not Connected to World Mover";
 		}
 	}
 

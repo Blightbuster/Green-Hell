@@ -21,6 +21,7 @@ namespace Pathfinding
 			int count = 0;
 			this.GetNodes(delegate(GraphNode node)
 			{
+				int count = count;
 				count++;
 			});
 			return count;
@@ -73,7 +74,7 @@ namespace Pathfinding
 
 		public virtual NNInfoInternal GetNearest(Vector3 position, NNConstraint constraint, GraphNode hint)
 		{
-			float maxDistSqr = (constraint != null && !constraint.constrainDistance) ? float.PositiveInfinity : AstarPath.active.maxNearestNodeDistanceSqr;
+			float maxDistSqr = (constraint == null || constraint.constrainDistance) ? AstarPath.active.maxNearestNodeDistanceSqr : float.PositiveInfinity;
 			float minDist = float.PositiveInfinity;
 			GraphNode minNode = null;
 			float minConstDist = float.PositiveInfinity;

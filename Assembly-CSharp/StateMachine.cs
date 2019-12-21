@@ -50,11 +50,9 @@ public class StateMachine
 			if (this.m_CurrentState != null)
 			{
 				DebugUtils.Assert("[StateMachine::CreateState] Error, more than one state is set as default!", true, DebugUtils.AssertType.Info);
+				return;
 			}
-			else
-			{
-				this.m_CurrentState = state;
-			}
+			this.m_CurrentState = state;
 		}
 	}
 

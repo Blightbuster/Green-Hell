@@ -333,60 +333,60 @@ namespace RootMotion.FinalIK
 		public FullBodyBipedIK ik;
 
 		[LargeHeader("Position")]
-		[Range(0f, 1f)]
 		[Tooltip("Master weight for positioning the head.")]
+		[Range(0f, 1f)]
 		public float positionWeight = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of moving the body along with the head")]
+		[Range(0f, 1f)]
 		public float bodyWeight = 0.8f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of moving the thighs along with the head")]
+		[Range(0f, 1f)]
 		public float thighWeight = 0.8f;
 
 		[Tooltip("If false, hands will not pull the head away if they are too far. Disabling this will improve performance significantly.")]
 		public bool handsPullBody = true;
 
-		[Range(0f, 1f)]
-		[Tooltip("The weight of rotating the head bone after solving")]
 		[LargeHeader("Rotation")]
+		[Tooltip("The weight of rotating the head bone after solving")]
+		[Range(0f, 1f)]
 		public float rotationWeight;
 
-		[Range(0f, 1f)]
 		[Tooltip("Clamping the rotation of the body")]
+		[Range(0f, 1f)]
 		public float bodyClampWeight = 0.5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Clamping the rotation of the head")]
+		[Range(0f, 1f)]
 		public float headClampWeight = 0.5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The master weight of bending/twisting the spine to the rotation of the head effector. This is similar to CCD, but uses the rotation of the head effector not the position.")]
+		[Range(0f, 1f)]
 		public float bendWeight = 1f;
 
 		[Tooltip("The bones to use for bending.")]
 		public FBBIKHeadEffector.BendBone[] bendBones = new FBBIKHeadEffector.BendBone[0];
 
-		[Range(0f, 1f)]
-		[Tooltip("Optional. The master weight of the CCD (Cyclic Coordinate Descent) IK effect that bends the spine towards the head effector before FBBIK solves.")]
 		[LargeHeader("CCD")]
+		[Tooltip("Optional. The master weight of the CCD (Cyclic Coordinate Descent) IK effect that bends the spine towards the head effector before FBBIK solves.")]
+		[Range(0f, 1f)]
 		public float CCDWeight = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of rolling the bones in towards the target")]
+		[Range(0f, 1f)]
 		public float roll;
 
-		[Range(0f, 1000f)]
 		[Tooltip("Smoothing the CCD effect.")]
+		[Range(0f, 1000f)]
 		public float damper = 500f;
 
 		[Tooltip("Bones to use for the CCD pass. Assign spine and/or neck bones.")]
 		public Transform[] CCDBones = new Transform[0];
 
 		[LargeHeader("Stretching")]
-		[Range(0f, 1f)]
 		[Tooltip("Stretching the spine/neck to help reach the target. This is useful for making sure the head stays locked relative to the VR headset. NB! Stretching is done after FBBIK has solved so if you have the hand effectors pinned and spine bones included in the 'Stretch Bones', the hands might become offset from their target positions.")]
+		[Range(0f, 1f)]
 		public float postStretchWeight = 1f;
 
 		[Tooltip("Stretch magnitude limit.")]

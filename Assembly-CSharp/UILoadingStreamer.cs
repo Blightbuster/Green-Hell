@@ -18,7 +18,7 @@ public class UILoadingStreamer : MonoBehaviour
 
 	private void Update()
 	{
-		if (this.streamers.Length > 0)
+		if (this.streamers.Length != 0)
 		{
 			bool flag = true;
 			this.progressImg.fillAmount = 0f;
@@ -34,6 +34,7 @@ public class UILoadingStreamer : MonoBehaviour
 					this.onDone.Invoke();
 				}
 				base.StartCoroutine(this.TurnOff());
+				return;
 			}
 		}
 		else
@@ -46,6 +47,7 @@ public class UILoadingStreamer : MonoBehaviour
 	{
 		yield return new WaitForSeconds(this.waitTime);
 		base.gameObject.SetActive(false);
+		yield break;
 		yield break;
 	}
 

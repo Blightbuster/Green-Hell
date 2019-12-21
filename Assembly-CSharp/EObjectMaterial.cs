@@ -15,5 +15,8 @@ public enum EObjectMaterial
 	Moss,
 	Water,
 	TurtleShell,
+	WoodTree,
+	Metal,
+	Tent,
 	Count
 }

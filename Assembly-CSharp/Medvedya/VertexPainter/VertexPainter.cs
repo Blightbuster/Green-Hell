@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Medvedya.VertexPainter
 {
-	[AddComponentMenu("Vertex painter/Vertex painter")]
-	[DisallowMultipleComponent]
-	[RequireComponent(typeof(MeshRenderer))]
-	[RequireComponent(typeof(MeshFilter))]
 	[ExecuteInEditMode]
+	[RequireComponent(typeof(MeshFilter))]
+	[RequireComponent(typeof(MeshRenderer))]
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Vertex painter/Vertex painter")]
 	public class VertexPainter : MonoBehaviour, IPainting
 	{
 		public MeshFilter meshFilter
@@ -106,9 +106,7 @@ namespace Medvedya.VertexPainter
 				return;
 			}
 			this.isInitMesh = true;
-			if (this.meshFilter.sharedMesh != null)
-			{
-			}
+			this.meshFilter.sharedMesh != null;
 			this.meshFilter.sharedMesh = new Mesh();
 			this.meshFilter.sharedMesh.name = base.gameObject.name;
 			this.FillFullMesh();
@@ -191,9 +189,9 @@ namespace Medvedya.VertexPainter
 			this.verteces = new Vector3[num];
 			this.colors = new Color32[num];
 			this.normals = new Vector3[num];
-			bool flag = array != null && array.Length > 0;
-			bool flag2 = array2 != null && array2.Length > 0;
-			this.hasUV = (array3 != null && array3.Length > 0);
+			bool flag = array != null && array.Length != 0;
+			bool flag2 = array2 != null && array2.Length != 0;
+			this.hasUV = (array3 != null && array3.Length != 0);
 			if (this.hasUV)
 			{
 				this.uv = new Vector2[num];
@@ -270,8 +268,7 @@ namespace Medvedya.VertexPainter
 			Vector3 rhs = this.verteces[point];
 			for (int i = 0; i < this.verteces.Length; i++)
 			{
-				Vector3 lhs = this.verteces[i];
-				if (lhs == rhs)
+				if (this.verteces[i] == rhs)
 				{
 					list.Add(i);
 				}

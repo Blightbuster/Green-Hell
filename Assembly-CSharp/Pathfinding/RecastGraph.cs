@@ -75,7 +75,11 @@ namespace Pathfinding
 
 		GraphUpdateThreading IUpdatableGraph.CanUpdateAsync(GraphUpdateObject o)
 		{
-			return (!o.updatePhysics) ? GraphUpdateThreading.SeparateThread : ((GraphUpdateThreading)7);
+			if (!o.updatePhysics)
+			{
+				return GraphUpdateThreading.SeparateThread;
+			}
+			return (GraphUpdateThreading)7;
 		}
 
 		void IUpdatableGraph.UpdateAreaInit(GraphUpdateObject o)
@@ -126,11 +130,11 @@ namespace Pathfinding
 			uint graphIndex = (uint)AstarPath.active.data.GetGraphIndex(this);
 			for (int m = 0; m < this.stagingTiles.Count; m++)
 			{
-				NavmeshTile navmeshTile = this.stagingTiles[m];
-				GraphNode[] nodes = navmeshTile.nodes;
-				for (int n = 0; n < nodes.Length; n++)
+				GraphNode[] nodes = this.stagingTiles[m].nodes;
+				GraphNode[] array = nodes;
+				for (int n = 0; n < array.Length; n++)
 				{
-					nodes[n].GraphIndex = graphIndex;
+					array[n].GraphIndex = graphIndex;
 				}
 			}
 			for (int num = 0; num < voxelize.inputMeshes.Count; num++)
@@ -178,6 +182,9 @@ namespace Pathfinding
 			{
 				yield return progress;
 			}
+			IEnumerator<Progress> enumerator = null;
+			yield break;
+			yield break;
 			yield break;
 		}
 
@@ -243,6 +250,8 @@ namespace Pathfinding
 
 		protected IEnumerable<Progress> ScanAllTiles()
 		{
+			RecastGraph.<>c__DisplayClass48_0 <>c__DisplayClass48_ = new RecastGraph.<>c__DisplayClass48_0();
+			<>c__DisplayClass48_.<>4__this = this;
 			this.transform = this.CalculateTransform();
 			this.InitializeTileInfo();
 			if (this.scanEmptyGraph)
@@ -254,7 +263,7 @@ namespace Pathfinding
 			yield return new Progress(0f, "Finding Meshes");
 			Bounds bounds = this.transform.Transform(new Bounds(this.forcedBoundsSize * 0.5f, this.forcedBoundsSize));
 			List<RasterizationMesh> meshes = this.CollectMeshes(bounds);
-			List<RasterizationMesh>[] buckets = this.PutMeshesIntoTileBuckets(meshes);
+			<>c__DisplayClass48_.buckets = this.PutMeshesIntoTileBuckets(meshes);
 			Queue<Int2> tileQueue = new Queue<Int2>();
 			for (int i = 0; i < this.tileZCount; i++)
 			{
@@ -263,38 +272,42 @@ namespace Pathfinding
 					tileQueue.Enqueue(new Int2(j, i));
 				}
 			}
-			ParallelWorkQueue<Int2> workQueue = new ParallelWorkQueue<Int2>(tileQueue);
-			Voxelize[] voxelizers = new Voxelize[workQueue.threadCount];
-			for (int k = 0; k < voxelizers.Length; k++)
+			ParallelWorkQueue<Int2> parallelWorkQueue = new ParallelWorkQueue<Int2>(tileQueue);
+			<>c__DisplayClass48_.voxelizers = new Voxelize[parallelWorkQueue.threadCount];
+			for (int k = 0; k < <>c__DisplayClass48_.voxelizers.Length; k++)
 			{
-				voxelizers[k] = new Voxelize(this.CellHeight, this.cellSize, this.walkableClimb, this.walkableHeight, this.maxSlope, this.maxEdgeLength);
+				<>c__DisplayClass48_.voxelizers[k] = new Voxelize(this.CellHeight, this.cellSize, this.walkableClimb, this.walkableHeight, this.maxSlope, this.maxEdgeLength);
 			}
-			workQueue.action = delegate(Int2 tile, int threadIndex)
+			parallelWorkQueue.action = delegate(Int2 tile, int threadIndex)
 			{
-				voxelizers[threadIndex].inputMeshes = buckets[tile.x + tile.y * this.$this.tileXCount];
-				this.$this.tiles[tile.x + tile.y * this.$this.tileXCount] = this.$this.BuildTileMesh(voxelizers[threadIndex], tile.x, tile.y, threadIndex);
+				<>c__DisplayClass48_.voxelizers[threadIndex].inputMeshes = <>c__DisplayClass48_.buckets[tile.x + tile.y * <>c__DisplayClass48_.<>4__this.tileXCount];
+				<>c__DisplayClass48_.<>4__this.tiles[tile.x + tile.y * <>c__DisplayClass48_.<>4__this.tileXCount] = <>c__DisplayClass48_.<>4__this.BuildTileMesh(<>c__DisplayClass48_.voxelizers[threadIndex], tile.x, tile.y, threadIndex);
 			};
-			int timeoutMillis = (!Application.isPlaying) ? 200 : 1;
-			foreach (int done in workQueue.Run(timeoutMillis))
+			int timeoutMillis = Application.isPlaying ? 1 : 200;
+			foreach (int num in parallelWorkQueue.Run(timeoutMillis))
 			{
-				yield return new Progress(Mathf.Lerp(0.1f, 0.9f, (float)done / (float)this.tiles.Length), string.Concat(new object[]
+				yield return new Progress(Mathf.Lerp(0.1f, 0.9f, (float)num / (float)this.tiles.Length), string.Concat(new object[]
 				{
 					"Calculated Tiles: ",
-					done,
+					num,
 					"/",
 					this.tiles.Length
 				}));
 			}
+			IEnumerator<int> enumerator = null;
 			yield return new Progress(0.9f, "Assigning Graph Indices");
-			uint graphIndex = (uint)AstarPath.active.data.GetGraphIndex(this);
+			<>c__DisplayClass48_.graphIndex = (uint)AstarPath.active.data.GetGraphIndex(this);
 			this.GetNodes(delegate(GraphNode node)
 			{
-				node.GraphIndex = graphIndex;
+				node.GraphIndex = <>c__DisplayClass48_.graphIndex;
 			});
-			for (int coordinateSum = 0; coordinateSum <= 1; coordinateSum++)
+			int num3;
+			for (int coordinateSum = 0; coordinateSum <= 1; coordinateSum = num3 + 1)
 			{
-				int direction;
-				for (direction = 0; direction <= 1; direction++)
+				RecastGraph.<>c__DisplayClass48_1 <>c__DisplayClass48_2 = new RecastGraph.<>c__DisplayClass48_1();
+				<>c__DisplayClass48_2.CS$<>8__locals1 = <>c__DisplayClass48_;
+				<>c__DisplayClass48_2.direction = 0;
+				while (<>c__DisplayClass48_2.direction <= 1)
 				{
 					for (int l = 0; l < this.tiles.Length; l++)
 					{
@@ -303,33 +316,38 @@ namespace Pathfinding
 							tileQueue.Enqueue(new Int2(this.tiles[l].x, this.tiles[l].z));
 						}
 					}
-					workQueue = new ParallelWorkQueue<Int2>(tileQueue);
-					workQueue.action = delegate(Int2 tile, int threadIndex)
+					parallelWorkQueue = new ParallelWorkQueue<Int2>(tileQueue);
+					parallelWorkQueue.action = delegate(Int2 tile, int threadIndex)
 					{
-						if (direction == 0 && tile.x < this.$this.tileXCount - 1)
+						if (<>c__DisplayClass48_2.direction == 0 && tile.x < <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tileXCount - 1)
 						{
-							this.$this.ConnectTiles(this.$this.tiles[tile.x + tile.y * this.$this.tileXCount], this.$this.tiles[tile.x + 1 + tile.y * this.$this.tileXCount]);
+							<>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.ConnectTiles(<>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tiles[tile.x + tile.y * <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tileXCount], <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tiles[tile.x + 1 + tile.y * <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tileXCount]);
 						}
-						if (direction == 1 && tile.y < this.$this.tileZCount - 1)
+						if (<>c__DisplayClass48_2.direction == 1 && tile.y < <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tileZCount - 1)
 						{
-							this.$this.ConnectTiles(this.$this.tiles[tile.x + tile.y * this.$this.tileXCount], this.$this.tiles[tile.x + (tile.y + 1) * this.$this.tileXCount]);
+							<>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.ConnectTiles(<>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tiles[tile.x + tile.y * <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tileXCount], <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tiles[tile.x + (tile.y + 1) * <>c__DisplayClass48_2.CS$<>8__locals1.<>4__this.tileXCount]);
 						}
 					};
 					int numTilesInQueue = tileQueue.Count;
-					foreach (int done2 in workQueue.Run(timeoutMillis))
+					foreach (int num2 in parallelWorkQueue.Run(timeoutMillis))
 					{
 						yield return new Progress(0.95f, string.Concat(new object[]
 						{
 							"Connected Tiles ",
-							numTilesInQueue - done2,
+							numTilesInQueue - num2,
 							"/",
 							numTilesInQueue,
 							" (Phase ",
-							direction + 1 + 2 * coordinateSum,
+							<>c__DisplayClass48_2.direction + 1 + 2 * coordinateSum,
 							" of 4)"
 						}));
 					}
+					enumerator = null;
+					num3 = <>c__DisplayClass48_2.direction;
+					<>c__DisplayClass48_2.direction = num3 + 1;
 				}
+				<>c__DisplayClass48_2 = null;
+				num3 = coordinateSum;
 			}
 			for (int m = 0; m < meshes.Count; m++)
 			{
@@ -340,6 +358,8 @@ namespace Pathfinding
 			{
 				this.OnRecalculatedTiles(this.tiles.Clone() as NavmeshTile[]);
 			}
+			yield break;
+			yield break;
 			yield break;
 		}
 
@@ -434,14 +454,14 @@ namespace Pathfinding
 			vox.BuildRegions();
 			VoxelContourSet cset = new VoxelContourSet();
 			vox.BuildContours(this.contourMaxError, 1, cset, 5);
-			VoxelMesh mesh;
-			vox.BuildPolyMesh(cset, 3, out mesh);
-			for (int i = 0; i < mesh.verts.Length; i++)
+			VoxelMesh voxelMesh;
+			vox.BuildPolyMesh(cset, 3, out voxelMesh);
+			for (int i = 0; i < voxelMesh.verts.Length; i++)
 			{
-				mesh.verts[i] *= 1000;
+				voxelMesh.verts[i] *= 1000;
 			}
-			vox.transformVoxel2Graph.Transform(mesh.verts);
-			return this.CreateTile(vox, mesh, x, z, threadIndex);
+			vox.transformVoxel2Graph.Transform(voxelMesh.verts);
+			return this.CreateTile(vox, voxelMesh, x, z, threadIndex);
 		}
 
 		private NavmeshTile CreateTile(Voxelize vox, VoxelMesh mesh, int x, int z, int threadIndex)
@@ -488,7 +508,7 @@ namespace Pathfinding
 				int num2 = x + z * this.tileXCount;
 				num2 <<= 12;
 				TriangleMeshNode.SetNavmeshHolder((int)num, navmeshTile);
-				object active = this.active;
+				AstarPath active = this.active;
 				lock (active)
 				{
 					navmeshTile.nodes = base.CreateNodes(navmeshTile.tris, num2, num);

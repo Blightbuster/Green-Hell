@@ -20,8 +20,9 @@ namespace MirzaBeig.ParticleSystems.Demos
 				Application.targetFrameRate = this.targetFPS2;
 				this.previousVSyncCount = QualitySettings.vSyncCount;
 				QualitySettings.vSyncCount = 0;
+				return;
 			}
-			else if (Input.GetKeyUp(KeyCode.Space))
+			if (Input.GetKeyUp(KeyCode.Space))
 			{
 				Application.targetFrameRate = this.targetFPS1;
 				QualitySettings.vSyncCount = this.previousVSyncCount;

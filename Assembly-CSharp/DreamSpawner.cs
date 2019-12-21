@@ -9,6 +9,22 @@ public class DreamSpawner : MonoBehaviour
 		DreamSpawner.m_Spawners.Add(this);
 	}
 
+	private void Start()
+	{
+		if (Application.isPlaying)
+		{
+			Renderer component = base.GetComponent<Renderer>();
+			if (component)
+			{
+				component.enabled = false;
+			}
+			for (int i = 0; i < base.transform.childCount; i++)
+			{
+				base.transform.GetChild(i).gameObject.SetActive(false);
+			}
+		}
+	}
+
 	public static DreamSpawner Find(string name)
 	{
 		int i = 0;

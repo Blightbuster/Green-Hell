@@ -5,21 +5,6 @@ namespace Pathfinding
 {
 	public class GraphUpdateShape
 	{
-		public GraphUpdateShape()
-		{
-		}
-
-		public GraphUpdateShape(Vector3[] points, bool convex, Matrix4x4 matrix, float minimumHeight)
-		{
-			this.convex = convex;
-			this.points = points;
-			this.origin = matrix.MultiplyPoint3x4(Vector3.zero);
-			this.right = matrix.MultiplyPoint3x4(Vector3.right) - this.origin;
-			this.up = matrix.MultiplyPoint3x4(Vector3.up) - this.origin;
-			this.forward = matrix.MultiplyPoint3x4(Vector3.forward) - this.origin;
-			this.minimumHeight = minimumHeight;
-		}
-
 		public Vector3[] points
 		{
 			get
@@ -52,14 +37,29 @@ namespace Pathfinding
 			}
 		}
 
+		public GraphUpdateShape()
+		{
+		}
+
+		public GraphUpdateShape(Vector3[] points, bool convex, Matrix4x4 matrix, float minimumHeight)
+		{
+			this.convex = convex;
+			this.points = points;
+			this.origin = matrix.MultiplyPoint3x4(Vector3.zero);
+			this.right = matrix.MultiplyPoint3x4(Vector3.right) - this.origin;
+			this.up = matrix.MultiplyPoint3x4(Vector3.up) - this.origin;
+			this.forward = matrix.MultiplyPoint3x4(Vector3.forward) - this.origin;
+			this.minimumHeight = minimumHeight;
+		}
+
 		private void CalculateConvexHull()
 		{
-			this._convexPoints = ((this.points == null) ? null : Polygon.ConvexHullXZ(this.points));
+			this._convexPoints = ((this.points != null) ? Polygon.ConvexHullXZ(this.points) : null);
 		}
 
 		public Bounds GetBounds()
 		{
-			return GraphUpdateShape.GetBounds((!this.convex) ? this.points : this._convexPoints, this.right, this.up, this.forward, this.origin, this.minimumHeight);
+			return GraphUpdateShape.GetBounds(this.convex ? this._convexPoints : this.points, this.right, this.up, this.forward, this.origin, this.minimumHeight);
 		}
 
 		public static Bounds GetBounds(Vector3[] points, Matrix4x4 matrix, float minimumHeight)

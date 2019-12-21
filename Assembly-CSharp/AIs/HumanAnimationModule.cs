@@ -7,6 +7,10 @@ namespace AIs
 	{
 		protected override string GetStatesDataScript()
 		{
+			if (this.m_AI.m_ID == AI.AIID.KidRunner)
+			{
+				return base.GetStatesDataScript();
+			}
 			return "SavageAnimatorData";
 		}
 
@@ -25,11 +29,12 @@ namespace AIs
 					fixedTimeOffset = UnityEngine.Random.Range(0f, this.m_StatesData[this.m_CurrentAnim].m_Duration);
 					this.m_StartFromRandomFrame = false;
 				}
-				if (this.m_PrevAnim == this.m_CurrentAnim && this.m_StatesData[this.m_CurrentAnim].m_Loop)
+				if (this.m_PrevAnim == this.m_CurrentAnim && this.m_StatesData.ContainsKey(this.m_CurrentAnim) && this.m_StatesData[this.m_CurrentAnim].m_Loop)
 				{
 					this.m_TransitionDuration = AnimationModule.DEFAULT_TRANSITION_DURATION;
 					return;
 				}
+				Debug.Log(this.m_CurrentAnim);
 				this.m_AI.m_Animator.CrossFadeInFixedTime(this.m_CurrentAnim, this.m_TransitionDuration, -1, fixedTimeOffset);
 				this.m_TransitionDuration = AnimationModule.DEFAULT_TRANSITION_DURATION;
 				this.m_PrevAnim = this.m_CurrentAnim;
@@ -38,19 +43,19 @@ namespace AIs
 			if (this.m_ForcedSpeed >= 0f)
 			{
 				this.m_AI.m_Animator.speed = this.m_ForcedSpeed;
+				return;
 			}
-			else if (currentAnimatorStateInfo.shortNameHash == this.m_WalkHash)
+			if (currentAnimatorStateInfo.shortNameHash == this.m_WalkHash)
 			{
 				this.m_AI.m_Animator.speed = this.m_AI.m_Params.m_WalkSpeedMul;
+				return;
 			}
-			else if (currentAnimatorStateInfo.shortNameHash == this.m_RunHash)
+			if (currentAnimatorStateInfo.shortNameHash == this.m_RunHash)
 			{
 				this.m_AI.m_Animator.speed = this.m_AI.m_Params.m_RunSpeedMul;
+				return;
 			}
-			else
-			{
-				this.m_AI.m_Animator.speed = 1f;
-			}
+			this.m_AI.m_Animator.speed = 1f;
 		}
 	}
 }

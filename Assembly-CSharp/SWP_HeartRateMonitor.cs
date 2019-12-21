@@ -43,8 +43,9 @@ public class SWP_HeartRateMonitor : MonoBehaviour
 		if (this.BeatsPerMinute <= 0 || this.FlatLine)
 		{
 			this.LastUpdate = Time.time;
+			return;
 		}
-		else if (Time.time - this.LastUpdate >= this.BeatsPerSecond)
+		if (Time.time - this.LastUpdate >= this.BeatsPerSecond)
 		{
 			this.LastUpdate = Time.time;
 			base.StartCoroutine(this.PerformBlip());
@@ -69,12 +70,13 @@ public class SWP_HeartRateMonitor : MonoBehaviour
 		yield return new WaitForSeconds(0.02f);
 		this.NewClone.transform.position = new Vector3(this.NewClone.transform.position.x, 2f * this.BlipMonitorHeightModifier + UnityEngine.Random.Range(0f, 1f * this.BlipMonitorHeightModifier) + this.BlipOffset.y, this.BlipOffset.z);
 		yield return new WaitForSeconds(0.02f);
-		this.NewClone.transform.position = new Vector3(this.NewClone.transform.position.x, this.BlipOffset.y, this.BlipOffset.z);
+		this.NewClone.transform.position = new Vector3(this.NewClone.transform.position.x, 0f + this.BlipOffset.y, this.BlipOffset.z);
 		yield return new WaitForSeconds(0.2f);
 		if (!this.bFlatLinePlayed)
 		{
 			this.PlayHeartSound(SWP_HeartRateMonitor.SoundType.HeartBeat2, this.SoundVolume);
 		}
+		yield break;
 		yield break;
 	}
 
@@ -88,11 +90,9 @@ public class SWP_HeartRateMonitor : MonoBehaviour
 		if (this.ShowBlip)
 		{
 			this.NewClone.GetComponent<MeshRenderer>().enabled = true;
+			return;
 		}
-		else
-		{
-			this.NewClone.GetComponent<MeshRenderer>().enabled = false;
-		}
+		this.NewClone.GetComponent<MeshRenderer>().enabled = false;
 	}
 
 	private IEnumerator WaitThenDestroy(GameObject OldClone)
@@ -100,6 +100,7 @@ public class SWP_HeartRateMonitor : MonoBehaviour
 		OldClone.GetComponent<MeshRenderer>().enabled = false;
 		yield return new WaitForSeconds(this.TrailTime);
 		UnityEngine.Object.DestroyObject(OldClone);
+		yield break;
 		yield break;
 	}
 
@@ -112,12 +113,14 @@ public class SWP_HeartRateMonitor : MonoBehaviour
 		if (_SoundType == SWP_HeartRateMonitor.SoundType.HeartBeat1)
 		{
 			base.GetComponent<AudioSource>().PlayOneShot(this.Heart1Sound, fSoundVolume);
+			return;
 		}
-		else if (_SoundType == SWP_HeartRateMonitor.SoundType.HeartBeat2)
+		if (_SoundType == SWP_HeartRateMonitor.SoundType.HeartBeat2)
 		{
 			base.GetComponent<AudioSource>().PlayOneShot(this.Heart2Sound, fSoundVolume);
+			return;
 		}
-		else if (_SoundType == SWP_HeartRateMonitor.SoundType.Flatline)
+		if (_SoundType == SWP_HeartRateMonitor.SoundType.Flatline)
 		{
 			base.GetComponent<AudioSource>().PlayOneShot(this.FlatlineSound, fSoundVolume);
 		}

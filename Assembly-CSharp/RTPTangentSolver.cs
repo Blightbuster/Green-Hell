@@ -35,7 +35,7 @@ public class RTPTangentSolver
 			float num12 = vector5.y - vector4.y;
 			float num13 = vector6.y - vector4.y;
 			float num14 = num10 * num13 - num11 * num12;
-			float num15 = (num14 != 0f) ? (1f / num14) : 0f;
+			float num15 = (num14 == 0f) ? 0f : (1f / num14);
 			Vector3 b = new Vector3((num13 * num4 - num12 * num5) * num15, (num13 * num6 - num12 * num7) * num15, (num13 * num8 - num12 * num9) * num15);
 			Vector3 b2 = new Vector3((num10 * num5 - num11 * num4) * num15, (num10 * num7 - num11 * num6) * num15, (num10 * num9 - num11 * num8) * num15);
 			array2[num] += b;
@@ -56,12 +56,12 @@ public class RTPTangentSolver
 			{
 				lhs = normals[j];
 			}
-			Vector3 rhs = array2[j];
-			Vector3.OrthoNormalize(ref lhs, ref rhs);
-			array[j].x = rhs.x;
-			array[j].y = rhs.y;
-			array[j].z = rhs.z;
-			array[j].w = ((Vector3.Dot(Vector3.Cross(lhs, rhs), array3[j]) >= 0f) ? 1f : -1f);
+			Vector3 vector7 = array2[j];
+			Vector3.OrthoNormalize(ref lhs, ref vector7);
+			array[j].x = vector7.x;
+			array[j].y = vector7.y;
+			array[j].z = vector7.z;
+			array[j].w = ((Vector3.Dot(Vector3.Cross(lhs, vector7), array3[j]) < 0f) ? -1f : 1f);
 		}
 		theMesh.tangents = array;
 	}

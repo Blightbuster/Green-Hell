@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using Pathfinding.Serialization;
 using Pathfinding.Util;
 using Pathfinding.WindowsStore;
@@ -37,16 +36,20 @@ namespace Pathfinding
 		{
 			get
 			{
-				if (this.upgradeData != null && this.upgradeData.Length > 0)
+				if (this.upgradeData != null && this.upgradeData.Length != 0)
 				{
 					this.data = this.upgradeData;
 					this.upgradeData = null;
 				}
-				return (this.dataString == null) ? null : Convert.FromBase64String(this.dataString);
+				if (this.dataString == null)
+				{
+					return null;
+				}
+				return Convert.FromBase64String(this.dataString);
 			}
 			set
 			{
-				this.dataString = ((value == null) ? null : Convert.ToBase64String(value));
+				this.dataString = ((value != null) ? Convert.ToBase64String(value) : null);
 			}
 		}
 
@@ -66,11 +69,9 @@ namespace Pathfinding
 			if (this.cacheStartup && this.file_cachedStartup != null)
 			{
 				this.LoadFromCache();
+				return;
 			}
-			else
-			{
-				this.DeserializeGraphs();
-			}
+			this.DeserializeGraphs();
 		}
 
 		internal void LockGraphStructure(bool allowAddingGraphs = false)
@@ -254,7 +255,8 @@ namespace Pathfinding
 			this.graphs = list.ToArray();
 			sr.DeserializeExtraInfo();
 			int i;
-			for (i = 0; i < this.graphs.Length; i++)
+			int l;
+			for (i = 0; i < this.graphs.Length; i = l + 1)
 			{
 				if (this.graphs[i] != null)
 				{
@@ -263,15 +265,16 @@ namespace Pathfinding
 						node.GraphIndex = (uint)i;
 					});
 				}
+				l = i;
 			}
-			for (int k = 0; k < this.graphs.Length; k++)
+			for (int j = 0; j < this.graphs.Length; j++)
 			{
-				for (int j = k + 1; j < this.graphs.Length; j++)
+				for (int k = j + 1; k < this.graphs.Length; k++)
 				{
-					if (this.graphs[k] != null && this.graphs[j] != null && this.graphs[k].guid == this.graphs[j].guid)
+					if (this.graphs[j] != null && this.graphs[k] != null && this.graphs[j].guid == this.graphs[k].guid)
 					{
 						Debug.LogWarning("Guid Conflict when importing graphs additively. Imported graph will get a new Guid.\nThis message is (relatively) harmless.");
-						this.graphs[k].guid = Pathfinding.Util.Guid.NewGuid();
+						this.graphs[j].guid = Pathfinding.Util.Guid.NewGuid();
 						break;
 					}
 				}
@@ -281,18 +284,19 @@ namespace Pathfinding
 
 		public void FindGraphTypes()
 		{
-			Assembly assembly = WindowsStoreCompatibility.GetTypeInfo(typeof(AstarPath)).Assembly;
-			Type[] types = assembly.GetTypes();
+			Type[] types = WindowsStoreCompatibility.GetTypeInfo(typeof(AstarPath)).Assembly.GetTypes();
 			List<Type> list = new List<Type>();
 			foreach (Type type in types)
 			{
-				for (Type baseType = type.BaseType; baseType != null; baseType = baseType.BaseType)
+				Type baseType = type.BaseType;
+				while (baseType != null)
 				{
 					if (object.Equals(baseType, typeof(NavGraph)))
 					{
 						list.Add(type);
 						break;
 					}
+					baseType = baseType.BaseType;
 				}
 			}
 			this.graphTypes = list.ToArray();
@@ -470,13 +474,16 @@ namespace Pathfinding
 			{
 				yield break;
 			}
-			for (int i = 0; i < this.graphs.Length; i++)
+			int num;
+			for (int i = 0; i < this.graphs.Length; i = num + 1)
 			{
 				if (this.graphs[i] != null && object.Equals(this.graphs[i].GetType(), type))
 				{
 					yield return this.graphs[i];
 				}
+				num = i;
 			}
+			yield break;
 			yield break;
 		}
 
@@ -486,13 +493,16 @@ namespace Pathfinding
 			{
 				yield break;
 			}
-			for (int i = 0; i < this.graphs.Length; i++)
+			int num;
+			for (int i = 0; i < this.graphs.Length; i = num + 1)
 			{
 				if (this.graphs[i] is IUpdatableGraph)
 				{
 					yield return this.graphs[i];
 				}
+				num = i;
 			}
+			yield break;
 			yield break;
 		}
 
@@ -503,13 +513,16 @@ namespace Pathfinding
 			{
 				yield break;
 			}
-			for (int i = 0; i < this.graphs.Length; i++)
+			int num;
+			for (int i = 0; i < this.graphs.Length; i = num + 1)
 			{
 				if (this.graphs[i] is IRaycastableGraph)
 				{
 					yield return this.graphs[i];
 				}
+				num = i;
 			}
+			yield break;
 			yield break;
 		}
 
@@ -537,8 +550,8 @@ namespace Pathfinding
 		[SerializeField]
 		private string dataString;
 
-		[FormerlySerializedAs("data")]
 		[SerializeField]
+		[FormerlySerializedAs("data")]
 		private byte[] upgradeData;
 
 		public byte[] data_backup;

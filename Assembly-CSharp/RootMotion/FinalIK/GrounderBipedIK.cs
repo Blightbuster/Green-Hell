@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder Biped")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder Biped")]
 	public class GrounderBipedIK : Grounder
 	{
 		[ContextMenu("User Manual")]
@@ -106,7 +106,7 @@ namespace RootMotion.FinalIK
 			this.ik.references.pelvis.position += this.solver.pelvis.IKOffset * this.weight;
 			this.SetLegIK(this.ik.solvers.leftFoot, 0);
 			this.SetLegIK(this.ik.solvers.rightFoot, 1);
-			if (this.spineBend != 0f && this.ik.references.spine.Length > 0)
+			if (this.spineBend != 0f && this.ik.references.spine.Length != 0)
 			{
 				this.spineSpeed = Mathf.Clamp(this.spineSpeed, 0f, this.spineSpeed);
 				Vector3 a = base.GetSpineOffsetTarget() * this.weight;

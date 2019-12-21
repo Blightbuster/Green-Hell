@@ -19,36 +19,32 @@ namespace Pathfinding
 			{
 				if (path2[i] is TriangleMeshNode || path2[i] is GridNodeBase)
 				{
-					Funnel.PathPart item = default(Funnel.PathPart);
-					item.startIndex = i;
+					Funnel.PathPart pathPart = default(Funnel.PathPart);
+					pathPart.startIndex = i;
 					uint graphIndex = path2[i].GraphIndex;
-					while (i < path2.Count)
+					while (i < path2.Count && (path2[i].GraphIndex == graphIndex || path2[i] is NodeLink3Node))
 					{
-						if (path2[i].GraphIndex != graphIndex && !(path2[i] is NodeLink3Node))
-						{
-							break;
-						}
 						i++;
 					}
 					i--;
-					item.endIndex = i;
-					if (item.startIndex == 0)
+					pathPart.endIndex = i;
+					if (pathPart.startIndex == 0)
 					{
-						item.startPoint = path.vectorPath[0];
+						pathPart.startPoint = path.vectorPath[0];
 					}
 					else
 					{
-						item.startPoint = (Vector3)path2[item.startIndex - 1].position;
+						pathPart.startPoint = (Vector3)path2[pathPart.startIndex - 1].position;
 					}
-					if (item.endIndex == path2.Count - 1)
+					if (pathPart.endIndex == path2.Count - 1)
 					{
-						item.endPoint = path.vectorPath[path.vectorPath.Count - 1];
+						pathPart.endPoint = path.vectorPath[path.vectorPath.Count - 1];
 					}
 					else
 					{
-						item.endPoint = (Vector3)path2[item.endIndex + 1].position;
+						pathPart.endPoint = (Vector3)path2[pathPart.endIndex + 1].position;
 					}
-					list.Add(item);
+					list.Add(pathPart);
 				}
 				else
 				{
@@ -56,28 +52,26 @@ namespace Pathfinding
 					{
 						throw new Exception("Unsupported node type or null node");
 					}
-					Funnel.PathPart item2 = default(Funnel.PathPart);
-					item2.startIndex = i;
+					Funnel.PathPart pathPart2 = default(Funnel.PathPart);
+					pathPart2.startIndex = i;
 					uint graphIndex2 = path2[i].GraphIndex;
-					for (i++; i < path2.Count; i++)
+					i++;
+					while (i < path2.Count && path2[i].GraphIndex == graphIndex2)
 					{
-						if (path2[i].GraphIndex != graphIndex2)
-						{
-							break;
-						}
+						i++;
 					}
 					i--;
-					if (i - item2.startIndex != 0)
+					if (i - pathPart2.startIndex != 0)
 					{
-						if (i - item2.startIndex != 1)
+						if (i - pathPart2.startIndex != 1)
 						{
-							throw new Exception("NodeLink2 link length greater than two (2) nodes. " + (i - item2.startIndex + 1));
+							throw new Exception("NodeLink2 link length greater than two (2) nodes. " + (i - pathPart2.startIndex + 1));
 						}
-						item2.endIndex = i;
-						item2.isLink = true;
-						item2.startPoint = (Vector3)path2[item2.startIndex].position;
-						item2.endPoint = (Vector3)path2[item2.endIndex].position;
-						list.Add(item2);
+						pathPart2.endIndex = i;
+						pathPart2.isLink = true;
+						pathPart2.startPoint = (Vector3)path2[pathPart2.startIndex].position;
+						pathPart2.endPoint = (Vector3)path2[pathPart2.endIndex].position;
+						list.Add(pathPart2);
 					}
 				}
 			}
@@ -297,7 +291,7 @@ namespace Pathfinding
 				int num3 = list3[j];
 				if (splitAtEveryPortal)
 				{
-					Vector2 vector = (num3 < 0) ? array2[-num3] : array[num3];
+					Vector2 vector = (num3 >= 0) ? array[num3] : array2[-num3];
 					for (int k = num2 + 1; k < Math.Abs(num3); k++)
 					{
 						float t = VectorMath.LineIntersectionFactorXZ(Funnel.FromXZ(array[k]), Funnel.FromXZ(array2[k]), Funnel.FromXZ(p), Funnel.FromXZ(vector));
@@ -350,33 +344,33 @@ namespace Pathfinding
 				Vector2 vector5 = right[i];
 				if (!Funnel.LeftOrColinear(vector3 - vector, vector5 - vector))
 				{
-					goto IL_10A;
+					goto IL_D9;
 				}
 				if (vector == vector3 || Funnel.RightOrColinear(vector2 - vector, vector5 - vector))
 				{
 					vector3 = vector5;
 					num = i;
-					goto IL_10A;
+					goto IL_D9;
 				}
 				vector3 = (vector = vector2);
 				funnelPath.Add(i = (num = num2));
-				IL_171:
+				IL_12F:
 				i++;
 				continue;
-				IL_10A:
+				IL_D9:
 				if (!Funnel.RightOrColinear(vector2 - vector, vector4 - vector))
 				{
-					goto IL_171;
+					goto IL_12F;
 				}
 				if (vector == vector2 || Funnel.LeftOrColinear(vector3 - vector, vector4 - vector))
 				{
 					vector2 = vector4;
 					num2 = i;
-					goto IL_171;
+					goto IL_12F;
 				}
 				vector2 = (vector = vector3);
 				funnelPath.Add(-(i = (num2 = num)));
-				goto IL_171;
+				goto IL_12F;
 			}
 			lastCorner = true;
 			funnelPath.Add(left.Length - 1);

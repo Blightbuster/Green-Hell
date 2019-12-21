@@ -43,11 +43,11 @@ public class FogSensor : SensorBase
 
 	private static float s_DefaultDensityEnd = -1f;
 
-	public static bool s_PlayerInFogSensor;
+	public static bool s_PlayerInFogSensor = false;
 
-	public static float s_FogDensityStart;
+	public static float s_FogDensityStart = 0f;
 
-	public static float s_FogDensityEnd;
+	public static float s_FogDensityEnd = 0f;
 
-	public static int s_NumEnters;
+	public static int s_NumEnters = 0;
 }

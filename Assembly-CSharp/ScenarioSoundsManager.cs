@@ -39,14 +39,11 @@ public class ScenarioSoundsManager : MonoBehaviour
 		}
 		foreach (AudioSource audioSource in this.m_AudioSources.Keys)
 		{
-			if (Time.time - this.m_AudioSources[audioSource] >= audioSource.clip.length)
+			if (Time.time - this.m_AudioSources[audioSource] >= audioSource.clip.length && !audioSource.isPlaying)
 			{
-				if (!audioSource.isPlaying)
-				{
-					this.m_AudioSources.Remove(audioSource);
-					UnityEngine.Object.Destroy(audioSource);
-					break;
-				}
+				this.m_AudioSources.Remove(audioSource);
+				UnityEngine.Object.Destroy(audioSource);
+				break;
 			}
 		}
 	}

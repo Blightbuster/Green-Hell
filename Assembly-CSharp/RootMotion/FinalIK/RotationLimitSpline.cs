@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Spline")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page12.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Rotation Limits/Rotation Limit Spline")]
 	public class RotationLimitSpline : RotationLimit
 	{
 		[ContextMenu("User Manual")]
@@ -38,8 +38,7 @@ namespace RootMotion.FinalIK
 
 		protected override Quaternion LimitRotation(Quaternion rotation)
 		{
-			Quaternion rotation2 = this.LimitSwing(rotation);
-			return RotationLimit.LimitTwist(rotation2, this.axis, base.secondaryAxis, this.twistLimit);
+			return RotationLimit.LimitTwist(this.LimitSwing(rotation), this.axis, base.secondaryAxis, this.twistLimit);
 		}
 
 		public Quaternion LimitSwing(Quaternion rotation)
@@ -54,16 +53,14 @@ namespace RootMotion.FinalIK
 			}
 			Vector3 vector = rotation * this.axis;
 			float num = RotationLimit.GetOrthogonalAngle(vector, base.secondaryAxis, this.axis);
-			float num2 = Vector3.Dot(vector, base.crossAxis);
-			if (num2 < 0f)
+			if (Vector3.Dot(vector, base.crossAxis) < 0f)
 			{
 				num = 180f + (180f - num);
 			}
 			float maxDegreesDelta = this.spline.Evaluate(num);
 			Quaternion to = Quaternion.FromToRotation(this.axis, vector);
 			Quaternion rotation2 = Quaternion.RotateTowards(Quaternion.identity, to, maxDegreesDelta);
-			Quaternion lhs = Quaternion.FromToRotation(vector, rotation2 * this.axis);
-			return lhs * rotation;
+			return Quaternion.FromToRotation(vector, rotation2 * this.axis) * rotation;
 		}
 
 		[Range(0f, 180f)]

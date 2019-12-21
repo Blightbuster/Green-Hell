@@ -5,8 +5,8 @@ using Pathfinding.Util;
 using UnityEngine;
 
 [RequireComponent(typeof(Seeker))]
-[HelpURL("http://arongranberg.com/astar/docs/class_a_i_lerp.php")]
 [AddComponentMenu("Pathfinding/AI/AILerp (2D,3D)")]
+[HelpURL("http://arongranberg.com/astar/docs/class_a_i_lerp.php")]
 public class AILerp : VersionedMonoBehaviour
 {
 	public bool targetReached { get; private set; }
@@ -59,12 +59,24 @@ public class AILerp : VersionedMonoBehaviour
 
 	protected IEnumerator RepeatTrySearchPath()
 	{
-		for (;;)
-		{
-			float v = this.TrySearchPath();
-			yield return new WaitForSeconds(v);
-		}
-		yield break;
+		/*
+An exception occurred when decompiling this method (06002562)
+
+ICSharpCode.Decompiler.DecompilerException: Error decompiling System.Collections.IEnumerator AILerp::RepeatTrySearchPath()
+ ---> System.ArgumentOutOfRangeException: Der Index lag außerhalb des Bereichs. Er darf nicht negativ und kleiner als die Sammlung sein.
+Parametername: index
+   bei System.ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+   bei ICSharpCode.Decompiler.ILAst.StateRangeAnalysis.CreateLabelRangeMapping(List`1 body, Int32 pos, Int32 bodyLength, LabelRangeMapping result, Boolean onlyInitialLabels) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\StateRange.cs:Zeile 326.
+   bei ICSharpCode.Decompiler.ILAst.MicrosoftYieldReturnDecompiler.AnalyzeMoveNext() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\MicrosoftYieldReturnDecompiler.cs:Zeile 347.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 93.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, List`1 list_ILNode, Func`2 getILInlining, List`1 listExpr, List`1 listBlock, Dictionary`2 labelRefCount) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 69.
+   bei ICSharpCode.Decompiler.ILAst.ILAstOptimizer.Optimize(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, ILAstOptimizationStep abortBeforeStep) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\ILAstOptimizer.cs:Zeile 233.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(IEnumerable`1 parameters, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 118.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 88.
+   --- Ende der internen Ausnahmestapelüberwachung ---
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 92.
+   bei ICSharpCode.Decompiler.Ast.AstBuilder.CreateMethodBody(MethodDef method, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, MethodKind methodKind, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstBuilder.cs:Zeile 1427.
+*/;
 	}
 
 	public float TrySearchPath()
@@ -145,13 +157,11 @@ public class AILerp : VersionedMonoBehaviour
 			this.previousMovementOrigin = this.interpolator.position;
 			this.previousMovementDirection = this.interpolator.tangent.normalized * this.interpolator.remainingDistance;
 			this.previousMovementStartTime = Time.time;
+			return;
 		}
-		else
-		{
-			this.previousMovementOrigin = Vector3.zero;
-			this.previousMovementDirection = Vector3.zero;
-			this.previousMovementStartTime = -9999f;
-		}
+		this.previousMovementOrigin = Vector3.zero;
+		this.previousMovementDirection = Vector3.zero;
+		this.previousMovementStartTime = -9999f;
 	}
 
 	public virtual Vector3 GetFeetPosition()
@@ -162,7 +172,7 @@ public class AILerp : VersionedMonoBehaviour
 	protected virtual void ConfigureNewPath()
 	{
 		bool valid = this.interpolator.valid;
-		Vector3 vector = (!valid) ? Vector3.zero : this.interpolator.tangent;
+		Vector3 vector = valid ? this.interpolator.tangent : Vector3.zero;
 		this.interpolator.SetPath(this.path.vectorPath);
 		this.interpolator.MoveToClosestPoint(this.GetFeetPosition());
 		if (this.interpolatePathSwitches && this.switchPathInterpolationSpeed > 0.01f && valid)
@@ -215,8 +225,7 @@ public class AILerp : VersionedMonoBehaviour
 		float num = this.switchPathInterpolationSpeed * (Time.time - this.previousMovementStartTime);
 		if (this.interpolatePathSwitches && num < 1f)
 		{
-			Vector3 a = this.previousMovementOrigin + Vector3.ClampMagnitude(this.previousMovementDirection, this.speed * (Time.time - this.previousMovementStartTime));
-			return Vector3.Lerp(a, this.interpolator.position, num);
+			return Vector3.Lerp(this.previousMovementOrigin + Vector3.ClampMagnitude(this.previousMovementDirection, this.speed * (Time.time - this.previousMovementStartTime)), this.interpolator.position, num);
 		}
 		return this.interpolator.position;
 	}

@@ -5,19 +5,6 @@ namespace Cinemachine
 {
 	public class CinemachineBlend
 	{
-		public CinemachineBlend(ICinemachineCamera a, ICinemachineCamera b, AnimationCurve curve, float duration, float t)
-		{
-			if (a == null || b == null)
-			{
-				throw new ArgumentException("Blend cameras cannot be null");
-			}
-			this.CamA = a;
-			this.CamB = b;
-			this.BlendCurve = curve;
-			this.TimeInBlend = t;
-			this.Duration = duration;
-		}
-
 		public ICinemachineCamera CamA { get; set; }
 
 		public ICinemachineCamera CamB { get; set; }
@@ -30,7 +17,11 @@ namespace Cinemachine
 		{
 			get
 			{
-				return (this.BlendCurve == null) ? 0f : this.BlendCurve.Evaluate(this.TimeInBlend);
+				if (this.BlendCurve == null)
+				{
+					return 0f;
+				}
+				return this.BlendCurve.Evaluate(this.TimeInBlend);
 			}
 		}
 
@@ -56,8 +47,8 @@ namespace Cinemachine
 		{
 			get
 			{
-				string arg = (this.CamA == null) ? "(none)" : ("[" + this.CamA.Name + "]");
-				string arg2 = (this.CamB == null) ? "(none)" : ("[" + this.CamB.Name + "]");
+				string arg = (this.CamA != null) ? ("[" + this.CamA.Name + "]") : "(none)";
+				string arg2 = (this.CamB != null) ? ("[" + this.CamB.Name + "]") : "(none)";
 				int num = (int)(this.BlendWeight * 100f);
 				return string.Format("{0} {1}% from {2}", arg2, num, arg);
 			}
@@ -76,6 +67,19 @@ namespace Cinemachine
 			}
 			blendSourceVirtualCamera = (this.CamB as BlendSourceVirtualCamera);
 			return blendSourceVirtualCamera != null && blendSourceVirtualCamera.Blend.Uses(cam);
+		}
+
+		public CinemachineBlend(ICinemachineCamera a, ICinemachineCamera b, AnimationCurve curve, float duration, float t)
+		{
+			if (a == null || b == null)
+			{
+				throw new ArgumentException("Blend cameras cannot be null");
+			}
+			this.CamA = a;
+			this.CamB = b;
+			this.BlendCurve = curve;
+			this.TimeInBlend = t;
+			this.Duration = duration;
 		}
 
 		public void UpdateCameraState(Vector3 worldUp, float deltaTime)

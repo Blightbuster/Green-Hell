@@ -8,21 +8,6 @@ namespace Pathfinding.RVO
 {
 	public class Simulator
 	{
-		public Simulator(int workers, bool doubleBuffering, MovementPlane movementPlane)
-		{
-			this.workers = new Simulator.Worker[workers];
-			this.doubleBuffering = doubleBuffering;
-			this.DesiredDeltaTime = 1f;
-			this.movementPlane = movementPlane;
-			this.Quadtree = new RVOQuadtree();
-			for (int i = 0; i < workers; i++)
-			{
-				this.workers[i] = new Simulator.Worker(this);
-			}
-			this.agents = new List<Agent>();
-			this.obstacles = new List<ObstacleVertex>();
-		}
-
 		public RVOQuadtree Quadtree { get; private set; }
 
 		public float DeltaTime
@@ -37,7 +22,7 @@ namespace Pathfinding.RVO
 		{
 			get
 			{
-				return this.workers != null && this.workers.Length > 0;
+				return this.workers != null && this.workers.Length != 0;
 			}
 		}
 
@@ -61,6 +46,21 @@ namespace Pathfinding.RVO
 		public List<ObstacleVertex> GetObstacles()
 		{
 			return this.obstacles;
+		}
+
+		public Simulator(int workers, bool doubleBuffering, MovementPlane movementPlane)
+		{
+			this.workers = new Simulator.Worker[workers];
+			this.doubleBuffering = doubleBuffering;
+			this.DesiredDeltaTime = 1f;
+			this.movementPlane = movementPlane;
+			this.Quadtree = new RVOQuadtree();
+			for (int i = 0; i < workers; i++)
+			{
+				this.workers[i] = new Simulator.Worker(this);
+			}
+			this.agents = new List<Agent>();
+			this.obstacles = new List<ObstacleVertex>();
 		}
 
 		public void ClearAgents()
@@ -221,9 +221,7 @@ namespace Pathfinding.RVO
 			obstacleVertex.height = height;
 			obstacleVertex2.height = height;
 			obstacleVertex2.ignore = true;
-			ObstacleVertex obstacleVertex3 = obstacleVertex;
-			Vector2 vector = new Vector2(b.x - a.x, b.z - a.z);
-			obstacleVertex3.dir = vector.normalized;
+			obstacleVertex.dir = new Vector2(b.x - a.x, b.z - a.z).normalized;
 			obstacleVertex2.dir = -obstacleVertex.dir;
 			this.BlockUntilSimulationStepIsDone();
 			this.obstacles.Add(obstacleVertex);
@@ -251,7 +249,7 @@ namespace Pathfinding.RVO
 			ObstacleVertex obstacleVertex = obstacle;
 			while (i < vertices.Length)
 			{
-				obstacleVertex.position = ((!flag) ? matrix.MultiplyPoint3x4(vertices[i]) : vertices[i]);
+				obstacleVertex.position = (flag ? vertices[i] : matrix.MultiplyPoint3x4(vertices[i]));
 				obstacleVertex = obstacleVertex.next;
 				i++;
 				if (obstacleVertex == obstacle || obstacleVertex == null)
@@ -266,9 +264,7 @@ namespace Pathfinding.RVO
 						else
 						{
 							Vector3 vector = obstacleVertex.next.position - obstacleVertex.position;
-							ObstacleVertex obstacleVertex2 = obstacleVertex;
-							Vector2 vector2 = new Vector2(vector.x, vector.z);
-							obstacleVertex2.dir = vector2.normalized;
+							obstacleVertex.dir = new Vector2(vector.x, vector.z).normalized;
 						}
 						obstacleVertex = obstacleVertex.next;
 					}
@@ -415,6 +411,7 @@ namespace Pathfinding.RVO
 						{
 							this.agents[num2].PostCalculation();
 						}
+						return;
 					}
 				}
 				else

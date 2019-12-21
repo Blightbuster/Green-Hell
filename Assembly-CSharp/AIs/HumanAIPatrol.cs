@@ -12,28 +12,26 @@ namespace AIs
 			if (!this.HasPath())
 			{
 				DebugUtils.Assert("Path is not set!", true, DebugUtils.AssertType.Info);
+				return;
 			}
-			else
+			float num = 0f;
+			for (int i = 0; i < this.m_Path.Count; i++)
 			{
-				float num = 0f;
-				for (int i = 0; i < this.m_Path.Count; i++)
+				this.m_Path[i].m_Next.m_Prev = this.m_Path[i];
+				num += Vector3.Distance(this.m_Path[i].transform.position, this.m_Path[i].m_Next.transform.position);
+			}
+			float progress = 0f;
+			float num2 = 0f;
+			for (int j = 0; j < this.m_Path.Count; j++)
+			{
+				if (j == 0)
 				{
-					this.m_Path[i].m_Next.m_Prev = this.m_Path[i];
-					num += Vector3.Distance(this.m_Path[i].transform.position, this.m_Path[i].m_Next.transform.position);
+					this.m_Path[j].m_Progress = progress;
 				}
-				float progress = 0f;
-				float num2 = 0f;
-				for (int j = 0; j < this.m_Path.Count; j++)
+				else
 				{
-					if (j == 0)
-					{
-						this.m_Path[j].m_Progress = progress;
-					}
-					else
-					{
-						num2 += Vector3.Distance(this.m_Path[j].m_Prev.transform.position, this.m_Path[j].transform.position);
-						this.m_Path[j].m_Progress = num2 / num;
-					}
+					num2 += Vector3.Distance(this.m_Path[j].m_Prev.transform.position, this.m_Path[j].transform.position);
+					this.m_Path[j].m_Progress = num2 / num;
 				}
 			}
 		}
@@ -52,7 +50,7 @@ namespace AIs
 				ai.m_PatrolModule = ai.gameObject.AddComponent<PatrolModule>();
 			}
 			ai.m_PatrolModule.m_Patrol = this;
-			ai.m_PatrolModule.Initialize();
+			ai.m_PatrolModule.Initialize(ai);
 		}
 
 		public bool HasPath()
@@ -62,12 +60,11 @@ namespace AIs
 
 		protected override void OnActivate()
 		{
-			base.OnActivate();
-			float maxValue = float.MaxValue;
-			AIPathPoint aipathPoint = this.GetClosestPathPoint(out maxValue);
-			for (int i = 0; i < 5; i++)
+			AIPathPoint aipathPoint = this.GetClosestPathPointInRange(EnemyAISpawnManager.Get().m_MinActivationDistance, EnemyAISpawnManager.Get().m_MaxActivationDistance);
+			if (!aipathPoint)
 			{
-				aipathPoint = aipathPoint.m_Prev;
+				float num = 0f;
+				aipathPoint = this.GetClosestPathPoint(out num);
 			}
 			Vector3 normalized = (aipathPoint.m_Next.transform.position - aipathPoint.transform.position).normalized;
 			foreach (HumanAI humanAI in this.m_Members)
@@ -77,7 +74,15 @@ namespace AIs
 				humanAI.m_PatrolModule.m_CurrentPathPoint = aipathPoint.m_Next;
 				humanAI.m_PatrolModule.CalcPath();
 			}
-			this.m_Leader = this.m_Members[UnityEngine.Random.Range(0, this.m_Members.Count)];
+			if (this.m_Members.Count > 0)
+			{
+				this.m_Leader = this.m_Members[UnityEngine.Random.Range(0, this.m_Members.Count)];
+			}
+			else
+			{
+				this.m_Leader = null;
+			}
+			base.OnActivate();
 		}
 
 		protected override void OnEnterCalmState()
@@ -122,18 +127,21 @@ namespace AIs
 			return result;
 		}
 
-		protected override void UpdateActivity()
+		public AIPathPoint GetClosestPathPointInRange(float min_dist, float max_dist)
 		{
-			if (this.m_ChallengeGroup)
+			Vector3 position = Player.Get().transform.position;
+			AIPathPoint result = null;
+			float num = float.MaxValue;
+			foreach (AIPathPoint aipathPoint in this.m_Path)
 			{
-				return;
+				float num2 = aipathPoint.transform.position.Distance(position);
+				if (num2 >= min_dist && num2 <= max_dist && num2 < num)
+				{
+					result = aipathPoint;
+					num = num2;
+				}
 			}
-			float maxValue = float.MaxValue;
-			AIPathPoint closestPathPoint = this.GetClosestPathPoint(out maxValue);
-			if (closestPathPoint && maxValue >= HumanAIGroupManager.Get().m_DeactivationDistance)
-			{
-				base.Deactivate();
-			}
+			return result;
 		}
 
 		public List<AIPathPoint> m_Path = new List<AIPathPoint>();

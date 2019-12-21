@@ -15,11 +15,11 @@ namespace AIs
 		{
 			base.Prepare();
 			base.StartAction(this.m_JumpBack);
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_HumanAI.transform.position).GetNormalized2D();
+			Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_HumanAI.transform.position).GetNormalized2D();
 			float num = this.m_HumanAI.transform.forward.GetNormalized2D().AngleSigned(normalized2D, Vector3.up);
 			if (Mathf.Abs(num) > 45f)
 			{
-				this.m_HumanAI.transform.Rotate(Vector3.up, (num <= 0f) ? (num + 45f) : (num - 45f));
+				this.m_HumanAI.transform.Rotate(Vector3.up, (num > 0f) ? (num - 45f) : (num + 45f));
 			}
 			this.m_StartPos = this.m_AI.transform.position;
 		}
@@ -27,8 +27,7 @@ namespace AIs
 		protected override void OnDeactivate()
 		{
 			base.OnDeactivate();
-			float num = this.m_AI.transform.position.Distance2D(this.m_StartPos);
-			if (num < 2f)
+			if (this.m_AI.transform.position.Distance2D(this.m_StartPos) < 2f)
 			{
 				this.m_AI.m_HumanFightModule.m_LastFailedJumpBackPos = this.m_AI.transform.position;
 			}

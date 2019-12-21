@@ -4,17 +4,6 @@ using Enums;
 
 public class ConstructionInfo : ItemInfo
 {
-	public ConstructionInfo()
-	{
-		this.m_ConstructionType = ConstructionType.None;
-		this.m_PlaceToAttachNames = new List<string>();
-		this.m_PlaceToAttachToNames = new List<string>();
-		this.m_RestingParamsMul = 1f;
-		this.m_ParamsMulRadius = -1f;
-		this.m_MenuIcon = string.Empty;
-		this.m_HitsCountToDestroy = 0;
-	}
-
 	public List<string> m_PlaceToAttachNames { get; set; }
 
 	public List<string> m_PlaceToAttachToNames { get; set; }
@@ -29,6 +18,17 @@ public class ConstructionInfo : ItemInfo
 
 	public int m_HitsCountToDestroy { get; set; }
 
+	public ConstructionInfo()
+	{
+		this.m_ConstructionType = ConstructionType.None;
+		this.m_PlaceToAttachNames = new List<string>();
+		this.m_PlaceToAttachToNames = new List<string>();
+		this.m_RestingParamsMul = 1f;
+		this.m_ParamsMulRadius = -1f;
+		this.m_MenuIcon = string.Empty;
+		this.m_HitsCountToDestroy = 0;
+	}
+
 	public override bool IsConstruction()
 	{
 		return true;
@@ -38,8 +38,7 @@ public class ConstructionInfo : ItemInfo
 	{
 		if (key.GetName() == "PlacesToAttach")
 		{
-			string svalue = key.GetVariable(0).SValue;
-			string[] array = svalue.Split(new char[]
+			string[] array = key.GetVariable(0).SValue.Split(new char[]
 			{
 				';'
 			});
@@ -47,11 +46,11 @@ public class ConstructionInfo : ItemInfo
 			{
 				this.m_PlaceToAttachNames.Add(array[i]);
 			}
+			return;
 		}
-		else if (key.GetName() == "PlacesToAttachTo")
+		if (key.GetName() == "PlacesToAttachTo")
 		{
-			string svalue2 = key.GetVariable(0).SValue;
-			string[] array2 = svalue2.Split(new char[]
+			string[] array2 = key.GetVariable(0).SValue.Split(new char[]
 			{
 				';'
 			});
@@ -59,30 +58,33 @@ public class ConstructionInfo : ItemInfo
 			{
 				this.m_PlaceToAttachToNames.Add(array2[j]);
 			}
+			return;
 		}
-		else if (key.GetName() == "RestingParamsMul")
+		if (key.GetName() == "RestingParamsMul")
 		{
 			this.m_RestingParamsMul = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "ParamsMulRadius")
+		if (key.GetName() == "ParamsMulRadius")
 		{
 			this.m_ParamsMulRadius = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "ConstructionType")
+		if (key.GetName() == "ConstructionType")
 		{
 			this.m_ConstructionType = (ConstructionType)Enum.Parse(typeof(ConstructionType), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "MenuIcon")
+		if (key.GetName() == "MenuIcon")
 		{
 			this.m_MenuIcon = key.GetVariable(0).SValue;
+			return;
 		}
-		else if (key.GetName() == "HitsCountToDestroy")
+		if (key.GetName() == "HitsCountToDestroy")
 		{
 			this.m_HitsCountToDestroy = key.GetVariable(0).IValue;
+			return;
 		}
-		else
-		{
-			base.LoadParams(key);
-		}
+		base.LoadParams(key);
 	}
 }

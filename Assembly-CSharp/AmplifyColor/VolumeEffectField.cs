@@ -21,61 +21,42 @@ namespace AmplifyColor
 
 		public static bool IsValidType(string type)
 		{
-			if (type != null)
-			{
-				if (type == "System.Single" || type == "System.Boolean" || type == "UnityEngine.Color" || type == "UnityEngine.Vector2" || type == "UnityEngine.Vector3" || type == "UnityEngine.Vector4")
-				{
-					return true;
-				}
-			}
-			return false;
+			return type == "System.Single" || type == "System.Boolean" || type == "UnityEngine.Color" || type == "UnityEngine.Vector2" || type == "UnityEngine.Vector3" || type == "UnityEngine.Vector4";
 		}
 
 		public void UpdateValue(object val)
 		{
-			string text = this.fieldType;
-			if (text != null)
+			string a = this.fieldType;
+			if (a == "System.Single")
 			{
-				if (!(text == "System.Single"))
-				{
-					if (!(text == "System.Boolean"))
-					{
-						if (!(text == "UnityEngine.Color"))
-						{
-							if (!(text == "UnityEngine.Vector2"))
-							{
-								if (!(text == "UnityEngine.Vector3"))
-								{
-									if (text == "UnityEngine.Vector4")
-									{
-										this.valueVector4 = (Vector4)val;
-									}
-								}
-								else
-								{
-									this.valueVector3 = (Vector3)val;
-								}
-							}
-							else
-							{
-								this.valueVector2 = (Vector2)val;
-							}
-						}
-						else
-						{
-							this.valueColor = (Color)val;
-						}
-					}
-					else
-					{
-						this.valueBoolean = (bool)val;
-					}
-				}
-				else
-				{
-					this.valueSingle = (float)val;
-				}
+				this.valueSingle = (float)val;
+				return;
 			}
+			if (a == "System.Boolean")
+			{
+				this.valueBoolean = (bool)val;
+				return;
+			}
+			if (a == "UnityEngine.Color")
+			{
+				this.valueColor = (Color)val;
+				return;
+			}
+			if (a == "UnityEngine.Vector2")
+			{
+				this.valueVector2 = (Vector2)val;
+				return;
+			}
+			if (a == "UnityEngine.Vector3")
+			{
+				this.valueVector3 = (Vector3)val;
+				return;
+			}
+			if (!(a == "UnityEngine.Vector4"))
+			{
+				return;
+			}
+			this.valueVector4 = (Vector4)val;
 		}
 
 		public string fieldName;

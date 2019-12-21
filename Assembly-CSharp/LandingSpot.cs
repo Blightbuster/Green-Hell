@@ -14,7 +14,7 @@ public class LandingSpot : MonoBehaviour
 		{
 			this._controller = this._thisT.parent.GetComponent<LandingSpotController>();
 		}
-		if (this._controller._autoCatchDelay.x > 0f)
+		if (this._controller._autoCatchDelay.x > 0f && !this._controller.m_LandOnlyOnStart)
 		{
 			base.StartCoroutine(this.GetFlockChild(this._controller._autoCatchDelay.x, this._controller._autoCatchDelay.y));
 		}
@@ -175,11 +175,12 @@ public class LandingSpot : MonoBehaviour
 				}
 				this._controller._activeLandingSpots++;
 			}
-			else if (this._controller._autoCatchDelay.x > 0f)
+			else if (this._controller._autoCatchDelay.x > 0f && !this._controller.m_LandOnlyOnStart)
 			{
 				base.StartCoroutine(this.GetFlockChild(this._controller._autoCatchDelay.x, this._controller._autoCatchDelay.y));
 			}
 		}
+		yield break;
 		yield break;
 	}
 
@@ -208,6 +209,7 @@ public class LandingSpot : MonoBehaviour
 				if (this._controller._autoDismountDelay.x > 0f)
 				{
 					base.Invoke("ReleaseFlockChild", UnityEngine.Random.Range(this._controller._autoDismountDelay.x, this._controller._autoDismountDelay.y));
+					return;
 				}
 			}
 			else if (this._controller._autoCatchDelay.x > 0f)
@@ -239,7 +241,7 @@ public class LandingSpot : MonoBehaviour
 			this.landingChild._landing = false;
 			this.landingChild.Flap();
 			this.landingChild._wayPoint = new Vector3(this.landingChild._wayPoint.x, this._thisT.position.y + 10f, this.landingChild._wayPoint.z);
-			if (this._controller._autoCatchDelay.x > 0f)
+			if (this._controller._autoCatchDelay.x > 0f && !this._controller.m_LandOnlyOnStart)
 			{
 				base.StartCoroutine(this.GetFlockChild(this._controller._autoCatchDelay.x + 0.1f, this._controller._autoCatchDelay.y + 0.1f));
 			}

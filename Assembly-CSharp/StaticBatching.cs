@@ -15,11 +15,9 @@ public class StaticBatching : MonoBehaviour
 			if (this.m_Object.activeSelf)
 			{
 				this.m_Object.SetActive(false);
+				return;
 			}
-			else
-			{
-				this.m_Object.SetActive(true);
-			}
+			this.m_Object.SetActive(true);
 		}
 	}
 

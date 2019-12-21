@@ -9,8 +9,9 @@ public class FlockChildSound : MonoBehaviour
 		this._flockChild = base.GetComponent<FlockChild>();
 		this._audio = base.GetComponent<AudioSource>();
 		this._audio.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.AI);
+		this._audio.priority = 255;
 		base.InvokeRepeating("PlayRandomSound", UnityEngine.Random.value + 1f, 1f);
-		if (this._scareSounds.Length > 0)
+		if (this._scareSounds.Length != 0)
 		{
 			base.InvokeRepeating("ScareSound", 1f, 0.01f);
 		}
@@ -32,14 +33,15 @@ public class FlockChildSound : MonoBehaviour
 		}
 		if (base.gameObject.activeInHierarchy)
 		{
-			if (!this._audio.isPlaying && this._flightSounds.Length > 0 && this._flightSoundRandomChance > UnityEngine.Random.value && !this._flockChild._landing)
+			if (!this._audio.isPlaying && this._flightSounds.Length != 0 && this._flightSoundRandomChance > UnityEngine.Random.value && !this._flockChild._landing)
 			{
 				this._audio.clip = this._flightSounds[UnityEngine.Random.Range(0, this._flightSounds.Length)];
 				this._audio.pitch = UnityEngine.Random.Range(this._pitchMin, this._pitchMax);
 				this._audio.volume = UnityEngine.Random.Range(this._volumeMin, this._volumeMax);
 				this._audio.Play();
+				return;
 			}
-			else if (!this._audio.isPlaying && this._idleSounds.Length > 0 && this._idleSoundRandomChance > UnityEngine.Random.value && this._flockChild._landing)
+			if (!this._audio.isPlaying && this._idleSounds.Length != 0 && this._idleSoundRandomChance > UnityEngine.Random.value && this._flockChild._landing)
 			{
 				this._audio.clip = this._idleSounds[UnityEngine.Random.Range(0, this._idleSounds.Length)];
 				this._audio.pitch = UnityEngine.Random.Range(this._pitchMin, this._pitchMax);

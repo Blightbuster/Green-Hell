@@ -24,12 +24,10 @@ namespace AIs
 			{
 				this.m_SnareTrap.SetupParams();
 				base.AddToPlan(this.m_SnareTrap);
+				return;
 			}
-			else
-			{
-				this.m_Idle.SetupParams(float.MaxValue);
-				base.AddToPlan(this.m_Idle);
-			}
+			this.m_Idle.SetupParams(float.MaxValue);
+			base.AddToPlan(this.m_Idle);
 		}
 
 		private SnareTrap m_SnareTrap;

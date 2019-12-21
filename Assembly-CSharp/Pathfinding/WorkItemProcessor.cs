@@ -5,11 +5,6 @@ namespace Pathfinding
 {
 	internal class WorkItemProcessor : IWorkItemContext
 	{
-		public WorkItemProcessor(AstarPath astar)
-		{
-			this.astar = astar;
-		}
-
 		public bool workItemsInProgressRightNow { get; private set; }
 
 		public bool workItemsInProgress { get; private set; }
@@ -25,6 +20,11 @@ namespace Pathfinding
 			{
 				this.astar.FloodFill();
 			}
+		}
+
+		public WorkItemProcessor(AstarPath astar)
+		{
+			this.astar = astar;
 		}
 
 		public void OnFloodFill()
@@ -52,28 +52,28 @@ namespace Pathfinding
 					this.workItemsInProgress = true;
 					this.queuedWorkItemFloodFill = false;
 				}
-				AstarWorkItem value = this.workItems[0];
-				if (value.init != null)
+				AstarWorkItem astarWorkItem = this.workItems[0];
+				if (astarWorkItem.init != null)
 				{
-					value.init();
-					value.init = null;
+					astarWorkItem.init();
+					astarWorkItem.init = null;
 				}
-				if (value.initWithContext != null)
+				if (astarWorkItem.initWithContext != null)
 				{
-					value.initWithContext(this);
-					value.initWithContext = null;
+					astarWorkItem.initWithContext(this);
+					astarWorkItem.initWithContext = null;
 				}
-				this.workItems[0] = value;
+				this.workItems[0] = astarWorkItem;
 				bool flag;
 				try
 				{
-					if (value.update != null)
+					if (astarWorkItem.update != null)
 					{
-						flag = value.update(force);
+						flag = astarWorkItem.update(force);
 					}
 					else
 					{
-						flag = (value.updateWithContext == null || value.updateWithContext(this, force));
+						flag = (astarWorkItem.updateWithContext == null || astarWorkItem.updateWithContext(this, force));
 					}
 				}
 				catch

@@ -1,11 +1,12 @@
 ﻿using System;
+using AIs;
 using CJTools;
 using Enums;
 using UnityEngine;
 
 public class Injury
 {
-	public Injury(InjuryType type, InjuryPlace place, BIWoundSlot slot, InjuryState state, int poison_level = 0, Injury parent_injury = null)
+	public Injury(InjuryType type, InjuryPlace place, BIWoundSlot slot, InjuryState state, int poison_level = 0, Injury parent_injury = null, DamageInfo damage_info = null)
 	{
 		this.m_Type = type;
 		this.m_Place = place;
@@ -15,9 +16,13 @@ public class Injury
 		this.m_PoisonLevel = poison_level;
 		this.m_TimeToInfect = this.m_DefaultTimeToInfect;
 		this.m_ParentInjury = parent_injury;
-		if (type == InjuryType.VenomBite || type == InjuryType.SnakeBite)
+		if (damage_info != null && damage_info.m_Damager != null)
 		{
-			Player.Get().GetComponent<PlayerDiseasesModule>().RequestDisease(ConsumeEffect.Fever, 0f, 1);
+			AI component = damage_info.m_Damager.GetComponent<AI>();
+			if (component != null)
+			{
+				this.m_AIDamager = component.m_ID;
+			}
 		}
 		this.m_State = state;
 		this.UpdateHealthDecreasePerSec();
@@ -95,98 +100,123 @@ public class Injury
 		}
 		if (biwoundSlot != null)
 		{
-			PlayerInjuryModule.Get().AddInjury(InjuryType.WormHole, this.m_Place, biwoundSlot, InjuryState.WormInside, 0, parent_injury);
+			PlayerInjuryModule.Get().AddInjury(InjuryType.WormHole, this.m_Place, biwoundSlot, InjuryState.WormInside, 0, parent_injury, null);
 		}
 	}
 
 	private void SetWoundMaterial(GameObject obj)
+	{
+		Injury.SetWoundMaterial(obj, this.m_State, this.m_Type);
+	}
+
+	public static void SetWoundMaterial(GameObject obj, InjuryState state, InjuryType type)
 	{
 		if (obj == null)
 		{
 			return;
 		}
 		Renderer componentDeepChild = General.GetComponentDeepChild<Renderer>(obj);
-		switch (this.m_Type)
+		switch (type)
 		{
 		case InjuryType.SmallWoundAbrassion:
-			if (this.m_State == InjuryState.Open)
+			if (state == InjuryState.Open)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_abrasion", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Infected)
+			if (state == InjuryState.Infected)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_abrasion_infected", typeof(Material)) as Material);
+				return;
 			}
 			break;
 		case InjuryType.SmallWoundScratch:
-			if (this.m_State == InjuryState.Open)
+			if (state == InjuryState.Open)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_scratch", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Infected)
+			if (state == InjuryState.Infected)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_scratch_infected", typeof(Material)) as Material);
+				return;
 			}
 			break;
 		case InjuryType.Laceration:
-			if (this.m_State == InjuryState.Bleeding)
+			if (state == InjuryState.Bleeding)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Open)
+			if (state == InjuryState.Open)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Infected)
+			if (state == InjuryState.Infected)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_infected", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Closed)
+			if (state == InjuryState.Closed)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_closed", typeof(Material)) as Material);
+				return;
 			}
 			break;
 		case InjuryType.LacerationCat:
-			if (this.m_State == InjuryState.Bleeding)
-			{
-				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_cat_bleeding", typeof(Material)) as Material);
-			}
-			else if (this.m_State == InjuryState.Open)
+			if (state == InjuryState.Bleeding)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_cat", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Infected)
+			if (state == InjuryState.Open)
+			{
+				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_cat", typeof(Material)) as Material);
+				return;
+			}
+			if (state == InjuryState.Infected)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_cat_infected", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Closed)
+			if (state == InjuryState.Closed)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_laceration_cat_closed", typeof(Material)) as Material);
+				return;
 			}
 			break;
 		case InjuryType.Rash:
 			componentDeepChild.material = (Resources.Load("Decals/wound_rash", typeof(Material)) as Material);
+			return;
+		case InjuryType.Worm:
+		case InjuryType.Leech:
+		case InjuryType.LeechHole:
 			break;
 		case InjuryType.WormHole:
-			if (this.m_State == InjuryState.WormInside)
+			if (state == InjuryState.WormInside)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_worm_hole_closed", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Open)
+			if (state == InjuryState.Open)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_worm_leech_hole", typeof(Material)) as Material);
+				return;
 			}
-			else if (this.m_State == InjuryState.Infected)
+			if (state == InjuryState.Infected)
 			{
 				componentDeepChild.material = (Resources.Load("Decals/wound_worm_hole_infected", typeof(Material)) as Material);
 			}
 			break;
 		case InjuryType.VenomBite:
 			componentDeepChild.material = (Resources.Load("Decals/wound_venom_bite", typeof(Material)) as Material);
-			break;
+			return;
 		case InjuryType.SnakeBite:
 			componentDeepChild.material = (Resources.Load("Decals/wound_snake_bite", typeof(Material)) as Material);
-			break;
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -228,12 +258,10 @@ public class Injury
 			if (this.m_Bandage.GetComponent<Item>() != null && (this.m_Bandage.GetComponent<Item>().m_Info.m_ID == ItemID.Larva || this.m_Bandage.GetComponent<Item>().m_Info.m_ID == ItemID.Ants || this.m_Bandage.GetComponent<Item>().m_Info.m_ID == ItemID.Maggot))
 			{
 				UnityEngine.Object.Destroy(this.m_Bandage);
+				return;
 			}
-			else
-			{
-				this.m_Bandage.SetActive(false);
-				this.m_Bandage = null;
-			}
+			this.m_Bandage.SetActive(false);
+			this.m_Bandage = null;
 		}
 	}
 
@@ -332,7 +360,14 @@ public class Injury
 				}
 				else if (currentTimeMinutes - this.m_HealingStartTime > this.GetHealingDuration())
 				{
-					PlayerInjuryModule.Get().HealInjury(this);
+					if (this.m_HealingResultInjuryState == InjuryState.Infected)
+					{
+						this.Infect();
+					}
+					else
+					{
+						PlayerInjuryModule.Get().HealInjury(this);
+					}
 				}
 			}
 			else if (this.m_State == InjuryState.Infected && currentTimeMinutes - this.m_HealingStartTime > this.GetHealingDuration())
@@ -379,7 +414,7 @@ public class Injury
 				{
 					DamageInfo damageInfo = new DamageInfo();
 					float num = 1f;
-					if (SleepController.Get().IsActive())
+					if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
 					{
 						num = Player.GetSleepTimeFactor();
 						damageInfo.m_Damage = num * 0.2f;
@@ -388,6 +423,7 @@ public class Injury
 					{
 						damageInfo.m_Damage = Time.deltaTime * 0.2f * num;
 					}
+					damageInfo.m_FromInjury = true;
 					damageInfo.m_PlayDamageSound = false;
 					Player.Get().TakeDamage(damageInfo);
 				}
@@ -409,7 +445,14 @@ public class Injury
 						PlayerInjuryModule.Get().HealInjury(this);
 					}
 				}
-				else if (currentTimeMinutes < this.m_HealingStartTime && currentTimeMinutes - this.m_StartTimeInMinutes > this.m_TimeToInfect)
+				else if (currentTimeMinutes < this.m_HealingStartTime)
+				{
+					if (currentTimeMinutes - this.m_StartTimeInMinutes > this.m_TimeToInfect)
+					{
+						this.Infect();
+					}
+				}
+				else if (this.m_HealingResultInjuryState == InjuryState.Infected && currentTimeMinutes - this.m_HealingStartTime > Injury.s_HealingLacerationOpenDurationInMinutes - this.m_HealingTimeDec && this.m_Bandage != null)
 				{
 					this.Infect();
 				}
@@ -468,7 +511,15 @@ public class Injury
 		this.m_HealingStartTime = float.MaxValue;
 		this.UpdateHealthDecreasePerSec();
 		this.RemoveBandage();
-		Player.Get().GetComponent<PlayerDiseasesModule>().RequestDisease(ConsumeEffect.Fever, 0f, 1);
+		Disease disease = PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.Fever);
+		if (disease != null && disease.IsActive())
+		{
+			disease.IncreaseLevel(1);
+		}
+		else
+		{
+			PlayerDiseasesModule.Get().RequestDisease(ConsumeEffect.Fever, 0f, 1);
+		}
 		PlayerInjuryModule.Get().UnlockKnownInjuryState(InjuryState.Infected);
 	}
 
@@ -488,7 +539,10 @@ public class Injury
 		this.SetState(InjuryState.Open);
 		this.m_HealingStartTime = float.MaxValue;
 		this.m_TimeToInfect = this.m_DefaultTimeToInfect;
-		this.SetWoundMaterial(this.m_Slot.m_Wound.gameObject);
+		if (this.m_Slot != null && this.m_Slot.m_Wound != null)
+		{
+			this.SetWoundMaterial(this.m_Slot.m_Wound.gameObject);
+		}
 		this.UpdateHealthDecreasePerSec();
 		this.RemoveBandage();
 	}
@@ -513,29 +567,31 @@ public class Injury
 			if (this.m_State == InjuryState.Infected)
 			{
 				this.m_HealthDecreasePerSec = Injury.s_InfectedWoundHealthDecPerSec;
+				return;
 			}
-			else
-			{
-				this.m_HealthDecreasePerSec = Injury.s_WoundHealthDecPerSec;
-			}
-			break;
+			this.m_HealthDecreasePerSec = Injury.s_WoundHealthDecPerSec;
+			return;
 		case InjuryType.Laceration:
 		case InjuryType.LacerationCat:
 			this.m_HealthDecreasePerSec = Injury.s_BiteHealthDecPerSec;
-			break;
+			return;
 		case InjuryType.Rash:
 			this.m_HealthDecreasePerSec = Injury.s_BlainHealthDecPerSec;
 			break;
 		case InjuryType.Worm:
 			this.m_HealthDecreasePerSec = Injury.s_WormHealthDecPerSec;
-			break;
+			return;
 		case InjuryType.Leech:
 			this.m_HealthDecreasePerSec = Injury.s_LeechHealthDecPerSec;
+			return;
+		case InjuryType.LeechHole:
 			break;
 		case InjuryType.VenomBite:
 		case InjuryType.SnakeBite:
 			this.m_HealthDecreasePerSec = Injury.s_PoisonedWoundHealthDecPerSec;
-			break;
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -543,10 +599,11 @@ public class Injury
 	{
 		SaveGame.SaveVal("InjuryDiag" + index, this.m_Diagnosed);
 		SaveGame.SaveVal("InjuryStart" + index, this.m_StartTimeInMinutes);
-		SaveGame.SaveVal("InjuryBand" + index, (!this.m_Bandage) ? string.Empty : this.m_Bandage.name);
+		SaveGame.SaveVal("InjuryBand" + index, this.m_Bandage ? this.m_Bandage.name : string.Empty);
 		SaveGame.SaveVal("InjuryHeal" + index, this.m_Healing);
 		SaveGame.SaveVal("InjuryHealStart" + index, this.m_HealingStartTime);
 		SaveGame.SaveVal("HealingResultInjuryState" + index, (int)this.m_HealingResultInjuryState);
+		SaveGame.SaveVal("PIMDamagerAIID" + index, (int)this.m_AIDamager);
 	}
 
 	public void Load(int index)
@@ -570,6 +627,10 @@ public class Injury
 		this.m_Healing = SaveGame.LoadBVal("InjuryHeal" + index);
 		this.m_HealingStartTime = SaveGame.LoadFVal("InjuryHealStart" + index);
 		this.m_HealingResultInjuryState = (InjuryState)SaveGame.LoadIVal("HealingResultInjuryState" + index);
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate6)
+		{
+			this.m_AIDamager = (AI.AIID)SaveGame.LoadIVal("PIMDamagerAIID" + index);
+		}
 		this.UpdateHealthDecreasePerSec();
 	}
 
@@ -592,6 +653,16 @@ public class Injury
 		return MainLevel.Instance.GetCurrentTimeMinutes() > this.m_HealingStartTime;
 	}
 
+	public void CheckInfectionFromDirt()
+	{
+		float num = UnityEngine.Random.Range(0f, 1f);
+		Disease disease = PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.DirtSickness);
+		if (num < (float)disease.m_Level * 0.2f)
+		{
+			this.m_HealingResultInjuryState = InjuryState.Infected;
+		}
+	}
+
 	public InjuryType m_Type = InjuryType.None;
 
 	public InjuryPlace m_Place = InjuryPlace.None;
@@ -604,23 +675,23 @@ public class Injury
 
 	public float m_HealthDecreasePerSec = 0.2f;
 
-	public static float s_BiteHealthDecPerSec = 0.2f;
+	public static float s_BiteHealthDecPerSec = 0.05f;
 
 	public static float s_BurnHealthDecPerSec = 0.05f;
 
-	public static float s_WoundHealthDecPerSec;
+	public static float s_WoundHealthDecPerSec = 0f;
 
 	public static float s_InfectedWoundHealthDecPerSec = 0.2f;
 
-	public static float s_LeechHealthDecPerSec;
+	public static float s_LeechHealthDecPerSec = 0f;
 
-	public static float s_WormHealthDecPerSec;
+	public static float s_WormHealthDecPerSec = 0f;
 
-	public static float s_BlainHealthDecPerSec;
+	public static float s_BlainHealthDecPerSec = 0f;
 
 	public static float s_PoisonedWoundHealthDecPerSec = 0.3f;
 
-	public static float s_CleanWoundHealthDecPerSec;
+	public static float s_CleanWoundHealthDecPerSec = 0f;
 
 	public static float s_PoisonedWoundHydrationDecPerSec = 0.01f;
 
@@ -646,7 +717,7 @@ public class Injury
 
 	public static float s_HealingLacerationOpenDurationInMinutes = 45f;
 
-	public static float s_HealingRashDurationInMinutes = 45f;
+	public static float s_HealingRashDurationInMinutes = 120f;
 
 	public static float s_HealingAbrasionOpenDurationInMinutes = 60f;
 
@@ -680,5 +751,7 @@ public class Injury
 
 	public Injury m_ParentInjury;
 
-	public static int s_NumInjuries;
+	public static int s_NumInjuries = 0;
+
+	public AI.AIID m_AIDamager = AI.AIID.None;
 }

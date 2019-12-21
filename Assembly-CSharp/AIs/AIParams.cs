@@ -44,6 +44,10 @@ namespace AIs
 				{
 					this.m_CanSneak = (key2.GetVariable(0).IValue != 0);
 				}
+				else if (key2.GetName() == "CanSwim")
+				{
+					this.m_CanSwim = (key2.GetVariable(0).IValue != 0);
+				}
 				else if (key2.GetName() == "WalkSpeedMul")
 				{
 					this.m_WalkSpeedMul = key2.GetVariable(0).FValue;
@@ -138,8 +142,7 @@ namespace AIs
 				}
 				else if (key2.GetName() == "HarvestingResult")
 				{
-					string svalue = key2.GetVariable(0).SValue;
-					string[] array = svalue.Split(new char[]
+					string[] array = key2.GetVariable(0).SValue.Split(new char[]
 					{
 						';'
 					});
@@ -150,7 +153,7 @@ namespace AIs
 							'*'
 						});
 						GameObject prefab = GreenHellGame.Instance.GetPrefab(array2[0]);
-						int num = (array2.Length <= 1) ? 1 : int.Parse(array2[1]);
+						int num = (array2.Length > 1) ? int.Parse(array2[1]) : 1;
 						for (int k = 0; k < num; k++)
 						{
 							this.m_HarvestingResult.Add(prefab);
@@ -159,8 +162,8 @@ namespace AIs
 				}
 				else if (key2.GetName() == "DamageType")
 				{
-					string svalue2 = key2.GetVariable(0).SValue;
-					this.m_DamageType = (DamageType)Enum.Parse(typeof(DamageType), svalue2);
+					string svalue = key2.GetVariable(0).SValue;
+					this.m_DamageType = (DamageType)Enum.Parse(typeof(DamageType), svalue);
 				}
 				else if (key2.GetName() == "PoisonLevel")
 				{
@@ -228,6 +231,10 @@ namespace AIs
 				{
 					this.m_JumpBackRange = key2.GetVariable(0).FValue;
 				}
+				else if (key2.GetName() == "DirtAddOnHarvest")
+				{
+					this.m_DirtAddOnHarvest = key2.GetVariable(0).FValue;
+				}
 			}
 		}
 
@@ -250,6 +257,8 @@ namespace AIs
 		public bool m_CanRun;
 
 		public bool m_CanSneak;
+
+		public bool m_CanSwim;
 
 		public bool m_CanLeaveSpawner;
 
@@ -324,5 +333,7 @@ namespace AIs
 		public float m_JumpAttackRange;
 
 		public float m_JumpBackRange;
+
+		public float m_DirtAddOnHarvest;
 	}
 }

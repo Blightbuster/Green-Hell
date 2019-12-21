@@ -234,34 +234,32 @@ namespace Pathfinding.RVO
 							this.maxRadius = Mathf.Sqrt(num2);
 						}
 					}
+					return;
 				}
-				else
+				Vector2 center = r.center;
+				if (this.p.x - num < center.x)
 				{
-					Vector2 center = r.center;
-					if (this.p.x - num < center.x)
+					if (this.p.y - num < center.y)
 					{
-						if (this.p.y - num < center.y)
-						{
-							this.QueryRec(this.nodes[i].child00, Rect.MinMaxRect(r.xMin, r.yMin, center.x, center.y));
-							num = Math.Min(num, this.maxRadius);
-						}
-						if (this.p.y + num > center.y)
-						{
-							this.QueryRec(this.nodes[i].child01, Rect.MinMaxRect(r.xMin, center.y, center.x, r.yMax));
-							num = Math.Min(num, this.maxRadius);
-						}
+						this.QueryRec(this.nodes[i].child00, Rect.MinMaxRect(r.xMin, r.yMin, center.x, center.y));
+						num = Math.Min(num, this.maxRadius);
 					}
-					if (this.p.x + num > center.x)
+					if (this.p.y + num > center.y)
 					{
-						if (this.p.y - num < center.y)
-						{
-							this.QueryRec(this.nodes[i].child10, Rect.MinMaxRect(center.x, r.yMin, r.xMax, center.y));
-							num = Math.Min(num, this.maxRadius);
-						}
-						if (this.p.y + num > center.y)
-						{
-							this.QueryRec(this.nodes[i].child11, Rect.MinMaxRect(center.x, center.y, r.xMax, r.yMax));
-						}
+						this.QueryRec(this.nodes[i].child01, Rect.MinMaxRect(r.xMin, center.y, center.x, r.yMax));
+						num = Math.Min(num, this.maxRadius);
+					}
+				}
+				if (this.p.x + num > center.x)
+				{
+					if (this.p.y - num < center.y)
+					{
+						this.QueryRec(this.nodes[i].child10, Rect.MinMaxRect(center.x, r.yMin, r.xMax, center.y));
+						num = Math.Min(num, this.maxRadius);
+					}
+					if (this.p.y + num > center.y)
+					{
+						this.QueryRec(this.nodes[i].child11, Rect.MinMaxRect(center.x, center.y, r.xMax, r.yMax));
 					}
 				}
 			}

@@ -9,42 +9,66 @@ namespace Pathfinding.Voxels
 	{
 		public static float Min(float a, float b, float c)
 		{
-			a = ((a >= b) ? b : a);
-			return (a >= c) ? c : a;
+			a = ((a < b) ? a : b);
+			if (a >= c)
+			{
+				return c;
+			}
+			return a;
 		}
 
 		public static float Max(float a, float b, float c)
 		{
-			a = ((a <= b) ? b : a);
-			return (a <= c) ? c : a;
+			a = ((a > b) ? a : b);
+			if (a <= c)
+			{
+				return c;
+			}
+			return a;
 		}
 
 		public static int Max(int a, int b, int c, int d)
 		{
-			a = ((a <= b) ? b : a);
-			a = ((a <= c) ? c : a);
-			return (a <= d) ? d : a;
+			a = ((a > b) ? a : b);
+			a = ((a > c) ? a : c);
+			if (a <= d)
+			{
+				return d;
+			}
+			return a;
 		}
 
 		public static int Min(int a, int b, int c, int d)
 		{
-			a = ((a >= b) ? b : a);
-			a = ((a >= c) ? c : a);
-			return (a >= d) ? d : a;
+			a = ((a < b) ? a : b);
+			a = ((a < c) ? a : c);
+			if (a >= d)
+			{
+				return d;
+			}
+			return a;
 		}
 
 		public static float Max(float a, float b, float c, float d)
 		{
-			a = ((a <= b) ? b : a);
-			a = ((a <= c) ? c : a);
-			return (a <= d) ? d : a;
+			a = ((a > b) ? a : b);
+			a = ((a > c) ? a : c);
+			if (a <= d)
+			{
+				return d;
+			}
+			return a;
 		}
 
 		public static float Min(float a, float b, float c, float d)
 		{
-			a = ((a >= b) ? b : a);
-			a = ((a >= c) ? c : a);
-			return (a >= d) ? d : a;
+			a = ((a < b) ? a : b);
+			a = ((a < c) ? a : c);
+			if (a >= d)
+			{
+				return d;
+			}
+			return a;
 		}
 
 		public static void CopyVector(float[] a, int i, Vector3 v)

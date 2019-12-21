@@ -17,15 +17,15 @@ namespace Cinemachine.Utility
 			for (int i = 0; i < base.KernelSize; i++)
 			{
 				float num = this.mKernel[i];
-				Quaternion b = lhs * this.mData[windowPos];
-				if (Quaternion.Dot(Quaternion.identity, b) < 0f)
+				Quaternion quaternion2 = lhs * this.mData[windowPos];
+				if (Quaternion.Dot(Quaternion.identity, quaternion2) < 0f)
 				{
 					num = -num;
 				}
-				rhs.x += b.x * num;
-				rhs.y += b.y * num;
-				rhs.z += b.z * num;
-				rhs.w += b.w * num;
+				rhs.x += quaternion2.x * num;
+				rhs.y += quaternion2.y * num;
+				rhs.z += quaternion2.z * num;
+				rhs.w += quaternion2.w * num;
 				if (++windowPos == base.KernelSize)
 				{
 					windowPos = 0;

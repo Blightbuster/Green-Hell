@@ -20,12 +20,7 @@ namespace AIs
 			{
 				return base.GetDuration() < this.m_Length;
 			}
-			if (this.m_AI.m_GoalsModule.m_PrevGoal == null)
-			{
-				return true;
-			}
-			AIGoalType type = this.m_AI.m_GoalsModule.m_PrevGoal.m_Type;
-			return type == AIGoalType.HunterBowAttack;
+			return this.m_AI.m_GoalsModule.m_PrevGoal == null || this.m_AI.m_GoalsModule.m_PrevGoal.m_Type == AIGoalType.HunterBowAttack;
 		}
 
 		protected override void Prepare()

@@ -31,9 +31,9 @@ namespace Pathfinding.RVO
 		public void OnDrawGizmos(bool selected)
 		{
 			this.gizmoDrawing = true;
-			Gizmos.color = new Color(0.615f, 1f, 0.06f, (!selected) ? 0.7f : 1f);
-			MovementPlane movementPlane = (!(RVOSimulator.active != null)) ? MovementPlane.XZ : RVOSimulator.active.movementPlane;
-			Vector3 vector = (movementPlane != MovementPlane.XZ) ? (-Vector3.forward) : Vector3.up;
+			Gizmos.color = new Color(0.615f, 1f, 0.06f, selected ? 1f : 0.7f);
+			MovementPlane movementPlane = (RVOSimulator.active != null) ? RVOSimulator.active.movementPlane : MovementPlane.XZ;
+			Vector3 vector = (movementPlane == MovementPlane.XZ) ? Vector3.up : (-Vector3.forward);
 			if (this.gizmoVerts == null || this.AreGizmosDirty() || this._obstacleMode != this.obstacleMode)
 			{
 				this._obstacleMode = this.obstacleMode;
@@ -89,7 +89,11 @@ namespace Pathfinding.RVO
 
 		protected virtual Matrix4x4 GetMatrix()
 		{
-			return (!this.LocalCoordinates) ? Matrix4x4.identity : base.transform.localToWorldMatrix;
+			if (!this.LocalCoordinates)
+			{
+				return Matrix4x4.identity;
+			}
+			return base.transform.localToWorldMatrix;
 		}
 
 		public void OnDisable()
@@ -215,9 +219,9 @@ namespace Pathfinding.RVO
 					num2 = x;
 				}
 			}
-			Vector3 a = matrix.MultiplyPoint3x4(vertices[(num - 1 + vertices.Length) % vertices.Length]);
-			Vector3 b = matrix.MultiplyPoint3x4(vertices[num]);
-			Vector3 c = matrix.MultiplyPoint3x4(vertices[(num + 1) % vertices.Length]);
+			Vector3 vector = matrix.MultiplyPoint3x4(vertices[(num - 1 + vertices.Length) % vertices.Length]);
+			Vector3 vector2 = matrix.MultiplyPoint3x4(vertices[num]);
+			Vector3 vector3 = matrix.MultiplyPoint3x4(vertices[(num + 1) % vertices.Length]);
 			MovementPlane movementPlane;
 			if (this.sim != null)
 			{
@@ -233,11 +237,11 @@ namespace Pathfinding.RVO
 			}
 			if (movementPlane == MovementPlane.XY)
 			{
-				a.z = a.y;
-				b.z = b.y;
-				c.z = c.y;
+				vector.z = vector.y;
+				vector2.z = vector2.y;
+				vector3.z = vector3.y;
 			}
-			if (VectorMath.IsClockwiseXZ(a, b, c) != (this.obstacleMode == RVOObstacle.ObstacleVertexWinding.KeepIn))
+			if (VectorMath.IsClockwiseXZ(vector, vector2, vector3) != (this.obstacleMode == RVOObstacle.ObstacleVertexWinding.KeepIn))
 			{
 				Array.Reverse(vertices);
 			}

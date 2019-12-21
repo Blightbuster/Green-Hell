@@ -31,6 +31,11 @@ public class HUDMap : HUDBase
 
 	protected override bool ShouldShow()
 	{
+		return this.IsActive();
+	}
+
+	public bool IsActive()
+	{
 		return this.m_Active;
 	}
 

@@ -53,11 +53,11 @@ namespace AIs
 			}
 			else if (num2 <= 135f)
 			{
-				this.m_StartAnimName = ((num < 0f) ? ("Start" + text + "Left_90") : ("Start" + text + "Right_90"));
+				this.m_StartAnimName = ((num >= 0f) ? ("Start" + text + "Right_90") : ("Start" + text + "Left_90"));
 			}
 			else
 			{
-				this.m_StartAnimName = ((num < 0f) ? ("Start" + text + "Left_180") : ("Start" + text + "Right_180"));
+				this.m_StartAnimName = ((num >= 0f) ? ("Start" + text + "Right_180") : ("Start" + text + "Left_180"));
 			}
 			this.m_MoveAnimName = text;
 			this.m_StopAnimName = "Stop" + text;
@@ -79,11 +79,9 @@ namespace AIs
 			if (id == AnimEventID.StopMoveEnd)
 			{
 				this.m_State = HumanFollowPatrolPath.State.Finish;
+				return;
 			}
-			else
-			{
-				base.OnAnimEvent(id);
-			}
+			base.OnAnimEvent(id);
 		}
 
 		private void UpdateMoveState()
@@ -94,7 +92,7 @@ namespace AIs
 			}
 			if (this.m_AI.m_PathModule.m_Agent.remainingDistance <= this.m_AI.GetPathPassDistance())
 			{
-				this.m_State = ((!this.m_PerformStop) ? HumanFollowPatrolPath.State.Finish : HumanFollowPatrolPath.State.Stop);
+				this.m_State = (this.m_PerformStop ? HumanFollowPatrolPath.State.Stop : HumanFollowPatrolPath.State.Finish);
 			}
 		}
 
@@ -109,20 +107,17 @@ namespace AIs
 
 		public override string GetAnimName()
 		{
-			HumanFollowPatrolPath.State state = this.m_State;
-			if (state == HumanFollowPatrolPath.State.Start)
+			switch (this.m_State)
 			{
+			case HumanFollowPatrolPath.State.Start:
 				return this.m_StartAnimName;
-			}
-			if (state == HumanFollowPatrolPath.State.Move)
-			{
+			case HumanFollowPatrolPath.State.Move:
 				return this.m_MoveAnimName;
-			}
-			if (state != HumanFollowPatrolPath.State.Stop)
-			{
+			case HumanFollowPatrolPath.State.Stop:
+				return this.m_StopAnimName;
+			default:
 				return string.Empty;
 			}
-			return this.m_StopAnimName;
 		}
 
 		protected override bool ShouldFinish()

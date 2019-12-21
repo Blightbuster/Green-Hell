@@ -3,13 +3,6 @@ using Enums;
 
 public class LiquidContainerInfo : ItemInfo
 {
-	public LiquidContainerInfo()
-	{
-		this.m_LiquidType = LiquidType.Water;
-		this.m_Capacity = 100f;
-		this.m_Amount = 0f;
-	}
-
 	public LiquidType m_LiquidType { get; set; }
 
 	public float m_Capacity { get; set; }
@@ -21,24 +14,31 @@ public class LiquidContainerInfo : ItemInfo
 		return true;
 	}
 
+	public LiquidContainerInfo()
+	{
+		this.m_LiquidType = LiquidType.Water;
+		this.m_Capacity = 100f;
+		this.m_Amount = 0f;
+	}
+
 	protected override void LoadParams(Key key)
 	{
 		if (key.GetName() == "LiquidType")
 		{
 			this.m_LiquidType = (LiquidType)Enum.Parse(typeof(LiquidType), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "LiquidAmount")
+		if (key.GetName() == "LiquidAmount")
 		{
 			this.m_Amount = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "Capacity")
+		if (key.GetName() == "Capacity")
 		{
 			this.m_Capacity = key.GetVariable(0).FValue;
+			return;
 		}
-		else
-		{
-			base.LoadParams(key);
-		}
+		base.LoadParams(key);
 	}
 
 	public override void GetInfoText(ref string result)
@@ -60,6 +60,20 @@ public class LiquidContainerInfo : ItemInfo
 
 	public override bool CanDrink()
 	{
-		return this.m_Amount >= 1f;
+		return !this.m_ForceNoDrink && this.m_Amount >= 1f;
 	}
+
+	public virtual bool CanSpill()
+	{
+		return !this.m_ForceNoSpill && this.m_Amount >= 1f;
+	}
+
+	public override float GetMass()
+	{
+		return base.m_Mass + this.m_Amount * 0.01f;
+	}
+
+	public bool m_ForceNoDrink;
+
+	public bool m_ForceNoSpill;
 }

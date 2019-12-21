@@ -32,7 +32,7 @@ namespace UnityEngine.PostProcessing
 		{
 			float num = temperature / 55f;
 			float num2 = tint / 55f;
-			float x = 0.31271f - num * ((num >= 0f) ? 0.05f : 0.1f);
+			float x = 0.31271f - num * ((num < 0f) ? 0.1f : 0.05f);
 			float y = this.StandardIlluminantY(x) + num2 * 0.05f;
 			Vector3 vector = new Vector3(0.949237f, 1.03542f, 1.08728f);
 			Vector3 vector2 = this.CIExyToLMS(x, y);
@@ -74,7 +74,7 @@ namespace UnityEngine.PostProcessing
 		{
 			Color color = ColorGradingComponent.NormalizeColor(gamma);
 			float num = (color.r + color.g + color.b) / 3f;
-			gamma.a *= ((gamma.a >= 0f) ? 5f : 0.8f);
+			gamma.a *= ((gamma.a < 0f) ? 0.8f : 5f);
 			float b = Mathf.Pow(2f, (color.r - num) * 0.5f) + gamma.a;
 			float b2 = Mathf.Pow(2f, (color.g - num) * 0.5f) + gamma.a;
 			float b3 = Mathf.Pow(2f, (color.b - num) * 0.5f) + gamma.a;
@@ -88,7 +88,7 @@ namespace UnityEngine.PostProcessing
 		{
 			Color color = ColorGradingComponent.NormalizeColor(gain);
 			float num = (color.r + color.g + color.b) / 3f;
-			gain.a *= ((gain.a <= 0f) ? 1f : 3f);
+			gain.a *= ((gain.a > 0f) ? 3f : 1f);
 			float x = Mathf.Pow(2f, (color.r - num) * 0.5f) + gain.a;
 			float y = Mathf.Pow(2f, (color.g - num) * 0.5f) + gain.a;
 			float z = Mathf.Pow(2f, (color.b - num) * 0.5f) + gain.a;
@@ -223,27 +223,27 @@ namespace UnityEngine.PostProcessing
 			material.shaderKeywords = null;
 			ColorGradingModel.TonemappingSettings tonemapping = settings.tonemapping;
 			ColorGradingModel.Tonemapper tonemapper = tonemapping.tonemapper;
-			if (tonemapper != ColorGradingModel.Tonemapper.Neutral)
+			if (tonemapper != ColorGradingModel.Tonemapper.ACES)
 			{
-				if (tonemapper == ColorGradingModel.Tonemapper.ACES)
+				if (tonemapper == ColorGradingModel.Tonemapper.Neutral)
 				{
-					material.EnableKeyword("TONEMAPPING_FILMIC");
+					material.EnableKeyword("TONEMAPPING_NEUTRAL");
+					float num = tonemapping.neutralBlackIn * 20f + 1f;
+					float num2 = tonemapping.neutralBlackOut * 10f + 1f;
+					float num3 = tonemapping.neutralWhiteIn / 20f;
+					float num4 = 1f - tonemapping.neutralWhiteOut / 20f;
+					float t = num / num2;
+					float t2 = num3 / num4;
+					float y = Mathf.Max(0f, Mathf.LerpUnclamped(0.57f, 0.37f, t));
+					float z = Mathf.LerpUnclamped(0.01f, 0.24f, t2);
+					float w = Mathf.Max(0f, Mathf.LerpUnclamped(0.02f, 0.2f, t));
+					material.SetVector(ColorGradingComponent.Uniforms._NeutralTonemapperParams1, new Vector4(0.2f, y, z, w));
+					material.SetVector(ColorGradingComponent.Uniforms._NeutralTonemapperParams2, new Vector4(0.02f, 0.3f, tonemapping.neutralWhiteLevel, tonemapping.neutralWhiteClip / 10f));
 				}
 			}
 			else
 			{
-				material.EnableKeyword("TONEMAPPING_NEUTRAL");
-				float num = tonemapping.neutralBlackIn * 20f + 1f;
-				float num2 = tonemapping.neutralBlackOut * 10f + 1f;
-				float num3 = tonemapping.neutralWhiteIn / 20f;
-				float num4 = 1f - tonemapping.neutralWhiteOut / 20f;
-				float t = num / num2;
-				float t2 = num3 / num4;
-				float y = Mathf.Max(0f, Mathf.LerpUnclamped(0.57f, 0.37f, t));
-				float z = Mathf.LerpUnclamped(0.01f, 0.24f, t2);
-				float w = Mathf.Max(0f, Mathf.LerpUnclamped(0.02f, 0.2f, t));
-				material.SetVector(ColorGradingComponent.Uniforms._NeutralTonemapperParams1, new Vector4(0.2f, y, z, w));
-				material.SetVector(ColorGradingComponent.Uniforms._NeutralTonemapperParams2, new Vector4(0.02f, 0.3f, tonemapping.neutralWhiteLevel, tonemapping.neutralWhiteClip / 10f));
+				material.EnableKeyword("TONEMAPPING_FILMIC");
 			}
 			material.SetFloat(ColorGradingComponent.Uniforms._HueShift, settings.basic.hueShift / 360f);
 			material.SetFloat(ColorGradingComponent.Uniforms._Saturation, settings.basic.saturation);
@@ -277,7 +277,7 @@ namespace UnityEngine.PostProcessing
 				this.GenerateLut();
 				base.model.isDirty = false;
 			}
-			uberMaterial.EnableKeyword((!this.context.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.PreGradingLog)) ? "COLOR_GRADING" : "COLOR_GRADING_LOG_VIEW");
+			uberMaterial.EnableKeyword(this.context.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.PreGradingLog) ? "COLOR_GRADING_LOG_VIEW" : "COLOR_GRADING");
 			RenderTexture bakedLut = base.model.bakedLut;
 			uberMaterial.SetTexture(ColorGradingComponent.Uniforms._LogLut, bakedLut);
 			uberMaterial.SetVector(ColorGradingComponent.Uniforms._LogLut_Params, new Vector3(1f / (float)bakedLut.width, 1f / (float)bakedLut.height, (float)bakedLut.height - 1f));
@@ -288,8 +288,7 @@ namespace UnityEngine.PostProcessing
 		public void OnGUI()
 		{
 			RenderTexture bakedLut = base.model.bakedLut;
-			Rect position = new Rect(this.context.viewport.x * (float)Screen.width + 8f, 8f, (float)bakedLut.width, (float)bakedLut.height);
-			GUI.DrawTexture(position, bakedLut);
+			GUI.DrawTexture(new Rect(this.context.viewport.x * (float)Screen.width + 8f, 8f, (float)bakedLut.width, (float)bakedLut.height), bakedLut);
 		}
 
 		public override void OnDisable()

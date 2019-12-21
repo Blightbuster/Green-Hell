@@ -76,8 +76,7 @@ public class Key
 		stream.Write("(");
 		for (int j = 0; j < this.m_Variables.Count; j++)
 		{
-			CJVariable cjvariable = this.m_Variables[j];
-			cjvariable.Write(stream);
+			this.m_Variables[j].Write(stream);
 			if (j < this.m_Variables.Count - 1)
 			{
 				stream.Write(", ");
@@ -96,8 +95,7 @@ public class Key
 		}
 		for (int l = 0; l < this.GetKeysCount(); l++)
 		{
-			Key key = this.GetKey(l);
-			key.Write(stream, tabs);
+			this.GetKey(l).Write(stream, tabs);
 			if (l < this.GetKeysCount() - 1)
 			{
 				stream.Write("\n");

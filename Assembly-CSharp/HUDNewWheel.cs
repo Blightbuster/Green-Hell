@@ -27,6 +27,7 @@ public class HUDNewWheel : HUDBase
 			});
 		}
 		this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
+		this.m_AudioSource.playOnAwake = false;
 		this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
 		AudioClip audioClip = Resources.Load<AudioClip>("Sounds/wheel_menu");
 		if (!audioClip)
@@ -66,7 +67,7 @@ public class HUDNewWheel : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return !Player.Get().IsDead() && !Player.Get().m_DreamActive && !CutscenesManager.Get().IsCutscenePlaying() && !SleepController.Get().IsActive() && !HUDWheel.Get().enabled && (Inventory3DManager.Get().gameObject.activeSelf || NotepadController.Get().IsActive() || MapController.Get().IsActive() || BodyInspectionController.Get().IsActive());
+		return !Player.Get().IsDead() && !Player.Get().m_DreamActive && !CutscenesManager.Get().IsCutscenePlaying() && !SleepController.Get().IsActive() && !HUDWheel.Get().enabled && !Storage3D.Get().IsActive() && !BodyInspectionController.Get().IsBandagingInProgress() && (Inventory3DManager.Get().gameObject.activeSelf || NotepadController.Get().IsActive() || MapController.Get().IsActive() || BodyInspectionController.Get().IsActive());
 	}
 
 	protected override void OnShow()
@@ -83,40 +84,49 @@ public class HUDNewWheel : HUDBase
 		return (slot != HUDNewWheel.HUDWheelSlot.Craft || Player.Get().CanStartCrafting()) && (slot != HUDNewWheel.HUDWheelSlot.Notebook || NotepadController.Get().IsActive() || Player.Get().CanShowNotepad()) && (slot != HUDNewWheel.HUDWheelSlot.Map || MapController.Get().IsActive() || Player.Get().CanShowMap()) && (slot != HUDNewWheel.HUDWheelSlot.Sleep || Player.Get().CanSleep()) && (slot != HUDNewWheel.HUDWheelSlot.Inspect || BodyInspectionController.Get().IsActive() || Player.Get().CanStartBodyInspection());
 	}
 
-	protected override void OnHide()
-	{
-		base.OnHide();
-	}
-
 	protected override void Update()
 	{
 		base.Update();
 		this.SetupSelections();
 		this.UpdateSelection();
+		if (Input.GetKeyDown(InputHelpers.PadButton.Button_X.KeyFromPad()))
+		{
+			int num = 0;
+			NewWheelButton[] buttons = this.m_Buttons;
+			for (int i = 0; i < buttons.Length; i++)
+			{
+				if (buttons[i].m_Selected)
+				{
+					this.Execute((HUDNewWheel.HUDWheelSlot)num);
+					return;
+				}
+				num++;
+			}
+		}
 	}
 
 	private void SetupSelections()
 	{
 		Color color = this.m_Buttons[0].m_Icon.color;
-		color.a = (Player.Get().CanStartCrafting() ? ((!CraftingManager.Get().gameObject.activeSelf) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanStartCrafting()) ? this.m_InactiveAlpha : (CraftingManager.Get().gameObject.activeSelf ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Buttons[0].m_Icon.color = color;
 		color = this.m_Buttons[3].m_Icon.color;
-		color.a = (Player.Get().CanShowNotepad() ? ((!NotepadController.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanShowNotepad()) ? this.m_InactiveAlpha : (NotepadController.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Buttons[3].m_Icon.color = color;
 		color = this.m_Buttons[4].m_Icon.color;
-		color.a = ((!Inventory3DManager.Get().gameObject.activeSelf) ? this.m_NormalAlpha : this.m_SelectedAlpha);
+		color.a = (Inventory3DManager.Get().gameObject.activeSelf ? this.m_SelectedAlpha : this.m_NormalAlpha);
 		this.m_Buttons[4].m_Icon.color = color;
 		color = this.m_Buttons[5].m_Icon.color;
-		color.a = (Player.Get().CanStartBodyInspection() ? ((!BodyInspectionController.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanStartBodyInspection()) ? this.m_InactiveAlpha : (BodyInspectionController.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Buttons[5].m_Icon.color = color;
 		color = this.m_Buttons[1].m_Icon.color;
-		color.a = (Player.Get().CanStartCrafting() ? ((!CraftingManager.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanStartCrafting()) ? this.m_InactiveAlpha : (CraftingManager.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Buttons[1].m_Icon.color = color;
 		color = this.m_Buttons[0].m_Icon.color;
-		color.a = (Player.Get().CanShowMap() ? ((!MapController.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanShowMap()) ? this.m_InactiveAlpha : (MapController.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Buttons[0].m_Icon.color = color;
 		color = this.m_Buttons[2].m_Icon.color;
-		color.a = (Player.Get().CanSleep() ? ((!SleepController.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanSleep()) ? this.m_InactiveAlpha : (SleepController.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Buttons[2].m_Icon.color = color;
 	}
 
@@ -130,26 +140,30 @@ public class HUDNewWheel : HUDBase
 
 	private void Execute(HUDNewWheel.HUDWheelSlot slot)
 	{
-		switch (slot + 1)
+		switch (slot)
 		{
-		case HUDNewWheel.HUDWheelSlot.Craft:
+		case HUDNewWheel.HUDWheelSlot.None:
+			break;
+		case HUDNewWheel.HUDWheelSlot.Map:
 			this.OnMap();
-			break;
-		case HUDNewWheel.HUDWheelSlot.Sleep:
+			return;
+		case HUDNewWheel.HUDWheelSlot.Craft:
 			this.OnCraft();
-			break;
-		case HUDNewWheel.HUDWheelSlot.Notebook:
+			return;
+		case HUDNewWheel.HUDWheelSlot.Sleep:
 			this.OnSleep();
-			break;
-		case HUDNewWheel.HUDWheelSlot.Backpack:
+			return;
+		case HUDNewWheel.HUDWheelSlot.Notebook:
 			this.OnNotebook();
-			break;
-		case HUDNewWheel.HUDWheelSlot.Inspect:
+			return;
+		case HUDNewWheel.HUDWheelSlot.Backpack:
 			this.OnBackpack();
-			break;
-		case HUDNewWheel.HUDWheelSlot.Count:
+			return;
+		case HUDNewWheel.HUDWheelSlot.Inspect:
 			this.OnInspect();
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -158,15 +172,13 @@ public class HUDNewWheel : HUDBase
 		if (MapController.Get().IsActive())
 		{
 			MapController.Get().Hide();
+			return;
 		}
-		else
+		if (!Player.Get().CanShowMap())
 		{
-			if (!Player.Get().CanShowMap())
-			{
-				return;
-			}
-			Player.Get().StartController(PlayerControllerType.Map);
+			return;
 		}
+		Player.Get().StartController(PlayerControllerType.Map);
 	}
 
 	private void OnCraft()
@@ -174,12 +186,10 @@ public class HUDNewWheel : HUDBase
 		if (CraftingManager.Get().IsActive())
 		{
 			CraftingManager.Get().Deactivate();
+			return;
 		}
-		else
-		{
-			Inventory3DManager.Get().Activate();
-			CraftingManager.Get().Activate();
-		}
+		Inventory3DManager.Get().Activate();
+		CraftingManager.Get().Activate();
 	}
 
 	private void OnSleep()
@@ -192,19 +202,13 @@ public class HUDNewWheel : HUDBase
 		if (NotepadController.Get().IsActive())
 		{
 			NotepadController.Get().Hide();
+			return;
 		}
-		else
+		if (Inventory3DManager.Get().IsActive())
 		{
-			if (MenuNotepad.Get().m_ActiveTab == MenuNotepad.MenuNotepadTab.PlannerTab)
-			{
-				HUDPlanner.Get().m_PlannerMode = PlannerMode.ReadOnly;
-			}
-			if (Inventory3DManager.Get().IsActive())
-			{
-				Inventory3DManager.Get().Deactivate();
-			}
-			Player.Get().StartController(PlayerControllerType.Notepad);
+			Inventory3DManager.Get().Deactivate();
 		}
+		Player.Get().StartController(PlayerControllerType.Notepad);
 	}
 
 	private void OnBackpack()
@@ -212,11 +216,9 @@ public class HUDNewWheel : HUDBase
 		if (Inventory3DManager.Get().gameObject.activeSelf)
 		{
 			Inventory3DManager.Get().Deactivate();
+			return;
 		}
-		else
-		{
-			Inventory3DManager.Get().Activate();
-		}
+		Inventory3DManager.Get().Activate();
 	}
 
 	private void OnInspect()
@@ -224,14 +226,12 @@ public class HUDNewWheel : HUDBase
 		if (BodyInspectionController.Get().IsActive())
 		{
 			BodyInspectionController.Get().Stop();
+			return;
 		}
-		else
+		Player.Get().StartController(PlayerControllerType.BodyInspection);
+		if (CraftingManager.Get().IsActive())
 		{
-			Player.Get().StartController(PlayerControllerType.BodyInspection);
-			if (CraftingManager.Get().IsActive())
-			{
-				CraftingManager.Get().Deactivate();
-			}
+			CraftingManager.Get().Deactivate();
 		}
 	}
 

@@ -42,57 +42,66 @@ namespace Pathfinding
 				GraphModifier.FindAllModifiers();
 			}
 			GraphModifier graphModifier = GraphModifier.root;
-			switch (type)
+			if (type <= GraphModifier.EventType.PreUpdate)
 			{
-			case GraphModifier.EventType.PostScan:
-				while (graphModifier != null)
+				switch (type)
 				{
-					graphModifier.OnPostScan();
-					graphModifier = graphModifier.next;
-				}
-				break;
-			case GraphModifier.EventType.PreScan:
-				while (graphModifier != null)
-				{
-					graphModifier.OnPreScan();
-					graphModifier = graphModifier.next;
-				}
-				break;
-			default:
-				if (type != GraphModifier.EventType.PostUpdate)
-				{
-					if (type == GraphModifier.EventType.PostCacheLoad)
+				case GraphModifier.EventType.PostScan:
+					while (graphModifier != null)
 					{
-						while (graphModifier != null)
-						{
-							graphModifier.OnPostCacheLoad();
-							graphModifier = graphModifier.next;
-						}
+						graphModifier.OnPostScan();
+						graphModifier = graphModifier.next;
 					}
+					return;
+				case GraphModifier.EventType.PreScan:
+					while (graphModifier != null)
+					{
+						graphModifier.OnPreScan();
+						graphModifier = graphModifier.next;
+					}
+					return;
+				case (GraphModifier.EventType)3:
+					break;
+				case GraphModifier.EventType.LatePostScan:
+					while (graphModifier != null)
+					{
+						graphModifier.OnLatePostScan();
+						graphModifier = graphModifier.next;
+					}
+					return;
+				default:
+					if (type != GraphModifier.EventType.PreUpdate)
+					{
+						return;
+					}
+					while (graphModifier != null)
+					{
+						graphModifier.OnGraphsPreUpdate();
+						graphModifier = graphModifier.next;
+					}
+					return;
 				}
-				else
+			}
+			else
+			{
+				if (type == GraphModifier.EventType.PostUpdate)
 				{
 					while (graphModifier != null)
 					{
 						graphModifier.OnGraphsPostUpdate();
 						graphModifier = graphModifier.next;
 					}
+					return;
 				}
-				break;
-			case GraphModifier.EventType.LatePostScan:
+				if (type != GraphModifier.EventType.PostCacheLoad)
+				{
+					return;
+				}
 				while (graphModifier != null)
 				{
-					graphModifier.OnLatePostScan();
+					graphModifier.OnPostCacheLoad();
 					graphModifier = graphModifier.next;
 				}
-				break;
-			case GraphModifier.EventType.PreUpdate:
-				while (graphModifier != null)
-				{
-					graphModifier.OnGraphsPreUpdate();
-					graphModifier = graphModifier.next;
-				}
-				break;
 			}
 		}
 
@@ -129,13 +138,11 @@ namespace Pathfinding
 			if (GraphModifier.root == null)
 			{
 				GraphModifier.root = this;
+				return;
 			}
-			else
-			{
-				this.next = GraphModifier.root;
-				GraphModifier.root.prev = this;
-				GraphModifier.root = this;
-			}
+			this.next = GraphModifier.root;
+			GraphModifier.root.prev = this;
+			GraphModifier.root = this;
 		}
 
 		private void RemoveFromLinkedList()

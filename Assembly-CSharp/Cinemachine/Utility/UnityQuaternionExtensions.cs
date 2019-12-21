@@ -23,8 +23,7 @@ namespace Cinemachine.Utility
 
 		public static Quaternion Normalized(this Quaternion q)
 		{
-			Vector4 vector = new Vector4(q.x, q.y, q.z, q.w);
-			Vector4 normalized = vector.normalized;
+			Vector4 normalized = new Vector4(q.x, q.y, q.z, q.w).normalized;
 			return new Quaternion(normalized.x, normalized.y, normalized.z, normalized.w);
 		}
 
@@ -56,8 +55,7 @@ namespace Cinemachine.Utility
 				num = UnityVectorExtensions.SignedAngle(vector3, vector2, vector);
 			}
 			Quaternion rotation2 = Quaternion.AngleAxis(num, vector);
-			float x = UnityVectorExtensions.SignedAngle(rotation2 * Vector3.forward, lookAtDir, rotation2 * Vector3.right);
-			return new Vector2(x, num);
+			return new Vector2(UnityVectorExtensions.SignedAngle(rotation2 * Vector3.forward, lookAtDir, rotation2 * Vector3.right), num);
 		}
 
 		public static Quaternion ApplyCameraRotation(this Quaternion orient, Vector2 rot, Vector3 worldUp)

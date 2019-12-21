@@ -10,6 +10,12 @@ namespace Pathfinding.Serialization
 {
 	public class AstarSerializer
 	{
+		private static StringBuilder GetStringBuilder()
+		{
+			AstarSerializer._stringBuilder.Length = 0;
+			return AstarSerializer._stringBuilder;
+		}
+
 		public AstarSerializer(AstarData data)
 		{
 			this.data = data;
@@ -20,12 +26,6 @@ namespace Pathfinding.Serialization
 		{
 			this.data = data;
 			this.settings = settings;
-		}
-
-		private static StringBuilder GetStringBuilder()
-		{
-			AstarSerializer._stringBuilder.Length = 0;
-			return AstarSerializer._stringBuilder;
 		}
 
 		public void SetGraphIndexOffset(int offset)
@@ -147,18 +147,25 @@ namespace Pathfinding.Serialization
 		private static int GetMaxNodeIndexInAllGraphs(NavGraph[] graphs)
 		{
 			int maxIndex = 0;
+			Action<GraphNode> <>9__0;
 			for (int i = 0; i < graphs.Length; i++)
 			{
 				if (graphs[i] != null)
 				{
-					graphs[i].GetNodes(delegate(GraphNode node)
+					NavGraph navGraph = graphs[i];
+					Action<GraphNode> action;
+					if ((action = <>9__0) == null)
 					{
-						maxIndex = Math.Max(node.NodeIndex, maxIndex);
-						if (node.NodeIndex == -1)
+						action = (<>9__0 = delegate(GraphNode node)
 						{
-							Debug.LogError("Graph contains destroyed nodes. This is a bug.");
-						}
-					});
+							maxIndex = Math.Max(node.NodeIndex, maxIndex);
+							if (node.NodeIndex == -1)
+							{
+								Debug.LogError("Graph contains destroyed nodes. This is a bug.");
+							}
+						});
+					}
+					navGraph.GetNodes(action);
 				}
 			}
 			return maxIndex;
@@ -171,15 +178,22 @@ namespace Pathfinding.Serialization
 			int maxNodeIndexInAllGraphs = AstarSerializer.GetMaxNodeIndexInAllGraphs(graphs);
 			writer.Write(maxNodeIndexInAllGraphs);
 			int maxNodeIndex2 = 0;
+			Action<GraphNode> <>9__0;
 			for (int i = 0; i < graphs.Length; i++)
 			{
 				if (graphs[i] != null)
 				{
-					graphs[i].GetNodes(delegate(GraphNode node)
+					NavGraph navGraph = graphs[i];
+					Action<GraphNode> action;
+					if ((action = <>9__0) == null)
 					{
-						maxNodeIndex2 = Math.Max(node.NodeIndex, maxNodeIndex2);
-						writer.Write(node.NodeIndex);
-					});
+						action = (<>9__0 = delegate(GraphNode node)
+						{
+							maxNodeIndex2 = Math.Max(node.NodeIndex, maxNodeIndex2);
+							writer.Write(node.NodeIndex);
+						});
+					}
+					navGraph.GetNodes(action);
 				}
 			}
 			if (maxNodeIndex2 != maxNodeIndexInAllGraphs)
@@ -248,9 +262,7 @@ namespace Pathfinding.Serialization
 		private byte[] SerializeNodeLinks()
 		{
 			MemoryStream memoryStream = new MemoryStream();
-			BinaryWriter writer = new BinaryWriter(memoryStream);
-			GraphSerializationContext ctx = new GraphSerializationContext(writer);
-			NodeLink2.SerializeReferences(ctx);
+			NodeLink2.SerializeReferences(new GraphSerializationContext(new BinaryWriter(memoryStream)));
 			return memoryStream.ToArray();
 		}
 
@@ -380,8 +392,7 @@ namespace Pathfinding.Serialization
 						".json' does not exist"
 					}));
 				}
-				BinaryReader binaryReader = AstarSerializer.GetBinaryReader(this.GetEntry(name2));
-				GraphSerializationContext ctx = new GraphSerializationContext(binaryReader, null, navGraph.graphIndex, this.meta);
+				GraphSerializationContext ctx = new GraphSerializationContext(AstarSerializer.GetBinaryReader(this.GetEntry(name2)), null, navGraph.graphIndex, this.meta);
 				navGraph.DeserializeSettingsCompatibility(ctx);
 			}
 			if (navGraph.guid.ToString() != this.meta.guids[zipIndex])
@@ -423,8 +434,7 @@ namespace Pathfinding.Serialization
 			{
 				return false;
 			}
-			BinaryReader binaryReader = AstarSerializer.GetBinaryReader(entry);
-			GraphSerializationContext ctx = new GraphSerializationContext(binaryReader, null, graph.graphIndex, this.meta);
+			GraphSerializationContext ctx = new GraphSerializationContext(AstarSerializer.GetBinaryReader(entry), null, graph.graphIndex, this.meta);
 			graph.DeserializeExtraInfo(ctx);
 			return true;
 		}
@@ -432,15 +442,22 @@ namespace Pathfinding.Serialization
 		private bool AnyDestroyedNodesInGraphs()
 		{
 			bool result = false;
+			Action<GraphNode> <>9__0;
 			for (int i = 0; i < this.graphs.Length; i++)
 			{
-				this.graphs[i].GetNodes(delegate(GraphNode node)
+				NavGraph navGraph = this.graphs[i];
+				Action<GraphNode> action;
+				if ((action = <>9__0) == null)
 				{
-					if (node.Destroyed)
+					action = (<>9__0 = delegate(GraphNode node)
 					{
-						result = true;
-					}
-				});
+						if (node.Destroyed)
+						{
+							result = true;
+						}
+					});
+				}
+				navGraph.GetNodes(action);
 			}
 			return result;
 		}
@@ -457,13 +474,20 @@ namespace Pathfinding.Serialization
 			GraphNode[] int2Node = new GraphNode[num + 1];
 			try
 			{
+				Action<GraphNode> <>9__0;
 				for (int i = 0; i < this.graphs.Length; i++)
 				{
-					this.graphs[i].GetNodes(delegate(GraphNode node)
+					NavGraph navGraph = this.graphs[i];
+					Action<GraphNode> action;
+					if ((action = <>9__0) == null)
 					{
-						int num2 = reader.ReadInt32();
-						int2Node[num2] = node;
-					});
+						action = (<>9__0 = delegate(GraphNode node)
+						{
+							int num2 = reader.ReadInt32();
+							int2Node[num2] = node;
+						});
+					}
+					navGraph.GetNodes(action);
 				}
 			}
 			catch (Exception innerException)
@@ -530,9 +554,7 @@ namespace Pathfinding.Serialization
 			{
 				return;
 			}
-			BinaryReader binaryReader = AstarSerializer.GetBinaryReader(entry);
-			GraphSerializationContext ctx = new GraphSerializationContext(binaryReader, int2Node, 0u, this.meta);
-			NodeLink2.DeserializeReferences(ctx);
+			NodeLink2.DeserializeReferences(new GraphSerializationContext(AstarSerializer.GetBinaryReader(entry), int2Node, 0u, this.meta));
 		}
 
 		public void PostDeserialization()

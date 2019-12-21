@@ -31,7 +31,7 @@ namespace Pathfinding
 				}
 				next2.next = next;
 			}
-			long num = (!timeSlice) ? 0L : (DateTime.UtcNow.Ticks + 10000L);
+			long num = timeSlice ? (DateTime.UtcNow.Ticks + 10000L) : 0L;
 			int num2 = 0;
 			while (this.pathReturnPop != null)
 			{

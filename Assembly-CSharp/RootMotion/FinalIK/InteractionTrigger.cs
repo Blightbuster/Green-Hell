@@ -97,10 +97,10 @@ namespace RootMotion.FinalIK
 				{
 					return false;
 				}
-				Vector3 vector = (!this.fixYAxis) ? trigger.up : Vector3.up;
+				Vector3 vector = this.fixYAxis ? Vector3.up : trigger.up;
 				Quaternion rotation = Quaternion.LookRotation(forward, vector);
 				Vector3 vector2 = trigger.position + rotation * this.offset3D;
-				Vector3 b = (!this.orbit) ? vector2 : trigger.position;
+				Vector3 b = this.orbit ? trigger.position : vector2;
 				Vector3 vector3 = character.position - b;
 				Vector3.OrthoNormalize(ref vector, ref vector3);
 				vector3 *= Vector3.Project(character.position - b, vector3).magnitude;
@@ -126,10 +126,8 @@ namespace RootMotion.FinalIK
 					{
 						vector5 = Vector3.forward;
 					}
-					Quaternion rotation2 = Quaternion.LookRotation(vector5, vector);
-					vector3 = Quaternion.Inverse(rotation2) * vector3;
-					float angle = Mathf.Atan2(vector3.x, vector3.z) * 57.29578f;
-					vector4 = Quaternion.AngleAxis(angle, vector) * vector4;
+					vector3 = Quaternion.Inverse(Quaternion.LookRotation(vector5, vector)) * vector3;
+					vector4 = Quaternion.AngleAxis(Mathf.Atan2(vector3.x, vector3.z) * 57.29578f, vector) * vector4;
 				}
 				float num = Vector3.Angle(vector4, character.forward);
 				if (num > this.maxAngle)
@@ -146,12 +144,12 @@ namespace RootMotion.FinalIK
 			[Tooltip("The offset of the character's position relative to the trigger in XZ plane. Y position of the character is unlimited as long as it is contact with the collider.")]
 			public Vector2 offset;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Angle offset from the default forward direction.")]
+			[Range(-180f, 180f)]
 			public float angleOffset;
 
-			[Range(0f, 180f)]
 			[Tooltip("Max angular offset of the character's forward from the direction of this trigger.")]
+			[Range(0f, 180f)]
 			public float maxAngle = 45f;
 
 			[Tooltip("Max offset of the character's position from this range's center.")]
@@ -178,7 +176,7 @@ namespace RootMotion.FinalIK
 				{
 					return Quaternion.identity;
 				}
-				Vector3 upwards = (!this.fixYAxis) ? this.lookAtTarget.transform.up : Vector3.up;
+				Vector3 upwards = this.fixYAxis ? Vector3.up : this.lookAtTarget.transform.up;
 				return Quaternion.LookRotation(forward, upwards);
 			}
 
@@ -233,8 +231,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Max distance from the lookAtTarget to the camera.")]
 			public float maxDistance = 0.5f;
 
-			[Range(0f, 180f)]
 			[Tooltip("Max angle between the direction and the direction towards the camera.")]
+			[Range(0f, 180f)]
 			public float maxAngle = 45f;
 
 			[Tooltip("Fixes the Y axis of the trigger to Vector3.up. This makes the trigger symmetrical relative to the object.")]
@@ -261,12 +259,12 @@ namespace RootMotion.FinalIK
 				return true;
 			}
 
-			[SerializeField]
 			[HideInInspector]
+			[SerializeField]
 			public string name;
 
-			[SerializeField]
 			[HideInInspector]
+			[SerializeField]
 			public bool show = true;
 
 			[Tooltip("The range for the character's position and rotation.")]

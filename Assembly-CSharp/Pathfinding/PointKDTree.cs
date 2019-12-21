@@ -40,12 +40,20 @@ namespace Pathfinding
 
 		private List<GraphNode> GetOrCreateList()
 		{
-			return (this.listCache.Count <= 0) ? new List<GraphNode>(PointKDTree.LeafSize * 2 + 1) : this.listCache.Pop();
+			if (this.listCache.Count <= 0)
+			{
+				return new List<GraphNode>(PointKDTree.LeafSize * 2 + 1);
+			}
+			return this.listCache.Pop();
 		}
 
 		private int Size(int index)
 		{
-			return (this.tree[index].data == null) ? (this.Size(2 * index) + this.Size(2 * index + 1)) : this.tree[index].data.Count;
+			if (this.tree[index].data == null)
+			{
+				return this.Size(2 * index) + this.Size(2 * index + 1);
+			}
+			return this.tree[index].data.Count;
 		}
 
 		private void CollectAndClear(int index, List<GraphNode> buffer)
@@ -60,12 +68,10 @@ namespace Pathfinding
 				}
 				data.Clear();
 				this.listCache.Push(data);
+				return;
 			}
-			else
-			{
-				this.CollectAndClear(index * 2, buffer);
-				this.CollectAndClear(index * 2 + 1, buffer);
-			}
+			this.CollectAndClear(index * 2, buffer);
+			this.CollectAndClear(index * 2 + 1, buffer);
 		}
 
 		private static int MaxAllowedSize(int numNodes, int depth)
@@ -100,33 +106,31 @@ namespace Pathfinding
 				{
 					this.tree[index].data.Add(nodes[i]);
 				}
+				return;
 			}
-			else
+			Int3 position;
+			Int3 @int = position = nodes[start].position;
+			for (int j = start; j < end; j++)
 			{
-				Int3 position;
-				Int3 lhs = position = nodes[start].position;
-				for (int j = start; j < end; j++)
-				{
-					Int3 position2 = nodes[j].position;
-					position = new Int3(Math.Min(position.x, position2.x), Math.Min(position.y, position2.y), Math.Min(position.z, position2.z));
-					lhs = new Int3(Math.Max(lhs.x, position2.x), Math.Max(lhs.y, position2.y), Math.Max(lhs.z, position2.z));
-				}
-				Int3 @int = lhs - position;
-				int num = (@int.x <= @int.y) ? ((@int.y <= @int.z) ? 2 : 1) : ((@int.x <= @int.z) ? 2 : 0);
-				nodes.Sort(start, end - start, PointKDTree.comparers[num]);
-				int num2 = (start + end) / 2;
-				this.tree[index].split = (nodes[num2 - 1].position[num] + nodes[num2].position[num] + 1) / 2;
-				this.tree[index].splitAxis = (byte)num;
-				this.Build(index * 2, nodes, start, num2);
-				this.Build(index * 2 + 1, nodes, num2, end);
+				Int3 position2 = nodes[j].position;
+				position = new Int3(Math.Min(position.x, position2.x), Math.Min(position.y, position2.y), Math.Min(position.z, position2.z));
+				@int = new Int3(Math.Max(@int.x, position2.x), Math.Max(@int.y, position2.y), Math.Max(@int.z, position2.z));
 			}
+			Int3 int2 = @int - position;
+			int num = (int2.x > int2.y) ? ((int2.x > int2.z) ? 0 : 2) : ((int2.y > int2.z) ? 1 : 2);
+			nodes.Sort(start, end - start, PointKDTree.comparers[num]);
+			int num2 = (start + end) / 2;
+			this.tree[index].split = (nodes[num2 - 1].position[num] + nodes[num2].position[num] + 1) / 2;
+			this.tree[index].splitAxis = (byte)num;
+			this.Build(index * 2, nodes, start, num2);
+			this.Build(index * 2 + 1, nodes, num2, end);
 		}
 
 		private void Add(GraphNode point, int index, int depth = 0)
 		{
 			while (this.tree[index].data == null)
 			{
-				index = 2 * index + ((point.position[(int)this.tree[index].splitAxis] >= this.tree[index].split) ? 1 : 0);
+				index = 2 * index + ((point.position[(int)this.tree[index].splitAxis] < this.tree[index].split) ? 0 : 1);
 				depth++;
 			}
 			this.tree[index].data.Add(point);
@@ -163,16 +167,14 @@ namespace Pathfinding
 						best = data[i];
 					}
 				}
+				return;
 			}
-			else
+			long num = (long)(point[(int)this.tree[index].splitAxis] - this.tree[index].split);
+			int num2 = 2 * index + ((num < 0L) ? 0 : 1);
+			this.GetNearestInternal(num2, point, constraint, ref best, ref bestSqrDist);
+			if (num * num < bestSqrDist)
 			{
-				long num = (long)(point[(int)this.tree[index].splitAxis] - this.tree[index].split);
-				int num2 = 2 * index + ((num >= 0L) ? 1 : 0);
-				this.GetNearestInternal(num2, point, constraint, ref best, ref bestSqrDist);
-				if (num * num < bestSqrDist)
-				{
-					this.GetNearestInternal(num2 ^ 1, point, constraint, ref best, ref bestSqrDist);
-				}
+				this.GetNearestInternal(num2 ^ 1, point, constraint, ref best, ref bestSqrDist);
 			}
 		}
 
@@ -188,22 +190,19 @@ namespace Pathfinding
 			{
 				for (int i = data.Count - 1; i >= 0; i--)
 				{
-					long sqrMagnitudeLong = (data[i].position - point).sqrMagnitudeLong;
-					if (sqrMagnitudeLong < sqrRadius)
+					if ((data[i].position - point).sqrMagnitudeLong < sqrRadius)
 					{
 						buffer.Add(data[i]);
 					}
 				}
+				return;
 			}
-			else
+			long num = (long)(point[(int)this.tree[index].splitAxis] - this.tree[index].split);
+			int num2 = 2 * index + ((num < 0L) ? 0 : 1);
+			this.GetInRangeInternal(num2, point, sqrRadius, buffer);
+			if (num * num < sqrRadius)
 			{
-				long num = (long)(point[(int)this.tree[index].splitAxis] - this.tree[index].split);
-				int num2 = 2 * index + ((num >= 0L) ? 1 : 0);
-				this.GetInRangeInternal(num2, point, sqrRadius, buffer);
-				if (num * num < sqrRadius)
-				{
-					this.GetInRangeInternal(num2 ^ 1, point, sqrRadius, buffer);
-				}
+				this.GetInRangeInternal(num2 ^ 1, point, sqrRadius, buffer);
 			}
 		}
 

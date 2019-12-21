@@ -23,8 +23,8 @@ namespace AIs
 			this.InitializeAIParams();
 			this.InitializeBloodFXData();
 			this.InitFootstepsData();
+			AISoundModule.CacheSounds();
 			AIManager.s_WalkableAreaMask = 1 << NavMesh.GetAreaFromName("Walkable");
-			this.m_AIWaveManager = new AIWavesManager();
 		}
 
 		private void InitFleshHitSounds()
@@ -49,8 +49,7 @@ namespace AIs
 						this.m_Tribe1Sounds[(int)key2] = new List<AudioClip>();
 						this.m_Tribe2Sounds[(int)key2] = new List<AudioClip>();
 						string svalue = key.GetVariable(1).SValue;
-						string path = "Sounds/" + key.GetVariable(2).SValue + "/Tribe0/" + svalue;
-						AudioClip audioClip = Resources.Load<AudioClip>(path);
+						AudioClip audioClip = Resources.Load<AudioClip>("Sounds/" + key.GetVariable(2).SValue + "/Tribe0/" + svalue);
 						if (audioClip)
 						{
 							this.m_Tribe0Sounds[(int)key2].Add(audioClip);
@@ -59,16 +58,15 @@ namespace AIs
 						{
 							for (int j = 1; j < 99; j++)
 							{
-								path = string.Concat(new string[]
+								audioClip = Resources.Load<AudioClip>(string.Concat(new string[]
 								{
 									"Sounds/",
 									key.GetVariable(2).SValue,
 									"/Tribe0/",
 									svalue,
-									(j >= 10) ? string.Empty : "0",
+									(j < 10) ? "0" : "",
 									j.ToString()
-								});
-								audioClip = Resources.Load<AudioClip>(path);
+								}));
 								if (!audioClip)
 								{
 									break;
@@ -76,8 +74,7 @@ namespace AIs
 								this.m_Tribe0Sounds[(int)key2].Add(audioClip);
 							}
 						}
-						path = "Sounds/" + key.GetVariable(2).SValue + "/Tribe1/" + svalue;
-						audioClip = Resources.Load<AudioClip>(path);
+						audioClip = Resources.Load<AudioClip>("Sounds/" + key.GetVariable(2).SValue + "/Tribe1/" + svalue);
 						if (audioClip)
 						{
 							this.m_Tribe1Sounds[(int)key2].Add(audioClip);
@@ -86,16 +83,15 @@ namespace AIs
 						{
 							for (int k = 1; k < 99; k++)
 							{
-								path = string.Concat(new string[]
+								audioClip = Resources.Load<AudioClip>(string.Concat(new string[]
 								{
 									"Sounds/",
 									key.GetVariable(2).SValue,
 									"/Tribe1/",
 									svalue,
-									(k >= 10) ? string.Empty : "0",
+									(k < 10) ? "0" : "",
 									k.ToString()
-								});
-								audioClip = Resources.Load<AudioClip>(path);
+								}));
 								if (!audioClip)
 								{
 									break;
@@ -103,8 +99,7 @@ namespace AIs
 								this.m_Tribe1Sounds[(int)key2].Add(audioClip);
 							}
 						}
-						path = "Sounds/" + key.GetVariable(2).SValue + "/Tribe2/" + svalue;
-						audioClip = Resources.Load<AudioClip>(path);
+						audioClip = Resources.Load<AudioClip>("Sounds/" + key.GetVariable(2).SValue + "/Tribe2/" + svalue);
 						if (audioClip)
 						{
 							this.m_Tribe2Sounds[(int)key2].Add(audioClip);
@@ -113,16 +108,15 @@ namespace AIs
 						{
 							for (int l = 1; l < 99; l++)
 							{
-								path = string.Concat(new string[]
+								audioClip = Resources.Load<AudioClip>(string.Concat(new string[]
 								{
 									"Sounds/",
 									key.GetVariable(2).SValue,
 									"/Tribe2/",
 									svalue,
-									(l >= 10) ? string.Empty : "0",
+									(l < 10) ? "0" : "",
 									l.ToString()
-								});
-								audioClip = Resources.Load<AudioClip>(path);
+								}));
 								if (!audioClip)
 								{
 									break;
@@ -133,16 +127,14 @@ namespace AIs
 					}
 				}
 				Resources.UnloadAsset(textAsset);
+				return;
 			}
-			else
-			{
-				DebugUtils.Assert("Missing HumanSounds script!", true, DebugUtils.AssertType.Info);
-			}
+			DebugUtils.Assert("Missing HumanSounds script!", true, DebugUtils.AssertType.Info);
 		}
 
 		private void InitFootstepsData()
 		{
-			for (int i = 0; i < 13; i++)
+			for (int i = 0; i < 16; i++)
 			{
 				this.m_FootstepDatas.Add(i, new AIFootstepData());
 			}
@@ -175,7 +167,18 @@ namespace AIs
 						});
 						for (int m = 0; m < array2.Length; m++)
 						{
-							aifootstepData.m_Sounds.Add(Resources.Load<AudioClip>(svalue + array2[m]));
+							aifootstepData.m_WalkSounds.Add(Resources.Load<AudioClip>(svalue + array2[m]));
+						}
+						if (key3.GetVariablesCount() > 2)
+						{
+							array2 = key3.GetVariable(2).SValue.Split(new char[]
+							{
+								';'
+							});
+							for (int n = 0; n < array2.Length; n++)
+							{
+								aifootstepData.m_RunSounds.Add(Resources.Load<AudioClip>(svalue + array2[n]));
+							}
 						}
 					}
 				}
@@ -192,63 +195,76 @@ namespace AIs
 			return fxnames[UnityEngine.Random.Range(0, fxnames.Count)];
 		}
 
-		public AudioClip GetFootstepSound(EObjectMaterial mat)
+		public AudioClip GetFootstepSound(EObjectMaterial mat, bool walk)
 		{
-			List<AudioClip> sounds = this.m_FootstepDatas[(int)mat].m_Sounds;
-			if (sounds.Count == 0)
+			List<AudioClip> list = walk ? this.m_FootstepDatas[(int)mat].m_WalkSounds : this.m_FootstepDatas[(int)mat].m_RunSounds;
+			if (list.Count != 0)
 			{
-				return null;
+				return list[UnityEngine.Random.Range(0, list.Count)];
 			}
-			return sounds[UnityEngine.Random.Range(0, sounds.Count)];
+			if (mat != EObjectMaterial.Unknown)
+			{
+				return this.GetFootstepSound(EObjectMaterial.Unknown, walk);
+			}
+			return null;
 		}
 
 		private void InitializeGoalParsers()
 		{
-			for (int i = 0; i < 40; i++)
+			int num = 0;
+			for (int i = 0; i < 44; i++)
 			{
-				List<TextAssetParser> list = new List<TextAssetParser>();
 				AI.AIID aiid = (AI.AIID)i;
-				string text = aiid.ToString() + "Goals";
-				string path = "Scripts/AI/" + text;
-				TextAsset textAsset = Resources.Load(path) as TextAsset;
-				if (textAsset)
+				string script_name = aiid.ToString();
+				this.LoadGoalScript(script_name, num);
+				num++;
+			}
+			foreach (string script_name2 in this.m_AdditionalGoalScripts)
+			{
+				this.LoadGoalScript(script_name2, num);
+				num++;
+			}
+		}
+
+		private void LoadGoalScript(string script_name, int index)
+		{
+			List<TextAssetParser> list = new List<TextAssetParser>();
+			TextAsset textAsset = Resources.Load("Scripts/AI/" + script_name + "Goals") as TextAsset;
+			if (textAsset)
+			{
+				TextAssetParser textAssetParser = new TextAssetParser(textAsset);
+				list.Add(textAssetParser);
+				this.m_GoalParsersByName.Add(script_name, textAssetParser);
+				Resources.UnloadAsset(textAsset);
+			}
+			else
+			{
+				for (int i = 0; i < 9999; i++)
 				{
-					TextAssetParser textAssetParser = new TextAssetParser(textAsset);
-					list.Add(textAssetParser);
-					this.m_GoalParsersByName.Add(text, textAssetParser);
+					AI.AIID aiid = (AI.AIID)index;
+					string text = aiid.ToString() + "Goals_" + i.ToString();
+					textAsset = (Resources.Load("Scripts/AI/" + text) as TextAsset);
+					if (!textAsset)
+					{
+						break;
+					}
+					TextAssetParser textAssetParser2 = new TextAssetParser(textAsset);
+					list.Add(textAssetParser2);
+					this.m_GoalParsersByName.Add(text, textAssetParser2);
 					Resources.UnloadAsset(textAsset);
 				}
-				else
-				{
-					for (int j = 0; j < 9999; j++)
-					{
-						AI.AIID aiid2 = (AI.AIID)i;
-						text = aiid2.ToString() + "Goals_" + j.ToString();
-						path = "Scripts/AI/" + text;
-						textAsset = (Resources.Load(path) as TextAsset);
-						if (!textAsset)
-						{
-							break;
-						}
-						TextAssetParser textAssetParser2 = new TextAssetParser(textAsset);
-						list.Add(textAssetParser2);
-						this.m_GoalParsersByName.Add(text, textAssetParser2);
-						Resources.UnloadAsset(textAsset);
-					}
-				}
-				this.m_GoalParsers.Add(i, list);
 			}
+			this.m_GoalParsers.Add(index, list);
 		}
 
 		private void InitializeAnimEventsParsers()
 		{
-			for (int i = 0; i < 40; i++)
+			for (int i = 0; i < 44; i++)
 			{
 				List<TextAssetParser> list = new List<TextAssetParser>();
 				AI.AIID aiid = (AI.AIID)i;
 				string text = aiid.ToString() + "AnimEvents";
-				string path = "Scripts/AI/" + text;
-				TextAsset textAsset = Resources.Load(path) as TextAsset;
+				TextAsset textAsset = Resources.Load("Scripts/AI/" + text) as TextAsset;
 				if (textAsset)
 				{
 					TextAssetParser textAssetParser = new TextAssetParser(textAsset);
@@ -265,13 +281,12 @@ namespace AIs
 
 		private void InitializeAnimatorDataParsers()
 		{
-			for (int i = 0; i < 40; i++)
+			for (int i = 0; i < 44; i++)
 			{
 				List<TextAssetParser> list = new List<TextAssetParser>();
 				AI.AIID aiid = (AI.AIID)i;
 				string text = aiid.ToString() + "AnimatorData";
-				string path = "Scripts/AI/" + text;
-				TextAsset textAsset = Resources.Load(path) as TextAsset;
+				TextAsset textAsset = Resources.Load("Scripts/AI/" + text) as TextAsset;
 				if (textAsset)
 				{
 					TextAssetParser textAssetParser = new TextAssetParser(textAsset);
@@ -288,8 +303,7 @@ namespace AIs
 
 		private void InitializeAIParams()
 		{
-			string path = "Scripts/AI/AIData";
-			TextAsset textAsset = Resources.Load(path) as TextAsset;
+			TextAsset textAsset = Resources.Load("Scripts/AI/AIData") as TextAsset;
 			if (!textAsset)
 			{
 				DebugUtils.Assert("Can't load AIData script!", true, DebugUtils.AssertType.Info);
@@ -311,8 +325,7 @@ namespace AIs
 
 		private void InitializeBloodFXData()
 		{
-			string path = "Scripts/AI/BloodFXData";
-			TextAsset textAsset = Resources.Load(path) as TextAsset;
+			TextAsset textAsset = Resources.Load("Scripts/AI/BloodFXData") as TextAsset;
 			if (!textAsset)
 			{
 				DebugUtils.Assert("Can't load BloodFXData script!", true, DebugUtils.AssertType.Info);
@@ -356,6 +369,10 @@ namespace AIs
 				{
 					this.m_AllAnimalAIs.Add(new_ai);
 				}
+				if (new_ai.IsEnemy())
+				{
+					this.m_EnemyAIs.Add(new_ai);
+				}
 			}
 		}
 
@@ -371,6 +388,10 @@ namespace AIs
 				else
 				{
 					this.m_AllAnimalAIs.Remove(ai);
+				}
+				if (this.m_EnemyAIs.Contains(ai))
+				{
+					this.m_EnemyAIs.Remove(ai);
 				}
 			}
 		}
@@ -418,15 +439,23 @@ namespace AIs
 		{
 			foreach (FishTank fishTank in FishTank.s_FishTanks)
 			{
-				if (fishTank.gameObject.activeSelf)
+				if (fishTank.gameObject.activeSelf && fishTank.IsPointInside(point))
 				{
-					if (fishTank.IsPointInside(point))
-					{
-						return fishTank;
-					}
+					return fishTank;
 				}
 			}
 			return null;
+		}
+
+		public int GetBodyPaintingIndex()
+		{
+			int currentBodyPaintingIndex = this.m_CurrentBodyPaintingIndex;
+			this.m_CurrentBodyPaintingIndex++;
+			if (this.m_CurrentBodyPaintingIndex >= this.m_BodyPaintingsCount)
+			{
+				this.m_CurrentBodyPaintingIndex = 0;
+			}
+			return currentBodyPaintingIndex;
 		}
 
 		public AI GetClosestAI(Vector3 position, float max_range = 3.40282347E+38f)
@@ -463,7 +492,6 @@ namespace AIs
 
 		private void Update()
 		{
-			this.m_AIWaveManager.Update();
 			this.UpdateActivity(false);
 			this.UpdateFishTanksActivity();
 			this.UpdateSpawners();
@@ -488,22 +516,37 @@ namespace AIs
 
 		private void UpdateActivity(bool force = false)
 		{
+			if (ScenarioManager.Get().IsDreamOrPreDream() || ScenarioManager.Get().IsBoolVariableTrue("PlayerMechGameEnding"))
+			{
+				foreach (AI ai in this.m_AllAIs)
+				{
+					if (ai.gameObject.activeSelf && !ai.IsKidRunner())
+					{
+						ai.gameObject.SetActive(false);
+					}
+				}
+				return;
+			}
 			if (!force && Time.time - this.m_LastUpdateActivity < this.m_UpdateActivityInterval)
 			{
 				return;
 			}
 			Vector3 position = Player.Get().transform.position;
-			foreach (AI ai in this.m_AllAnimalAIs)
+			foreach (AI ai2 in this.m_AllAnimalAIs)
 			{
-				if (!ai.m_Trap)
+				if (!ai2.m_Trap && ai2.CheckActivityByDistance())
 				{
-					if (ai.CheckActivityByDistance())
+					float num = Vector3.Distance(position, ai2.transform.position);
+					if (ai2.m_BleedingDamage == 0f)
 					{
-						float num = Vector3.Distance(position, ai.transform.position);
 						if (num > this.m_AIActivationRange)
 						{
-							UnityEngine.Object.Destroy(ai.gameObject);
+							UnityEngine.Object.Destroy(ai2.gameObject);
 						}
+					}
+					else if (num > this.m_AIBleedingActivationRange)
+					{
+						UnityEngine.Object.Destroy(ai2.gameObject);
 					}
 				}
 			}
@@ -518,7 +561,7 @@ namespace AIs
 						deadBody.m_DeactivationTime = Time.time;
 					}
 				}
-				else if (Time.time - deadBody.m_DeactivationTime > 300f)
+				else if (Time.time - deadBody.m_DeactivationTime > 60f)
 				{
 					UnityEngine.Object.Destroy(deadBody.gameObject);
 				}
@@ -564,18 +607,12 @@ namespace AIs
 			{
 				GameObject prefab = GreenHellGame.Instance.GetPrefab("Jaguar");
 				Vector3 forward = Camera.main.transform.forward;
-				GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(prefab, JaguarTwitchDemo.s_Object.transform.Find("Spawner").position, JaguarTwitchDemo.s_Object.transform.Find("Spawner").rotation);
-				AI component = gameObject.GetComponent<AI>();
-				component.m_Attractor = JaguarTwitchDemo.s_Object.transform.Find("Attr_0").GetComponent<AIAttractor>();
+				UnityEngine.Object.Instantiate<GameObject>(prefab, JaguarTwitchDemo.s_Object.transform.Find("Spawner").position, JaguarTwitchDemo.s_Object.transform.Find("Spawner").rotation).GetComponent<AI>().m_Attractor = JaguarTwitchDemo.s_Object.transform.Find("Attr_0").GetComponent<AIAttractor>();
 			}
 			if (this.m_DebugSpawnID != AI.AIID.None && Input.GetKeyDown(KeyCode.Keypad3))
 			{
 				this.DebugSpawnAI(this.m_DebugSpawnID.ToString(), true, false);
 			}
-		}
-
-		private void OnGUI()
-		{
 		}
 
 		private void DebugSpawnAI(string name, bool idle_mode = false, bool hallucination = false)
@@ -586,9 +623,7 @@ namespace AIs
 				return;
 			}
 			Vector3 forward = Camera.main.transform.forward;
-			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(prefab, Player.Get().GetHeadTransform().position + forward * 10f, Quaternion.LookRotation(-Camera.main.transform.forward, Vector3.up));
-			AI component = gameObject.GetComponent<AI>();
-			component.m_Hallucination = hallucination;
+			UnityEngine.Object.Instantiate<GameObject>(prefab, Player.Get().GetHeadTransform().position + forward * 10f, Quaternion.LookRotation(-Camera.main.transform.forward, Vector3.up)).GetComponent<AI>().m_Hallucination = hallucination;
 		}
 
 		private void DebugGiveDamageToAllAIs(float damage)
@@ -628,7 +663,6 @@ namespace AIs
 			{
 				FishTank.s_FishTanks[j].Save(j);
 			}
-			this.m_AIWaveManager.Save();
 		}
 
 		public void Load()
@@ -653,7 +687,18 @@ namespace AIs
 			{
 				FishTank.s_FishTanks[l].Load(l);
 			}
-			this.m_AIWaveManager.Load();
+		}
+
+		public void DestroyAllEnemies()
+		{
+			while (this.m_EnemyAIs.Count > 0)
+			{
+				if (this.m_EnemyAIs[0] && this.m_EnemyAIs[0].gameObject)
+				{
+					UnityEngine.Object.Destroy(this.m_EnemyAIs[0].gameObject);
+				}
+				this.m_EnemyAIs.RemoveAt(0);
+			}
 		}
 
 		private List<AI> m_AllAnimalAIs = new List<AI>();
@@ -665,6 +710,8 @@ namespace AIs
 
 		public List<AI> m_ActiveAIs = new List<AI>();
 
+		public List<AI> m_EnemyAIs = new List<AI>();
+
 		public List<DeadBody> m_DeadBodies = new List<DeadBody>();
 
 		private float m_LastUpdateActivity;
@@ -672,6 +719,8 @@ namespace AIs
 		private float m_UpdateActivityInterval = 1f;
 
 		public float m_AIActivationRange = 40f;
+
+		public float m_AIBleedingActivationRange = 100f;
 
 		public float m_FlocksActivationRange = 40f;
 
@@ -706,9 +755,9 @@ namespace AIs
 		[HideInInspector]
 		public AI.AIID m_DebugSpawnID = AI.AIID.None;
 
-		public static int s_WalkableAreaMask;
+		public static int s_WalkableAreaMask = 0;
 
-		private AIWavesManager m_AIWaveManager;
+		public static int s_WaterAreaMask = 9;
 
 		[HideInInspector]
 		public Dictionary<int, List<string>> m_BloodFXNames = new Dictionary<int, List<string>>();
@@ -716,7 +765,19 @@ namespace AIs
 		[HideInInspector]
 		public List<AI.AIID> m_ProcessedAnimEventsReceivers = new List<AI.AIID>();
 
-		private static AIManager s_Instance;
+		private int m_CurrentBodyPaintingIndex;
+
+		private int m_BodyPaintingsCount = 3;
+
+		public Material[] m_Painting0;
+
+		public Material[] m_Painting1;
+
+		public Material[] m_Painting2;
+
+		private static AIManager s_Instance = null;
+
+		public List<string> m_AdditionalGoalScripts = new List<string>();
 
 		private int m_SpawnerIdx;
 

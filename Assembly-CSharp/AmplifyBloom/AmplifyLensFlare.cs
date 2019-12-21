@@ -86,7 +86,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_overallIntensity = ((value >= 0f) ? value : 0f);
+				this.m_overallIntensity = ((value < 0f) ? 0f : value);
 				this.m_lensFlareGhostsParams.x = value * this.m_normalizedGhostIntensity;
 				this.m_lensFlareHaloParams.x = value * this.m_normalizedHaloIntensity;
 			}
@@ -124,7 +124,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_normalizedGhostIntensity = ((value >= 0f) ? value : 0f);
+				this.m_normalizedGhostIntensity = ((value < 0f) ? 0f : value);
 				this.m_lensFlareGhostsParams.x = this.m_overallIntensity * this.m_normalizedGhostIntensity;
 			}
 		}
@@ -137,7 +137,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_lensFlareGhostsParams.x = ((value >= 0f) ? value : 0f);
+				this.m_lensFlareGhostsParams.x = ((value < 0f) ? 0f : value);
 			}
 		}
 
@@ -209,7 +209,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_normalizedHaloIntensity = ((value >= 0f) ? value : 0f);
+				this.m_normalizedHaloIntensity = ((value < 0f) ? 0f : value);
 				this.m_lensFlareHaloParams.x = this.m_overallIntensity * this.m_normalizedHaloIntensity;
 			}
 		}
@@ -222,7 +222,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_lensFlareHaloParams.x = ((value >= 0f) ? value : 0f);
+				this.m_lensFlareHaloParams.x = ((value < 0f) ? 0f : value);
 			}
 		}
 

@@ -120,20 +120,21 @@ public class Watch : MonoBehaviour
 		case Watch.State.Time:
 		{
 			WatchTimeData watchTimeData = (WatchTimeData)this.m_Datas[0];
-			int num = (int)MainLevel.Instance.m_TODSky.Cycle.Hour;
-			int num2 = num % 10;
-			int num3 = (num - num2) / 10;
-			int num4 = (int)((MainLevel.Instance.m_TODSky.Cycle.Hour - (float)num) * 60f);
-			int num5 = num4 % 10;
-			int num6 = (num4 - num5) / 10;
-			watchTimeData.m_TimeHourDec.text = num3.ToString();
-			watchTimeData.m_TimeHourUnit.text = num2.ToString();
-			watchTimeData.m_TimeMinuteDec.text = num6.ToString();
-			watchTimeData.m_TimeMinuteUnit.text = num5.ToString();
+			DateTime dateTime = MainLevel.Instance.m_TODSky.Cycle.DateTime.AddDays((double)this.m_FakeDayOffset);
+			int hour = dateTime.Hour;
+			int num = hour % 10;
+			int num2 = (hour - num) / 10;
+			int minute = dateTime.Minute;
+			int num3 = minute % 10;
+			int num4 = (minute - num3) / 10;
+			watchTimeData.m_TimeHourDec.text = num2.ToString();
+			watchTimeData.m_TimeHourUnit.text = num.ToString();
+			watchTimeData.m_TimeMinuteDec.text = num4.ToString();
+			watchTimeData.m_TimeMinuteUnit.text = num3.ToString();
 			Localization localization = GreenHellGame.Instance.GetLocalization();
-			string key = "Watch_" + MainLevel.Instance.m_TODSky.Cycle.DateTime.DayOfWeek.ToString();
-			watchTimeData.m_DayName.text = localization.Get(key);
-			switch (MainLevel.Instance.m_TODSky.Cycle.DateTime.Month)
+			string key = "Watch_" + EnumUtils<DayOfWeek>.GetName(dateTime.DayOfWeek);
+			watchTimeData.m_DayName.text = localization.Get(key, true);
+			switch (dateTime.Month)
 			{
 			case 1:
 				key = "Watch_January";
@@ -172,20 +173,20 @@ public class Watch : MonoBehaviour
 				key = "Watch_December";
 				break;
 			}
-			watchTimeData.m_MonthName.text = localization.Get(key);
-			int day = MainLevel.Instance.m_TODSky.Cycle.DateTime.Day;
-			int num7 = day % 10;
-			int num8 = (day - num7) / 10;
-			watchTimeData.m_DayDec.text = num8.ToString();
-			watchTimeData.m_DayUnit.text = num7.ToString();
-			break;
+			watchTimeData.m_MonthName.text = localization.Get(key, true);
+			int day = dateTime.Day;
+			int num5 = day % 10;
+			int num6 = (day - num5) / 10;
+			watchTimeData.m_DayDec.text = num6.ToString();
+			watchTimeData.m_DayUnit.text = num5.ToString();
+			return;
 		}
 		case Watch.State.Sanity:
 		{
 			WatchSanityData watchSanityData = (WatchSanityData)this.m_Datas[1];
 			watchSanityData.m_Sanity.BeatsPerMinute = (int)CJTools.Math.GetProportionalClamp(Watch.MIN_BEATS_PER_SEC, Watch.MAX_BEATS_PER_SEC, (float)PlayerSanityModule.Get().m_Sanity, 1f, 0f);
 			watchSanityData.m_SanityText.text = PlayerSanityModule.Get().m_Sanity.ToString();
-			break;
+			return;
 		}
 		case Watch.State.Macronutrients:
 		{
@@ -198,26 +199,39 @@ public class Watch : MonoBehaviour
 			watchMacronutrientsData.m_Proteins.fillAmount = fillAmount3;
 			float fillAmount4 = Player.Get().GetHydration() / Player.Get().GetMaxHydration();
 			watchMacronutrientsData.m_Hydration.fillAmount = fillAmount4;
-			break;
+			return;
 		}
 		case Watch.State.Compass:
 		{
 			WatchCompassData watchCompassData = (WatchCompassData)this.m_Datas[3];
 			Vector3 forward = Player.Get().gameObject.transform.forward;
-			float num9 = Vector3.Angle(Vector3.forward, forward);
+			float num7 = Vector3.Angle(Vector3.forward, forward);
 			if (forward.x < 0f)
 			{
-				num9 = 360f - num9;
+				num7 = 360f - num7;
 			}
-			Quaternion rotation = Quaternion.Euler(new Vector3(0f, 0f, num9));
+			Quaternion rotation = Quaternion.Euler(new Vector3(0f, 0f, num7));
 			watchCompassData.m_Compass.transform.rotation = rotation;
-			int num10 = 0;
-			int num11 = 0;
-			Player.Get().GetGPSCoordinates(out num10, out num11);
-			watchCompassData.m_GPSCoordinates.text = num10.ToString() + "'W\n" + num11.ToString() + "'S";
-			break;
+			int num8 = 0;
+			int num9 = 0;
+			Player.Get().GetGPSCoordinates(out num8, out num9);
+			watchCompassData.m_GPSCoordinates.text = num8.ToString() + "'W\n" + num9.ToString() + "'S";
+			return;
 		}
+		default:
+			return;
 		}
+	}
+
+	public bool IsWatchTab(string state_name)
+	{
+		Watch.State state = (Watch.State)Enum.Parse(typeof(Watch.State), state_name);
+		return this.m_State == state;
+	}
+
+	public void SetWatchTab(string state_name)
+	{
+		this.SetState((Watch.State)Enum.Parse(typeof(Watch.State), state_name));
 	}
 
 	public bool IsWatchTabActive(string state_name)
@@ -230,6 +244,20 @@ public class Watch : MonoBehaviour
 		return this.m_State == state;
 	}
 
+	public void SetFakeDate(int day, int month)
+	{
+		DateTime dateTime = MainLevel.Instance.m_TODSky.Cycle.DateTime;
+		dateTime = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day);
+		int year = (month > dateTime.Month && day > dateTime.Day) ? (dateTime.Year - 1) : dateTime.Year;
+		DateTime d = new DateTime(year, month, day);
+		this.m_FakeDayOffset = (d - dateTime).Days;
+	}
+
+	public void ClearFakeDate()
+	{
+		this.m_FakeDayOffset = 0;
+	}
+
 	public Watch.State m_State = Watch.State.None;
 
 	private Dictionary<int, WatchData> m_Datas = new Dictionary<int, WatchData>();
@@ -240,7 +268,9 @@ public class Watch : MonoBehaviour
 
 	public GameObject m_Canvas;
 
-	private static Watch s_Instance;
+	private static Watch s_Instance = null;
+
+	private int m_FakeDayOffset;
 
 	public enum State
 	{

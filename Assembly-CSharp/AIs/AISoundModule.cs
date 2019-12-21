@@ -6,14 +6,31 @@ namespace AIs
 {
 	public class AISoundModule : AIModule
 	{
-		public override void Initialize()
+		public static void CacheSounds()
 		{
-			base.Initialize();
+			AI.AIID[] array = (AI.AIID[])Enum.GetValues(typeof(AI.AIID));
+			for (int i = 0; i < array.Length; i++)
+			{
+				AISoundModule.ParseSoundFile(array[i]);
+			}
+		}
+
+		public static void ClearCache()
+		{
+			AISoundModule.s_Status.Clear();
+			AISoundModule.s_IdleClips.Clear();
+			AISoundModule.s_PanicClips.Clear();
+			AISoundModule.s_DeathClips.Clear();
+		}
+
+		public override void Initialize(Being being)
+		{
+			base.Initialize(being);
 			bool flag = false;
-			this.s_Status.TryGetValue((int)this.m_AI.m_ID, out flag);
+			AISoundModule.s_Status.TryGetValue((int)this.m_AI.m_ID, out flag);
 			if (!flag)
 			{
-				this.ParseSoundFile();
+				AISoundModule.ParseSoundFile(this.m_AI.m_ID);
 			}
 			if (this.m_AudioSource == null)
 			{
@@ -22,16 +39,17 @@ namespace AIs
 				this.m_AudioSource.spatialBlend = 1f;
 				this.m_AudioSource.rolloffMode = AudioRolloffMode.Linear;
 				this.m_AudioSource.maxDistance = 12f;
+				this.m_AudioSource.priority = 50;
 			}
 		}
 
-		private void ParseSoundFile()
+		private static void ParseSoundFile(AI.AIID ai_id)
 		{
 			ScriptParser scriptParser = new ScriptParser();
-			scriptParser.Parse("AI/" + this.m_AI.m_ID.ToString() + "Sounds", true);
-			this.s_IdleClips[(int)this.m_AI.m_ID] = new List<AudioClip>();
-			this.s_PanicClips[(int)this.m_AI.m_ID] = new List<AudioClip>();
-			this.s_DeathClips[(int)this.m_AI.m_ID] = new List<AudioClip>();
+			scriptParser.Parse("AI/" + ai_id.ToString() + "Sounds", true);
+			AISoundModule.s_IdleClips[(int)ai_id] = new List<AudioClip>();
+			AISoundModule.s_PanicClips[(int)ai_id] = new List<AudioClip>();
+			AISoundModule.s_DeathClips[(int)ai_id] = new List<AudioClip>();
 			for (int i = 0; i < scriptParser.GetKeysCount(); i++)
 			{
 				Key key = scriptParser.GetKey(i);
@@ -40,8 +58,8 @@ namespace AIs
 					for (int j = 0; j < key.GetVariablesCount(); j++)
 					{
 						CJVariable variable = key.GetVariable(j);
-						AudioClip item = Resources.Load("Sounds/AI/" + this.m_AI.m_ID.ToString() + "/" + variable.SValue) as AudioClip;
-						this.s_IdleClips[(int)this.m_AI.m_ID].Add(item);
+						AudioClip item = Resources.Load("Sounds/AI/" + ai_id.ToString() + "/" + variable.SValue) as AudioClip;
+						AISoundModule.s_IdleClips[(int)ai_id].Add(item);
 					}
 				}
 				else if (key.GetName() == "Panic")
@@ -49,8 +67,8 @@ namespace AIs
 					for (int k = 0; k < key.GetVariablesCount(); k++)
 					{
 						CJVariable variable2 = key.GetVariable(k);
-						AudioClip item2 = Resources.Load("Sounds/AI/" + this.m_AI.m_ID.ToString() + "/" + variable2.SValue) as AudioClip;
-						this.s_PanicClips[(int)this.m_AI.m_ID].Add(item2);
+						AudioClip item2 = Resources.Load("Sounds/AI/" + ai_id.ToString() + "/" + variable2.SValue) as AudioClip;
+						AISoundModule.s_PanicClips[(int)ai_id].Add(item2);
 					}
 				}
 				else if (key.GetName() == "Death")
@@ -58,12 +76,12 @@ namespace AIs
 					for (int l = 0; l < key.GetVariablesCount(); l++)
 					{
 						CJVariable variable3 = key.GetVariable(l);
-						AudioClip item3 = Resources.Load("Sounds/AI/" + this.m_AI.m_ID.ToString() + "/" + variable3.SValue) as AudioClip;
-						this.s_DeathClips[(int)this.m_AI.m_ID].Add(item3);
+						AudioClip item3 = Resources.Load("Sounds/AI/" + ai_id.ToString() + "/" + variable3.SValue) as AudioClip;
+						AISoundModule.s_DeathClips[(int)ai_id].Add(item3);
 					}
 				}
 			}
-			this.s_Status[(int)this.m_AI.m_ID] = true;
+			AISoundModule.s_Status[(int)ai_id] = true;
 		}
 
 		public void RequestSound(AISoundType sound_type)
@@ -79,19 +97,20 @@ namespace AIs
 				if (Time.time > this.m_IdleSoundNextTime)
 				{
 					this.m_AudioSource.Stop();
-					if (this.s_IdleClips[(int)this.m_AI.m_ID].Count > 0)
+					if (AISoundModule.s_IdleClips[(int)this.m_AI.m_ID].Count > 0)
 					{
-						this.m_AudioSource.PlayOneShot(this.s_IdleClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, this.s_IdleClips[(int)this.m_AI.m_ID].Count)]);
+						this.m_AudioSource.PlayOneShot(AISoundModule.s_IdleClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, AISoundModule.s_IdleClips[(int)this.m_AI.m_ID].Count)]);
 					}
 					this.m_IdleSoundNextTime = Time.time + UnityEngine.Random.Range(this.m_IdleSoundDelayMin, this.m_IdleSoundDelayMax);
+					return;
 				}
 			}
 			else if (this.m_RequestedSound == AISoundType.Panic && Time.time > this.m_PanicSoundNextTime)
 			{
 				this.m_AudioSource.Stop();
-				if (this.s_PanicClips[(int)this.m_AI.m_ID].Count > 0)
+				if (AISoundModule.s_PanicClips[(int)this.m_AI.m_ID].Count > 0)
 				{
-					this.m_AudioSource.PlayOneShot(this.s_PanicClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, this.s_PanicClips[(int)this.m_AI.m_ID].Count)]);
+					this.m_AudioSource.PlayOneShot(AISoundModule.s_PanicClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, AISoundModule.s_PanicClips[(int)this.m_AI.m_ID].Count)]);
 				}
 				this.m_PanicSoundNextTime = Time.time + UnityEngine.Random.Range(this.m_PanicSoundDelayMin, this.m_PanicSoundDelayMax);
 			}
@@ -99,17 +118,16 @@ namespace AIs
 
 		public void OnGoalActivate(AIGoalType goal_type)
 		{
-			if (goal_type != AIGoalType.Idle)
-			{
-				if (goal_type == AIGoalType.MoveAwayFromEnemy)
-				{
-					this.RequestSound(AISoundType.Panic);
-				}
-			}
-			else
+			if (goal_type == AIGoalType.Idle)
 			{
 				this.RequestSound(AISoundType.Idle);
+				return;
 			}
+			if (goal_type != AIGoalType.MoveAwayFromEnemy)
+			{
+				return;
+			}
+			this.RequestSound(AISoundType.Panic);
 		}
 
 		public override void OnDie()
@@ -118,21 +136,29 @@ namespace AIs
 			if (Time.time > this.m_DeathSoundNextTime)
 			{
 				this.m_AudioSource.Stop();
-				if (this.s_DeathClips[(int)this.m_AI.m_ID].Count > 0)
+				if (AISoundModule.s_DeathClips[(int)this.m_AI.m_ID].Count > 0)
 				{
-					this.m_AudioSource.PlayOneShot(this.s_DeathClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, this.s_DeathClips[(int)this.m_AI.m_ID].Count)]);
+					this.m_AudioSource.PlayOneShot(AISoundModule.s_DeathClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, AISoundModule.s_DeathClips[(int)this.m_AI.m_ID].Count)]);
 				}
 				this.m_DeathSoundNextTime = Time.time + UnityEngine.Random.Range(this.m_DeathSoundDelayMin, this.m_DeathSoundDelayMax);
 			}
 		}
 
-		private Dictionary<int, List<AudioClip>> s_IdleClips = new Dictionary<int, List<AudioClip>>();
+		public virtual void PlayAttackSound()
+		{
+		}
 
-		private Dictionary<int, List<AudioClip>> s_PanicClips = new Dictionary<int, List<AudioClip>>();
+		public virtual void PlayRandomGrowlSound()
+		{
+		}
 
-		private Dictionary<int, List<AudioClip>> s_DeathClips = new Dictionary<int, List<AudioClip>>();
+		public static Dictionary<int, List<AudioClip>> s_IdleClips = new Dictionary<int, List<AudioClip>>();
 
-		private Dictionary<int, bool> s_Status = new Dictionary<int, bool>();
+		private static Dictionary<int, List<AudioClip>> s_PanicClips = new Dictionary<int, List<AudioClip>>();
+
+		private static Dictionary<int, List<AudioClip>> s_DeathClips = new Dictionary<int, List<AudioClip>>();
+
+		private static Dictionary<int, bool> s_Status = new Dictionary<int, bool>();
 
 		private AudioSource m_AudioSource;
 

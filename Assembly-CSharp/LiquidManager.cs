@@ -18,8 +18,7 @@ public class LiquidManager : MonoBehaviour
 
 	private void LoadScript()
 	{
-		TextAsset asset = Resources.Load(LiquidManager.s_ScriptName) as TextAsset;
-		TextAssetParser textAssetParser = new TextAssetParser(asset);
+		TextAssetParser textAssetParser = new TextAssetParser(Resources.Load(LiquidManager.s_ScriptName) as TextAsset);
 		for (int i = 0; i < textAssetParser.GetKeysCount(); i++)
 		{
 			Key key = textAssetParser.GetKey(i);
@@ -61,10 +60,12 @@ public class LiquidManager : MonoBehaviour
 					}
 					else if (key2.GetName() == "DrinkEffect")
 					{
-						liquidData.m_ConsumeEffect = (ConsumeEffect)Enum.Parse(typeof(ConsumeEffect), key2.GetVariable(0).SValue);
-						liquidData.m_ConsumeEffectChance = key2.GetVariable(1).FValue;
-						liquidData.m_ConsumeEffectDelay = key2.GetVariable(2).FValue;
-						liquidData.m_ConsumeEffectLevel = key2.GetVariable(3).IValue;
+						LiquidConsumeEffectData liquidConsumeEffectData = new LiquidConsumeEffectData();
+						liquidConsumeEffectData.m_ConsumeEffect = (ConsumeEffect)Enum.Parse(typeof(ConsumeEffect), key2.GetVariable(0).SValue);
+						liquidConsumeEffectData.m_ConsumeEffectChance = key2.GetVariable(1).FValue;
+						liquidConsumeEffectData.m_ConsumeEffectDelay = key2.GetVariable(2).FValue;
+						liquidConsumeEffectData.m_ConsumeEffectLevel = key2.GetVariable(3).IValue;
+						liquidData.m_ConsumeEffects.Add(liquidConsumeEffectData);
 					}
 					else if (key2.GetName() == "Energy")
 					{
@@ -108,7 +109,7 @@ public class LiquidManager : MonoBehaviour
 		return null;
 	}
 
-	private static LiquidManager s_Instance;
+	private static LiquidManager s_Instance = null;
 
 	[HideInInspector]
 	public List<LiquidData> m_LiquidDatas = new List<LiquidData>();

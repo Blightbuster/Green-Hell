@@ -58,7 +58,11 @@ namespace UnityEngine.PostProcessing
 
 		public override CameraEvent GetCameraEvent()
 		{
-			return (!this.ambientOnlySupported || this.context.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.AmbientOcclusion)) ? CameraEvent.BeforeImageEffectsOpaque : CameraEvent.BeforeReflections;
+			if (!this.ambientOnlySupported || this.context.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.AmbientOcclusion))
+			{
+				return CameraEvent.BeforeImageEffectsOpaque;
+			}
+			return CameraEvent.BeforeReflections;
 		}
 
 		public override void PopulateCommandBuffer(CommandBuffer cb)
@@ -69,29 +73,22 @@ namespace UnityEngine.PostProcessing
 			material.shaderKeywords = null;
 			material.SetFloat(AmbientOcclusionComponent.Uniforms._Intensity, settings.intensity);
 			material.SetFloat(AmbientOcclusionComponent.Uniforms._Radius, settings.radius);
-			material.SetFloat(AmbientOcclusionComponent.Uniforms._Downsample, (!settings.downsampling) ? 1f : 0.5f);
+			material.SetFloat(AmbientOcclusionComponent.Uniforms._Downsample, settings.downsampling ? 0.5f : 1f);
 			material.SetInt(AmbientOcclusionComponent.Uniforms._SampleCount, (int)settings.sampleCount);
 			if (!this.context.isGBufferAvailable && RenderSettings.fog)
 			{
 				material.SetVector(AmbientOcclusionComponent.Uniforms._FogParams, new Vector3(RenderSettings.fogDensity, RenderSettings.fogStartDistance, RenderSettings.fogEndDistance));
-				FogMode fogMode = RenderSettings.fogMode;
-				if (fogMode != FogMode.Linear)
+				switch (RenderSettings.fogMode)
 				{
-					if (fogMode != FogMode.Exponential)
-					{
-						if (fogMode == FogMode.ExponentialSquared)
-						{
-							material.EnableKeyword("FOG_EXP2");
-						}
-					}
-					else
-					{
-						material.EnableKeyword("FOG_EXP");
-					}
-				}
-				else
-				{
+				case FogMode.Linear:
 					material.EnableKeyword("FOG_LINEAR");
+					break;
+				case FogMode.Exponential:
+					material.EnableKeyword("FOG_EXP");
+					break;
+				case FogMode.ExponentialSquared:
+					material.EnableKeyword("FOG_EXP2");
+					break;
 				}
 			}
 			else
@@ -100,14 +97,14 @@ namespace UnityEngine.PostProcessing
 			}
 			int width = this.context.width;
 			int height = this.context.height;
-			int num = (!settings.downsampling) ? 1 : 2;
+			int num = settings.downsampling ? 2 : 1;
 			int nameID = AmbientOcclusionComponent.Uniforms._OcclusionTexture1;
 			cb.GetTemporaryRT(nameID, width / num, height / num, 0, FilterMode.Bilinear, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			cb.Blit(null, nameID, material, (int)this.occlusionSource);
 			int occlusionTexture = AmbientOcclusionComponent.Uniforms._OcclusionTexture2;
 			cb.GetTemporaryRT(occlusionTexture, width, height, 0, FilterMode.Bilinear, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 			cb.SetGlobalTexture(AmbientOcclusionComponent.Uniforms._MainTex, nameID);
-			cb.Blit(nameID, occlusionTexture, material, (this.occlusionSource != AmbientOcclusionComponent.OcclusionSource.GBuffer) ? 3 : 4);
+			cb.Blit(nameID, occlusionTexture, material, (this.occlusionSource == AmbientOcclusionComponent.OcclusionSource.GBuffer) ? 4 : 3);
 			cb.ReleaseTemporaryRT(nameID);
 			nameID = AmbientOcclusionComponent.Uniforms._OcclusionTexture;
 			cb.GetTemporaryRT(nameID, width, height, 0, FilterMode.Bilinear, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
@@ -127,7 +124,7 @@ namespace UnityEngine.PostProcessing
 			}
 			else
 			{
-				RenderTextureFormat format = (!this.context.isHdr) ? RenderTextureFormat.Default : RenderTextureFormat.DefaultHDR;
+				RenderTextureFormat format = this.context.isHdr ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default;
 				int tempRT = AmbientOcclusionComponent.Uniforms._TempRT;
 				cb.GetTemporaryRT(tempRT, this.context.width, this.context.height, 0, FilterMode.Bilinear, format);
 				cb.Blit(BuiltinRenderTextureType.CameraTarget, tempRT, mat, 0);

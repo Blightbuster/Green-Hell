@@ -3,14 +3,20 @@ using System.Collections.Generic;
 using CJTools;
 using Enums;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace AIs
 {
 	public class AI : Being, INoiseReceiver, IAnimationEventsReceiver
 	{
+		public static bool IsHuntingTarget(AI.AIID id)
+		{
+			return id == AI.AIID.Agouti || id == AI.AIID.Peccary || id == AI.AIID.Capybara || id == AI.AIID.Tapir || id == AI.AIID.Armadillo || id == AI.AIID.GoldenLionTamarin || id == AI.AIID.Atelinae || id == AI.AIID.GreenIguana;
+		}
+
 		public static bool IsHuman(AI.AIID id)
 		{
-			return id == AI.AIID.Savage || id == AI.AIID.Hunter || id == AI.AIID.Thug || id == AI.AIID.SpearMan || id == AI.AIID.Regular;
+			return id == AI.AIID.Savage || id == AI.AIID.Hunter || id == AI.AIID.Thug || id == AI.AIID.Spearman || id == AI.AIID.Regular;
 		}
 
 		public static bool IsSnake(AI.AIID id)
@@ -43,6 +49,16 @@ namespace AIs
 			return this.m_ID == AI.AIID.Puma || this.m_ID == AI.AIID.Jaguar;
 		}
 
+		public bool IsCaiman()
+		{
+			return this.m_ID == AI.AIID.BlackCaiman;
+		}
+
+		public bool IsEnemy()
+		{
+			return this.IsHuman() || this.IsCaiman() || this.IsCat();
+		}
+
 		protected override void Awake()
 		{
 			base.Awake();
@@ -66,6 +82,8 @@ namespace AIs
 			this.m_HumanLookModule = base.gameObject.GetComponent<HumanLookModule>();
 			this.m_PatrolModule = base.gameObject.GetComponent<PatrolModule>();
 			this.m_HumanAISoundModule = base.gameObject.GetComponent<HumanAISoundModule>();
+			this.m_WaterBoxModule = base.gameObject.GetComponent<WaterBoxModule>();
+			this.m_KidRunnerSoundModule = base.gameObject.GetComponent<KidRunnerSoundModule>();
 			this.m_Animator = base.gameObject.GetComponent<Animator>();
 			this.m_BoxCollider = base.GetComponent<BoxCollider>();
 			float num = Mathf.Max(base.gameObject.transform.localScale.x, base.gameObject.transform.localScale.z);
@@ -73,8 +91,8 @@ namespace AIs
 			this.m_Renderer = General.GetComponentDeepChild<SkinnedMeshRenderer>(base.gameObject);
 			DebugUtils.Assert(this.m_Renderer != null, "Can't find renderer - " + this.m_ID.ToString(), true, DebugUtils.AssertType.Info);
 			this.SetupColliderBoxes();
-			this.SetupRagdollBones();
-			this.m_Head = base.transform.FindDeepChild((this.m_ID != AI.AIID.Jaguar) ? "Head" : "Jaguar_Head");
+			this.m_Head = base.transform.FindDeepChild((this.m_ID == AI.AIID.Jaguar) ? "Jaguar_Head" : "Head");
+			this.m_WaterMask = 1 << NavMesh.GetAreaFromName("Water");
 		}
 
 		protected override void Start()
@@ -82,13 +100,20 @@ namespace AIs
 			this.m_Params = AIManager.Get().m_AIParamsMap[(int)this.m_ID];
 			if (this.m_Params.m_BigAnimal)
 			{
-				this.m_SoundModule = base.gameObject.AddComponent<BigAnimalSoundModule>();
+				if (this.m_ID == AI.AIID.BlackCaiman)
+				{
+					this.m_SoundModule = base.gameObject.AddComponent<BlackCaimanSoundModule>();
+				}
+				else
+				{
+					this.m_SoundModule = base.gameObject.AddComponent<BigAnimalSoundModule>();
+				}
 			}
 			else if (this.m_ID == AI.AIID.Mouse || this.m_ID == AI.AIID.CaneToad)
 			{
 				this.m_SoundModule = base.gameObject.AddComponent<AISoundModule>();
 			}
-			if (this.m_SoundModule && this.m_Trap)
+			if (this.m_SoundModule && this.m_Trap && (this.m_Trap.m_Effect == Trap.Effect.Block || this.m_Trap.m_Info.m_ID == ItemID.Snare_Trap))
 			{
 				this.m_SoundModule.RequestSound(AISoundType.Panic);
 			}
@@ -96,14 +121,23 @@ namespace AIs
 			base.Start();
 			this.m_StartExecuted = true;
 			this.OnEnable();
-			if (this.m_ID == AI.AIID.Jaguar)
+			if (this.IsCat())
 			{
-				BalanceSystem.Get().OnJaguarActivated();
+				EnemyAISpawnManager.Get().OnActivatePredator(this);
 			}
 			AudioSource[] components = base.GetComponents<AudioSource>();
-			foreach (AudioSource audioSource in components)
+			for (int i = 0; i < components.Length; i++)
 			{
-				audioSource.rolloffMode = AudioRolloffMode.Linear;
+				components[i].rolloffMode = AudioRolloffMode.Linear;
+			}
+			this.UpdateSwimming();
+			if (this.m_StartAttractor)
+			{
+				this.SetAttractor(this.m_StartAttractor);
+			}
+			if (this.m_ID == AI.AIID.PoisonDartFrog || this.m_ID == AI.AIID.CaneToad)
+			{
+				this.m_BoxCollider.isTrigger = true;
 			}
 		}
 
@@ -113,106 +147,96 @@ namespace AIs
 			{
 				return;
 			}
+			base.GetComponents<BeingModule>(this.m_Modules);
 			if (this.m_HearingModule)
 			{
-				this.m_HearingModule.Initialize();
+				this.m_HearingModule.Initialize(this);
 			}
 			if (this.m_SightModule)
 			{
-				this.m_SightModule.Initialize();
+				this.m_SightModule.Initialize(this);
 			}
 			if (this.m_EnemySenseModule)
 			{
-				this.m_EnemySenseModule.Initialize();
+				this.m_EnemySenseModule.Initialize(this);
 			}
 			if (this.m_EnemyModule)
 			{
-				this.m_EnemyModule.Initialize();
+				this.m_EnemyModule.Initialize(this);
 			}
 			if (this.m_HealthModule)
 			{
-				this.m_HealthModule.Initialize();
+				this.m_HealthModule.Initialize(this);
 			}
 			if (this.m_MoraleModule)
 			{
-				this.m_MoraleModule.Initialize();
+				this.m_MoraleModule.Initialize(this);
 			}
 			if (this.m_HostileStateModule)
 			{
-				this.m_HostileStateModule.Initialize();
+				this.m_HostileStateModule.Initialize(this);
 			}
 			if (this.m_DamageModule)
 			{
-				this.m_DamageModule.Initialize();
+				this.m_DamageModule.Initialize(this);
 			}
 			if (this.m_HumanFightModule)
 			{
-				this.m_HumanFightModule.Initialize();
+				this.m_HumanFightModule.Initialize(this);
 			}
 			if (this.m_HumanLookModule)
 			{
-				this.m_HumanLookModule.Initialize();
+				this.m_HumanLookModule.Initialize(this);
 			}
 			if (this.m_PathModule)
 			{
-				this.m_PathModule.Initialize();
+				this.m_PathModule.Initialize(this);
 			}
 			if (this.m_PatrolModule)
 			{
-				this.m_PatrolModule.Initialize();
+				this.m_PatrolModule.Initialize(this);
 			}
 			if (this.m_SnakeSoundModule)
 			{
-				this.m_SnakeSoundModule.Initialize();
+				this.m_SnakeSoundModule.Initialize(this);
 			}
 			if (this.m_HumanAISoundModule)
 			{
-				this.m_HumanAISoundModule.Initialize();
+				this.m_HumanAISoundModule.Initialize(this);
 			}
 			if (this.m_ArachnidSoundModule)
 			{
-				this.m_ArachnidSoundModule.Initialize();
+				this.m_ArachnidSoundModule.Initialize(this);
 			}
 			if (this.m_AnimationModule)
 			{
-				this.m_AnimationModule.Initialize();
+				this.m_AnimationModule.Initialize(this);
 			}
 			if (this.m_BodyRotationModule)
 			{
-				this.m_BodyRotationModule.Initialize();
+				this.m_BodyRotationModule.Initialize(this);
 			}
 			if (this.m_TransformModule)
 			{
-				this.m_TransformModule.Initialize();
+				this.m_TransformModule.Initialize(this);
 			}
 			if (this.m_VisModule)
 			{
-				this.m_VisModule.Initialize();
+				this.m_VisModule.Initialize(this);
 			}
 			if (this.m_SoundModule)
 			{
-				this.m_SoundModule.Initialize();
+				this.m_SoundModule.Initialize(this);
 			}
 			if (this.m_GoalsModule)
 			{
-				this.m_GoalsModule.Initialize();
+				this.m_GoalsModule.Initialize(this);
+			}
+			if (this.m_KidRunnerSoundModule)
+			{
+				this.m_KidRunnerSoundModule.Initialize(this);
 			}
 			this.m_ModulesInitialized = true;
-		}
-
-		private void SetupRagdollBones()
-		{
-			List<Rigidbody> componentsDeepChild = General.GetComponentsDeepChild<Rigidbody>(base.gameObject);
-			for (int i = 0; i < componentsDeepChild.Count; i++)
-			{
-				componentsDeepChild[i].isKinematic = true;
-				Collider component = componentsDeepChild[i].GetComponent<Collider>();
-				RagdollBone ragdollBone = component.gameObject.AddComponent<RagdollBone>();
-				ragdollBone.m_Parent = base.gameObject;
-				component.enabled = false;
-				component.isTrigger = true;
-				this.m_RagdollBones.Add(component, componentsDeepChild[i]);
-			}
 		}
 
 		public GameObject GetObject()
@@ -240,10 +264,9 @@ namespace AIs
 			base.OnEnable();
 			AIManager.Get().OnEnableAI(this);
 			NoiseManager.RegisterReceiver(this);
-			if (!this.IsHuman() && !this.IsCat())
+			if (!this.IsHuman() && !this.IsCat() && !this.IsCaiman() && !this.IsStringray())
 			{
-				Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), this.m_BoxCollider);
-				this.m_BoxCollider.isTrigger = true;
+				Physics.IgnoreCollision(Player.Get().m_Collider, this.m_BoxCollider);
 			}
 		}
 
@@ -252,7 +275,15 @@ namespace AIs
 			base.OnDisable();
 			AIManager.Get().OnDisableAI(this);
 			NoiseManager.UnregisterReceiver(this);
-			this.m_Visible = false;
+			if (this.IsCat())
+			{
+				EnemyAISpawnManager.Get().OnDeactivatePredator(this);
+			}
+		}
+
+		public virtual bool IsKidRunner()
+		{
+			return false;
 		}
 
 		public virtual bool IsHuman()
@@ -265,14 +296,14 @@ namespace AIs
 			return false;
 		}
 
-		public virtual bool IsFish()
+		public virtual bool IsStringray()
 		{
 			return false;
 		}
 
-		public virtual bool IsStringray()
+		public override bool CanBeImpaledOnSpear()
 		{
-			return false;
+			return this.m_ID == AI.AIID.Crab;
 		}
 
 		private bool CanJumpBack()
@@ -287,16 +318,7 @@ namespace AIs
 				return false;
 			}
 			AIGoalType type = activeGoal.m_Type;
-			if (type == AIGoalType.JumpBack)
-			{
-				return false;
-			}
-			if ((type == AIGoalType.ReactOnHit || type == AIGoalType.HumanPunchBack) && this.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime <= 0.5f)
-			{
-				return false;
-			}
-			float num = base.transform.position.Distance(Player.Get().transform.position);
-			return num <= this.m_Params.m_JumpBackRange && UnityEngine.Random.Range(0f, 1f) <= this.m_GoalsModule.m_JumpBackGoal.m_Probability;
+			return type != AIGoalType.JumpBack && ((type != AIGoalType.ReactOnHit && type != AIGoalType.HumanPunchBack) || this.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.5f) && base.transform.position.Distance(this.m_EnemyModule.m_Enemy.transform.position) <= this.m_Params.m_JumpBackRange && UnityEngine.Random.Range(0f, 1f) <= this.m_GoalsModule.m_JumpBackGoal.m_Probability;
 		}
 
 		private bool TryJumpBack()
@@ -346,6 +368,7 @@ namespace AIs
 					obb.start = base.gameObject.transform.InverseTransformPoint(component.bounds.center);
 					obb.transform = base.transform;
 					this.m_ColliderBoxes.Add(obb);
+					return;
 				}
 			}
 			else
@@ -408,11 +431,12 @@ namespace AIs
 		public void StartRagdoll()
 		{
 			this.m_BoxCollider.isTrigger = true;
-			foreach (Collider collider in this.m_RagdollBones.Keys)
+			foreach (RagdollBone ragdollBone in this.m_RagdollBones)
 			{
-				this.m_RagdollBones[collider].isKinematic = false;
-				collider.isTrigger = false;
-				collider.enabled = true;
+				ragdollBone.m_Rigidbody.isKinematic = false;
+				ragdollBone.m_Rigidbody.detectCollisions = true;
+				ragdollBone.m_Collider.isTrigger = false;
+				ragdollBone.m_Collider.enabled = true;
 			}
 		}
 
@@ -427,12 +451,49 @@ namespace AIs
 			int num = Physics.OverlapBoxNonAlloc(base.transform.TransformPoint(this.m_BoxCollider.center), this.m_BoxCollider.size, this.m_CollidersTemp, Quaternion.identity);
 			for (int i = 0; i < num; i++)
 			{
-				Collider collider = this.m_CollidersTemp[i];
-				if (collider.gameObject.CompareTag(this.m_LiquidSourceName))
+				if (this.m_CollidersTemp[i].gameObject.CompareTag(this.m_LiquidSourceName))
 				{
 					this.m_InWater = true;
 					return;
 				}
+			}
+		}
+
+		public bool IsSwimming()
+		{
+			return this.m_IsSwimming;
+		}
+
+		private void UpdateSwimming()
+		{
+			if (!this.m_Params.m_CanSwim)
+			{
+				return;
+			}
+			float maxDistance = 5f;
+			NavMeshHit navMeshHit;
+			if (NavMesh.SamplePosition(base.transform.position, out navMeshHit, maxDistance, this.m_WaterMask))
+			{
+				this.m_IsSwimming = (navMeshHit.mask == this.m_WaterMask);
+				this.m_SwimmingPos = navMeshHit.position;
+				if (this.IsSwimming() && this.m_WaterBoxModule)
+				{
+					float waterLevel = this.m_WaterBoxModule.GetWaterLevel();
+					if (waterLevel < -10000f)
+					{
+						this.m_IsSwimming = false;
+						return;
+					}
+					if (this.m_TransformModule.m_TempTerrainPos != Vector3.zero && waterLevel - this.m_TransformModule.m_TempTerrainPos.y < 0.9f)
+					{
+						this.m_IsSwimming = false;
+						return;
+					}
+				}
+			}
+			else
+			{
+				this.m_IsSwimming = false;
 			}
 		}
 
@@ -443,11 +504,11 @@ namespace AIs
 				return;
 			}
 			this.UpdateModules();
-			int qualityLevel = QualitySettings.GetQualityLevel();
-			if (qualityLevel == 4)
+			if (QualitySettings.GetQualityLevel() == 4)
 			{
 				this.UpdateInWater();
 			}
+			this.UpdateSwimming();
 			if (this.m_Trap)
 			{
 				this.m_Trap.UpdateEffect();
@@ -463,6 +524,8 @@ namespace AIs
 				this.m_BoxCollider.center = center;
 			}
 			this.UpdateInvisibleDuration();
+			float num2 = Mathf.Max(base.gameObject.transform.localScale.x, base.gameObject.transform.localScale.z);
+			this.m_Radius = Mathf.Max(this.m_BoxCollider.size.x, this.m_BoxCollider.size.z) * num2 * 0.5f;
 		}
 
 		private void UpdateInvisibleDuration()
@@ -470,17 +533,31 @@ namespace AIs
 			if (!this.m_Renderer.isVisible)
 			{
 				this.m_InvisibleDuration += Time.deltaTime;
+				return;
 			}
-			else
+			this.m_InvisibleDuration = 0f;
+		}
+
+		private void UpdateBleedingDamage()
+		{
+			if (this.m_BleedingDamage == 0f || !this.m_HealthModule)
 			{
-				this.m_InvisibleDuration = 0f;
+				return;
 			}
+			this.m_HealthModule.DecreaseHealth(this.m_BleedingDamage * Time.deltaTime);
+		}
+
+		public void OnStickWeapon(Weapon weapon)
+		{
+			this.m_BleedingDamage = Mathf.Max(this.m_BleedingDamage, ((WeaponInfo)weapon.m_Info).m_DamageOverTime);
+			this.m_BleedingDamage = Mathf.Max(this.m_BleedingDamage, 0f);
 		}
 
 		protected override void LateUpdate()
 		{
 			base.LateUpdate();
 			this.LateUpdateModules();
+			this.UpdateBleedingDamage();
 		}
 
 		private void UpdateModules()
@@ -568,6 +645,10 @@ namespace AIs
 			if (this.m_SoundModule && this.m_SoundModule.enabled)
 			{
 				this.m_SoundModule.OnUpdate();
+			}
+			if (this.m_KidRunnerSoundModule)
+			{
+				this.m_KidRunnerSoundModule.OnUpdate();
 			}
 		}
 
@@ -657,11 +738,15 @@ namespace AIs
 			{
 				this.m_SoundModule.OnLateUpdate();
 			}
+			if (this.m_KidRunnerSoundModule)
+			{
+				this.m_KidRunnerSoundModule.OnLateUpdate();
+			}
 		}
 
 		private void UpdateLeavesPusher()
 		{
-			LeavesPusher.Get().Push(this.m_BoxCollider.bounds.center, this.m_Radius);
+			LeavesPusher.Get().Push(base.gameObject, this.m_Radius, new Vector3?(this.m_BoxCollider.bounds.center - base.transform.position));
 		}
 
 		public override HitCollisionType GetHitCollisionType()
@@ -686,9 +771,9 @@ namespace AIs
 			deadBody.m_AIID = this.m_ID;
 			deadBody.m_Trap = this.m_Trap;
 			deadBody.m_RagdollBones = new List<Rigidbody>();
-			foreach (Collider key in this.m_RagdollBones.Keys)
+			foreach (RagdollBone ragdollBone in this.m_RagdollBones)
 			{
-				deadBody.m_RagdollBones.Add(this.m_RagdollBones[key]);
+				deadBody.m_RagdollBones.Add(ragdollBone.m_Rigidbody);
 			}
 			deadBody.m_AI = this;
 		}
@@ -708,13 +793,19 @@ namespace AIs
 			}
 			if (this.m_Params.m_BigAnimal || this.m_Params.m_Human)
 			{
-				Component[] components = base.GetComponents(typeof(Component));
-				for (int j = 0; j < components.Length; j++)
+				foreach (Behaviour behaviour in base.GetComponents<Behaviour>())
 				{
-					Type type = components[j].GetType();
-					if (type != typeof(Transform) && type != typeof(BoxCollider) && type != typeof(DeadBody) && type != typeof(AudioSource) && type != typeof(VisModule))
+					Type type = behaviour.GetType();
+					if (Array.IndexOf<Type>(AI.s_DontRemoveComponents, type) == -1)
 					{
-						UnityEngine.Object.Destroy(components[j]);
+						if (behaviour is IReplicatedBehaviour)
+						{
+							behaviour.enabled = false;
+						}
+						else
+						{
+							this.DestroyComponentWithEvent(behaviour);
+						}
 					}
 				}
 				this.m_BoxCollider.center = base.transform.InverseTransformPoint(this.m_Renderer.bounds.center);
@@ -726,6 +817,10 @@ namespace AIs
 				this.m_Spawner.OnDestroyAI(this);
 				this.m_Spawner = null;
 			}
+			if (this.IsCat())
+			{
+				EnemyAISpawnManager.Get().OnDeactivatePredator(this);
+			}
 		}
 
 		public void SetAttractor(AIAttractor attr)
@@ -734,7 +829,7 @@ namespace AIs
 			this.m_Attractor.m_Occupied = true;
 		}
 
-		public void ReleaseAttractor()
+		public virtual void ReleaseAttractor()
 		{
 			this.m_Attractor.m_Occupied = false;
 			this.m_Attractor = null;
@@ -794,9 +889,9 @@ namespace AIs
 				item.transform.rotation = base.transform.rotation;
 				if (this.m_ID == AI.AIID.PoisonDartFrog)
 				{
-					List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
+					Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
 					Material material = null;
-					for (int i = 0; i < componentsDeepChild.Count; i++)
+					for (int i = 0; i < componentsDeepChild.Length; i++)
 					{
 						material = componentsDeepChild[i].material;
 					}
@@ -843,24 +938,59 @@ namespace AIs
 			return result;
 		}
 
-		public Transform GetClosestRagdollBone(Vector3 point)
+		public RagdollBone GetHeadRagdollBone()
+		{
+			foreach (RagdollBone ragdollBone in this.m_RagdollBones)
+			{
+				if (ragdollBone.m_BoneType == RagdollBone.BoneType.Human_Head)
+				{
+					return ragdollBone;
+				}
+			}
+			return null;
+		}
+
+		public RagdollBone GetClosestRagdollBone(Vector3 point)
 		{
 			float num = float.MaxValue;
-			Transform result = null;
-			foreach (Collider collider in this.m_RagdollBones.Keys)
+			RagdollBone result = null;
+			foreach (RagdollBone ragdollBone in this.m_RagdollBones)
 			{
-				float sqrMagnitude = (collider.transform.position - point).sqrMagnitude;
+				bool enabled = ragdollBone.m_Collider.enabled;
+				ragdollBone.m_Collider.enabled = true;
+				float sqrMagnitude = (ragdollBone.m_Collider.ClosestPoint(point) - point).sqrMagnitude;
 				if (sqrMagnitude < num)
 				{
-					result = collider.transform;
+					result = ragdollBone;
 					num = sqrMagnitude;
 				}
+				ragdollBone.m_Collider.enabled = enabled;
 			}
 			return result;
 		}
 
+		public override bool TakeDamage(DamageInfo info)
+		{
+			RagdollBone closestRagdollBone = this.GetClosestRagdollBone(info.m_Position);
+			if (closestRagdollBone)
+			{
+				info.m_Damage *= closestRagdollBone.GetDamageMultiplier(false);
+			}
+			this.m_LastDamageInfo = info;
+			bool flag = base.TakeDamage(info);
+			if (flag && info.m_Damager && info.m_Damager.GetComponent<ReplicatedLogicalPlayer>())
+			{
+				PlayerStateModule.Get().OnGiveDamageToAI(this, info);
+			}
+			return flag;
+		}
+
 		public float GetPathPassDistance()
 		{
+			if (this.IsKidRunner())
+			{
+				return this.m_Radius;
+			}
 			float num = this.m_Radius;
 			if (this.m_Params.m_Human)
 			{
@@ -883,6 +1013,29 @@ namespace AIs
 
 		public virtual void OnPlayerDie()
 		{
+		}
+
+		public bool IsVisible()
+		{
+			return this.m_Renderer.isVisible;
+		}
+
+		private void OnTriggerEnter(Collider other)
+		{
+			WaterCollider component = other.gameObject.GetComponent<WaterCollider>();
+			if (component && this.m_WaterBoxModule)
+			{
+				this.m_WaterBoxModule.OnEnterWater(component);
+			}
+		}
+
+		private void OnTriggerExit(Collider other)
+		{
+			WaterCollider component = other.gameObject.GetComponent<WaterCollider>();
+			if (component && this.m_WaterBoxModule)
+			{
+				this.m_WaterBoxModule.OnExitWater(component);
+			}
 		}
 
 		[HideInInspector]
@@ -957,7 +1110,15 @@ namespace AIs
 		public HumanAISoundModule m_HumanAISoundModule;
 
 		[HideInInspector]
+		public WaterBoxModule m_WaterBoxModule;
+
+		[HideInInspector]
+		public KidRunnerSoundModule m_KidRunnerSoundModule;
+
+		[HideInInspector]
 		public AIAttractor m_Attractor;
+
+		public AIAttractor m_StartAttractor;
 
 		[HideInInspector]
 		public AIParams m_Params;
@@ -984,12 +1145,19 @@ namespace AIs
 		public bool m_StartExecuted;
 
 		[HideInInspector]
-		public Dictionary<Collider, Rigidbody> m_RagdollBones = new Dictionary<Collider, Rigidbody>();
+		public List<RagdollBone> m_RagdollBones = new List<RagdollBone>();
 
 		[HideInInspector]
 		public bool m_PerformEmergency;
 
 		private bool m_InWater;
+
+		private int m_WaterMask = -1;
+
+		private bool m_IsSwimming;
+
+		[HideInInspector]
+		public Vector3 m_SwimmingPos = Vector3.zero;
 
 		public string m_PresetName = string.Empty;
 
@@ -1001,13 +1169,31 @@ namespace AIs
 		[HideInInspector]
 		public float m_InvisibleDuration;
 
+		[HideInInspector]
+		public DamageInfo m_LastDamageInfo;
+
+		[HideInInspector]
+		public float m_BleedingDamage;
+
 		private string m_LiquidSourceName = "LiquidSource";
 
 		private Collider[] m_CollidersTemp = new Collider[10];
 
 		private bool m_HasBody;
 
-		public bool m_Visible = true;
+		private static readonly Type[] s_DontRemoveComponents = new Type[]
+		{
+			typeof(Transform),
+			typeof(BoxCollider),
+			typeof(DeadBody),
+			typeof(AudioSource),
+			typeof(VisModule),
+			typeof(GuidComponent),
+			typeof(ReplicationComponent),
+			typeof(Relevance),
+			typeof(LODGroup),
+			typeof(HealthModule)
+		};
 
 		public enum AIID
 		{
@@ -1047,11 +1233,15 @@ namespace AIs
 			Beetle,
 			Regular,
 			Hunter,
-			SpearMan,
+			Spearman,
 			Thug,
 			Savage,
 			ArmadilloThreeBanded,
 			CaimanLizard,
+			Crab,
+			AngelFish,
+			DiscusFish,
+			KidRunner,
 			Count
 		}
 

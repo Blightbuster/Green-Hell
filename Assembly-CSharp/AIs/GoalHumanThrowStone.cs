@@ -17,34 +17,32 @@ namespace AIs
 			{
 				return true;
 			}
-			Being enemy = this.m_AI.m_EnemyModule.m_Enemy;
-			if (!enemy)
+			if (!this.m_AI.m_EnemyModule.m_Enemy)
 			{
 				return false;
 			}
-			if (this.m_Active)
+			float num = this.m_AI.m_EnemyModule.m_Enemy.transform.position.Distance(this.m_AI.transform.position);
+			if (num > 15f || num < 6f || this.m_AI.m_GoalsModule.m_PrevGoal == this)
 			{
-				return true;
+				return false;
 			}
-			float num = Player.Get().transform.position.Distance(this.m_AI.transform.position);
-			return num < 15f && num > 6f && (this.m_AI.m_GoalsModule.m_PrevGoal == null || this.m_AI.m_GoalsModule.m_PrevGoal != this);
+			Vector3 normalized = (this.m_AI.m_EnemyModule.m_Enemy.GetHeadTransform().position - this.m_AI.GetHeadTransform().position).normalized;
+			Debug.DrawLine(this.m_AI.GetHeadTransform().position + normalized, this.m_AI.m_EnemyModule.m_Enemy.GetHeadTransform().position - normalized, Color.blue);
+			RaycastHit raycastHit;
+			return Physics.Raycast(this.m_AI.GetHeadTransform().position + normalized, normalized, out raycastHit) && (raycastHit.collider.gameObject.IsPlayer() || raycastHit.collider.gameObject == Camera.main.gameObject);
 		}
 
 		protected override void Prepare()
 		{
 			base.Prepare();
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
-			float num = Vector3.Angle(normalized2D, this.m_AI.transform.forward.GetNormalized2D());
-			if (num >= 10f)
+			if (Vector3.Angle((this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) >= 10f)
 			{
 				HumanRotateTo humanRotateTo = base.CreateAction(typeof(HumanRotateTo)) as HumanRotateTo;
-				humanRotateTo.SetupParams(Player.Get().transform.position, 10f);
+				humanRotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.transform.position, 10f);
 				base.StartAction(humanRotateTo);
+				return;
 			}
-			else
-			{
-				base.StartAction(this.m_ThrowStone);
-			}
+			base.StartAction(this.m_ThrowStone);
 		}
 
 		public override void OnStopAction(AIAction action)

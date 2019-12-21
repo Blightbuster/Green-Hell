@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_advanced_smooth.php")]
 	[AddComponentMenu("Pathfinding/Modifiers/Advanced Smooth")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_advanced_smooth.php")]
 	[Serializable]
 	public class AdvancedSmooth : MonoModifier
 	{
@@ -123,8 +123,8 @@ namespace Pathfinding
 					num2 = (double)(AdvancedSmooth.TurnConstructor.turningRadius * 2f);
 					flag2 = true;
 				}
-				this.deltaRightLeft = ((!flag) ? (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius * 2f) / num)) : 0.0);
-				this.deltaLeftRight = ((!flag2) ? (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius * 2f) / num2)) : 0.0);
+				this.deltaRightLeft = (flag ? 0.0 : (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius * 2f) / num)));
+				this.deltaLeftRight = (flag2 ? 0.0 : (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius * 2f) / num2)));
 				this.betaRightRight = base.ClockwiseAngle(this.preVaRight, this.alfaRightRight - 1.5707963267948966);
 				this.betaRightLeft = base.ClockwiseAngle(this.preVaRight, this.alfaRightLeft - this.deltaRightLeft);
 				this.betaLeftRight = base.CounterClockwiseAngle(this.preVaLeft, this.alfaLeftRight + this.deltaLeftRight);
@@ -177,14 +177,14 @@ namespace Pathfinding
 				{
 					flag2 = true;
 				}
-				double num = (!flag) ? base.Atan2(AdvancedSmooth.TurnConstructor.prev - this.rightCircleCenter) : 0.0;
-				double num2 = (!flag) ? (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius / (AdvancedSmooth.TurnConstructor.prev - this.rightCircleCenter).magnitude))) : 0.0;
+				double num = flag ? 0.0 : base.Atan2(AdvancedSmooth.TurnConstructor.prev - this.rightCircleCenter);
+				double num2 = flag ? 0.0 : (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius / (AdvancedSmooth.TurnConstructor.prev - this.rightCircleCenter).magnitude)));
 				this.gammaRight = num + num2;
-				double num3 = (!flag) ? base.ClockwiseAngle(this.gammaRight, this.vaRight) : 0.0;
-				double num4 = (!flag2) ? base.Atan2(AdvancedSmooth.TurnConstructor.prev - this.leftCircleCenter) : 0.0;
-				double num5 = (!flag2) ? (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius / (AdvancedSmooth.TurnConstructor.prev - this.leftCircleCenter).magnitude))) : 0.0;
+				double num3 = flag ? 0.0 : base.ClockwiseAngle(this.gammaRight, this.vaRight);
+				double num4 = flag2 ? 0.0 : base.Atan2(AdvancedSmooth.TurnConstructor.prev - this.leftCircleCenter);
+				double num5 = flag2 ? 0.0 : (1.5707963267948966 - Math.Asin((double)(AdvancedSmooth.TurnConstructor.turningRadius / (AdvancedSmooth.TurnConstructor.prev - this.leftCircleCenter).magnitude)));
 				this.gammaLeft = num4 - num5;
-				double num6 = (!flag2) ? base.CounterClockwiseAngle(this.gammaLeft, this.vaLeft) : 0.0;
+				double num6 = flag2 ? 0.0 : base.CounterClockwiseAngle(this.gammaLeft, this.vaLeft);
 				if (!flag)
 				{
 					turnList.Add(new AdvancedSmooth.Turn((float)num3, this, 0));
@@ -233,32 +233,34 @@ namespace Pathfinding
 				{
 				case 0:
 					base.AddCircleSegment(this.gammaRight, this.vaRight, true, this.rightCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 1:
 					base.AddCircleSegment(this.gammaLeft, this.vaLeft, false, this.leftCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 2:
 					base.AddCircleSegment(this.preVaRight, this.alfaRightRight - 1.5707963267948966, true, this.preRightCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
 					base.AddCircleSegment(this.alfaRightRight - 1.5707963267948966, this.vaRight, true, this.rightCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 3:
 					base.AddCircleSegment(this.preVaRight, this.alfaRightLeft - this.deltaRightLeft, true, this.preRightCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
 					base.AddCircleSegment(this.alfaRightLeft - this.deltaRightLeft + 3.1415926535897931, this.vaLeft, false, this.leftCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 4:
 					base.AddCircleSegment(this.preVaLeft, this.alfaLeftRight + this.deltaLeftRight, false, this.preLeftCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
 					base.AddCircleSegment(this.alfaLeftRight + this.deltaLeftRight + 3.1415926535897931, this.vaRight, true, this.rightCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 5:
 					base.AddCircleSegment(this.preVaLeft, this.alfaLeftLeft + 1.5707963267948966, false, this.preLeftCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
 					base.AddCircleSegment(this.alfaLeftLeft + 1.5707963267948966, this.vaLeft, false, this.leftCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 6:
 					base.AddCircleSegment(this.vaRight, this.gammaRight, true, this.rightCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
 				case 7:
 					base.AddCircleSegment(this.vaLeft, this.gammaLeft, false, this.leftCircleCenter, output, AdvancedSmooth.TurnConstructor.turningRadius);
-					break;
+					return;
+				default:
+					return;
 				}
 			}
 
@@ -325,7 +327,7 @@ namespace Pathfinding
 				this.gamma1 = base.Atan2(AdvancedSmooth.TurnConstructor.prev - this.circleCenter);
 				this.gamma2 = base.Atan2(AdvancedSmooth.TurnConstructor.current - this.circleCenter);
 				this.clockwise = !VectorMath.RightOrColinearXZ(this.circleCenter, AdvancedSmooth.TurnConstructor.prev, AdvancedSmooth.TurnConstructor.prev + AdvancedSmooth.TurnConstructor.t1);
-				double num = (!this.clockwise) ? base.CounterClockwiseAngle(this.gamma1, this.gamma2) : base.ClockwiseAngle(this.gamma1, this.gamma2);
+				double num = this.clockwise ? base.ClockwiseAngle(this.gamma1, this.gamma2) : base.CounterClockwiseAngle(this.gamma1, this.gamma2);
 				num = base.GetLengthFromAngle(num, (double)(this.circleCenter - AdvancedSmooth.TurnConstructor.current).magnitude);
 				turnList.Add(new AdvancedSmooth.Turn((float)num, this, 0));
 			}
@@ -529,24 +531,24 @@ namespace Pathfinding
 
 			public static Vector3 prevNormal;
 
-			public static bool changedPreviousTangent;
+			public static bool changedPreviousTangent = false;
 		}
 
 		public struct Turn : IComparable<AdvancedSmooth.Turn>
 		{
-			public Turn(float length, AdvancedSmooth.TurnConstructor constructor, int id = 0)
-			{
-				this.length = length;
-				this.id = id;
-				this.constructor = constructor;
-			}
-
 			public float score
 			{
 				get
 				{
 					return this.length * this.constructor.factorBias + this.constructor.constantBias;
 				}
+			}
+
+			public Turn(float length, AdvancedSmooth.TurnConstructor constructor, int id = 0)
+			{
+				this.length = length;
+				this.id = id;
+				this.constructor = constructor;
 			}
 
 			public void GetPath(List<Vector3> output)
@@ -556,7 +558,15 @@ namespace Pathfinding
 
 			public int CompareTo(AdvancedSmooth.Turn t)
 			{
-				return (t.score <= this.score) ? ((t.score >= this.score) ? 0 : 1) : -1;
+				if (t.score > this.score)
+				{
+					return -1;
+				}
+				if (t.score >= this.score)
+				{
+					return 0;
+				}
+				return 1;
 			}
 
 			public static bool operator <(AdvancedSmooth.Turn lhs, AdvancedSmooth.Turn rhs)

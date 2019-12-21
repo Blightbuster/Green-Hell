@@ -14,7 +14,7 @@ public class HarvestingSmallAnimalController : PlayerController
 	{
 		base.Awake();
 		HarvestingSmallAnimalController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.HarvestingSmallAnimal;
+		base.m_ControllerType = PlayerControllerType.HarvestingSmallAnimal;
 		this.SetupAudio();
 	}
 
@@ -36,6 +36,14 @@ public class HarvestingSmallAnimalController : PlayerController
 	protected override void OnEnable()
 	{
 		base.OnEnable();
+		if (!this.m_Item.m_CurrentSlot && this.m_Item.m_InventorySlot && this.m_Item.m_InventorySlot.m_Items.Count > 0)
+		{
+			this.m_Item.m_InventorySlot.RemoveItem(this.m_Item, false);
+		}
+		else if (this.m_Item.m_CurrentSlot && this.m_Item.m_CurrentSlot.m_InventoryStackSlot)
+		{
+			this.m_Item.m_CurrentSlot.RemoveItem(this.m_Item, false);
+		}
 		this.m_Item.enabled = false;
 		this.m_InInventory = Inventory3DManager.Get().gameObject.activeSelf;
 		if (this.m_InInventory)

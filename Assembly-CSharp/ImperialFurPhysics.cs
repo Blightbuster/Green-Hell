@@ -25,8 +25,7 @@ public class ImperialFurPhysics : MonoBehaviour
 		Vector3 vector = Vector3.zero;
 		if (this.physicsEnabled && !this.useRigidbody)
 		{
-			Vector3 a = this.oldPosition - this.thisTransform.position;
-			vector = a / Time.deltaTime;
+			vector = (this.oldPosition - this.thisTransform.position) / Time.deltaTime;
 			this.oldPosition = this.thisTransform.position;
 			vector *= this.forceScale;
 		}

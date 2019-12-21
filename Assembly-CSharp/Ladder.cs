@@ -18,6 +18,12 @@ public class Ladder : Construction
 		}
 	}
 
+	protected override void Start()
+	{
+		base.Initialize(false);
+		base.Start();
+	}
+
 	public override void GetActions(List<TriggerAction.TYPE> actions)
 	{
 		if (HeavyObjectController.Get().IsActive())
@@ -33,8 +39,17 @@ public class Ladder : Construction
 		Player.Get().StartClimbing(this);
 	}
 
+	public void OnExecuteParent(TriggerAction.TYPE action)
+	{
+		base.OnExecute(action);
+	}
+
 	public override bool CanExecuteActions()
 	{
+		if (!base.CanExecuteActions())
+		{
+			return false;
+		}
 		Transform x = null;
 		float num = float.MaxValue;
 		for (int i = 0; i < this.m_Triggers.Count; i++)
@@ -52,7 +67,7 @@ public class Ladder : Construction
 
 	public override bool CanTrigger()
 	{
-		return true;
+		return !this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying();
 	}
 
 	public override bool CheckRange()

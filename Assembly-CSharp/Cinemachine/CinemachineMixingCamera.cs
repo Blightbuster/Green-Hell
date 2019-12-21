@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("Cinemachine/CinemachineMixingCamera")]
-	[DisallowMultipleComponent]
-	[ExecuteInEditMode]
 	[DocumentationSorting(20f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineMixingCamera")]
 	public class CinemachineMixingCamera : CinemachineVirtualCameraBase
 	{
 		public float GetWeight(int index)
@@ -77,7 +77,7 @@ namespace Cinemachine
 			{
 				return this.GetWeight(index);
 			}
-			Debug.LogError("CinemachineMixingCamera: Invalid child: " + ((!(vcam != null)) ? "(null)" : vcam.Name));
+			Debug.LogError("CinemachineMixingCamera: Invalid child: " + ((vcam != null) ? vcam.Name : "(null)"));
 			return 0f;
 		}
 
@@ -87,11 +87,9 @@ namespace Cinemachine
 			if (this.m_indexMap.TryGetValue(vcam, out index))
 			{
 				this.SetWeight(index, w);
+				return;
 			}
-			else
-			{
-				Debug.LogError("CinemachineMixingCamera: Invalid child: " + ((!(vcam != null)) ? "(null)" : vcam.Name));
-			}
+			Debug.LogError("CinemachineMixingCamera: Invalid child: " + ((vcam != null) ? vcam.Name : "(null)"));
 		}
 
 		private ICinemachineCamera LiveChild { get; set; }
@@ -120,9 +118,10 @@ namespace Cinemachine
 		{
 			base.RemovePostPipelineStageHook(d);
 			this.ValidateListOfChildren();
-			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in this.m_ChildCameras)
+			CinemachineVirtualCameraBase[] childCameras = this.m_ChildCameras;
+			for (int i = 0; i < childCameras.Length; i++)
 			{
-				cinemachineVirtualCameraBase.RemovePostPipelineStageHook(d);
+				childCameras[i].RemovePostPipelineStageHook(d);
 			}
 		}
 
@@ -185,8 +184,7 @@ namespace Cinemachine
 			}
 			this.m_indexMap = new Dictionary<CinemachineVirtualCameraBase, int>();
 			List<CinemachineVirtualCameraBase> list = new List<CinemachineVirtualCameraBase>();
-			CinemachineVirtualCameraBase[] componentsInChildren = base.GetComponentsInChildren<CinemachineVirtualCameraBase>(true);
-			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in componentsInChildren)
+			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in base.GetComponentsInChildren<CinemachineVirtualCameraBase>(true))
 			{
 				if (cinemachineVirtualCameraBase.transform.parent == base.transform)
 				{

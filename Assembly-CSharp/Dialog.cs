@@ -7,7 +7,7 @@ public class Dialog : IInputsReceiver
 	public Dialog(string name, string group, AudioSource source)
 	{
 		this.m_Name = name;
-		this.m_Group = ((group != null && !(group == string.Empty)) ? group : DialogsManager.s_GroupALL);
+		this.m_Group = ((group == null || group == string.Empty) ? DialogsManager.s_GroupALL : group);
 		this.m_AudioSource = source;
 	}
 
@@ -81,64 +81,116 @@ public class Dialog : IInputsReceiver
 
 	private float GetNodeLength(DialogNode node)
 	{
-		return (!(node.m_Clip != null)) ? ((node.m_Wait <= 0f) ? Mathf.Max(2f, (float)GreenHellGame.Instance.GetLocalization().Get(node.m_Name).Length / 20f) : node.m_Wait) : node.m_Clip.length;
+		if (node.m_Clip != null)
+		{
+			return node.m_Clip.length;
+		}
+		if (node.m_Wait <= 0f)
+		{
+			return Mathf.Max(2f, (float)GreenHellGame.Instance.GetLocalization().Get(node.m_Name, true).Length / 20f);
+		}
+		return node.m_Wait;
 	}
 
 	private void PlayNode(DialogNode node)
 	{
-		if (node.m_Object)
+		if (node.m_Object == null && node.m_ObjectName.Length > 0)
 		{
-			this.m_AudioSource.transform.parent = node.m_Object.transform;
+			node.m_Object = MainLevel.Instance.GetUniqueObject(node.m_ObjectName);
+			node.m_Animator = (node.m_Object ? node.m_Object.GetComponent<Animator>() : null);
+			DebugUtils.Assert(node.m_Object != null, "Missing dialog object '" + node.m_ObjectName + "'!", true, DebugUtils.AssertType.Info);
 		}
-		else
+		if (this.m_AudioSource)
 		{
-			this.m_AudioSource.transform.parent = Player.Get().transform;
+			if (node.m_Object)
+			{
+				this.m_AudioSource.transform.position = node.m_Object.transform.position;
+				this.m_AudioSource.spatialBlend = 1f;
+			}
+			else
+			{
+				this.m_AudioSource.transform.position = Player.Get().transform.position;
+				this.m_AudioSource.spatialBlend = 0f;
+			}
 		}
-		this.m_AudioSource.transform.localPosition = Vector3.zero;
 		if (node.m_WTSoundBefore)
 		{
-			this.m_AudioSource.clip = null;
+			if (this.m_AudioSource)
+			{
+				this.m_AudioSource.clip = null;
+			}
 			if (node.m_WTSoundBeforeName != string.Empty)
 			{
 				foreach (AudioClip audioClip in DialogsManager.Get().m_WTBeforeSounds)
 				{
 					if (audioClip.name == node.m_WTSoundBeforeName)
 					{
-						this.m_AudioSource.clip = audioClip;
+						if (this.m_AudioSource)
+						{
+							this.m_AudioSource.clip = audioClip;
+							break;
+						}
 						break;
 					}
 				}
 			}
-			if (!this.m_AudioSource.clip)
+			if (this.m_AudioSource)
 			{
-				this.m_AudioSource.clip = DialogsManager.Get().m_WTBeforeSounds[UnityEngine.Random.Range(0, DialogsManager.Get().m_WTBeforeSounds.Count)];
-			}
-			if (!this.m_AudioSource.clip)
-			{
-				this.m_AudioSource.clip = DialogsManager.Get().m_WTAfterSounds[UnityEngine.Random.Range(0, DialogsManager.Get().m_WTAfterSounds.Count)];
+				if (!this.m_AudioSource.clip)
+				{
+					this.m_AudioSource.clip = DialogsManager.Get().m_WTBeforeSounds[UnityEngine.Random.Range(0, DialogsManager.Get().m_WTBeforeSounds.Count)];
+				}
+				if (!this.m_AudioSource.clip)
+				{
+					this.m_AudioSource.clip = DialogsManager.Get().m_WTAfterSounds[UnityEngine.Random.Range(0, DialogsManager.Get().m_WTAfterSounds.Count)];
+				}
 			}
 			this.m_CurrentNodeLength = 1f;
 			this.SetState(Dialog.State.PlayingWTSoundBefore);
 		}
 		else
 		{
-			this.m_AudioSource.clip = node.m_Clip;
+			if (this.m_AudioSource)
+			{
+				this.m_AudioSource.clip = node.m_Clip;
+			}
 			this.m_CurrentNodeLength = this.GetNodeLength(node);
 			this.SetState(Dialog.State.Playing);
+			if (node.m_Animator)
+			{
+				node.m_Animator.CrossFadeInFixedTime(node.m_Clip.name, 0f, 1);
+			}
+			if (node.m_PlayerAnimTrigger != -1)
+			{
+				Player.Get().m_Animator.SetTrigger(node.m_PlayerAnimTrigger);
+			}
 		}
-		this.m_AudioSource.Play();
+		DialogsManager.Get().OnStartNode(node);
+		if (node.m_ValueName != string.Empty)
+		{
+			ScenarioManager.Get().SetBoolVariable(node.m_ValueName, node.m_Value);
+		}
+		if (this.m_AudioSource)
+		{
+			this.m_AudioSource.Play();
+		}
 		this.m_CurrentNode = node;
 		this.m_StartNodeTime = Time.time;
+		this.CheckIfPlayerSpeaking();
 	}
 
-	public void Stop()
+	public void Stop(bool finish)
 	{
-		this.m_AudioSource.Stop();
-		this.m_AudioSource.clip = null;
+		if (this.m_AudioSource != null)
+		{
+			this.m_AudioSource.Stop();
+			this.m_AudioSource.clip = null;
+		}
 		this.m_CurrentNode = null;
 		this.SetState(Dialog.State.Finished);
 		InputsManager.Get().UnregisterReceiver(this);
 		HUDSelectDialogNode.Get().HideNodeSelection();
+		DialogsManager.Get().OnStopDialog(this, finish);
 	}
 
 	public bool CanReceiveAction()
@@ -146,9 +198,14 @@ public class Dialog : IInputsReceiver
 		return this.m_State == Dialog.State.Playing || this.m_State == Dialog.State.PlayingWTSoundAfter || this.m_State == Dialog.State.PlayingWTSoundBefore;
 	}
 
-	public void OnInputAction(InputsManager.InputAction action)
+	public bool CanReceiveActionPaused()
 	{
-		if (GreenHellGame.DEBUG && (action == InputsManager.InputAction.SkipDialogNode || action == InputsManager.InputAction.Quit))
+		return false;
+	}
+
+	public void OnInputAction(InputActionData action_data)
+	{
+		if (GreenHellGame.DEBUG && action_data.m_Action == InputsManager.InputAction.SkipDialogNode && this.m_CurrentNode != null)
 		{
 			this.FinishNode();
 		}
@@ -176,7 +233,7 @@ public class Dialog : IInputsReceiver
 		}
 		if (this.m_State == Dialog.State.WaitingForDecision && this.m_PrevNode != null)
 		{
-			float num = (this.m_PrevNode == null) ? DialogsManager.Get().m_DefaultReplyTime : this.m_PrevNode.m_ReplyTime;
+			float num = (this.m_PrevNode != null) ? this.m_PrevNode.m_ReplyTime : DialogsManager.Get().m_DefaultReplyTime;
 			if (num == 0f)
 			{
 				num = float.MaxValue;
@@ -185,15 +242,13 @@ public class Dialog : IInputsReceiver
 			{
 				if (this.m_PrevNode.m_FinishIfNoReply)
 				{
-					this.Stop();
+					this.Stop(true);
+					return;
 				}
-				else
-				{
-					HUDSelectDialogNode.Get().OnSelect(this.m_PrevNode.m_Nexts.Count - 1);
-				}
+				HUDSelectDialogNode.Get().OnSelect(this.m_PrevNode.m_Nexts.Count - 1);
 				return;
 			}
-			if (this.m_PrevNode.m_Additionals.Count > 0)
+			else if (this.m_PrevNode.m_Additionals.Count > 0)
 			{
 				if (this.m_AdditionalStarted)
 				{
@@ -207,13 +262,14 @@ public class Dialog : IInputsReceiver
 				{
 					if (this.m_PrevNode.m_Object)
 					{
-						this.m_AudioSource.transform.parent = this.m_PrevNode.m_Object.transform;
+						this.m_AudioSource.transform.position = this.m_PrevNode.m_Object.transform.position;
+						this.m_AudioSource.spatialBlend = 1f;
 					}
 					else
 					{
-						this.m_AudioSource.transform.parent = Player.Get().transform;
+						this.m_AudioSource.transform.position = Player.Get().transform.position;
+						this.m_AudioSource.spatialBlend = 0f;
 					}
-					this.m_AudioSource.transform.localPosition = Vector3.zero;
 					this.m_CurrentAdditionalNode = this.m_PrevNode.m_Additionals[this.m_PrevNode.m_AdditionalIndex];
 					this.m_AudioSource.clip = this.m_CurrentAdditionalNode.m_Clip;
 					this.m_AudioSource.Play();
@@ -224,6 +280,7 @@ public class Dialog : IInputsReceiver
 					}
 					this.m_AdditionalStarted = true;
 					this.m_AdditionalStartTime = Time.time;
+					return;
 				}
 			}
 		}
@@ -234,11 +291,12 @@ public class Dialog : IInputsReceiver
 				this.m_AudioSource.clip = this.m_CurrentNode.m_Clip;
 				this.m_AudioSource.Play();
 				this.m_StartNodeTime = Time.time;
-				string text = GreenHellGame.Instance.GetLocalization().Get(this.m_CurrentNode.m_Name);
-				this.m_CurrentNodeLength = ((!(this.m_AudioSource.clip != null)) ? ((this.m_CurrentNode.m_Wait <= 0f) ? Mathf.Max(2f, (float)text.Length / 20f) : this.m_CurrentNode.m_Wait) : this.m_AudioSource.clip.length);
+				string text = GreenHellGame.Instance.GetLocalization().Get(this.m_CurrentNode.m_Name, true);
+				this.m_CurrentNodeLength = ((this.m_AudioSource.clip != null) ? this.m_AudioSource.clip.length : ((this.m_CurrentNode.m_Wait > 0f) ? this.m_CurrentNode.m_Wait : Mathf.Max(2f, (float)text.Length / 20f)));
 				this.SetState(Dialog.State.Playing);
+				return;
 			}
-			else if (this.m_State == Dialog.State.Playing && this.m_CurrentNode.m_WTSoundAfter)
+			if (this.m_State == Dialog.State.Playing && this.m_CurrentNode.m_WTSoundAfter)
 			{
 				this.m_AudioSource.clip = null;
 				if (this.m_CurrentNode.m_WTSoundAfterName != string.Empty)
@@ -264,11 +322,9 @@ public class Dialog : IInputsReceiver
 				this.SetState(Dialog.State.PlayingWTSoundAfter);
 				this.m_AudioSource.Play();
 				this.m_StartNodeTime = Time.time;
+				return;
 			}
-			else
-			{
-				this.FinishNode();
-			}
+			this.FinishNode();
 		}
 	}
 
@@ -291,26 +347,26 @@ public class Dialog : IInputsReceiver
 				return;
 			}
 			int count = this.m_PrevNode.m_Nexts.Count;
-			if (count != 0)
+			if (count == 0)
 			{
-				if (count != 1)
-				{
-					HUDSelectDialogNode.Get().ShowNodeSelection(this.m_PrevNode.m_Nexts, this.m_PrevNode.m_ReplyTime);
-					this.SetState(Dialog.State.WaitingForDecision);
-				}
-				else if (this.m_PrevNode.m_ShowReply)
-				{
-					HUDSelectDialogNode.Get().ShowNodeSelection(this.m_PrevNode.m_Nexts, this.m_PrevNode.m_ReplyTime);
-					this.SetState(Dialog.State.WaitingForDecision);
-				}
-				else
-				{
-					this.PlayNode(this.m_PrevNode.m_Nexts[0]);
-				}
+				this.Stop(true);
+				return;
+			}
+			if (count != 1)
+			{
+				HUDSelectDialogNode.Get().ShowNodeSelection(this.m_PrevNode.m_Nexts, this.m_PrevNode.m_ReplyTime);
+				this.SetState(Dialog.State.WaitingForDecision);
 			}
 			else
 			{
-				this.Stop();
+				if (this.m_PrevNode.m_ShowReply)
+				{
+					HUDSelectDialogNode.Get().ShowNodeSelection(this.m_PrevNode.m_Nexts, this.m_PrevNode.m_ReplyTime);
+					this.SetState(Dialog.State.WaitingForDecision);
+					return;
+				}
+				this.PlayNode(this.m_PrevNode.m_Nexts[0]);
+				return;
 			}
 		}
 	}
@@ -320,11 +376,9 @@ public class Dialog : IInputsReceiver
 		if (this.m_State == Dialog.State.WaitingForDecision)
 		{
 			this.PlayNode(node);
+			return;
 		}
-		else
-		{
-			this.m_Queue.Add(node);
-		}
+		this.m_Queue.Add(node);
 	}
 
 	public bool IsFinished()
@@ -359,6 +413,27 @@ public class Dialog : IInputsReceiver
 		}
 	}
 
+	private void CheckIfPlayerSpeaking()
+	{
+		this.m_LastNodePlayerSpeaking = false;
+		using (List<DialogTextData>.Enumerator enumerator = this.m_CurrentNode.m_TextDatas.GetEnumerator())
+		{
+			while (enumerator.MoveNext())
+			{
+				if (enumerator.Current.m_Text.Contains("Player"))
+				{
+					this.m_LastNodePlayerSpeaking = true;
+					break;
+				}
+			}
+		}
+	}
+
+	public bool IsPlayerSpeaking()
+	{
+		return this.m_LastNodePlayerSpeaking && this.m_AudioSource && this.m_AudioSource.isPlaying;
+	}
+
 	public string m_Name = string.Empty;
 
 	public string m_Group = string.Empty;
@@ -370,6 +445,8 @@ public class Dialog : IInputsReceiver
 	public List<DialogNode> m_RootNodes = new List<DialogNode>();
 
 	public List<DialogNode> m_Queue = new List<DialogNode>();
+
+	public bool m_ShownInSelectDialog;
 
 	public DialogNode m_CurrentNode;
 
@@ -392,6 +469,8 @@ public class Dialog : IInputsReceiver
 	public bool m_Paused;
 
 	private bool m_AudioPaused;
+
+	private bool m_LastNodePlayerSpeaking;
 
 	private Dialog.State m_State;
 

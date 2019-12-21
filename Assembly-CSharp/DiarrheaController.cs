@@ -12,7 +12,7 @@ public class DiarrheaController : PlayerController
 	{
 		base.Awake();
 		DiarrheaController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Diarrhea;
+		base.m_ControllerType = PlayerControllerType.Diarrhea;
 	}
 
 	protected override void OnEnable()

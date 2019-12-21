@@ -21,25 +21,36 @@ namespace AIs
 
 		protected virtual void InitObjects()
 		{
-			for (int i = 0; i < base.transform.childCount; i++)
+			List<GameObject> list = new List<GameObject>();
+			foreach (HumanAI humanAI in base.gameObject.GetComponentsInChildren<HumanAI>())
 			{
-				GameObject gameObject = base.transform.GetChild(i).gameObject;
-				HumanAI component = gameObject.GetComponent<HumanAI>();
-				if (component)
+				if (humanAI.transform.parent != base.transform && !list.Contains(humanAI.transform.parent.gameObject))
 				{
-					this.AddAI(component);
+					list.Add(humanAI.transform.parent.gameObject);
 				}
-				else
+				humanAI.transform.parent = base.transform;
+				this.AddAI(humanAI);
+				humanAI.gameObject.SetActive(this.m_Active);
+			}
+			foreach (GameObject gameObject in list)
+			{
+				gameObject.transform.parent = null;
+				UnityEngine.Object.Destroy(gameObject);
+			}
+			for (int j = 0; j < base.transform.childCount; j++)
+			{
+				GameObject gameObject2 = base.transform.GetChild(j).gameObject;
+				if (!this.m_AllObjects.Contains(gameObject2))
 				{
-					Item component2 = gameObject.GetComponent<Item>();
-					if (component2)
+					Item component = gameObject2.GetComponent<Item>();
+					if (component)
 					{
-						component2.m_Group = this;
-						component2.ItemsManagerUnregister();
+						component.m_Group = this;
+						component.ItemsManagerUnregister();
 					}
-					this.m_AllObjects.Add(gameObject);
+					gameObject2.SetActive(this.m_Active);
+					this.m_AllObjects.Add(gameObject2);
 				}
-				gameObject.SetActive(this.m_Active);
 			}
 			if (this.m_Members.Count == 0)
 			{
@@ -48,10 +59,17 @@ namespace AIs
 			}
 		}
 
+		public void SetupConstructionsToDestroy(FirecampGroup group)
+		{
+			if (group != null)
+			{
+				group.GetAllConstructions(ref this.m_ConstructionsToDestroy);
+			}
+		}
+
 		private void OnDestroy()
 		{
 			HumanAIGroup.s_AIGroups.Remove(this);
-			HumanAIGroupManager.Get().OnDestroyGroup(this);
 		}
 
 		public virtual bool IsWave()
@@ -69,6 +87,15 @@ namespace AIs
 			return false;
 		}
 
+		public void OnAIDie(HumanAI ai)
+		{
+			this.RemovedAI(ai, false);
+			foreach (HumanAI humanAI in this.m_Members)
+			{
+				humanAI.m_EnemyModule.SetEnemy(Player.Get());
+			}
+		}
+
 		public virtual void AddAI(HumanAI ai)
 		{
 			ai.gameObject.SetActive(true);
@@ -77,15 +104,18 @@ namespace AIs
 			this.m_AllObjects.Add(ai.gameObject);
 		}
 
-		public void RemovedAI(HumanAI ai)
+		public void RemovedAI(HumanAI ai, bool from_destroy)
 		{
 			this.m_Members.Remove(ai);
 			this.m_AllObjects.Remove(ai.gameObject);
 			ai.m_Group = null;
-			ai.transform.parent = null;
+			if (!ai.m_IsBeingDestroyed)
+			{
+				ai.transform.parent = null;
+			}
 			if (this.m_Members.Count == 0)
 			{
-				this.Deactivate();
+				this.Deactivate(from_destroy);
 			}
 		}
 
@@ -103,11 +133,11 @@ namespace AIs
 			}
 			if (!this.m_ChallengeGroup && this.m_FromBalance)
 			{
-				int currentHumanAISpawnCount = BalanceSystem.Get().GetCurrentHumanAISpawnCount();
-				while (this.m_Members.Count > currentHumanAISpawnCount)
+				int currentGroupMembersCount = EnemyAISpawnManager.Get().GetCurrentGroupMembersCount();
+				while (this.m_Members.Count > currentGroupMembersCount)
 				{
 					HumanAI humanAI = this.m_Members[UnityEngine.Random.Range(0, this.m_Members.Count)];
-					this.RemovedAI(humanAI);
+					this.RemovedAI(humanAI, false);
 					UnityEngine.Object.Destroy(humanAI.gameObject);
 				}
 			}
@@ -117,38 +147,26 @@ namespace AIs
 
 		protected virtual void OnActivate()
 		{
-			if (this.IsWave())
-			{
-				BalanceSystem.Get().OnHumanAIWaveActivated();
-			}
-			else if (this.m_FromBalance)
-			{
-				BalanceSystem.Get().OnHumanAIGroupActivated();
-			}
 			this.SetupState();
 		}
 
 		protected virtual void OnDeactivate()
 		{
-			if (this.IsWave())
-			{
-				BalanceSystem.Get().OnHumanAIWaveDeactivated(this.m_Members.Count == 0);
-			}
-			else if (this.m_FromBalance)
-			{
-				BalanceSystem.Get().OnHumanAIGroupDeactivated(this.m_Members.Count == 0);
-			}
+			EnemyAISpawnManager.Get().OnDeactivateGroup(this);
 			this.SetState(HumanAIGroup.State.None);
 		}
 
-		protected void Deactivate()
+		protected void Deactivate(bool from_destroy)
 		{
 			this.OnDeactivate();
 			if (this.m_Members.Count == 0)
 			{
-				foreach (GameObject gameObject in this.m_AllObjects)
+				if (!from_destroy)
 				{
-					gameObject.transform.parent = null;
+					foreach (GameObject gameObject in this.m_AllObjects)
+					{
+						gameObject.transform.parent = null;
+					}
 				}
 				this.m_AllObjects.Clear();
 			}
@@ -180,6 +198,31 @@ namespace AIs
 			return result;
 		}
 
+		public Construction GetClosestConstructionToDestroy(Vector3 position)
+		{
+			float num = float.MaxValue;
+			Construction result = null;
+			foreach (Construction construction in this.m_ConstructionsToDestroy)
+			{
+				if (!(construction == null) && !ItemInfo.IsTrap(construction.GetInfoID()))
+				{
+					float num2 = construction.transform.position.Distance(position);
+					if (num2 < num)
+					{
+						num = num2;
+						result = construction;
+					}
+				}
+			}
+			return result;
+		}
+
+		public void StartWave(FirecampGroup group)
+		{
+			this.SetState(HumanAIGroup.State.StartWave);
+			this.SetupConstructionsToDestroy(group);
+		}
+
 		protected virtual void Update()
 		{
 			if (Player.Get().IsDead())
@@ -192,19 +235,23 @@ namespace AIs
 				return;
 			}
 			this.UpdateState();
+			this.UpdateConstructionsToDestroy();
 		}
 
 		protected virtual void UpdateActivity()
 		{
+			if (this.m_ForceActive)
+			{
+				return;
+			}
 			if (this.m_ChallengeGroup)
 			{
 				return;
 			}
 			float maxValue = float.MaxValue;
-			HumanAI closestMember = this.GetClosestMember(out maxValue);
-			if (closestMember && maxValue >= HumanAIGroupManager.Get().m_DeactivationDistance)
+			if (this.GetClosestMember(out maxValue) && maxValue >= EnemyAISpawnManager.s_DeactivationDist)
 			{
-				this.Deactivate();
+				this.Deactivate(false);
 			}
 		}
 
@@ -234,16 +281,21 @@ namespace AIs
 			{
 			case HumanAIGroup.State.None:
 				this.OnEnterNoneState();
-				break;
+				return;
 			case HumanAIGroup.State.Calm:
 				this.OnEnterCalmState();
-				break;
+				return;
 			case HumanAIGroup.State.Upset:
 				this.OnEnterUpsetState();
-				break;
+				return;
+			case HumanAIGroup.State.StartWave:
+				this.OnEnterStartWaveState();
+				return;
 			case HumanAIGroup.State.Attack:
 				this.OnEnterAttackState();
-				break;
+				return;
+			default:
+				return;
 			}
 		}
 
@@ -267,8 +319,7 @@ namespace AIs
 		private void OnEnterUpsetState()
 		{
 			int index = UnityEngine.Random.Range(0, this.m_Members.Count);
-			HumanAI humanAI = this.m_Members[index];
-			humanAI.SetState(HumanAI.State.Upset);
+			this.m_Members[index].SetState(HumanAI.State.Upset);
 		}
 
 		private void OnEnterAttackState()
@@ -280,35 +331,56 @@ namespace AIs
 			PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.AISight);
 		}
 
+		private void OnEnterStartWaveState()
+		{
+			foreach (HumanAI humanAI in this.m_Members)
+			{
+				humanAI.SetState(HumanAI.State.StartWave);
+			}
+		}
+
 		private bool ShouldSetCalmState()
 		{
+			if (Player.Get().IsInSafeZone())
+			{
+				return true;
+			}
 			if (this.m_State != HumanAIGroup.State.Attack)
 			{
 				bool result = true;
-				foreach (HumanAI humanAI in this.m_Members)
+				using (List<HumanAI>.Enumerator enumerator = this.m_Members.GetEnumerator())
 				{
-					if (humanAI.GetState() != HumanAI.State.Rest)
+					while (enumerator.MoveNext())
 					{
-						result = false;
-						break;
+						if (enumerator.Current.GetState() != HumanAI.State.Rest)
+						{
+							result = false;
+							break;
+						}
 					}
 				}
 				return result;
 			}
 			if (this.m_ChallengeGroup)
 			{
-				foreach (HumanAI humanAI2 in this.m_Members)
+				using (List<HumanAI>.Enumerator enumerator = this.m_Members.GetEnumerator())
 				{
-					if (humanAI2.m_SightModule.m_PlayerVisible)
+					while (enumerator.MoveNext())
 					{
-						return false;
+						if (enumerator.Current.m_SightModule.m_VisiblePlayers.Count > 0)
+						{
+							return false;
+						}
 					}
 				}
-				foreach (HumanAI humanAI3 in this.m_Members)
+				using (List<HumanAI>.Enumerator enumerator = this.m_Members.GetEnumerator())
 				{
-					if (humanAI3.m_EnemySenseModule.m_Enemy)
+					while (enumerator.MoveNext())
 					{
-						return false;
+						if (enumerator.Current.m_EnemySenseModule.m_Enemies.Count > 0)
+						{
+							return false;
+						}
 					}
 				}
 				return true;
@@ -322,11 +394,14 @@ namespace AIs
 			{
 				return false;
 			}
-			foreach (HumanAI humanAI in this.m_Members)
+			using (List<HumanAI>.Enumerator enumerator = this.m_Members.GetEnumerator())
 			{
-				if (humanAI.m_HearingModule.m_Noise != null)
+				while (enumerator.MoveNext())
 				{
-					return true;
+					if (enumerator.Current.m_HearingModule.m_Noise != null)
+					{
+						return true;
+					}
 				}
 			}
 			return false;
@@ -338,11 +413,14 @@ namespace AIs
 			{
 				return false;
 			}
-			foreach (HumanAI humanAI in this.m_Members)
+			using (List<HumanAI>.Enumerator enumerator = this.m_Members.GetEnumerator())
 			{
-				if (humanAI.m_EnemyModule.m_Enemy)
+				while (enumerator.MoveNext())
 				{
-					return true;
+					if (enumerator.Current.m_EnemyModule.m_Enemy)
+					{
+						return true;
+					}
 				}
 			}
 			return false;
@@ -393,12 +471,10 @@ namespace AIs
 				AI.AIID aiid = (AI.AIID)Enum.Parse(typeof(AI.AIID), SaveGame.LoadSVal("HAGroupID" + j.ToString() + "_" + index.ToString()));
 				Vector3 position = SaveGame.LoadV3Val("HAGroupPos" + j.ToString() + "_" + index.ToString());
 				Quaternion rotation = SaveGame.LoadQVal("HAGroupRot" + j.ToString() + "_" + index.ToString());
-				GameObject prefab = GreenHellGame.Instance.GetPrefab(aiid.ToString());
-				GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(prefab, position, rotation, base.transform);
-				HumanAI component = gameObject.GetComponent<HumanAI>();
+				HumanAI component = UnityEngine.Object.Instantiate<GameObject>(GreenHellGame.Instance.GetPrefab(aiid.ToString()), position, rotation, base.transform).GetComponent<HumanAI>();
 				this.AddAI(component);
 			}
-			this.Deactivate();
+			this.Deactivate(false);
 		}
 
 		private void UpdateSounds()
@@ -435,6 +511,32 @@ namespace AIs
 			}
 		}
 
+		private void UpdateConstructionsToDestroy()
+		{
+			if (this.m_ConstructionsToDestroy.Count == 0)
+			{
+				return;
+			}
+			foreach (HumanAI humanAI in this.m_Members)
+			{
+				if (humanAI.m_SelectedConstruction)
+				{
+					if (humanAI.m_EnemyModule.m_Enemy && humanAI.m_EnemyModule.m_Enemy.transform.position.Distance(humanAI.transform.position) < 6f)
+					{
+						humanAI.m_SelectedConstruction = null;
+					}
+				}
+				else
+				{
+					Being enemy = humanAI.m_EnemyModule.m_Enemy;
+					if (!enemy || enemy.transform.position.Distance(humanAI.transform.position) > 15f)
+					{
+						humanAI.m_SelectedConstruction = this.GetClosestConstructionToDestroy(humanAI.transform.position);
+					}
+				}
+			}
+		}
+
 		[HideInInspector]
 		public List<HumanAI> m_Members = new List<HumanAI>();
 
@@ -460,6 +562,11 @@ namespace AIs
 		protected float m_MaxCalmSoundInterval = 6f;
 
 		protected AudioClip m_LastCalmClip;
+
+		[HideInInspector]
+		public bool m_ForceActive;
+
+		private List<Construction> m_ConstructionsToDestroy = new List<Construction>();
 
 		public enum State
 		{

@@ -4,10 +4,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[SaveDuringPlay]
 	[DocumentationSorting(8f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineBasicMultiChannelPerlin : CinemachineComponentBase
 	{
 		public override bool IsValid
@@ -58,20 +58,20 @@ namespace Cinemachine
 			{
 				foreach (NoiseSettings.TransformNoiseParams transformNoiseParams in noiseParams)
 				{
-					Vector3 a = new Vector3(transformNoiseParams.X.Frequency, transformNoiseParams.Y.Frequency, transformNoiseParams.Z.Frequency) * time;
-					a += noiseOffsets;
-					Vector3 vector = new Vector3(Mathf.PerlinNoise(a.x, 0f) - 0.5f, Mathf.PerlinNoise(a.y, 0f) - 0.5f, Mathf.PerlinNoise(a.z, 0f) - 0.5f);
-					num += vector.x * transformNoiseParams.X.Amplitude;
-					num2 += vector.y * transformNoiseParams.Y.Amplitude;
-					num3 += vector.z * transformNoiseParams.Z.Amplitude;
+					Vector3 vector = new Vector3(transformNoiseParams.X.Frequency, transformNoiseParams.Y.Frequency, transformNoiseParams.Z.Frequency) * time;
+					vector += noiseOffsets;
+					Vector3 vector2 = new Vector3(Mathf.PerlinNoise(vector.x, 0f) - 0.5f, Mathf.PerlinNoise(vector.y, 0f) - 0.5f, Mathf.PerlinNoise(vector.z, 0f) - 0.5f);
+					num += vector2.x * transformNoiseParams.X.Amplitude;
+					num2 += vector2.y * transformNoiseParams.Y.Amplitude;
+					num3 += vector2.z * transformNoiseParams.Z.Amplitude;
 				}
 			}
 			return new Vector3(num, num2, num3);
 		}
 
-		[FormerlySerializedAs("m_Definition")]
-		[Tooltip("The asset containing the Noise Profile.  Define the frequencies and amplitudes there to make a characteristic noise profile.  Make your own or just use one of the many presets.")]
 		[HideInInspector]
+		[Tooltip("The asset containing the Noise Profile.  Define the frequencies and amplitudes there to make a characteristic noise profile.  Make your own or just use one of the many presets.")]
+		[FormerlySerializedAs("m_Definition")]
 		public NoiseSettings m_NoiseProfile;
 
 		[Tooltip("Gain to apply to the amplitudes defined in the NoiseSettings asset.  1 is normal.  Setting this to 0 completely mutes the noise.")]

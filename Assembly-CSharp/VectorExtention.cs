@@ -36,4 +36,21 @@ public static class VectorExtention
 		vector.y = 0f;
 		return vector;
 	}
+
+	public static float Dot2D(this Vector3 vector, Vector3 other)
+	{
+		vector.y = 0f;
+		other.y = 0f;
+		return Vector3.Dot(vector, other);
+	}
+
+	public static Vector3 To3D(this Vector2 vector)
+	{
+		return new Vector3(vector.x, 0f, vector.y);
+	}
+
+	public static Vector3 Round(this Vector3 vector, int digits)
+	{
+		return new Vector3((float)Math.Round((double)vector.x, digits), (float)Math.Round((double)vector.y, digits), (float)Math.Round((double)vector.z, digits));
+	}
 }

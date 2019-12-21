@@ -9,6 +9,14 @@ namespace Pathfinding.Util
 {
 	public class TileHandler
 	{
+		public bool isValid
+		{
+			get
+			{
+				return this.graph != null && this.graph.exists && this.tileXCount == this.graph.tileXCount && this.tileZCount == this.graph.tileZCount;
+			}
+		}
+
 		public TileHandler(NavmeshBase graph)
 		{
 			if (graph == null)
@@ -27,14 +35,6 @@ namespace Pathfinding.Util
 			this.reloadedInBatch = new bool[this.activeTileTypes.Length];
 			this.cuts = new GridLookup<NavmeshClipper>(new Int2(this.tileXCount, this.tileZCount));
 			this.graph = graph;
-		}
-
-		public bool isValid
-		{
-			get
-			{
-				return this.graph != null && this.graph.exists && this.tileXCount == this.graph.tileXCount && this.tileZCount == this.graph.tileZCount;
-			}
 		}
 
 		public void OnRecalculatedTiles(NavmeshTile[] recalculatedTiles)
@@ -101,9 +101,9 @@ namespace Pathfinding.Util
 		{
 			int x = tile.x;
 			int z = tile.z;
-			Int3 tileSize = (Int3)new Vector3(this.graph.TileWorldSizeX, 0f, this.graph.TileWorldSizeZ);
-			Int3 centerOffset = -((Int3)this.graph.GetTileBoundsInGraphSpace(x, z, 1, 1).min + new Int3(tileSize.x * tile.w / 2, 0, tileSize.z * tile.d / 2));
-			TileHandler.TileType tileType = new TileHandler.TileType(tile.vertsInGraphSpace, tile.tris, tileSize, centerOffset, tile.w, tile.d);
+			Int3 @int = (Int3)new Vector3(this.graph.TileWorldSizeX, 0f, this.graph.TileWorldSizeZ);
+			Int3 centerOffset = -((Int3)this.graph.GetTileBoundsInGraphSpace(x, z, 1, 1).min + new Int3(@int.x * tile.w / 2, 0, @int.z * tile.d / 2));
+			TileHandler.TileType tileType = new TileHandler.TileType(tile.vertsInGraphSpace, tile.tris, @int, centerOffset, tile.w, tile.d);
 			int num = x + z * this.tileXCount;
 			this.activeTileTypes[num] = tileType;
 			this.activeTileRotations[num] = 0;
@@ -147,20 +147,22 @@ namespace Pathfinding.Util
 		{
 			if (verts.Length == 0 || tris.Length == 0)
 			{
-				return new TileHandler.CuttingResult
+				TileHandler.CuttingResult result = new TileHandler.CuttingResult
 				{
 					verts = ArrayPool<Int3>.Claim(0),
 					tris = ArrayPool<int>.Claim(0)
 				};
+				return result;
 			}
 			if (perturbate > 10)
 			{
 				Debug.LogError("Too many perturbations aborting.\nThis may cause a tile in the navmesh to become empty. Try to see see if any of your NavmeshCut or NavmeshAdd components use invalid custom meshes.");
-				return new TileHandler.CuttingResult
+				TileHandler.CuttingResult result = new TileHandler.CuttingResult
 				{
 					verts = verts,
 					tris = tris
 				};
+				return result;
 			}
 			List<IntPoint> list = null;
 			if (extraShape == null && (mode & TileHandler.CutMode.CutExtra) != (TileHandler.CutMode)0)
@@ -295,7 +297,7 @@ namespace Pathfinding.Util
 									int num3 = this.ClipAgainstRectangle(array, clipOut, size);
 									if (num3 == 0)
 									{
-										goto IL_9D3;
+										goto IL_8D1;
 									}
 									for (int n = 0; n < num3; n++)
 									{
@@ -315,7 +317,7 @@ namespace Pathfinding.Util
 										{
 											if (!flag)
 											{
-												goto IL_9C4;
+												goto IL_8C2;
 											}
 											this.CutDual(list8, list4, list5, flag, list10, polyTree);
 										}
@@ -342,7 +344,7 @@ namespace Pathfinding.Util
 											{
 												Polygon polygon = null;
 												int num7 = -1;
-												for (List<IntPoint> list11 = contour; list11 != null; list11 = ((num7 >= childs.Count) ? null : childs[num7].Contour))
+												for (List<IntPoint> list11 = contour; list11 != null; list11 = ((num7 < childs.Count) ? childs[num7].Contour : null))
 												{
 													list9.Clear();
 													for (int num8 = 0; num8 < list11.Count; num8++)
@@ -402,11 +404,11 @@ namespace Pathfinding.Util
 											}
 										}
 									}
-									IL_9C4:;
+									IL_8C2:;
 								}
 							}
 						}
-						IL_9D3:;
+						IL_8D1:;
 					}
 				}
 				if (array2 != null)
@@ -418,8 +420,8 @@ namespace Pathfinding.Util
 				ListPool<IntPoint>.Release(list8);
 				ListPool<PolygonPoint>.Release(list9);
 			}
-			TileHandler.CuttingResult result = default(TileHandler.CuttingResult);
-			Polygon.CompressMesh(list6, list7, out result.verts, out result.tris);
+			TileHandler.CuttingResult result2 = default(TileHandler.CuttingResult);
+			Polygon.CompressMesh(list6, list7, out result2.verts, out result2.tris);
 			for (int num10 = 0; num10 < list2.Count; num10++)
 			{
 				list2[num10].UsedForCut();
@@ -433,7 +435,7 @@ namespace Pathfinding.Util
 			}
 			ListPool<TileHandler.Cut>.Release(list5);
 			ListPool<NavmeshCut>.Release(list2);
-			return result;
+			return result2;
 		}
 
 		private static List<TileHandler.Cut> PrepareNavmeshCutsForCutting(List<NavmeshCut> navmeshCuts, GraphTransform transform, IntRect cutSpaceBounds, int perturbate, bool anyNavmeshAdds)
@@ -566,7 +568,7 @@ namespace Pathfinding.Util
 			{
 				for (int j = 0; j < intermediateResult.Count; j++)
 				{
-					this.clipper.AddPolygon(intermediateResult[j], (!Clipper.Orientation(intermediateResult[j])) ? PolyType.ptSubject : PolyType.ptClip);
+					this.clipper.AddPolygon(intermediateResult[j], Clipper.Orientation(intermediateResult[j]) ? PolyType.ptClip : PolyType.ptSubject);
 				}
 			}
 			for (int k = 0; k < tmpIntersectingCuts.Count; k++)
@@ -663,7 +665,7 @@ namespace Pathfinding.Util
 						{
 							if (!colinear)
 							{
-								goto IL_409;
+								goto IL_3C6;
 							}
 							flag = true;
 						}
@@ -695,23 +697,22 @@ namespace Pathfinding.Util
 						else if (delaunay && !flag)
 						{
 							float num4 = Int3.Angle(int2 - @int, int3 - @int);
-							float num5 = Int3.Angle(int2 - int4, int3 - int4);
-							if (num5 > 6.28318548f - 2f * num4)
+							if (Int3.Angle(int2 - int4, int3 - int4) > 6.28318548f - 2f * num4)
 							{
 								tris[j + (k + 1) % 3] = tris[num2];
-								int num6 = num2 / 3 * 3;
-								int num7 = num2 - num6;
-								tris[num6 + (num7 - 1 + 3) % 3] = tris[j + (k + 2) % 3];
+								int num5 = num2 / 3 * 3;
+								int num6 = num2 - num5;
+								tris[num5 + (num6 - 1 + 3) % 3] = tris[j + (k + 2) % 3];
 								dictionary[new Int2(tris[j], tris[j + 1])] = j + 2;
 								dictionary[new Int2(tris[j + 1], tris[j + 2])] = j;
 								dictionary[new Int2(tris[j + 2], tris[j])] = j + 1;
-								dictionary[new Int2(tris[num6], tris[num6 + 1])] = num6 + 2;
-								dictionary[new Int2(tris[num6 + 1], tris[num6 + 2])] = num6;
-								dictionary[new Int2(tris[num6 + 2], tris[num6])] = num6 + 1;
+								dictionary[new Int2(tris[num5], tris[num5 + 1])] = num5 + 2;
+								dictionary[new Int2(tris[num5 + 1], tris[num5 + 2])] = num5;
+								dictionary[new Int2(tris[num5 + 2], tris[num5])] = num5 + 1;
 							}
 						}
 					}
-					IL_409:;
+					IL_3C6:;
 				}
 			}
 		}
@@ -807,8 +808,8 @@ namespace Pathfinding.Util
 				{
 					cuttingResult.tris = Memory.ShrinkArray<int>(cuttingResult.tris, num);
 				}
-				int w = (rotation % 2 != 0) ? tile.Depth : tile.Width;
-				int d = (rotation % 2 != 0) ? tile.Width : tile.Depth;
+				int w = (rotation % 2 == 0) ? tile.Width : tile.Depth;
+				int d = (rotation % 2 == 0) ? tile.Depth : tile.Width;
 				this.graph.ReplaceTile(x, z, w, d, cuttingResult.verts, cuttingResult.tris);
 				GraphModifier.TriggerEvent(GraphModifier.EventType.PostUpdate);
 				context.QueueFloodFill();
@@ -842,6 +843,22 @@ namespace Pathfinding.Util
 
 		public class TileType
 		{
+			public int Width
+			{
+				get
+				{
+					return this.width;
+				}
+			}
+
+			public int Depth
+			{
+				get
+				{
+					return this.depth;
+				}
+			}
+
 			public TileType(Int3[] sourceVerts, int[] sourceTris, Int3 tileSize, Int3 centerOffset, int width = 1, int depth = 1)
 			{
 				if (sourceVerts == null)
@@ -901,22 +918,6 @@ namespace Pathfinding.Util
 				this.lastYOffset = 0;
 				this.width = width;
 				this.depth = depth;
-			}
-
-			public int Width
-			{
-				get
-				{
-					return this.width;
-				}
-			}
-
-			public int Depth
-			{
-				get
-				{
-					return this.depth;
-				}
 			}
 
 			public void Load(out Int3[] verts, out int[] tris, int rotation, int yoffset)

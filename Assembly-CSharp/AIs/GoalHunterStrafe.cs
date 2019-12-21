@@ -28,11 +28,11 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			Direction direction = (UnityEngine.Random.Range(0f, 1f) <= 0.5f) ? Direction.Right : Direction.Left;
-			if (!this.m_AI.m_PathModule.CalcPath((direction != Direction.Left) ? PathModule.PathType.StrafeRight : PathModule.PathType.StrafeLeft))
+			Direction direction = (UnityEngine.Random.Range(0f, 1f) > 0.5f) ? Direction.Left : Direction.Right;
+			if (!this.m_AI.m_PathModule.CalcPath((direction == Direction.Left) ? PathModule.PathType.StrafeLeft : PathModule.PathType.StrafeRight))
 			{
-				direction = ((direction != Direction.Right) ? Direction.Right : Direction.Left);
-				if (!this.m_AI.m_PathModule.CalcPath((direction != Direction.Left) ? PathModule.PathType.StrafeRight : PathModule.PathType.StrafeLeft))
+				direction = ((direction == Direction.Right) ? Direction.Left : Direction.Right);
+				if (!this.m_AI.m_PathModule.CalcPath((direction == Direction.Left) ? PathModule.PathType.StrafeLeft : PathModule.PathType.StrafeRight))
 				{
 					base.Deactivate();
 					return;

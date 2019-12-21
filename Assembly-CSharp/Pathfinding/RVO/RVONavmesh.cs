@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Pathfinding.RVO
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_navmesh.php")]
 	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Navmesh")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_navmesh.php")]
 	public class RVONavmesh : GraphModifier
 	{
 		public override void OnPostCacheLoad()
@@ -82,22 +82,34 @@ namespace Pathfinding.RVO
 		{
 			if (grid is LayerGridGraph)
 			{
-				nodes = (nodes ?? (grid as LayerGridGraph).nodes);
+				GridNodeBase[] array;
+				if ((array = nodes) == null)
+				{
+					GridNodeBase[] nodes2 = (grid as LayerGridGraph).nodes;
+					array = nodes2;
+				}
+				nodes = array;
 			}
-			nodes = (nodes ?? grid.nodes);
+			GridNodeBase[] array2;
+			if ((array2 = nodes) == null)
+			{
+				GridNodeBase[] nodes2 = grid.nodes;
+				array2 = nodes2;
+			}
+			nodes = array2;
 			int[] neighbourXOffsets = grid.neighbourXOffsets;
 			int[] neighbourZOffsets = grid.neighbourZOffsets;
-			int[] array;
-			if (grid.neighbours == NumNeighbours.Six)
+			int[] array3;
+			if (grid.neighbours != NumNeighbours.Six)
 			{
-				array = GridGraph.hexagonNeighbourIndices;
+				RuntimeHelpers.InitializeArray(array3 = new int[4], fieldof(<PrivateImplementationDetails>.02E4414E7DFA0F3AA2387EE8EA7AB31431CB406A).FieldHandle);
 			}
 			else
 			{
-				RuntimeHelpers.InitializeArray(array = new int[4], fieldof(<PrivateImplementationDetails>.$field-02E4414E7DFA0F3AA2387EE8EA7AB31431CB406A).FieldHandle);
+				array3 = GridGraph.hexagonNeighbourIndices;
 			}
-			int[] array2 = array;
-			float num = (grid.neighbours != NumNeighbours.Six) ? 0.5f : 0.333333343f;
+			int[] array4 = array3;
+			float num = (grid.neighbours == NumNeighbours.Six) ? 0.333333343f : 0.5f;
 			if (nodes != null)
 			{
 				Dictionary<Int3, int> dictionary = new Dictionary<Int3, int>();
@@ -108,13 +120,13 @@ namespace Pathfinding.RVO
 				{
 					if (gridNodeBase != null && gridNodeBase.Walkable && !gridNodeBase.HasConnectionsToAllEightNeighbours)
 					{
-						for (int j = 0; j < array2.Length; j++)
+						for (int j = 0; j < array4.Length; j++)
 						{
-							int num2 = array2[j];
+							int num2 = array4[j];
 							if (gridNodeBase.GetNeighbourAlongDirection(num2) == null)
 							{
-								int num3 = array2[(j - 1 + array2.Length) % array2.Length];
-								int num4 = array2[(j + 1) % array2.Length];
+								int num3 = array4[(j - 1 + array4.Length) % array4.Length];
+								int num4 = array4[(j + 1) % array4.Length];
 								Vector3 vector = new Vector3((float)gridNodeBase.XCoordinateInGrid + 0.5f, 0f, (float)gridNodeBase.ZCoordinateInGrid + 0.5f);
 								vector.x += (float)neighbourXOffsets[num2] * num;
 								vector.z += (float)neighbourZOffsets[num2] * num;
@@ -134,9 +146,7 @@ namespace Pathfinding.RVO
 								}
 								else
 								{
-									int count = vertices.Count;
-									dictionary[key] = count;
-									key3 = count;
+									key3 = (dictionary[key] = vertices.Count);
 									vertices.Add(vector3);
 								}
 								int num5;
@@ -146,9 +156,7 @@ namespace Pathfinding.RVO
 								}
 								else
 								{
-									int count = vertices.Count;
-									dictionary[key2] = count;
-									num5 = count;
+									num5 = (dictionary[key2] = vertices.Count);
 									vertices.Add(vector2);
 								}
 								dictionary2.Add(key3, num5);
@@ -176,9 +184,9 @@ namespace Pathfinding.RVO
 						vector4 = vector5;
 					}
 					vertexBuffer.Add(vertices[chain[chain.Count - 1]]);
-					Vector3[] array3 = vertexBuffer.ToArray();
-					transform.Transform(array3);
-					callback(array3, cycle);
+					Vector3[] array5 = vertexBuffer.ToArray();
+					transform.Transform(array5);
+					callback(array5, cycle);
 				});
 				ListPool<Vector3>.Release(vertexBuffer);
 				ListPool<Vector3>.Release(vertices);

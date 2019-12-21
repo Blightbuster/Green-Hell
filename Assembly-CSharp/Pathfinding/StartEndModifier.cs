@@ -41,16 +41,14 @@ namespace Pathfinding
 			if ((flag2 || this.addPoints) && this.exactEndPoint != StartEndModifier.Exactness.SnapToNode)
 			{
 				abpath.vectorPath.Add(vector2);
+				return;
 			}
-			else
-			{
-				abpath.vectorPath[abpath.vectorPath.Count - 1] = vector2;
-			}
+			abpath.vectorPath[abpath.vectorPath.Count - 1] = vector2;
 		}
 
 		private Vector3 Snap(ABPath path, StartEndModifier.Exactness mode, bool start, out bool forceAddPoint)
 		{
-			int num = (!start) ? (path.path.Count - 1) : 0;
+			int num = start ? 0 : (path.path.Count - 1);
 			GraphNode graphNode = path.path[num];
 			Vector3 vector = (Vector3)graphNode.position;
 			forceAddPoint = false;
@@ -65,7 +63,7 @@ namespace Pathfinding
 				Vector3 vector2;
 				if (start)
 				{
-					vector2 = ((this.adjustStartPoint == null) ? path.originalStartPoint : this.adjustStartPoint());
+					vector2 = ((this.adjustStartPoint != null) ? this.adjustStartPoint() : path.originalStartPoint);
 				}
 				else
 				{
@@ -78,14 +76,19 @@ namespace Pathfinding
 				case StartEndModifier.Exactness.Interpolate:
 				{
 					Vector3 clampedPoint = this.GetClampedPoint(vector, vector2, graphNode);
-					GraphNode graphNode2 = path.path[Mathf.Clamp(num + ((!start) ? -1 : 1), 0, path.path.Count - 1)];
+					GraphNode graphNode2 = path.path[Mathf.Clamp(num + (start ? 1 : -1), 0, path.path.Count - 1)];
 					return VectorMath.ClosestPointOnSegment(vector, (Vector3)graphNode2.position, clampedPoint);
 				}
 				case StartEndModifier.Exactness.NodeConnection:
 				{
 					this.connectionBuffer = (this.connectionBuffer ?? new List<GraphNode>());
-					this.connectionBufferAddDelegate = (this.connectionBufferAddDelegate ?? new Action<GraphNode>(this.connectionBuffer.Add));
-					GraphNode graphNode2 = path.path[Mathf.Clamp(num + ((!start) ? -1 : 1), 0, path.path.Count - 1)];
+					Action<GraphNode> action;
+					if ((action = this.connectionBufferAddDelegate) == null)
+					{
+						action = new Action<GraphNode>(this.connectionBuffer.Add);
+					}
+					this.connectionBufferAddDelegate = action;
+					GraphNode graphNode2 = path.path[Mathf.Clamp(num + (start ? 1 : -1), 0, path.path.Count - 1)];
 					graphNode.GetConnections(this.connectionBufferAddDelegate);
 					Vector3 result = vector;
 					float num2 = float.PositiveInfinity;
@@ -108,7 +111,7 @@ namespace Pathfinding
 				throw new ArgumentException("Cannot reach this point, but the compiler is not smart enough to realize that.");
 			}
 			case StartEndModifier.Exactness.ClosestOnNode:
-				return this.GetClampedPoint(vector, (!start) ? path.endPoint : path.startPoint, graphNode);
+				return this.GetClampedPoint(vector, start ? path.startPoint : path.endPoint, graphNode);
 			default:
 				throw new ArgumentException("Invalid mode");
 			}

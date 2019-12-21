@@ -61,7 +61,7 @@ namespace AmplifyMotion
 				this.m_bones = new MotionState.Matrix3x4[this.m_boneCount];
 				Vector4[] baseVertices = new Vector4[this.m_vertexCount * this.m_weightCount];
 				int[] boneIndices = new int[this.m_vertexCount * this.m_weightCount];
-				float[] boneWeights = (this.m_weightCount <= 1) ? null : new float[this.m_vertexCount * this.m_weightCount];
+				float[] boneWeights = (this.m_weightCount > 1) ? new float[this.m_vertexCount * this.m_weightCount] : null;
 				if (this.m_weightCount == 1)
 				{
 					this.InitializeBone1(baseVertices, boneIndices);
@@ -157,8 +157,8 @@ namespace AmplifyMotion
 				this.m_gpuBoneData = new Color[this.m_gpuBoneTexWidth * this.m_gpuBoneTexHeight];
 				this.UpdateBonesGPU();
 				TextureFormat textureFormat = TextureFormat.RHalf;
-				textureFormat = ((this.m_weightCount != 2) ? textureFormat : TextureFormat.RGHalf);
-				textureFormat = ((this.m_weightCount != 4) ? textureFormat : TextureFormat.RGBAHalf);
+				textureFormat = ((this.m_weightCount == 2) ? TextureFormat.RGHalf : textureFormat);
+				textureFormat = ((this.m_weightCount == 4) ? TextureFormat.RGBAHalf : textureFormat);
 				this.m_gpuBoneIndices = new Texture2D(this.m_gpuVertexTexWidth, this.m_gpuVertexTexHeight, textureFormat, false, true);
 				this.m_gpuBoneIndices.hideFlags = HideFlags.DontSave;
 				this.m_gpuBoneIndices.name = "AM-" + this.m_obj.name + "-Bones";
@@ -169,10 +169,9 @@ namespace AmplifyMotion
 				for (int i = 0; i < this.m_vertexCount; i++)
 				{
 					int num = i % this.m_gpuVertexTexWidth;
-					int num2 = i / this.m_gpuVertexTexWidth;
-					int num3 = num2 * this.m_gpuVertexTexWidth + num;
+					int num2 = i / this.m_gpuVertexTexWidth * this.m_gpuVertexTexWidth + num;
 					BoneWeight boneWeight = boneWeights[i];
-					array[num3] = new Vector4((float)boneWeight.boneIndex0, (float)boneWeight.boneIndex1, (float)boneWeight.boneIndex2, (float)boneWeight.boneIndex3);
+					array[num2] = new Vector4((float)boneWeight.boneIndex0, (float)boneWeight.boneIndex1, (float)boneWeight.boneIndex2, (float)boneWeight.boneIndex3);
 				}
 				this.m_gpuBoneIndices.SetPixels(array);
 				this.m_gpuBoneIndices.Apply();
@@ -191,12 +190,11 @@ namespace AmplifyMotion
 				}
 				for (int l = 0; l < this.m_vertexCount; l++)
 				{
-					int num4 = l % this.m_gpuVertexTexWidth;
-					int num5 = l / this.m_gpuVertexTexWidth;
-					int num6 = num5 * this.m_gpuVertexTexWidth + num4;
+					int num3 = l % this.m_gpuVertexTexWidth;
+					int num4 = l / this.m_gpuVertexTexWidth * this.m_gpuVertexTexWidth + num3;
 					for (int m = 0; m < this.m_weightCount; m++)
 					{
-						list[m][num6] = this.m_baseVertices[l * this.m_weightCount + m];
+						list[m][num4] = this.m_baseVertices[l * this.m_weightCount + m];
 					}
 				}
 				for (int n = 0; n < this.m_weightCount; n++)
@@ -218,9 +216,9 @@ namespace AmplifyMotion
 				this.m_gpuCurrVertices.Create();
 				this.m_gpuSkinDeformMat.SetTexture("_AM_BONE_TEX", this.m_gpuBones);
 				this.m_gpuSkinDeformMat.SetTexture("_AM_BONE_INDEX_TEX", this.m_gpuBoneIndices);
-				for (int num7 = 0; num7 < this.m_weightCount; num7++)
+				for (int num5 = 0; num5 < this.m_weightCount; num5++)
 				{
-					this.m_gpuSkinDeformMat.SetTexture("_AM_BASE_VERTEX" + num7 + "_TEX", this.m_gpuBaseVertices[num7]);
+					this.m_gpuSkinDeformMat.SetTexture("_AM_BASE_VERTEX" + num5 + "_TEX", this.m_gpuBaseVertices[num5]);
 				}
 				Vector4 vector = new Vector4(1f / (float)this.m_gpuBoneTexWidth, 1f / (float)this.m_gpuBoneTexHeight, (float)this.m_gpuBoneTexWidth, (float)this.m_gpuBoneTexHeight);
 				Vector4 vector2 = new Vector4(1f / (float)this.m_gpuVertexTexWidth, 1f / (float)this.m_gpuVertexTexHeight, (float)this.m_gpuVertexTexWidth, (float)this.m_gpuVertexTexHeight);
@@ -229,13 +227,13 @@ namespace AmplifyMotion
 				this.m_gpuSkinDeformMat.SetVector("_AM_VERTEX_TEXEL_SIZE", vector2);
 				this.m_gpuSkinDeformMat.SetVector("_AM_VERTEX_TEXEL_HALFSIZE", vector2 * 0.5f);
 				Vector2[] array2 = new Vector2[this.m_vertexCount];
-				for (int num8 = 0; num8 < this.m_vertexCount; num8++)
+				for (int num6 = 0; num6 < this.m_vertexCount; num6++)
 				{
-					int num9 = num8 % this.m_gpuVertexTexWidth;
-					int num10 = num8 / this.m_gpuVertexTexWidth;
-					float x = (float)num9 / (float)this.m_gpuVertexTexWidth + vector2.x * 0.5f;
-					float y = (float)num10 / (float)this.m_gpuVertexTexHeight + vector2.y * 0.5f;
-					array2[num8] = new Vector2(x, y);
+					float num7 = (float)(num6 % this.m_gpuVertexTexWidth);
+					int num8 = num6 / this.m_gpuVertexTexWidth;
+					float x = num7 / (float)this.m_gpuVertexTexWidth + vector2.x * 0.5f;
+					float y = (float)num8 / (float)this.m_gpuVertexTexHeight + vector2.y * 0.5f;
+					array2[num6] = new Vector2(x, y);
 				}
 				this.m_clonedMesh.uv2 = array2;
 			}
@@ -323,7 +321,7 @@ namespace AmplifyMotion
 		{
 			for (int i = 0; i < this.m_boneCount; i++)
 			{
-				this.m_bones[i] = ((!(this.m_boneTransforms[i] != null)) ? Matrix4x4.identity : this.m_boneTransforms[i].localToWorldMatrix);
+				this.m_bones[i] = ((this.m_boneTransforms[i] != null) ? this.m_boneTransforms[i].localToWorldMatrix : Matrix4x4.identity);
 			}
 			this.m_worldToLocalMatrix = this.m_transform.worldToLocalMatrix;
 			if (this.m_useGPU)
@@ -603,7 +601,7 @@ namespace AmplifyMotion
 					this.m_clonedMesh.normals = this.m_prevVertices;
 				}
 				bool flag = (this.m_owner.Instance.CullingMask & 1 << this.m_obj.gameObject.layer) != 0;
-				int num = (!flag) ? 255 : this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject);
+				int num = flag ? this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject) : 255;
 				Matrix4x4 value;
 				if (this.m_obj.FixedStep)
 				{
@@ -615,7 +613,7 @@ namespace AmplifyMotion
 				}
 				renderCB.SetGlobalMatrix("_AM_MATRIX_PREV_MVP", value);
 				renderCB.SetGlobalFloat("_AM_OBJECT_ID", (float)num * 0.003921569f);
-				renderCB.SetGlobalFloat("_AM_MOTION_SCALE", (!flag) ? 0f : scale);
+				renderCB.SetGlobalFloat("_AM_MOTION_SCALE", flag ? scale : 0f);
 				if (this.m_useGPU)
 				{
 					Vector4 vector = new Vector4(1f / (float)this.m_gpuVertexTexWidth, 1f / (float)this.m_gpuVertexTexHeight, (float)this.m_gpuVertexTexWidth, (float)this.m_gpuVertexTexHeight);
@@ -624,13 +622,13 @@ namespace AmplifyMotion
 					renderCB.SetGlobalTexture("_AM_PREV_VERTEX_TEX", this.m_gpuPrevVertices);
 					renderCB.SetGlobalTexture("_AM_CURR_VERTEX_TEX", this.m_gpuCurrVertices);
 				}
-				int num2 = (!this.m_useGPU) ? 0 : 4;
-				int num3 = (quality != Quality.Mobile) ? 2 : 0;
+				int num2 = this.m_useGPU ? 4 : 0;
+				int num3 = (quality == Quality.Mobile) ? 0 : 2;
 				int num4 = num2 + num3;
 				for (int i = 0; i < this.m_sharedMaterials.Length; i++)
 				{
 					MotionState.MaterialDesc materialDesc = this.m_sharedMaterials[i];
-					int shaderPass = num4 + ((!materialDesc.coverage) ? 0 : 1);
+					int shaderPass = num4 + (materialDesc.coverage ? 1 : 0);
 					if (materialDesc.coverage)
 					{
 						Texture mainTexture = materialDesc.material.mainTexture;

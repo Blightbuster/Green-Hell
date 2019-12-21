@@ -14,10 +14,10 @@ public class GrapplingHookController : PlayerController
 	{
 		base.Awake();
 		GrapplingHookController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.GrapplingHook;
+		base.m_ControllerType = PlayerControllerType.GrapplingHook;
 		this.m_State = GrapplingHookControllerState.None;
 		this.m_LookController = base.gameObject.GetComponent<LookController>();
-		this.m_CharacterController = base.GetComponent<CharacterController>();
+		this.m_CharacterController = base.GetComponent<CharacterControllerProxy>();
 	}
 
 	protected override void OnEnable()
@@ -75,7 +75,7 @@ public class GrapplingHookController : PlayerController
 		{
 			this.m_WantedSpeed.y = -10f;
 		}
-		this.m_CharacterController.Move(this.m_WantedSpeed * Time.fixedDeltaTime);
+		this.m_CharacterController.Move(this.m_WantedSpeed * Time.fixedDeltaTime, true);
 	}
 
 	public override void ControllerUpdate()
@@ -144,8 +144,7 @@ public class GrapplingHookController : PlayerController
 
 	private void StartLadder()
 	{
-		LadderController component = this.m_Player.GetComponent<LadderController>();
-		component.SetLadder(this.m_Ladder);
+		this.m_Player.GetComponent<LadderController>().SetLadder(this.m_Ladder);
 		this.m_Player.StartController(PlayerControllerType.Ladder);
 	}
 
@@ -176,7 +175,7 @@ public class GrapplingHookController : PlayerController
 
 	private Dictionary<Transform, float> m_BodyRotationBonesParams = new Dictionary<Transform, float>();
 
-	private CharacterController m_CharacterController;
+	private CharacterControllerProxy m_CharacterController;
 
 	private Vector3 m_WantedSpeed = Vector3.zero;
 }

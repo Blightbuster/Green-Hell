@@ -453,7 +453,7 @@ namespace RootMotion.FinalIK
 				this.spineMapping.iterations = 3;
 			}
 			this.spineMapping.SetBones(array, references.leftUpperArm, references.rightUpperArm, references.leftThigh, references.rightThigh);
-			int num = (!(references.head != null)) ? 0 : 1;
+			int num = (references.head != null) ? 1 : 0;
 			if (this.boneMappings.Length != num)
 			{
 				this.boneMappings = new IKMappingBone[num];
@@ -466,7 +466,7 @@ namespace RootMotion.FinalIK
 					this.boneMappings[0].maintainRotationWeight = 0f;
 				}
 			}
-			if (this.boneMappings.Length > 0)
+			if (this.boneMappings.Length != 0)
 			{
 				this.boneMappings[0].bone = references.head;
 			}
@@ -508,8 +508,7 @@ namespace RootMotion.FinalIK
 				return references.spine[0];
 			}
 			Vector3 b = Vector3.Lerp(references.leftThigh.position, references.rightThigh.position, 0.5f);
-			Vector3 a = Vector3.Lerp(references.leftUpperArm.position, references.rightUpperArm.position, 0.5f);
-			Vector3 onNormal = a - b;
+			Vector3 onNormal = Vector3.Lerp(references.leftUpperArm.position, references.rightUpperArm.position, 0.5f) - b;
 			float magnitude = onNormal.magnitude;
 			if (references.spine.Length < 2)
 			{
@@ -518,16 +517,10 @@ namespace RootMotion.FinalIK
 			int num2 = 0;
 			for (int i = 1; i < num; i++)
 			{
-				Vector3 vector = references.spine[i].position - b;
-				Vector3 vector2 = Vector3.Project(vector, onNormal);
-				float num3 = Vector3.Dot(vector2.normalized, onNormal.normalized);
-				if (num3 > 0f)
+				Vector3 vector = Vector3.Project(references.spine[i].position - b, onNormal);
+				if (Vector3.Dot(vector.normalized, onNormal.normalized) > 0f && vector.magnitude / magnitude < 0.5f)
 				{
-					float num4 = vector2.magnitude / magnitude;
-					if (num4 < 0.5f)
-					{
-						num2 = i;
-					}
+					num2 = i;
 				}
 			}
 			return references.spine[num2];
@@ -545,17 +538,14 @@ namespace RootMotion.FinalIK
 
 		private void SetLimbOrientation(FullBodyBipedChain chain, BipedLimbOrientations.LimbOrientation limbOrientation)
 		{
-			bool flag = chain == FullBodyBipedChain.LeftArm || chain == FullBodyBipedChain.RightArm;
-			if (flag)
+			if (chain == FullBodyBipedChain.LeftArm || chain == FullBodyBipedChain.RightArm)
 			{
 				this.GetBendConstraint(chain).SetLimbOrientation(-limbOrientation.upperBoneForwardAxis, -limbOrientation.lowerBoneForwardAxis, -limbOrientation.lastBoneLeftAxis);
 				this.GetLimbMapping(chain).SetLimbOrientation(-limbOrientation.upperBoneForwardAxis, -limbOrientation.lowerBoneForwardAxis);
+				return;
 			}
-			else
-			{
-				this.GetBendConstraint(chain).SetLimbOrientation(limbOrientation.upperBoneForwardAxis, limbOrientation.lowerBoneForwardAxis, limbOrientation.lastBoneLeftAxis);
-				this.GetLimbMapping(chain).SetLimbOrientation(limbOrientation.upperBoneForwardAxis, limbOrientation.lowerBoneForwardAxis);
-			}
+			this.GetBendConstraint(chain).SetLimbOrientation(limbOrientation.upperBoneForwardAxis, limbOrientation.lowerBoneForwardAxis, limbOrientation.lastBoneLeftAxis);
+			this.GetLimbMapping(chain).SetLimbOrientation(limbOrientation.upperBoneForwardAxis, limbOrientation.lowerBoneForwardAxis);
 		}
 
 		private static Transform GetLeftClavicle(BipedReferences references)
@@ -586,9 +576,9 @@ namespace RootMotion.FinalIK
 
 		private static bool Contains(Transform[] array, Transform transform)
 		{
-			foreach (Transform x in array)
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x == transform)
+				if (array[i] == transform)
 				{
 					return true;
 				}

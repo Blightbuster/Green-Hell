@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Biped IK")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page2.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/IK/Biped IK")]
 	public class BipedIK : SolverManager
 	{
 		[ContextMenu("User Manual")]
@@ -150,10 +150,10 @@ namespace RootMotion.FinalIK
 
 		protected override void InitiateSolver()
 		{
-			string empty = string.Empty;
-			if (BipedReferences.SetupError(this.references, ref empty))
+			string message = "";
+			if (BipedReferences.SetupError(this.references, ref message))
 			{
-				Warning.Log(empty, this.references.root, false);
+				Warning.Log(message, this.references.root, false);
 				return;
 			}
 			this.solvers.AssignReferences(this.references);
@@ -163,9 +163,10 @@ namespace RootMotion.FinalIK
 			}
 			this.solvers.lookAt.Initiate(base.transform);
 			this.solvers.aim.Initiate(base.transform);
-			foreach (IKSolverLimb iksolverLimb in this.solvers.limbs)
+			IKSolverLimb[] limbs = this.solvers.limbs;
+			for (int i = 0; i < limbs.Length; i++)
 			{
-				iksolverLimb.Initiate(base.transform);
+				limbs[i].Initiate(base.transform);
 			}
 			this.solvers.pelvis.Initiate(this.references.pelvis);
 		}

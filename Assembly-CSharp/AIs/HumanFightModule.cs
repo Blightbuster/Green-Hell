@@ -5,9 +5,9 @@ namespace AIs
 {
 	public class HumanFightModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_HumanAI = (HumanAI)this.m_AI;
 			DebugUtils.Assert(this.m_HumanAI, true);
 		}
@@ -24,25 +24,7 @@ namespace AIs
 				return false;
 			}
 			AIGoalType type = activeGoal.m_Type;
-			if (type == AIGoalType.HumanJumpBack || type == AIGoalType.HumanJumpAttack)
-			{
-				return false;
-			}
-			if ((type == AIGoalType.HumanHitReaction || type == AIGoalType.HumanPunchBack) && this.m_AI.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime <= 0.5f)
-			{
-				return false;
-			}
-			float num = base.transform.position.Distance(Player.Get().transform.position);
-			if (num > this.m_AI.m_Params.m_JumpBackRange)
-			{
-				return false;
-			}
-			if (this.m_LastFailedJumpBackPos != Vector3.zero && this.m_LastFailedJumpBackPos.Distance(base.transform.position) < 5f)
-			{
-				return false;
-			}
-			float num2 = Vector3.Dot(base.transform.forward, (Player.Get().transform.position - base.transform.position).normalized);
-			return num2 >= 0.25f && UnityEngine.Random.Range(0f, 1f) <= this.m_AI.m_GoalsModule.m_JumpBackGoal.m_Probability;
+			return type != AIGoalType.HumanJumpBack && type != AIGoalType.HumanJumpAttack && ((type != AIGoalType.HumanHitReaction && type != AIGoalType.HumanPunchBack) || this.m_AI.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.5f) && base.transform.position.Distance(Player.Get().transform.position) <= this.m_AI.m_Params.m_JumpBackRange && (!(this.m_LastFailedJumpBackPos != Vector3.zero) || this.m_LastFailedJumpBackPos.Distance(base.transform.position) >= 5f) && Vector3.Dot(base.transform.forward, (Player.Get().transform.position - base.transform.position).normalized) >= 0.25f && UnityEngine.Random.Range(0f, 1f) <= this.m_AI.m_GoalsModule.m_JumpBackGoal.m_Probability;
 		}
 
 		public void OnPlayerStartAttack()
@@ -62,30 +44,27 @@ namespace AIs
 
 		private bool CanPunchBack()
 		{
-			if (this.m_HumanAI.m_CurrentWeapon && (this.m_HumanAI.m_CurrentWeapon.m_Info.IsBow() || this.m_HumanAI.m_CurrentWeapon.m_Info.IsSpear()))
+			if (this.m_HumanAI.m_CurrentWeapon && this.m_HumanAI.m_CurrentWeapon.m_Info.IsBow())
 			{
 				return false;
 			}
 			float num = UnityEngine.Random.Range(0f, 1f);
-			if (this.m_AI.m_GoalsModule.m_PunchBackGoal.m_Probability <= num)
-			{
-				return false;
-			}
-			float num2 = base.transform.position.Distance(Player.Get().transform.position);
-			return num2 <= this.m_AI.m_Params.m_AttackRange;
+			return this.m_AI.m_GoalsModule.m_PunchBackGoal.m_Probability > num && base.transform.position.Distance(Player.Get().transform.position) <= this.m_AI.m_Params.m_AttackRange;
 		}
 
 		public override void OnTakeDamage(DamageInfo info)
 		{
 			base.OnTakeDamage(info);
+			if (this.m_AI.m_GoalsModule.m_ActiveGoal != null && this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type == AIGoalType.HumanPunchBack)
+			{
+				return;
+			}
 			if (this.CanPunchBack())
 			{
 				this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.HumanPunchBack);
+				return;
 			}
-			else
-			{
-				this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.HumanHitReaction);
-			}
+			this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.HumanHitReaction);
 		}
 
 		[NonSerialized]

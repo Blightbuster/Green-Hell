@@ -8,26 +8,11 @@ using Pathfinding.Util;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[HelpURL("http://arongranberg.com/astar/docs/class_astar_path.php")]
-[AddComponentMenu("Pathfinding/Pathfinder")]
 [ExecuteInEditMode]
+[AddComponentMenu("Pathfinding/Pathfinder")]
+[HelpURL("http://arongranberg.com/astar/docs/class_astar_path.php")]
 public class AstarPath : VersionedMonoBehaviour
 {
-	private AstarPath()
-	{
-		this.pathProcessor = new PathProcessor(this, this.pathReturnQueue, 0, true);
-		this.pathReturnQueue = new PathReturnQueue(this);
-		this.workItems = new WorkItemProcessor(this);
-		this.graphUpdates = new GraphUpdateProcessor(this);
-		this.graphUpdates.OnGraphsUpdated += delegate
-		{
-			if (AstarPath.OnGraphsUpdated != null)
-			{
-				AstarPath.OnGraphsUpdated(this);
-			}
-		};
-	}
-
 	public static Version Version
 	{
 		get
@@ -171,6 +156,21 @@ public class AstarPath : VersionedMonoBehaviour
 		}
 	}
 
+	private AstarPath()
+	{
+		this.pathProcessor = new PathProcessor(this, this.pathReturnQueue, 0, true);
+		this.pathReturnQueue = new PathReturnQueue(this);
+		this.workItems = new WorkItemProcessor(this);
+		this.graphUpdates = new GraphUpdateProcessor(this);
+		this.graphUpdates.OnGraphsUpdated += delegate
+		{
+			if (AstarPath.OnGraphsUpdated != null)
+			{
+				AstarPath.OnGraphsUpdated(this);
+			}
+		};
+	}
+
 	public string[] GetTagNames()
 	{
 		if (this.tagNames == null || this.tagNames.Length != 32)
@@ -178,7 +178,7 @@ public class AstarPath : VersionedMonoBehaviour
 			this.tagNames = new string[32];
 			for (int i = 0; i < this.tagNames.Length; i++)
 			{
-				this.tagNames[i] = string.Empty + i;
+				this.tagNames[i] = string.Concat(i);
 			}
 			this.tagNames[0] = "Basic Ground";
 		}
@@ -216,9 +216,9 @@ public class AstarPath : VersionedMonoBehaviour
 				on65KOverflow();
 			}
 		}
-		ushort result;
-		this.nextFreePathID = (result = this.nextFreePathID) + 1;
-		return result;
+		ushort num = this.nextFreePathID;
+		this.nextFreePathID = num + 1;
+		return num;
 	}
 
 	private void RecalculateDebugLimits()
@@ -226,47 +226,50 @@ public class AstarPath : VersionedMonoBehaviour
 		this.debugFloor = float.PositiveInfinity;
 		this.debugRoof = float.NegativeInfinity;
 		bool ignoreSearchTree = !this.showSearchTree || this.debugPathData == null;
+		Action<GraphNode> <>9__0;
 		for (int i = 0; i < this.graphs.Length; i++)
 		{
 			if (this.graphs[i] != null && this.graphs[i].drawGizmos)
 			{
-				this.graphs[i].GetNodes(delegate(GraphNode node)
+				NavGraph navGraph = this.graphs[i];
+				Action<GraphNode> action;
+				if ((action = <>9__0) == null)
 				{
-					if (ignoreSearchTree || GraphGizmoHelper.InSearchTree(node, this.debugPathData, this.debugPathID))
+					action = (<>9__0 = delegate(GraphNode node)
 					{
-						if (this.debugMode == GraphDebugMode.Penalty)
+						if (ignoreSearchTree || GraphGizmoHelper.InSearchTree(node, this.debugPathData, this.debugPathID))
 						{
-							this.debugFloor = Mathf.Min(this.debugFloor, node.Penalty);
-							this.debugRoof = Mathf.Max(this.debugRoof, node.Penalty);
-						}
-						else if (this.debugPathData != null)
-						{
-							PathNode pathNode = this.debugPathData.GetPathNode(node);
-							GraphDebugMode graphDebugMode = this.debugMode;
-							if (graphDebugMode != GraphDebugMode.F)
+							if (this.debugMode == GraphDebugMode.Penalty)
 							{
-								if (graphDebugMode != GraphDebugMode.G)
+								this.debugFloor = Mathf.Min(this.debugFloor, node.Penalty);
+								this.debugRoof = Mathf.Max(this.debugRoof, node.Penalty);
+								return;
+							}
+							if (this.debugPathData != null)
+							{
+								PathNode pathNode = this.debugPathData.GetPathNode(node);
+								switch (this.debugMode)
 								{
-									if (graphDebugMode == GraphDebugMode.H)
-									{
-										this.debugFloor = Mathf.Min(this.debugFloor, pathNode.H);
-										this.debugRoof = Mathf.Max(this.debugRoof, pathNode.H);
-									}
-								}
-								else
-								{
+								case GraphDebugMode.G:
 									this.debugFloor = Mathf.Min(this.debugFloor, pathNode.G);
 									this.debugRoof = Mathf.Max(this.debugRoof, pathNode.G);
+									return;
+								case GraphDebugMode.H:
+									this.debugFloor = Mathf.Min(this.debugFloor, pathNode.H);
+									this.debugRoof = Mathf.Max(this.debugRoof, pathNode.H);
+									break;
+								case GraphDebugMode.F:
+									this.debugFloor = Mathf.Min(this.debugFloor, pathNode.F);
+									this.debugRoof = Mathf.Max(this.debugRoof, pathNode.F);
+									return;
+								default:
+									return;
 								}
 							}
-							else
-							{
-								this.debugFloor = Mathf.Min(this.debugFloor, pathNode.F);
-								this.debugRoof = Mathf.Max(this.debugRoof, pathNode.F);
-							}
 						}
-					}
-				});
+					});
+				}
+				navGraph.GetNodes(action);
 			}
 		}
 		if (float.IsInfinity(this.debugFloor))
@@ -321,7 +324,7 @@ public class AstarPath : VersionedMonoBehaviour
 
 	private void OnGUI()
 	{
-		if (this.logPathResults == PathLog.InGame && this.inGameDebugPath != string.Empty)
+		if (this.logPathResults == PathLog.InGame && this.inGameDebugPath != "")
 		{
 			GUI.Label(new Rect(5f, 5f, 400f, 600f), this.inGameDebugPath);
 		}
@@ -329,7 +332,7 @@ public class AstarPath : VersionedMonoBehaviour
 
 	internal void Log(string s)
 	{
-		if (object.ReferenceEquals(AstarPath.active, null))
+		if (AstarPath.active == null)
 		{
 			UnityEngine.Debug.Log("No AstarPath object was found : " + s);
 			return;
@@ -350,11 +353,9 @@ public class AstarPath : VersionedMonoBehaviour
 		if (this.logPathResults == PathLog.InGame)
 		{
 			this.inGameDebugPath = message;
+			return;
 		}
-		else
-		{
-			UnityEngine.Debug.Log(message);
-		}
+		UnityEngine.Debug.Log(message);
 	}
 
 	private void Update()
@@ -431,6 +432,7 @@ public class AstarPath : VersionedMonoBehaviour
 		this.QueueGraphUpdates();
 		this.graphUpdateRoutineRunning = false;
 		yield break;
+		yield break;
 	}
 
 	public void UpdateGraphs(Bounds bounds, float delay)
@@ -448,6 +450,7 @@ public class AstarPath : VersionedMonoBehaviour
 		yield return new WaitForSeconds(delay);
 		this.UpdateGraphs(ob);
 		yield break;
+		yield break;
 	}
 
 	public void UpdateGraphs(Bounds bounds)
@@ -463,6 +466,7 @@ public class AstarPath : VersionedMonoBehaviour
 			if (!this.graphUpdateRoutineRunning)
 			{
 				base.StartCoroutine(this.DelayedGraphUpdate());
+				return;
 			}
 		}
 		else
@@ -826,7 +830,8 @@ public class AstarPath : VersionedMonoBehaviour
 				graphsToScan[j].DestroyAllNodesInternal();
 			}
 		}
-		for (int i = 0; i < graphsToScan.Length; i++)
+		int num;
+		for (int i = 0; i < graphsToScan.Length; i = num + 1)
 		{
 			if (graphsToScan[i] != null)
 			{
@@ -857,15 +862,12 @@ public class AstarPath : VersionedMonoBehaviour
 						graphUpdateLock.Release();
 						throw;
 					}
-					float a = minp;
-					float b = maxp;
-					Progress progress = coroutine.Current;
-					float p = Mathf.Lerp(a, b, progress.progress);
-					string str = progressDescriptionPrefix;
-					Progress progress2 = coroutine.Current;
-					yield return new Progress(p, str + progress2.description);
+					yield return new Progress(Mathf.Lerp(minp, maxp, coroutine.Current.progress), progressDescriptionPrefix + coroutine.Current.description);
 				}
+				progressDescriptionPrefix = null;
+				coroutine = null;
 			}
+			num = i;
 		}
 		this.data.UnlockGraphStructure();
 		yield return new Progress(0.8f, "Post processing graphs");
@@ -893,6 +895,7 @@ public class AstarPath : VersionedMonoBehaviour
 		GC.Collect();
 		this.Log("Scanning - Process took " + (this.lastScanTime * 1000f).ToString("0") + " ms to complete");
 		yield break;
+		yield break;
 	}
 
 	private IEnumerable<Progress> ScanGraph(NavGraph graph)
@@ -902,11 +905,12 @@ public class AstarPath : VersionedMonoBehaviour
 			yield return new Progress(0f, "Pre processing");
 			AstarPath.OnGraphPreScan(graph);
 		}
-		yield return new Progress(0f, string.Empty);
-		foreach (Progress p in graph.ScanInternal())
+		yield return new Progress(0f, "");
+		foreach (Progress progress in graph.ScanInternal())
 		{
-			yield return new Progress(Mathf.Lerp(0f, 0.95f, p.progress), p.description);
+			yield return new Progress(Mathf.Lerp(0f, 0.95f, progress.progress), progress.description);
 		}
+		IEnumerator<Progress> enumerator = null;
 		yield return new Progress(0.95f, "Assigning graph indices");
 		graph.GetNodes(delegate(GraphNode node)
 		{
@@ -917,6 +921,7 @@ public class AstarPath : VersionedMonoBehaviour
 			yield return new Progress(0.99f, "Post processing");
 			AstarPath.OnGraphPostScan(graph);
 		}
+		yield break;
 		yield break;
 	}
 
@@ -997,7 +1002,7 @@ public class AstarPath : VersionedMonoBehaviour
 	public static void StartPath(Path p, bool pushToFront = false)
 	{
 		AstarPath astarPath = AstarPath.active;
-		if (object.ReferenceEquals(astarPath, null))
+		if (astarPath == null)
 		{
 			UnityEngine.Debug.LogError("There is no AstarPath object in the scene or it has not been initialized yet");
 			return;
@@ -1032,11 +1037,9 @@ public class AstarPath : VersionedMonoBehaviour
 		if (pushToFront)
 		{
 			astarPath.pathProcessor.queue.PushFront(p);
+			return;
 		}
-		else
-		{
-			astarPath.pathProcessor.queue.Push(p);
-		}
+		astarPath.pathProcessor.queue.Push(p);
 	}
 
 	private void OnApplicationQuit()
@@ -1059,7 +1062,7 @@ public class AstarPath : VersionedMonoBehaviour
 	{
 		NavGraph[] graphs = this.graphs;
 		float num = float.PositiveInfinity;
-		NNInfoInternal internalInfo = default(NNInfoInternal);
+		NNInfoInternal nninfoInternal = default(NNInfoInternal);
 		int num2 = -1;
 		if (graphs != null)
 		{
@@ -1068,28 +1071,28 @@ public class AstarPath : VersionedMonoBehaviour
 				NavGraph navGraph = graphs[i];
 				if (navGraph != null && constraint.SuitableGraph(i, navGraph))
 				{
-					NNInfoInternal nninfoInternal;
+					NNInfoInternal nninfoInternal2;
 					if (this.fullGetNearestSearch)
 					{
-						nninfoInternal = navGraph.GetNearestForce(position, constraint);
+						nninfoInternal2 = navGraph.GetNearestForce(position, constraint);
 					}
 					else
 					{
-						nninfoInternal = navGraph.GetNearest(position, constraint);
+						nninfoInternal2 = navGraph.GetNearest(position, constraint);
 					}
-					if (nninfoInternal.node != null)
+					if (nninfoInternal2.node != null)
 					{
-						float magnitude = (nninfoInternal.clampedPosition - position).magnitude;
+						float magnitude = (nninfoInternal2.clampedPosition - position).magnitude;
 						if (this.prioritizeGraphs && magnitude < this.prioritizeGraphsLimit)
 						{
-							internalInfo = nninfoInternal;
+							nninfoInternal = nninfoInternal2;
 							num2 = i;
 							break;
 						}
 						if (magnitude < num)
 						{
 							num = magnitude;
-							internalInfo = nninfoInternal;
+							nninfoInternal = nninfoInternal2;
 							num2 = i;
 						}
 					}
@@ -1100,24 +1103,24 @@ public class AstarPath : VersionedMonoBehaviour
 		{
 			return default(NNInfo);
 		}
-		if (internalInfo.constrainedNode != null)
+		if (nninfoInternal.constrainedNode != null)
 		{
-			internalInfo.node = internalInfo.constrainedNode;
-			internalInfo.clampedPosition = internalInfo.constClampedPosition;
+			nninfoInternal.node = nninfoInternal.constrainedNode;
+			nninfoInternal.clampedPosition = nninfoInternal.constClampedPosition;
 		}
-		if (!this.fullGetNearestSearch && internalInfo.node != null && !constraint.Suitable(internalInfo.node))
+		if (!this.fullGetNearestSearch && nninfoInternal.node != null && !constraint.Suitable(nninfoInternal.node))
 		{
 			NNInfoInternal nearestForce = graphs[num2].GetNearestForce(position, constraint);
 			if (nearestForce.node != null)
 			{
-				internalInfo = nearestForce;
+				nninfoInternal = nearestForce;
 			}
 		}
-		if (!constraint.Suitable(internalInfo.node) || (constraint.constrainDistance && (internalInfo.clampedPosition - position).sqrMagnitude > this.maxNearestNodeDistanceSqr))
+		if (!constraint.Suitable(nninfoInternal.node) || (constraint.constrainDistance && (nninfoInternal.clampedPosition - position).sqrMagnitude > this.maxNearestNodeDistanceSqr))
 		{
 			return default(NNInfo);
 		}
-		return new NNInfo(internalInfo);
+		return new NNInfo(nninfoInternal);
 	}
 
 	public GraphNode GetNearest(Ray ray)
@@ -1130,32 +1133,36 @@ public class AstarPath : VersionedMonoBehaviour
 		GraphNode nearestNode = null;
 		Vector3 lineDirection = ray.direction;
 		Vector3 lineOrigin = ray.origin;
+		Action<GraphNode> <>9__0;
 		for (int i = 0; i < this.graphs.Length; i++)
 		{
 			NavGraph navGraph = this.graphs[i];
-			navGraph.GetNodes(delegate(GraphNode node)
+			Action<GraphNode> action;
+			if ((action = <>9__0) == null)
 			{
-				Vector3 vector = (Vector3)node.position;
-				Vector3 a = lineOrigin + Vector3.Dot(vector - lineOrigin, lineDirection) * lineDirection;
-				float num = Mathf.Abs(a.x - vector.x);
-				num *= num;
-				if (num > minDist)
+				action = (<>9__0 = delegate(GraphNode node)
 				{
-					return;
-				}
-				num = Mathf.Abs(a.z - vector.z);
-				num *= num;
-				if (num > minDist)
-				{
-					return;
-				}
-				float sqrMagnitude = (a - vector).sqrMagnitude;
-				if (sqrMagnitude < minDist)
-				{
-					minDist = sqrMagnitude;
-					nearestNode = node;
-				}
-			});
+					Vector3 vector = (Vector3)node.position;
+					Vector3 vector2 = lineOrigin + Vector3.Dot(vector - lineOrigin, lineDirection) * lineDirection;
+					float num = Mathf.Abs(vector2.x - vector.x);
+					if (num * num > minDist)
+					{
+						return;
+					}
+					float num2 = Mathf.Abs(vector2.z - vector.z);
+					if (num2 * num2 > minDist)
+					{
+						return;
+					}
+					float sqrMagnitude = (vector2 - vector).sqrMagnitude;
+					if (sqrMagnitude < minDist)
+					{
+						minDist = sqrMagnitude;
+						nearestNode = node;
+					}
+				});
+			}
+			navGraph.GetNodes(action);
 		}
 		return nearestNode;
 	}
@@ -1278,7 +1285,7 @@ public class AstarPath : VersionedMonoBehaviour
 
 	private RetainedGizmos gizmos = new RetainedGizmos();
 
-	private static int waitForPathDepth;
+	private static int waitForPathDepth = 0;
 
 	public enum AstarDistribution
 	{

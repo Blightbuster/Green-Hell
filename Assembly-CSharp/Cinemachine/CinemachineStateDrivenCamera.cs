@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DisallowMultipleComponent]
-	[AddComponentMenu("Cinemachine/CinemachineStateDrivenCamera")]
 	[DocumentationSorting(13f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineStateDrivenCamera")]
 	public class CinemachineStateDrivenCamera : CinemachineVirtualCameraBase
 	{
 		public override string Description
@@ -15,11 +15,15 @@ namespace Cinemachine
 			get
 			{
 				ICinemachineCamera liveChild = this.LiveChild;
-				if (this.mActiveBlend == null)
+				if (this.mActiveBlend != null)
 				{
-					return (liveChild == null) ? "(none)" : ("[" + liveChild.Name + "]");
+					return this.mActiveBlend.Description;
 				}
-				return this.mActiveBlend.Description;
+				if (liveChild == null)
+				{
+					return "(none)";
+				}
+				return "[" + liveChild.Name + "]";
 			}
 		}
 
@@ -74,9 +78,10 @@ namespace Cinemachine
 		{
 			base.RemovePostPipelineStageHook(d);
 			this.UpdateListOfChildren();
-			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in this.m_ChildCameras)
+			CinemachineVirtualCameraBase[] childCameras = this.m_ChildCameras;
+			for (int i = 0; i < childCameras.Length; i++)
 			{
-				cinemachineVirtualCameraBase.RemovePostPipelineStageHook(d);
+				childCameras[i].RemovePostPipelineStageHook(d);
 			}
 		}
 
@@ -123,7 +128,7 @@ namespace Cinemachine
 			}
 			if (this.mActiveBlend != null)
 			{
-				this.mActiveBlend.TimeInBlend += ((deltaTime < 0f) ? this.mActiveBlend.Duration : deltaTime);
+				this.mActiveBlend.TimeInBlend += ((deltaTime >= 0f) ? deltaTime : this.mActiveBlend.Duration);
 				if (this.mActiveBlend.IsComplete)
 				{
 					this.mActiveBlend = null;
@@ -188,8 +193,7 @@ namespace Cinemachine
 				return;
 			}
 			List<CinemachineVirtualCameraBase> list = new List<CinemachineVirtualCameraBase>();
-			CinemachineVirtualCameraBase[] componentsInChildren = base.GetComponentsInChildren<CinemachineVirtualCameraBase>(true);
-			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in componentsInChildren)
+			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in base.GetComponentsInChildren<CinemachineVirtualCameraBase>(true))
 			{
 				if (cinemachineVirtualCameraBase.transform.parent == base.transform)
 				{
@@ -263,7 +267,7 @@ namespace Cinemachine
 			}
 			while (num != 0 && !this.mInstructionDictionary.ContainsKey(num))
 			{
-				num = ((!this.mStateParentLookup.ContainsKey(num)) ? 0 : this.mStateParentLookup[num]);
+				num = (this.mStateParentLookup.ContainsKey(num) ? this.mStateParentLookup[num] : 0);
 			}
 			float time = Time.time;
 			if (this.mActivationTime != 0f)
@@ -341,12 +345,12 @@ namespace Cinemachine
 			AnimationCurve animationCurve = this.m_DefaultBlend.BlendCurve;
 			if (this.m_CustomBlends != null)
 			{
-				string fromCameraName = (fromKey == null) ? string.Empty : fromKey.Name;
-				string toCameraName = (toKey == null) ? string.Empty : toKey.Name;
+				string fromCameraName = (fromKey != null) ? fromKey.Name : string.Empty;
+				string toCameraName = (toKey != null) ? toKey.Name : string.Empty;
 				animationCurve = this.m_CustomBlends.GetBlendCurveForVirtualCameras(fromCameraName, toCameraName, animationCurve);
 			}
 			Keyframe[] keys = animationCurve.keys;
-			duration = ((keys != null && keys.Length != 0) ? keys[keys.Length - 1].time : 0f);
+			duration = ((keys == null || keys.Length == 0) ? 0f : keys[keys.Length - 1].time);
 			return animationCurve;
 		}
 
@@ -358,22 +362,21 @@ namespace Cinemachine
 			}
 			if (camA == null || activeBlend != null)
 			{
-				CameraState state = (activeBlend == null) ? this.State : activeBlend.State;
-				camA = new StaticPointVirtualCamera(state, (activeBlend == null) ? "(none)" : "Mid-blend");
+				camA = new StaticPointVirtualCamera((activeBlend != null) ? activeBlend.State : this.State, (activeBlend != null) ? "Mid-blend" : "(none)");
 			}
 			return new CinemachineBlend(camA, camB, blendCurve, duration, 0f);
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("Default object for the camera children to look at (the aim target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
+		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
-		[NoSaveDuringPlay]
 		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all of the children define targets of their own.")]
+		[NoSaveDuringPlay]
 		public Transform m_Follow;
 
-		[Tooltip("The state machine whose state changes will drive this camera's choice of active child")]
 		[Space]
+		[Tooltip("The state machine whose state changes will drive this camera's choice of active child")]
 		public Animator m_AnimatedTarget;
 
 		[Tooltip("Which layer in the target state machine to observe")]
@@ -385,16 +388,16 @@ namespace Cinemachine
 		[Tooltip("Force all child cameras to be enabled.  This is useful if animating them in Timeline, but consumes extra resources")]
 		public bool m_EnableAllChildCameras;
 
-		[NoSaveDuringPlay]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
+		[NoSaveDuringPlay]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("The set of instructions associating virtual cameras with states.  These instructions are used to choose the live child at any given moment")]
 		public CinemachineStateDrivenCamera.Instruction[] m_Instructions;
 
-		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Camera children")]
 		[CinemachineBlendDefinitionProperty]
+		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Camera children")]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.EaseInOut, 0.5f);
 
 		[Tooltip("This is the asset which contains custom settings for specific child blends")]

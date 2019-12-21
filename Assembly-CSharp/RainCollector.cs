@@ -5,16 +5,16 @@ using UnityEngine;
 
 public class RainCollector : Trigger, IRainCollector, IProcessor
 {
-	protected override void Start()
+	protected override void Awake()
 	{
-		base.Start();
-		RainManager.Get().Register(this);
+		base.Awake();
+		RainCollector.s_AllRainCollectors.Add(this);
 	}
 
 	protected override void OnDestroy()
 	{
 		base.OnDestroy();
-		RainManager.Get().UnRegister(this);
+		RainCollector.s_AllRainCollectors.Remove(this);
 	}
 
 	public override void OnExecute(TriggerAction.TYPE action)
@@ -50,7 +50,7 @@ public class RainCollector : Trigger, IRainCollector, IProcessor
 
 	public override string GetName()
 	{
-		return GreenHellGame.Instance.GetLocalization().Get("Water");
+		return GreenHellGame.Instance.GetLocalization().Get("Water", true);
 	}
 
 	public override Vector3 GetIconPos()
@@ -65,12 +65,7 @@ public class RainCollector : Trigger, IRainCollector, IProcessor
 
 	public override bool CanExecuteActions()
 	{
-		return true;
-	}
-
-	public override Vector3 GetHudInfoDisplayOffset()
-	{
-		return Vector3.down * 200f;
+		return !this.m_CantExecuteActionsDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying();
 	}
 
 	public void Pour(float fill_amount)
@@ -96,9 +91,9 @@ public class RainCollector : Trigger, IRainCollector, IProcessor
 		}
 	}
 
-	public float GetProcessProgress(Item item)
+	public float GetProcessProgress(Trigger trigger)
 	{
-		if (this.m_ContainerSlot.m_Item == item)
+		if (this.m_ContainerSlot.m_Item == (Item)trigger)
 		{
 			return this.m_Amount / this.m_Capacity;
 		}
@@ -114,4 +109,6 @@ public class RainCollector : Trigger, IRainCollector, IProcessor
 	public ItemSlot m_ContainerSlot;
 
 	private bool m_IsContainer;
+
+	public static List<RainCollector> s_AllRainCollectors = new List<RainCollector>();
 }

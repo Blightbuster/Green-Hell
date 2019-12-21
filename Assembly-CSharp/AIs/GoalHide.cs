@@ -13,19 +13,7 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			if (this.m_Active)
-			{
-				return true;
-			}
-			if (AI.IsArmadillo(this.m_AI.m_ID))
-			{
-				float num = this.m_AI.transform.position.Distance(Player.Get().transform.position);
-				if (num < 2f)
-				{
-					return true;
-				}
-			}
-			return false;
+			return this.m_Active || (AI.IsArmadillo(this.m_AI.m_ID) && this.m_AI.transform.position.Distance(Player.Get().transform.position) < 2f);
 		}
 
 		protected override void Prepare()
@@ -47,10 +35,10 @@ namespace AIs
 			{
 				if (AI.IsArmadillo(this.m_AI.m_ID))
 				{
-					float num = this.m_AI.transform.position.Distance(Player.Get().transform.position);
-					if (num > 3f)
+					if (this.m_AI.transform.position.Distance(Player.Get().transform.position) > 3f)
 					{
 						this.m_Hide.m_Finish = true;
+						return;
 					}
 				}
 				else if (base.GetDuration() >= 5f)

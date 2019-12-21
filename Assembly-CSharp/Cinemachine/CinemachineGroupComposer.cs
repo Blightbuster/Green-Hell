@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("")]
-	[ExecuteInEditMode]
-	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(4f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
+	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineGroupComposer : CinemachineComposer
 	{
 		private void OnValidate()
@@ -57,7 +57,7 @@ namespace Cinemachine
 			{
 				return;
 			}
-			Vector3 vector = (!v.AlmostZero()) ? v.normalized : Vector3.forward;
+			Vector3 vector = v.AlmostZero() ? Vector3.forward : v.normalized;
 			Bounds boundingBox = targetGroup.BoundingBox;
 			this.m_lastBoundsMatrix = Matrix4x4.TRS(boundingBox.center - vector * boundingBox.extents.magnitude, Quaternion.LookRotation(vector, curState.ReferenceUp), Vector3.one);
 			this.m_LastBounds = targetGroup.GetViewSpaceBoundingBox(this.m_lastBoundsMatrix);
@@ -73,19 +73,18 @@ namespace Cinemachine
 			if (!curState.Lens.Orthographic && this.m_AdjustmentMode != CinemachineGroupComposer.AdjustmentMode.ZoomOnly)
 			{
 				float fieldOfView = curState.Lens.FieldOfView;
-				float num3 = num / (2f * Mathf.Tan(fieldOfView * 0.0174532924f / 2f));
-				float num4 = num3 + this.m_LastBounds.extents.z;
-				num4 = Mathf.Clamp(num4, magnitude - this.m_MaxDollyIn, magnitude + this.m_MaxDollyOut);
-				num4 = Mathf.Clamp(num4, this.m_MinimumDistance, this.m_MaximumDistance);
-				curState.PositionCorrection += a - vector * num4 - curState.RawPosition;
+				float num3 = num / (2f * Mathf.Tan(fieldOfView * 0.0174532924f / 2f)) + this.m_LastBounds.extents.z;
+				num3 = Mathf.Clamp(num3, magnitude - this.m_MaxDollyIn, magnitude + this.m_MaxDollyOut);
+				num3 = Mathf.Clamp(num3, this.m_MinimumDistance, this.m_MaximumDistance);
+				curState.PositionCorrection += a - vector * num3 - curState.RawPosition;
 			}
 			if (curState.Lens.Orthographic || this.m_AdjustmentMode != CinemachineGroupComposer.AdjustmentMode.DollyOnly)
 			{
-				float num5 = (base.TrackedPoint - curState.CorrectedPosition).magnitude - this.m_LastBounds.extents.z;
+				float num4 = (base.TrackedPoint - curState.CorrectedPosition).magnitude - this.m_LastBounds.extents.z;
 				float value = 179f;
-				if (num5 > 0.0001f)
+				if (num4 > 0.0001f)
 				{
-					value = 2f * Mathf.Atan(num / (2f * num5)) * 57.29578f;
+					value = 2f * Mathf.Atan(num / (2f * num4)) * 57.29578f;
 				}
 				LensSettings lens = curState.Lens;
 				lens.FieldOfView = Mathf.Clamp(value, this.m_MinimumFOV, this.m_MaximumFOV);
@@ -112,15 +111,15 @@ namespace Cinemachine
 			return Mathf.Max(Mathf.Max(0.0001f, b.size.x) / (num * base.VcamState.Lens.Aspect), Mathf.Max(0.0001f, b.size.y) / num);
 		}
 
-		[Tooltip("The bounding box of the targets should occupy this amount of the screen space.  1 means fill the whole screen.  0.5 means fill half the screen, etc.")]
 		[Space]
+		[Tooltip("The bounding box of the targets should occupy this amount of the screen space.  1 means fill the whole screen.  0.5 means fill half the screen, etc.")]
 		public float m_GroupFramingSize = 0.8f;
 
 		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]
 		public CinemachineGroupComposer.FramingMode m_FramingMode = CinemachineGroupComposer.FramingMode.HorizontalAndVertical;
 
-		[Tooltip("How aggressively the camera tries to frame the group. Small numbers are more responsive, rapidly adjusting the camera to keep the group in the frame.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to frame the group. Small numbers are more responsive, rapidly adjusting the camera to keep the group in the frame.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_FrameDamping = 2f;
 
 		[Tooltip("How to adjust the camera to get the desired framing.  You can zoom, dolly in/out, or do both.")]
@@ -138,12 +137,12 @@ namespace Cinemachine
 		[Tooltip("Set this to limit how far from the target the camera can get.")]
 		public float m_MaximumDistance = 5000f;
 
-		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
 		[Range(1f, 179f)]
+		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
 		public float m_MinimumFOV = 3f;
 
-		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]
 		[Range(1f, 179f)]
+		[Tooltip("If adjusting FOV, will not set the FOV higher than this.")]
 		public float m_MaximumFOV = 60f;
 
 		[Tooltip("If adjusting Orthographic Size, will not set it lower than this.")]

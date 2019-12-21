@@ -69,8 +69,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Maximum average luminance to consider for auto exposure (in EV).")]
 			public float maxLuminance;
 
-			[Tooltip("Exposure bias. Use this to offset the global exposure of the scene.")]
 			[Min(0f)]
+			[Tooltip("Exposure bias. Use this to offset the global exposure of the scene.")]
 			public float keyValue;
 
 			[Tooltip("Set this to true to let Unity handle the key value automatically based on average luminance.")]
@@ -91,8 +91,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Lower bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			public int logMin;
 
-			[Tooltip("Upper bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			[Range(1f, 16f)]
+			[Tooltip("Upper bound for the brightness range of the generated histogram (in EV). The bigger the spread between min & max, the lower the precision will be.")]
 			public int logMax;
 		}
 	}

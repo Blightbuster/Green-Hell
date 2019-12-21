@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Enums;
 using UnityEngine;
 
-public class DialogsManager : MonoBehaviour
+public class DialogsManager : MonoBehaviour, ISaveLoad
 {
 	public static DialogsManager Get()
 	{
@@ -16,6 +17,7 @@ public class DialogsManager : MonoBehaviour
 
 	private void Start()
 	{
+		base.transform.position = Vector3.zero;
 		this.Initialize();
 	}
 
@@ -26,8 +28,7 @@ public class DialogsManager : MonoBehaviour
 		list.Add("Sounds/TempSounds/Chatters/");
 		for (int i = 0; i < list.Count; i++)
 		{
-			string path = list[i];
-			foreach (AudioClip audioClip in Resources.LoadAll<AudioClip>(path))
+			foreach (AudioClip audioClip in Resources.LoadAll<AudioClip>(list[i]))
 			{
 				string key = audioClip.name.ToLower();
 				if (this.m_AllClips.ContainsKey(key))
@@ -102,7 +103,6 @@ public class DialogsManager : MonoBehaviour
 	{
 		this.m_Dialogs.Clear();
 		this.m_Groups.Clear();
-		this.m_Groups.Add(DialogsManager.s_GroupALL);
 		ScriptParser scriptParser = new ScriptParser();
 		scriptParser.Parse("Dialogs.txt", true);
 		for (int i = 0; i < scriptParser.GetKeysCount(); i++)
@@ -126,6 +126,76 @@ public class DialogsManager : MonoBehaviour
 				this.m_Groups.Add(key.GetVariable(0).SValue);
 			}
 		}
+		this.m_Groups.Sort();
+		this.m_Groups.Insert(0, DialogsManager.s_GroupALL);
+	}
+
+	public void UnlockAllDialogs()
+	{
+		foreach (string name in this.m_Dialogs.Keys)
+		{
+			this.UnlockScenarioDialog(name);
+		}
+	}
+
+	public void UnlockScenarioDialog(string name)
+	{
+		Dialog dialog = this.m_Dialogs[name];
+		if (!this.m_ScenarioDialogs.ContainsKey(dialog.m_Group))
+		{
+			this.m_ScenarioDialogs.Add(dialog.m_Group, new List<Dialog>());
+		}
+		this.m_ScenarioDialogs[dialog.m_Group].Add(dialog);
+		if (HUDManager.Get() == null)
+		{
+			Debug.Log("DialogsManager UnlockScenarioDialog no HUDManager");
+			return;
+		}
+		if (SaveGame.m_State == SaveGame.State.None)
+		{
+			((HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog))).AddInfo(GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewDialog", true), string.Empty, HUDInfoLogTextureType.WT);
+			if (!ScenarioManager.Get().IsDreamOrPreDream())
+			{
+				PlayerAudioModule.Get().PlayNotepadEntrySound();
+			}
+			HUDWalkieTalkie.Get().UpdateNewDialogsCounter();
+		}
+	}
+
+	public void LockScenarioDialog(string name)
+	{
+		Dialog dialog = this.m_Dialogs[name];
+		List<Dialog> list = null;
+		if (!this.m_ScenarioDialogs.TryGetValue(dialog.m_Group, out list))
+		{
+			return;
+		}
+		list.Remove(dialog);
+		if (list.Count == 0)
+		{
+			this.m_ScenarioDialogs.Remove(dialog.m_Group);
+		}
+		HUDWalkieTalkie.Get().UpdateNewDialogsCounter();
+	}
+
+	public void LockAllScenarioDialogs()
+	{
+		this.m_ScenarioDialogs.Clear();
+		HUDWalkieTalkie.Get().UpdateNewDialogsCounter();
+	}
+
+	private bool CanStartDialog()
+	{
+		return !ConsciousnessController.Get().IsActive() && !HarvestingAnimalController.Get().IsActive() && !HarvestingSmallAnimalController.Get().IsActive() && !TriggerController.Get().IsGrabInProgress();
+	}
+
+	public void ScenarioStartDialogIfNonPlaying(string dialog_name)
+	{
+		if (this.IsAnyDialogPlaying())
+		{
+			return;
+		}
+		this.StartDialog(dialog_name);
 	}
 
 	public void StartDialog(string dialog_name)
@@ -134,7 +204,6 @@ public class DialogsManager : MonoBehaviour
 		{
 			return;
 		}
-		this.StopDialog();
 		string b = dialog_name.ToLower();
 		Dialog dialog = null;
 		foreach (string text in this.m_Dialogs.Keys)
@@ -142,23 +211,45 @@ public class DialogsManager : MonoBehaviour
 			if (text.ToLower() == b)
 			{
 				dialog = this.m_Dialogs[text];
+				dialog_name = text;
 				break;
 			}
 		}
 		if (dialog == null)
 		{
-			DebugUtils.Assert("[DialogManager:Play] Can't find dialog - " + dialog_name, true, DebugUtils.AssertType.Info);
+			Debug.Log("[DialogManager:Play] Can't find dialog - " + dialog_name);
 			return;
 		}
+		if (!this.CanStartDialog())
+		{
+			this.m_DialogsQueue.Add(dialog);
+			return;
+		}
+		this.StopDialog();
 		this.m_CurrentDialog = dialog;
 		this.m_CurrentDialog.Start();
+	}
+
+	public void StartDialogWithWT(string dialog_name)
+	{
+		this.StartDialog(dialog_name);
+		if (this.IsAnyDialogPlaying() && (!Player.Get().m_ActiveFightController || !Player.Get().m_ActiveFightController.IsAttack()))
+		{
+			Player.Get().m_ShouldStartWalkieTalkieController = true;
+			if (Player.Get().GetCurrentItem(Hand.Left) == null)
+			{
+				Player.Get().StartController(PlayerControllerType.WalkieTalkie);
+			}
+		}
+		PlayerWalkieTalkieModule.Get().OnCall();
 	}
 
 	public void StopDialog()
 	{
 		if (this.m_CurrentDialog != null)
 		{
-			this.m_CurrentDialog.Stop();
+			this.m_CurrentDialog.Stop(false);
+			this.m_CurrentDialog = null;
 		}
 	}
 
@@ -168,10 +259,16 @@ public class DialogsManager : MonoBehaviour
 		{
 			if (this.m_CurrentDialog != null)
 			{
-				this.m_CurrentDialog.Stop();
+				this.m_CurrentDialog.Stop(false);
 				this.m_CurrentDialog = null;
 			}
 			return;
+		}
+		if (this.m_DialogsQueue.Count > 0 && !this.IsAnyDialogPlaying())
+		{
+			Dialog dialog = this.m_DialogsQueue[0];
+			this.m_DialogsQueue.RemoveAt(0);
+			this.StartDialog(dialog.m_Name);
 		}
 		if (this.m_CurrentDialog != null)
 		{
@@ -195,6 +292,7 @@ public class DialogsManager : MonoBehaviour
 			{
 				this.m_CurrentDialog.UnPause();
 			}
+			WalkieTalkieController.Get().UpdateWTLight();
 		}
 	}
 
@@ -206,12 +304,85 @@ public class DialogsManager : MonoBehaviour
 		}
 	}
 
-	public bool IsPlaying()
+	public bool IsAnyDialogPlaying()
 	{
 		return this.m_CurrentDialog != null;
 	}
 
-	private static DialogsManager s_Instance;
+	public bool IsDialogPlaying(string name)
+	{
+		return this.m_CurrentDialog != null && this.m_CurrentDialog.m_Name.ToLower() == name.ToLower();
+	}
+
+	public void Save()
+	{
+		foreach (Dialog dialog in this.m_Dialogs.Values)
+		{
+			SaveGame.SaveVal("DialogShown" + dialog.m_Name, dialog.m_ShownInSelectDialog);
+		}
+		int val = 0;
+		foreach (List<Dialog> list in this.m_ScenarioDialogs.Values)
+		{
+			foreach (Dialog dialog2 in list)
+			{
+				SaveGame.SaveVal("ScenarioDialog" + val++, dialog2.m_Name);
+			}
+		}
+		SaveGame.SaveVal("ScenarioDialogCount", val);
+	}
+
+	public void Load()
+	{
+		this.m_AudioSource.transform.parent = base.transform;
+		if (this.m_CurrentDialog != null)
+		{
+			this.m_CurrentDialog.Stop(false);
+			this.m_CurrentDialog = null;
+		}
+		foreach (Dialog dialog in this.m_Dialogs.Values)
+		{
+			dialog.m_ShownInSelectDialog = SaveGame.LoadBVal("DialogShown" + dialog.m_Name);
+		}
+		this.LockAllScenarioDialogs();
+		int num = SaveGame.LoadIVal("ScenarioDialogCount");
+		for (int i = 0; i < num; i++)
+		{
+			this.UnlockScenarioDialog(SaveGame.LoadSVal("ScenarioDialog" + i));
+		}
+	}
+
+	public void OnStartNode(DialogNode node)
+	{
+		if (WalkieTalkieController.Get())
+		{
+			WalkieTalkieController.Get().OnStartNode(node);
+		}
+	}
+
+	public void OnStopDialog(Dialog dialog, bool finish)
+	{
+		if (WalkieTalkieController.Get())
+		{
+			WalkieTalkieController.Get().OnStopDialog(dialog);
+		}
+		if (finish)
+		{
+			this.LockScenarioDialog(dialog.m_Name);
+		}
+	}
+
+	public bool CanSelectDialog()
+	{
+		return !this.IsAnyDialogPlaying() && this.m_ScenarioDialogs.Count != 0 && PlayerWalkieTalkieModule.Get().CanCall();
+	}
+
+	public bool IsPlayerSpeaking()
+	{
+		Dialog currentDialog = this.m_CurrentDialog;
+		return currentDialog != null && currentDialog.IsPlayerSpeaking();
+	}
+
+	private static DialogsManager s_Instance = null;
 
 	public Dictionary<string, Dialog> m_Dialogs = new Dictionary<string, Dialog>();
 
@@ -239,4 +410,9 @@ public class DialogsManager : MonoBehaviour
 
 	[HideInInspector]
 	public List<AudioClip> m_WTAfterSounds = new List<AudioClip>();
+
+	[HideInInspector]
+	public Dictionary<string, List<Dialog>> m_ScenarioDialogs = new Dictionary<string, List<Dialog>>();
+
+	private List<Dialog> m_DialogsQueue = new List<Dialog>();
 }

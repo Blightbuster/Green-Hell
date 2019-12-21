@@ -37,7 +37,7 @@ public class MenuConstruction : MenuScreen
 		}
 	}
 
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.Setup();
@@ -69,9 +69,10 @@ public class MenuConstruction : MenuScreen
 					{
 						if (dictionary.ContainsKey(ghostSlot.m_ItemName))
 						{
-							Dictionary<string, int> dictionary2;
-							string itemName;
-							(dictionary2 = dictionary)[itemName = ghostSlot.m_ItemName] = dictionary2[itemName] + 1;
+							Dictionary<string, int> dictionary2 = dictionary;
+							string itemName = ghostSlot.m_ItemName;
+							int value = dictionary2[itemName] + 1;
+							dictionary2[itemName] = value;
 						}
 						else
 						{
@@ -90,10 +91,9 @@ public class MenuConstruction : MenuScreen
 				foreach (string text in dictionary.Keys)
 				{
 					Text components = menuConstructionSlot2.components;
-					string text2 = components.text;
 					components.text = string.Concat(new object[]
 					{
-						text2,
+						components.text,
 						text,
 						"*",
 						dictionary[text],
@@ -108,8 +108,7 @@ public class MenuConstruction : MenuScreen
 	public void OnSlotPress(int slot_index)
 	{
 		MenuConstructionSlot menuConstructionSlot = this.m_Slots[slot_index];
-		ConstructionController component = Player.Get().GetComponent<ConstructionController>();
-		component.SetupPrefab(menuConstructionSlot.info);
+		Player.Get().GetComponent<ConstructionController>().SetupPrefab(menuConstructionSlot.info);
 		Player.Get().StartController(PlayerControllerType.Construction);
 		this.m_MenuInGameManager.HideMenu();
 	}
@@ -135,8 +134,8 @@ public class MenuConstruction : MenuScreen
 		for (int i = 0; i < this.m_ActiveSlots.Count; i++)
 		{
 			MenuConstructionSlot menuConstructionSlot = this.m_ActiveSlots[i];
-			menuConstructionSlot.name.color = ((i != index) ? this.m_NormalColor : this.m_FocusColor);
-			menuConstructionSlot.components.color = ((i != index) ? this.m_NormalColor : this.m_FocusColor);
+			menuConstructionSlot.name.color = ((i == index) ? this.m_FocusColor : this.m_NormalColor);
+			menuConstructionSlot.components.color = ((i == index) ? this.m_FocusColor : this.m_NormalColor);
 		}
 	}
 

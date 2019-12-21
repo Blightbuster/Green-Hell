@@ -57,7 +57,7 @@ public class Skill
 		int num2 = Mathf.FloorToInt(this.m_Value);
 		if (num2 > num && HUDMessages.Get())
 		{
-			HUDMessages.Get().AddMessage(localization.Get("Skill_" + this.m_Name) + " +" + (num2 - num).ToString(), null, HUDMessageIcon.None, string.Empty);
+			HUDMessages.Get().AddMessage(localization.Get("Skill_" + this.m_Name, true) + " +" + (num2 - num).ToString(), null, HUDMessageIcon.None, "", null);
 		}
 	}
 

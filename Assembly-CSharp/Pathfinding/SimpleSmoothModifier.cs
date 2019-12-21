@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_simple_smooth_modifier.php")]
-	[RequireComponent(typeof(Seeker))]
 	[AddComponentMenu("Pathfinding/Modifiers/Simple Smooth")]
+	[RequireComponent(typeof(Seeker))]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_simple_smooth_modifier.php")]
 	[Serializable]
 	public class SimpleSmoothModifier : MonoModifier
 	{
@@ -71,7 +71,7 @@ namespace Pathfinding
 			{
 				float magnitude2 = (path[j] - path[j + 1]).magnitude;
 				Vector3 a = vector;
-				Vector3 vector2 = (j >= path.Count - 2) ? (path[j + 1] - path[j]).normalized : ((path[j + 2] - path[j + 1]).normalized - (path[j] - path[j + 1]).normalized).normalized;
+				Vector3 vector2 = (j < path.Count - 2) ? ((path[j + 2] - path[j + 1]).normalized - (path[j] - path[j + 1]).normalized).normalized : (path[j + 1] - path[j]).normalized;
 				Vector3 tan = a * magnitude2 * this.factor;
 				Vector3 tan2 = vector2 * magnitude2 * this.factor;
 				Vector3 a2 = path[j];
@@ -149,7 +149,7 @@ namespace Pathfinding
 					}
 					if (flag3)
 					{
-						list[l * 2] = vector + ((!flag) ? (-normalized * this.offset * 1f) : (normalized * this.offset * 1f));
+						list[l * 2] = vector + (flag ? (normalized * this.offset * 1f) : (-normalized * this.offset * 1f));
 					}
 					else
 					{
@@ -157,7 +157,7 @@ namespace Pathfinding
 					}
 					if (flag4)
 					{
-						list[l * 2 + 1] = vector2 + ((!flag2) ? (-normalized * this.offset * 1f) : (normalized * this.offset * 1f));
+						list[l * 2 + 1] = vector2 + (flag2 ? (normalized * this.offset * 1f) : (-normalized * this.offset * 1f));
 					}
 					else
 					{
@@ -185,20 +185,19 @@ namespace Pathfinding
 				{
 					num += Vector3.Distance(path[i], path[i + 1]);
 				}
-				int num2 = Mathf.FloorToInt(num / this.maxSegmentLength);
-				list = ListPool<Vector3>.Claim(num2 + 2);
-				float num3 = 0f;
+				list = ListPool<Vector3>.Claim(Mathf.FloorToInt(num / this.maxSegmentLength) + 2);
+				float num2 = 0f;
 				for (int j = 0; j < path.Count - 1; j++)
 				{
 					Vector3 a = path[j];
 					Vector3 b = path[j + 1];
-					float num4 = Vector3.Distance(a, b);
-					while (num3 < num4)
+					float num3 = Vector3.Distance(a, b);
+					while (num2 < num3)
 					{
-						list.Add(Vector3.Lerp(a, b, num3 / num4));
-						num3 += this.maxSegmentLength;
+						list.Add(Vector3.Lerp(a, b, num2 / num3));
+						num2 += this.maxSegmentLength;
 					}
-					num3 -= num4;
+					num2 -= num3;
 				}
 			}
 			else
@@ -209,13 +208,13 @@ namespace Pathfinding
 					Debug.LogWarning("Very large number of subdivisions. Cowardly refusing to subdivide every segment into more than " + (1 << this.subdivisions) + " subsegments");
 					this.subdivisions = 10;
 				}
-				int num5 = 1 << this.subdivisions;
-				list = ListPool<Vector3>.Claim((path.Count - 1) * num5 + 1);
+				int num4 = 1 << this.subdivisions;
+				list = ListPool<Vector3>.Claim((path.Count - 1) * num4 + 1);
 				for (int k = 0; k < path.Count - 1; k++)
 				{
-					for (int l = 0; l < num5; l++)
+					for (int l = 0; l < num4; l++)
 					{
-						list.Add(Vector3.Lerp(path[k], path[k + 1], (float)l / (float)num5));
+						list.Add(Vector3.Lerp(path[k], path[k + 1], (float)l / (float)num4));
 					}
 				}
 			}

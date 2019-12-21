@@ -36,8 +36,7 @@ namespace Pathfinding.Recast
 		{
 			if (this.tagMask.Count > 0 || this.mask != 0)
 			{
-				MeshFilter[] meshFilters = UnityEngine.Object.FindObjectsOfType<MeshFilter>();
-				List<MeshFilter> list = RecastMeshGatherer.FilterMeshes(meshFilters, this.tagMask, this.mask);
+				List<MeshFilter> list = RecastMeshGatherer.FilterMeshes(UnityEngine.Object.FindObjectsOfType<MeshFilter>(), this.tagMask, this.mask);
 				Dictionary<Mesh, Vector3[]> dictionary = new Dictionary<Mesh, Vector3[]>();
 				Dictionary<Mesh, int[]> dictionary2 = new Dictionary<Mesh, int[]>();
 				bool flag = false;
@@ -84,7 +83,7 @@ namespace Pathfinding.Recast
 			for (int i = 0; i < list.Count; i++)
 			{
 				MeshFilter meshFilter = list[i].GetMeshFilter();
-				Renderer renderer = (!(meshFilter != null)) ? null : meshFilter.GetComponent<Renderer>();
+				Renderer renderer = (meshFilter != null) ? meshFilter.GetComponent<Renderer>() : null;
 				if (meshFilter != null && renderer != null)
 				{
 					Mesh sharedMesh = meshFilter.sharedMesh;
@@ -129,7 +128,7 @@ namespace Pathfinding.Recast
 		public void CollectTerrainMeshes(bool rasterizeTrees, float desiredChunkSize, List<RasterizationMesh> result)
 		{
 			Terrain[] activeTerrains = Terrain.activeTerrains;
-			if (activeTerrains.Length > 0)
+			if (activeTerrains.Length != 0)
 			{
 				for (int i = 0; i < activeTerrains.Length; i++)
 				{
@@ -300,14 +299,14 @@ namespace Pathfinding.Recast
 			{
 				SphereCollider sphereCollider = col as SphereCollider;
 				CapsuleCollider capsuleCollider = col as CapsuleCollider;
-				float num = (!(sphereCollider != null)) ? capsuleCollider.radius : sphereCollider.radius;
-				float height = (!(sphereCollider != null)) ? (capsuleCollider.height * 0.5f / num - 1f) : 0f;
+				float num = (sphereCollider != null) ? sphereCollider.radius : capsuleCollider.radius;
+				float height = (sphereCollider != null) ? 0f : (capsuleCollider.height * 0.5f / num - 1f);
 				Quaternion q = Quaternion.identity;
 				if (capsuleCollider != null)
 				{
-					q = Quaternion.Euler((float)((capsuleCollider.direction != 2) ? 0 : 90), 0f, (float)((capsuleCollider.direction != 0) ? 0 : 90));
+					q = Quaternion.Euler((float)((capsuleCollider.direction == 2) ? 90 : 0), 0f, (float)((capsuleCollider.direction == 0) ? 90 : 0));
 				}
-				Matrix4x4 matrix4x = Matrix4x4.TRS((!(sphereCollider != null)) ? capsuleCollider.center : sphereCollider.center, q, Vector3.one * num);
+				Matrix4x4 matrix4x = Matrix4x4.TRS((sphereCollider != null) ? sphereCollider.center : capsuleCollider.center, q, Vector3.one * num);
 				matrix4x = localToWorldMatrix * matrix4x;
 				result = this.RasterizeCapsuleCollider(num, height, col.bounds, matrix4x);
 			}
@@ -356,42 +355,42 @@ namespace Pathfinding.Recast
 				{
 					for (int k = 0; k < num2; k++)
 					{
-						array[k + j * num2] = new Vector3(Mathf.Cos((float)k * 3.14159274f * 2f / (float)num2) * Mathf.Sin((float)j * 3.14159274f / (float)(num - 1)), Mathf.Cos((float)j * 3.14159274f / (float)(num - 1)) + ((j >= num / 2) ? (-height) : height), Mathf.Sin((float)k * 3.14159274f * 2f / (float)num2) * Mathf.Sin((float)j * 3.14159274f / (float)(num - 1)));
+						array[k + j * num2] = new Vector3(Mathf.Cos((float)k * 3.14159274f * 2f / (float)num2) * Mathf.Sin((float)j * 3.14159274f / (float)(num - 1)), Mathf.Cos((float)j * 3.14159274f / (float)(num - 1)) + ((j < num / 2) ? height : (-height)), Mathf.Sin((float)k * 3.14159274f * 2f / (float)num2) * Mathf.Sin((float)j * 3.14159274f / (float)(num - 1)));
 					}
 				}
 				array[array.Length - 2] = Vector3.down;
 				int l = 0;
-				int num3 = num2 - 1;
+				int item = num2 - 1;
 				while (l < num2)
 				{
 					list.Add(array.Length - 1);
-					list.Add(0 * num2 + num3);
-					list.Add(0 * num2 + l);
-					num3 = l++;
+					list.Add(item);
+					list.Add(l);
+					item = l++;
 				}
 				for (int m = 1; m < num; m++)
 				{
 					int n = 0;
-					int num4 = num2 - 1;
+					int num3 = num2 - 1;
 					while (n < num2)
 					{
 						list.Add(m * num2 + n);
-						list.Add(m * num2 + num4);
+						list.Add(m * num2 + num3);
 						list.Add((m - 1) * num2 + n);
-						list.Add((m - 1) * num2 + num4);
+						list.Add((m - 1) * num2 + num3);
 						list.Add((m - 1) * num2 + n);
-						list.Add(m * num2 + num4);
-						num4 = n++;
+						list.Add(m * num2 + num3);
+						num3 = n++;
 					}
 				}
-				int num5 = 0;
-				int num6 = num2 - 1;
-				while (num5 < num2)
+				int num4 = 0;
+				int num5 = num2 - 1;
+				while (num4 < num2)
 				{
 					list.Add(array.Length - 2);
-					list.Add((num - 1) * num2 + num6);
 					list.Add((num - 1) * num2 + num5);
-					num6 = num5++;
+					list.Add((num - 1) * num2 + num4);
+					num5 = num4++;
 				}
 				capsuleCache = new RecastMeshGatherer.CapsuleCache();
 				capsuleCache.rows = num;

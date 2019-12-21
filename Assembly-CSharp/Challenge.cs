@@ -61,7 +61,7 @@ public class Challenge
 		}
 		if (this.m_Objectives.Count > this.m_ObjectiveIndex)
 		{
-			ObjectivesManager.Get().ActivateObjective(this.m_Objectives[this.m_ObjectiveIndex]);
+			ObjectivesManager.Get().ActivateObjective(this.m_Objectives[this.m_ObjectiveIndex], true);
 		}
 		MainLevel.Instance.m_TODSky.Cycle.DateTime = this.m_StartDate;
 		MainLevel.Instance.m_TODSky.Cycle.GameTime = 0f;
@@ -102,7 +102,7 @@ public class Challenge
 		this.m_ObjectiveIndex++;
 		if (this.m_Objectives.Count > this.m_ObjectiveIndex)
 		{
-			ObjectivesManager.Get().ActivateObjective(this.m_Objectives[this.m_ObjectiveIndex]);
+			ObjectivesManager.Get().ActivateObjective(this.m_Objectives[this.m_ObjectiveIndex], true);
 		}
 	}
 

@@ -145,8 +145,8 @@ namespace Pathfinding
 
 		private int RebuildFromInternal(TriangleMeshNode[] nodes, int[] permutation, IntRect[] nodeBounds, int from, int to, bool odd)
 		{
-			IntRect rect = BBTree.NodeBounds(permutation, nodeBounds, from, to);
-			int box = this.GetBox(rect);
+			IntRect intRect = BBTree.NodeBounds(permutation, nodeBounds, from, to);
+			int box = this.GetBox(intRect);
 			if (to - from <= 4)
 			{
 				int num = this.tree[box].nodeOffset = this.leafNodes * 4;
@@ -154,31 +154,31 @@ namespace Pathfinding
 				this.leafNodes++;
 				for (int i = 0; i < 4; i++)
 				{
-					this.nodeLookup[num + i] = ((i >= to - from) ? null : nodes[permutation[from + i]]);
+					this.nodeLookup[num + i] = ((i < to - from) ? nodes[permutation[from + i]] : null);
 				}
 				return box;
 			}
 			int num2;
 			if (odd)
 			{
-				int divider = (rect.xmin + rect.xmax) / 2;
+				int divider = (intRect.xmin + intRect.xmax) / 2;
 				num2 = BBTree.SplitByX(nodes, permutation, from, to, divider);
 			}
 			else
 			{
-				int divider2 = (rect.ymin + rect.ymax) / 2;
+				int divider2 = (intRect.ymin + intRect.ymax) / 2;
 				num2 = BBTree.SplitByZ(nodes, permutation, from, to, divider2);
 			}
 			if (num2 == from || num2 == to)
 			{
 				if (!odd)
 				{
-					int divider3 = (rect.xmin + rect.xmax) / 2;
+					int divider3 = (intRect.xmin + intRect.xmax) / 2;
 					num2 = BBTree.SplitByX(nodes, permutation, from, to, divider3);
 				}
 				else
 				{
-					int divider4 = (rect.ymin + rect.ymax) / 2;
+					int divider4 = (intRect.ymin + intRect.ymax) / 2;
 					num2 = BBTree.SplitByZ(nodes, permutation, from, to, divider4);
 				}
 				if (num2 == from || num2 == to)
@@ -193,16 +193,16 @@ namespace Pathfinding
 
 		private static IntRect NodeBounds(int[] permutation, IntRect[] nodeBounds, int from, int to)
 		{
-			IntRect result = nodeBounds[permutation[from]];
+			IntRect intRect = nodeBounds[permutation[from]];
 			for (int i = from + 1; i < to; i++)
 			{
-				IntRect intRect = nodeBounds[permutation[i]];
-				result.xmin = Math.Min(result.xmin, intRect.xmin);
-				result.ymin = Math.Min(result.ymin, intRect.ymin);
-				result.xmax = Math.Max(result.xmax, intRect.xmax);
-				result.ymax = Math.Max(result.ymax, intRect.ymax);
+				IntRect intRect2 = nodeBounds[permutation[i]];
+				intRect.xmin = Math.Min(intRect.xmin, intRect2.xmin);
+				intRect.ymin = Math.Min(intRect.ymin, intRect2.ymin);
+				intRect.xmax = Math.Max(intRect.xmax, intRect2.xmax);
+				intRect.ymax = Math.Max(intRect.ymax, intRect2.ymax);
 			}
-			return result;
+			return intRect;
 		}
 
 		[Conditional("ASTARDEBUG")]
@@ -249,36 +249,38 @@ namespace Pathfinding
 			if (bbtreeBox.IsLeaf)
 			{
 				TriangleMeshNode[] array = this.nodeLookup;
-				int num = 0;
-				while (num < 4 && array[bbtreeBox.nodeOffset + num] != null)
+				for (int i = 0; i < 4; i++)
 				{
-					TriangleMeshNode triangleMeshNode = array[bbtreeBox.nodeOffset + num];
+					if (array[bbtreeBox.nodeOffset + i] == null)
+					{
+						return;
+					}
+					TriangleMeshNode triangleMeshNode = array[bbtreeBox.nodeOffset + i];
 					if (constraint == null || constraint.Suitable(triangleMeshNode))
 					{
-						Vector3 constClampedPosition = triangleMeshNode.ClosestPointOnNodeXZ(p);
-						float num2 = (constClampedPosition.x - p.x) * (constClampedPosition.x - p.x) + (constClampedPosition.z - p.z) * (constClampedPosition.z - p.z);
-						if (nnInfo.constrainedNode == null || num2 < closestSqrDist - 1E-06f || (num2 <= closestSqrDist + 1E-06f && Mathf.Abs(constClampedPosition.y - p.y) < Mathf.Abs(nnInfo.constClampedPosition.y - p.y)))
+						Vector3 vector = triangleMeshNode.ClosestPointOnNodeXZ(p);
+						float num = (vector.x - p.x) * (vector.x - p.x) + (vector.z - p.z) * (vector.z - p.z);
+						if (nnInfo.constrainedNode == null || num < closestSqrDist - 1E-06f || (num <= closestSqrDist + 1E-06f && Mathf.Abs(vector.y - p.y) < Mathf.Abs(nnInfo.constClampedPosition.y - p.y)))
 						{
 							nnInfo.constrainedNode = triangleMeshNode;
-							nnInfo.constClampedPosition = constClampedPosition;
-							closestSqrDist = num2;
+							nnInfo.constClampedPosition = vector;
+							closestSqrDist = num;
 						}
 					}
-					num++;
 				}
 			}
 			else
 			{
 				int left = bbtreeBox.left;
 				int right = bbtreeBox.right;
+				float num2;
 				float num3;
-				float num4;
-				this.GetOrderedChildren(ref left, ref right, out num3, out num4, p);
-				if (num3 <= closestSqrDist)
+				this.GetOrderedChildren(ref left, ref right, out num2, out num3, p);
+				if (num2 <= closestSqrDist)
 				{
 					this.SearchBoxClosestXZ(left, p, ref closestSqrDist, constraint, ref nnInfo);
 				}
-				if (num4 <= closestSqrDist)
+				if (num3 <= closestSqrDist)
 				{
 					this.SearchBoxClosestXZ(right, p, ref closestSqrDist, constraint, ref nnInfo);
 				}
@@ -306,36 +308,35 @@ namespace Pathfinding
 			if (bbtreeBox.IsLeaf)
 			{
 				TriangleMeshNode[] array = this.nodeLookup;
-				int num = 0;
-				while (num < 4 && array[bbtreeBox.nodeOffset + num] != null)
+				for (int i = 0; i < 4; i++)
 				{
-					TriangleMeshNode triangleMeshNode = array[bbtreeBox.nodeOffset + num];
+					if (array[bbtreeBox.nodeOffset + i] == null)
+					{
+						return;
+					}
+					TriangleMeshNode triangleMeshNode = array[bbtreeBox.nodeOffset + i];
 					Vector3 vector = triangleMeshNode.ClosestPointOnNode(p);
 					float sqrMagnitude = (vector - p).sqrMagnitude;
-					if (sqrMagnitude < closestSqrDist)
+					if (sqrMagnitude < closestSqrDist && (constraint == null || constraint.Suitable(triangleMeshNode)))
 					{
-						if (constraint == null || constraint.Suitable(triangleMeshNode))
-						{
-							nnInfo.constrainedNode = triangleMeshNode;
-							nnInfo.constClampedPosition = vector;
-							closestSqrDist = sqrMagnitude;
-						}
+						nnInfo.constrainedNode = triangleMeshNode;
+						nnInfo.constClampedPosition = vector;
+						closestSqrDist = sqrMagnitude;
 					}
-					num++;
 				}
 			}
 			else
 			{
 				int left = bbtreeBox.left;
 				int right = bbtreeBox.right;
+				float num;
 				float num2;
-				float num3;
-				this.GetOrderedChildren(ref left, ref right, out num2, out num3, p);
-				if (num2 < closestSqrDist)
+				this.GetOrderedChildren(ref left, ref right, out num, out num2, p);
+				if (num < closestSqrDist)
 				{
 					this.SearchBoxClosest(left, p, ref closestSqrDist, constraint, ref nnInfo);
 				}
-				if (num3 < closestSqrDist)
+				if (num2 < closestSqrDist)
 				{
 					this.SearchBoxClosest(right, p, ref closestSqrDist, constraint, ref nnInfo);
 				}
@@ -359,7 +360,11 @@ namespace Pathfinding
 
 		public TriangleMeshNode QueryInside(Vector3 p, NNConstraint constraint)
 		{
-			return (this.count == 0 || !this.tree[0].Contains(p)) ? null : this.SearchBoxInside(0, p, constraint);
+			if (this.count == 0 || !this.tree[0].Contains(p))
+			{
+				return null;
+			}
+			return this.SearchBoxInside(0, p, constraint);
 		}
 
 		private TriangleMeshNode SearchBoxInside(int boxi, Vector3 p, NNConstraint constraint)
@@ -368,18 +373,17 @@ namespace Pathfinding
 			if (bbtreeBox.IsLeaf)
 			{
 				TriangleMeshNode[] array = this.nodeLookup;
-				int num = 0;
-				while (num < 4 && array[bbtreeBox.nodeOffset + num] != null)
+				for (int i = 0; i < 4; i++)
 				{
-					TriangleMeshNode triangleMeshNode = array[bbtreeBox.nodeOffset + num];
-					if (triangleMeshNode.ContainsPoint((Int3)p))
+					if (array[bbtreeBox.nodeOffset + i] == null)
 					{
-						if (constraint == null || constraint.Suitable(triangleMeshNode))
-						{
-							return triangleMeshNode;
-						}
+						break;
 					}
-					num++;
+					TriangleMeshNode triangleMeshNode = array[bbtreeBox.nodeOffset + i];
+					if (triangleMeshNode.ContainsPoint((Int3)p) && (constraint == null || constraint.Suitable(triangleMeshNode)))
+					{
+						return triangleMeshNode;
+					}
 				}
 			}
 			else
@@ -420,11 +424,11 @@ namespace Pathfinding
 			Vector3 a = (Vector3)new Int3(bbtreeBox.rect.xmin, 0, bbtreeBox.rect.ymin);
 			Vector3 vector = (Vector3)new Int3(bbtreeBox.rect.xmax, 0, bbtreeBox.rect.ymax);
 			Vector3 vector2 = (a + vector) * 0.5f;
-			Vector3 size = (vector - vector2) * 2f;
-			size = new Vector3(size.x, 1f, size.z);
+			Vector3 vector3 = (vector - vector2) * 2f;
+			vector3 = new Vector3(vector3.x, 1f, vector3.z);
 			vector2.y += (float)(depth * 2);
 			Gizmos.color = AstarMath.IntToColor(depth, 1f);
-			Gizmos.DrawCube(vector2, size);
+			Gizmos.DrawCube(vector2, vector3);
 			if (!bbtreeBox.IsLeaf)
 			{
 				this.OnDrawGizmos(bbtreeBox.left, depth + 1);
@@ -473,6 +477,14 @@ namespace Pathfinding
 
 		private struct BBTreeBox
 		{
+			public bool IsLeaf
+			{
+				get
+				{
+					return this.nodeOffset >= 0;
+				}
+			}
+
 			public BBTreeBox(IntRect rect)
 			{
 				this.nodeOffset = -1;
@@ -485,14 +497,6 @@ namespace Pathfinding
 				this.nodeOffset = nodeOffset;
 				this.rect = rect;
 				this.left = (this.right = -1);
-			}
-
-			public bool IsLeaf
-			{
-				get
-				{
-					return this.nodeOffset >= 0;
-				}
 			}
 
 			public bool Contains(Vector3 point)

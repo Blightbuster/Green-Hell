@@ -8,8 +8,7 @@ public class DetachChildrenAndDestroy : MonoBehaviour
 		int i = 0;
 		while (i < base.transform.childCount)
 		{
-			Transform child = base.transform.GetChild(i);
-			child.parent = null;
+			base.transform.GetChild(i).parent = null;
 		}
 		UnityEngine.Object.Destroy(base.gameObject);
 	}

@@ -154,7 +154,7 @@ namespace AmplifyBloom
 				GlareDefData glareDefData;
 				if (this.m_currentGlareType == GlareLibType.Custom)
 				{
-					if (this.m_customGlareDef != null && this.m_customGlareDef.Length > 0)
+					if (this.m_customGlareDef != null && this.m_customGlareDef.Length != 0)
 					{
 						glareDefData = this.m_customGlareDef[this.m_customGlareDefIdx];
 						flag = true;
@@ -171,9 +171,9 @@ namespace AmplifyBloom
 				this.m_amplifyGlareCache.GlareDef = glareDefData;
 				float num = (float)source.width;
 				float num2 = (float)source.height;
-				StarDefData starDefData = (!flag) ? this.m_starDefArr[(int)glareDefData.StarType] : glareDefData.CustomStarData;
+				StarDefData starDefData = flag ? glareDefData.CustomStarData : this.m_starDefArr[(int)glareDefData.StarType];
 				this.m_amplifyGlareCache.StarDef = starDefData;
-				int num3 = (this.m_glareMaxPassCount >= starDefData.PassCount) ? starDefData.PassCount : this.m_glareMaxPassCount;
+				int num3 = (this.m_glareMaxPassCount < starDefData.PassCount) ? this.m_glareMaxPassCount : starDefData.PassCount;
 				this.m_amplifyGlareCache.CurrentPassCount = num3;
 				float num4 = glareDefData.StarInclination + starDefData.Inclination;
 				for (int i = 0; i < this.m_glareMaxPassCount; i++)
@@ -197,9 +197,9 @@ namespace AmplifyBloom
 					float f = num4 + starLineData.Inclination;
 					float num5 = Mathf.Sin(f);
 					float num6 = Mathf.Cos(f);
-					Vector2 a = default(Vector2);
-					a.x = num6 / num * (starLineData.SampleLength * this.m_overallStreakScale);
-					a.y = num5 / num2 * (starLineData.SampleLength * this.m_overallStreakScale);
+					Vector2 vector = default(Vector2);
+					vector.x = num6 / num * (starLineData.SampleLength * this.m_overallStreakScale);
+					vector.y = num5 / num2 * (starLineData.SampleLength * this.m_overallStreakScale);
 					float num7 = (this.m_aTanFoV + 0.1f) * 280f / (num + num2) * 1.2f;
 					for (int n = 0; n < num3; n++)
 					{
@@ -207,8 +207,8 @@ namespace AmplifyBloom
 						{
 							float d = Mathf.Pow(starLineData.Attenuation, num7 * (float)num8);
 							this.m_amplifyGlareCache.Starlines[m].Passes[n].Weights[num8] = this.m_amplifyGlareCache.CromaticAberrationMat[num3 - 1 - n, num8] * d * ((float)n + 1f) * 0.5f;
-							this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].x = a.x * (float)num8;
-							this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].y = a.y * (float)num8;
+							this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].x = vector.x * (float)num8;
+							this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].y = vector.y * (float)num8;
 							if (Mathf.Abs(this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].x) >= 0.9f || Mathf.Abs(this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].y) >= 0.9f)
 							{
 								this.m_amplifyGlareCache.Starlines[m].Passes[n].Offsets[num8].x = 0f;
@@ -231,7 +231,7 @@ namespace AmplifyBloom
 							Graphics.Blit(this._rtBuffer[l - 1], this._rtBuffer[l], material, 2);
 						}
 						l++;
-						a *= this.m_perPassDisplacement;
+						vector *= this.m_perPassDisplacement;
 						num7 *= this.m_perPassDisplacement;
 					}
 				}
@@ -306,7 +306,7 @@ namespace AmplifyBloom
 			}
 			set
 			{
-				this.m_intensity = ((value >= 0f) ? value : 0f);
+				this.m_intensity = ((value < 0f) ? 0f : value);
 				this.m_isDirty = true;
 			}
 		}
@@ -403,25 +403,23 @@ namespace AmplifyBloom
 					this.m_customGlareDef = null;
 					this.m_customGlareDefIdx = 0;
 					this.m_customGlareDefAmount = 0;
+					return;
 				}
-				else
+				GlareDefData[] array = new GlareDefData[value];
+				for (int i = 0; i < value; i++)
 				{
-					GlareDefData[] array = new GlareDefData[value];
-					for (int i = 0; i < value; i++)
+					if (i < this.m_customGlareDefAmount)
 					{
-						if (i < this.m_customGlareDefAmount)
-						{
-							array[i] = this.m_customGlareDef[i];
-						}
-						else
-						{
-							array[i] = new GlareDefData();
-						}
+						array[i] = this.m_customGlareDef[i];
 					}
-					this.m_customGlareDefIdx = Mathf.Clamp(this.m_customGlareDefIdx, 0, value - 1);
-					this.m_customGlareDef = array;
-					this.m_customGlareDefAmount = value;
+					else
+					{
+						array[i] = new GlareDefData();
+					}
 				}
+				this.m_customGlareDefIdx = Mathf.Clamp(this.m_customGlareDefIdx, 0, value - 1);
+				this.m_customGlareDef = array;
+				this.m_customGlareDefAmount = value;
 			}
 		}
 

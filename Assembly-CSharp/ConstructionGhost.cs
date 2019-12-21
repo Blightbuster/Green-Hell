@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using CJTools;
 using Enums;
-using UltimateWater;
 using UnityEngine;
-using UnityStandardAssets.CrossPlatformInput;
 
-public class ConstructionGhost : Trigger
+public class ConstructionGhost : Trigger, IReplicatedBehaviour
 {
 	protected override void Awake()
 	{
@@ -20,23 +18,45 @@ public class ConstructionGhost : Trigger
 		}
 		this.m_ResultItemID = (ItemID)Enum.Parse(typeof(ItemID), component.m_InfoName);
 		this.m_ResultInfo = (ConstructionInfo)ItemsManager.Get().GetInfo(this.m_ResultItemID);
-	}
-
-	protected override void OnEnable()
-	{
-		base.OnEnable();
+		this.m_ActiveMaterialName = this.m_ActiveMaterial.name;
+		this.m_HighlightedMaterialName = this.m_HighlightedMaterial.name;
+		this.m_AdditionalPlacingConditions.Add(this.m_PlacingCondition);
 		if (ConstructionGhostManager.Get())
 		{
 			ConstructionGhostManager.Get().RegisterGhost(this);
+		}
+		Transform transform = base.transform;
+		while (transform.parent != null)
+		{
+			transform = transform.parent;
+		}
+		if (transform.CompareTag("Challenges"))
+		{
+			this.m_Challenge = true;
+		}
+	}
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+		if (this.m_Rotate)
+		{
+			Player.Get().UnblockRotation();
+		}
+		if (ConstructionGhostManager.Get())
+		{
+			ConstructionGhostManager.Get().UnregisterGhost(this);
 		}
 	}
 
 	protected override void Start()
 	{
 		base.Start();
+		GameObject gameObject = base.gameObject.FindChild("Colliders");
+		this.m_TestColliders = (gameObject ? gameObject.GetComponentsInChildren<BoxCollider>() : null);
 		this.m_BoxCollider = base.gameObject.GetComponent<BoxCollider>();
 		DebugUtils.Assert(this.m_BoxCollider, "[ConstructionGhost::Start] Can't find box collider!", true, DebugUtils.AssertType.Info);
-		Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), this.m_BoxCollider);
+		Physics.IgnoreCollision(Player.Get().m_Collider, this.m_BoxCollider);
 		if (this.m_State == ConstructionGhost.GhostState.None)
 		{
 			this.SetState(ConstructionGhost.GhostState.Building);
@@ -45,6 +65,10 @@ public class ConstructionGhost : Trigger
 		this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("NoCollisionWithPlayer"));
 		this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("SmallPlant"));
 		this.m_LayerMasksToIgnore.Add(this.m_ItemLayer);
+		if (this.m_IgnoreTerrain)
+		{
+			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("Terrain"));
+		}
 		this.m_ShaderOfCollidingPlant = Shader.Find("Shader Forge/select_yellow_shader");
 		this.SetupAudio();
 		this.m_ShaderPropertyFresnelColor = Shader.PropertyToID("_fresnelcolor");
@@ -54,7 +78,6 @@ public class ConstructionGhost : Trigger
 		this.m_AvailableColorFresnel = new Color(1f, 1f, 1f, 1f);
 		this.m_NotAvailableHardColorFresnel = new Color(1f, 0.196f, 0.196f, 0f);
 		this.m_NotAvailableSoftColorFresnel = new Color(1f, 0.92f, 0.016f, 1f);
-		ConstructionGhostManager.Get().RegisterGhost(this);
 	}
 
 	private void SetupAudio()
@@ -96,6 +119,14 @@ public class ConstructionGhost : Trigger
 		this.m_InsertItemClipsDict[5].Add(item);
 		item = (AudioClip)Resources.Load("Sounds/Constructions/construction_insert_branches_06");
 		this.m_InsertItemClipsDict[5].Add(item);
+		this.m_InsertItemClipsDict[637] = new List<AudioClip>();
+		item = (AudioClip)Resources.Load("Sounds/Items/mud_insert");
+		this.m_InsertItemClipsDict[637].Add(item);
+	}
+
+	protected override void OnEnable()
+	{
+		base.OnEnable();
 	}
 
 	protected override void OnDisable()
@@ -106,12 +137,24 @@ public class ConstructionGhost : Trigger
 		{
 			this.RemoveCollidingPlant(this.m_CollidingPlants.Keys.ElementAt(i));
 		}
-		ConstructionGhostManager.Get().UnregisterGhost(this);
 	}
 
 	public void RegisterObserver(IGhostObserver observer)
 	{
 		this.m_Observers.Add(observer);
+	}
+
+	public void Reset()
+	{
+		foreach (GhostStep ghostStep in this.m_Steps)
+		{
+			foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
+			{
+				ghostSlot.Reset();
+			}
+		}
+		this.m_CurrentStep = 0;
+		this.SetState(ConstructionGhost.GhostState.Building);
 	}
 
 	public ConstructionGhost.GhostState GetState()
@@ -127,34 +170,32 @@ public class ConstructionGhost : Trigger
 
 	private void OnEnterState()
 	{
-		ConstructionGhost.GhostState state = this.m_State;
-		if (state != ConstructionGhost.GhostState.Dragging)
+		switch (this.m_State)
 		{
-			if (state != ConstructionGhost.GhostState.Building)
-			{
-				if (state == ConstructionGhost.GhostState.Ready)
-				{
-					this.CreateConstruction();
-					UnityEngine.Object.Destroy(base.gameObject);
-					HUDGather.Get().Setup();
-				}
-			}
-			else
-			{
-				foreach (GhostStep ghostStep in this.m_Steps)
-				{
-					foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
-					{
-						ghostSlot.Init();
-					}
-				}
-				this.SetupCurrentStep();
-				HUDGather.Get().Setup();
-			}
-		}
-		else
-		{
+		case ConstructionGhost.GhostState.Dragging:
 			this.UpdateState();
+			return;
+		case ConstructionGhost.GhostState.Building:
+			if (this.IsOnUpperLevel())
+			{
+				this.m_UpperLevel = true;
+			}
+			foreach (GhostStep ghostStep in this.m_Steps)
+			{
+				foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
+				{
+					ghostSlot.Init();
+				}
+			}
+			this.SetupCurrentStep();
+			HUDGather.Get().Setup();
+			return;
+		case ConstructionGhost.GhostState.Ready:
+			this.CreateConstruction();
+			HUDGather.Get().Setup();
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -164,8 +205,7 @@ public class ConstructionGhost : Trigger
 		{
 			return;
 		}
-		GhostStep ghostStep = this.m_Steps[this.m_CurrentStep];
-		foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
+		foreach (GhostSlot ghostSlot in this.m_Steps[this.m_CurrentStep].m_Slots)
 		{
 			ghostSlot.Activate();
 		}
@@ -182,24 +222,25 @@ public class ConstructionGhost : Trigger
 		}
 	}
 
-	private void UpdateState()
+	public void UpdateState()
 	{
 		ConstructionGhost.GhostState state = this.m_State;
-		if (state != ConstructionGhost.GhostState.Dragging)
-		{
-			if (state == ConstructionGhost.GhostState.Building)
-			{
-				if (this.IsReady())
-				{
-					this.SetState(ConstructionGhost.GhostState.Ready);
-				}
-			}
-		}
-		else
+		if (state == ConstructionGhost.GhostState.Dragging)
 		{
 			this.UpdateRotation();
 			this.UpdateTransform();
 			this.UpdateColor();
+			this.UpdateShaderProps();
+			return;
+		}
+		if (state != ConstructionGhost.GhostState.Building)
+		{
+			return;
+		}
+		this.UpdateShaderProps();
+		if (this.IsReady())
+		{
+			this.SetState(ConstructionGhost.GhostState.Ready);
 		}
 	}
 
@@ -211,25 +252,28 @@ public class ConstructionGhost : Trigger
 		}
 	}
 
-	private bool IsInInAir(Vector3 pos, Vector3 corner)
+	private bool IsInAir(Vector3 pos, Vector3 corner)
 	{
 		DebugRender.DrawLine(pos, corner, Color.blue, 0f);
-		float terrainY = MainLevel.GetTerrainY(corner);
-		if (terrainY >= corner.y)
+		if (MainLevel.GetTerrainY(corner) >= corner.y)
 		{
 			return false;
 		}
 		float maxDistance = Mathf.Abs(pos.y - corner.y);
-		RaycastHit[] array = Physics.RaycastAll(pos, Vector3.down, maxDistance);
-		for (int i = 0; i < array.Length; i++)
+		int num = Physics.RaycastNonAlloc(pos, Vector3.down, ConstructionGhost.s_RaycastHitsTmp, maxDistance);
+		for (int i = 0; i < num; i++)
 		{
-			if (!(array[i].collider == this.m_BoxCollider))
+			if (!(ConstructionGhost.s_RaycastHitsTmp[i].collider == this.m_BoxCollider))
 			{
-				if (array[i].collider.gameObject == Terrain.activeTerrain.gameObject)
+				if (ConstructionGhost.s_RaycastHitsTmp[i].collider.gameObject == Terrain.activeTerrain.gameObject)
 				{
 					return false;
 				}
-				if (array[i].collider.gameObject.isStatic)
+				if (ConstructionGhost.s_RaycastHitsTmp[i].collider.gameObject.isStatic)
+				{
+					return false;
+				}
+				if (!ConstructionGhost.s_RaycastHitsTmp[i].collider.isTrigger)
 				{
 					return false;
 				}
@@ -238,24 +282,52 @@ public class ConstructionGhost : Trigger
 		return true;
 	}
 
-	private void UpdateProhibitionType()
+	private bool IsCornerInAir(Vector3 pos, Vector3 corner)
 	{
-		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.IsSnapped && !this.m_ConstructionToAttachTo)
+		DebugRender.DrawLine(pos, corner, Color.blue, 0f);
+		if (MainLevel.GetTerrainY(corner) >= corner.y)
+		{
+			return false;
+		}
+		float maxDistance = Mathf.Abs(pos.y - corner.y);
+		int num = Physics.RaycastNonAlloc(pos, Vector3.down, ConstructionGhost.s_RaycastHitsTmp, maxDistance);
+		for (int i = 0; i < num; i++)
+		{
+			if (!(ConstructionGhost.s_RaycastHitsTmp[i].collider == this.m_BoxCollider) && !ConstructionGhost.s_RaycastHitsTmp[i].collider.isTrigger)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public void UpdateProhibitionType()
+	{
+		if (!this.m_CanBePlacedOnTopOfConstruction && this.m_OnTopOfConstruction)
+		{
+			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+			return;
+		}
+		if (this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.IsSnapped) && !this.m_ConstructionToAttachTo)
 		{
 			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
 			return;
 		}
 		if (this.m_SelectedSlot)
 		{
-			ConstructionSlot[] components = this.m_SelectedSlot.gameObject.GetComponents<ConstructionSlot>();
-			foreach (ConstructionSlot constructionSlot in components)
+			foreach (ConstructionSlot constructionSlot in this.m_SelectedSlot.gameObject.GetComponents<ConstructionSlot>())
 			{
-				if (constructionSlot.m_Construction)
+				if (constructionSlot.m_Construction && (!constructionSlot.m_Construction.m_Info.IsWall() || this.m_ResultInfo.IsWall()) && (constructionSlot.m_Construction.m_Info.IsWall() || !this.m_ResultInfo.IsWall()))
 				{
 					this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
 					return;
 				}
 			}
+		}
+		if (ItemInfo.IsStoneRing(this.m_ResultItemID) && this.m_Firecamp && this.m_Firecamp.m_StoneRing)
+		{
+			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+			return;
 		}
 		if (this.m_Corners != null)
 		{
@@ -263,7 +335,7 @@ public class ConstructionGhost : Trigger
 			{
 				bool enabled = boxCollider.enabled;
 				boxCollider.enabled = true;
-				bool flag = this.IsInInAir(boxCollider.bounds.center, boxCollider.bounds.min);
+				bool flag = this.IsInAir(boxCollider.bounds.center, boxCollider.bounds.min);
 				boxCollider.enabled = enabled;
 				if (flag)
 				{
@@ -272,179 +344,259 @@ public class ConstructionGhost : Trigger
 				}
 			}
 		}
-		this.m_ProhibitionType = ConstructionGhost.ProhibitionType.None;
-		if (this.m_AllignToTerrain && !this.m_Smoker && this.m_FirecampRacks.Count == 0)
+		if (this.IsOnUpperLevel() && this.m_UpperLevelCorners != null)
 		{
-			float num = Vector3.Angle(base.transform.up, Vector3.up);
-			if (num > this.m_MaxAllignAngle)
+			foreach (BoxCollider boxCollider2 in this.m_UpperLevelCorners)
 			{
-				this.ClearCollidingPlants();
-				this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
-				return;
+				bool enabled2 = boxCollider2.enabled;
+				boxCollider2.enabled = true;
+				Vector3 center = boxCollider2.bounds.center;
+				center.y += boxCollider2.bounds.max.y;
+				bool flag2 = this.IsCornerInAir(center, boxCollider2.bounds.min);
+				boxCollider2.enabled = enabled2;
+				if (flag2)
+				{
+					this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+					return;
+				}
 			}
 		}
-		Vector3 center = this.m_BoxCollider.bounds.center;
-		Vector3 halfExtents = this.m_BoxCollider.size * 0.5f;
-		center.y += this.m_ColliderShrinkBottom * 0.5f;
-		halfExtents.y -= this.m_ColliderShrinkBottom;
-		halfExtents.y = Mathf.Max(halfExtents.y, this.m_ColliderShrinkBottom);
-		Collider[] collection = Physics.OverlapBox(center, halfExtents, this.m_BoxCollider.transform.rotation);
-		List<Collider> list = new List<Collider>(collection);
-		list.Remove(Player.Get().m_Collider);
-		list.Remove(this.m_BoxCollider);
-		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.NeedFirecamp && this.m_Firecamp)
+		this.m_ProhibitionType = ConstructionGhost.ProhibitionType.None;
+		if (this.m_AllignToTerrain && !this.m_Smoker && this.m_FirecampRacks.Count == 0 && Vector3.Angle(base.transform.up, Vector3.up) > this.m_MaxAllignAngle)
 		{
-			list.Remove(this.m_Firecamp.m_Collider);
+			this.ClearCollidingPlants();
+			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+			return;
+		}
+		Vector3 center2 = this.m_BoxCollider.bounds.center;
+		Vector3 vector = this.m_BoxCollider.size * 0.5f;
+		center2.y += this.m_ColliderShrinkBottom * 0.5f;
+		vector.y -= this.m_ColliderShrinkBottom;
+		vector.y = Mathf.Max(vector.y, 0f);
+		this.m_Colliders.Clear();
+		if (this.m_TestColliders != null)
+		{
+			foreach (BoxCollider boxCollider3 in this.m_TestColliders)
+			{
+				int num = Physics.OverlapBoxNonAlloc(boxCollider3.bounds.center, boxCollider3.size * 0.5f, ConstructionGhost.s_CollidersTemp, boxCollider3.transform.rotation);
+				for (int j = 0; j < num; j++)
+				{
+					Collider collider = ConstructionGhost.s_CollidersTemp[j];
+					if (!this.m_Colliders.Contains(collider) && !this.m_TestColliders.Contains(collider))
+					{
+						if (collider.isTrigger && !collider.gameObject.GetComponent<ConstructionGhost>())
+						{
+							UnityEngine.Object component = collider.gameObject.GetComponent<Spikes>();
+							Acre exists = collider.gameObject.transform.parent ? collider.gameObject.transform.parent.GetComponent<Acre>() : null;
+							FramePlacingObstacle component2 = collider.gameObject.GetComponent<FramePlacingObstacle>();
+							if (!component && !exists && !component2)
+							{
+								goto IL_458;
+							}
+						}
+						if (!(collider.gameObject == Terrain.activeTerrain.gameObject) && !(collider.transform.parent == base.transform))
+						{
+							this.m_Colliders.Add(collider);
+						}
+					}
+					IL_458:;
+				}
+			}
+		}
+		else
+		{
+			int num2 = Physics.OverlapBoxNonAlloc(center2, vector, ConstructionGhost.s_CollidersTemp, this.m_BoxCollider.transform.rotation);
+			this.m_Colliders.Resize(num2);
+			for (int k = 0; k < num2; k++)
+			{
+				this.m_Colliders[k] = ConstructionGhost.s_CollidersTemp[k];
+			}
+		}
+		this.m_Colliders.Remove(Player.Get().m_Collider);
+		this.m_Colliders.Remove(this.m_BoxCollider);
+		if (this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.NeedFirecamp) && this.m_Firecamp)
+		{
+			this.m_Colliders.Remove(this.m_Firecamp.m_Collider);
 			if (this.m_Firecamp.m_StoneRing)
 			{
-				list.Remove(this.m_Firecamp.m_StoneRing.m_Collider);
+				this.m_Colliders.Remove(this.m_Firecamp.m_StoneRing.m_Collider);
 			}
 		}
 		if ((ItemInfo.IsFirecamp(this.m_ResultItemID) || ItemInfo.IsStoneRing(this.m_ResultItemID)) && this.m_FirecampRacks.Count > 0)
 		{
 			foreach (FirecampRack firecampRack in this.m_FirecampRacks)
 			{
-				list.Remove(firecampRack.m_Collider);
+				this.m_Colliders.Remove(firecampRack.m_Collider);
 			}
 		}
 		if ((ItemInfo.IsFirecamp(this.m_ResultItemID) || ItemInfo.IsStoneRing(this.m_ResultItemID)) && this.m_Smoker)
 		{
-			list.Remove(this.m_Smoker.m_Collider);
+			this.m_Colliders.Remove(this.m_Smoker.m_Collider);
 		}
-		foreach (Collider collider in list)
+		if (this.m_ResultItemID != ItemID.Stick_Fish_Trap && this.m_ResultItemID != ItemID.Big_Stick_Fish_Trap)
 		{
-			Item component = collider.gameObject.GetComponent<Item>();
-			if (!component || component.m_Info.IsConstruction())
+			foreach (Collider collider2 in this.m_Colliders)
 			{
-				if (collider.isTrigger)
+				Item component3 = collider2.gameObject.GetComponent<Item>();
+				if (!(component3 != null) || component3.m_Info == null || component3.m_Info.IsConstruction() || component3.m_IsPlant || component3.m_IsTree)
 				{
-					ConstructionGhost component2 = collider.gameObject.GetComponent<ConstructionGhost>();
-					if (component2 != null)
+					if (collider2.isTrigger)
 					{
-						foreach (GhostStep ghostStep in component2.m_Steps)
+						if ((this.m_ResultItemID == ItemID.building_frame || this.m_ResultItemID == ItemID.building_bamboo_frame) && collider2.gameObject.GetComponent<FramePlacingObstacle>())
 						{
-							foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
-							{
-								if (this.m_Collider.bounds.Intersects(ghostSlot.m_Collider.bounds))
-								{
-									this.ClearCollidingPlants();
-									this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
-									return;
-								}
-							}
+							this.ClearCollidingPlants();
+							this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+							return;
 						}
-					}
-				}
-				else if (!(collider.tag == "Sectr_trigger"))
-				{
-					if (this.m_ConstructionToAttachTo)
-					{
-						if (collider.gameObject == this.m_ConstructionToAttachTo.gameObject)
+						UnityEngine.Object component4 = collider2.gameObject.GetComponent<Spikes>();
+						Acre exists2 = collider2.gameObject.transform.parent ? collider2.gameObject.transform.parent.GetComponent<Acre>() : null;
+						if (component4 || exists2)
+						{
+							this.ClearCollidingPlants();
+							this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+							return;
+						}
+						ConstructionGhost component5 = collider2.gameObject.GetComponent<ConstructionGhost>();
+						if (!(component5 != null))
 						{
 							continue;
 						}
-						if (collider.gameObject == Terrain.activeTerrain.gameObject)
+						if (component5.m_ResultItemID == ItemID.mud_mixer)
 						{
+							this.ClearCollidingPlants();
+							this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+							return;
+						}
+						using (List<GhostStep>.Enumerator enumerator4 = component5.m_Steps.GetEnumerator())
+						{
+							while (enumerator4.MoveNext())
+							{
+								GhostStep ghostStep = enumerator4.Current;
+								foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
+								{
+									if (base.m_Collider.bounds.Intersects(ghostSlot.m_Collider.bounds))
+									{
+										this.ClearCollidingPlants();
+										this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+										return;
+									}
+								}
+							}
 							continue;
 						}
 					}
-					ConstructionGhost component2 = collider.gameObject.GetComponent<ConstructionGhost>();
-					if (component2 != null)
+					if (!this.m_ConstructionToAttachTo || (!(collider2.gameObject == this.m_ConstructionToAttachTo.gameObject) && !(collider2.gameObject == Terrain.activeTerrain.gameObject)))
 					{
-						foreach (GhostStep ghostStep2 in component2.m_Steps)
+						ConstructionGhost component5 = collider2.gameObject.GetComponent<ConstructionGhost>();
+						if (component5 != null)
 						{
-							foreach (GhostSlot ghostSlot2 in ghostStep2.m_Slots)
+							foreach (GhostStep ghostStep2 in component5.m_Steps)
 							{
-								if (this.m_Collider.bounds.Intersects(ghostSlot2.m_Collider.bounds))
+								foreach (GhostSlot ghostSlot2 in ghostStep2.m_Slots)
 								{
-									this.ClearCollidingPlants();
-									this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
-									return;
+									if (base.m_Collider.bounds.Intersects(ghostSlot2.m_Collider.bounds))
+									{
+										this.ClearCollidingPlants();
+										this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+										return;
+									}
 								}
 							}
 						}
-					}
-					Construction component3 = collider.gameObject.GetComponent<Construction>();
-					if (!component3 && collider.gameObject.transform.parent)
-					{
-						component3 = collider.gameObject.transform.parent.GetComponent<Construction>();
-					}
-					if (component3)
-					{
-						if (!(component3 == this.m_ConstructionToAttachTo))
+						Construction component6 = collider2.gameObject.GetComponent<Construction>();
+						if (!component6 && collider2.gameObject.transform.parent)
 						{
-							if (!this.m_ConstructionToAttachTo || !this.m_ConstructionToAttachTo.IsConstructionConnected(component3))
+							component6 = collider2.gameObject.transform.parent.GetComponent<Construction>();
+						}
+						if (component6)
+						{
+							if (!(component6 == this.m_ConstructionToAttachTo) && (!this.m_ConstructionToAttachTo || !this.m_ConstructionToAttachTo.IsConstructionConnected(component6)))
 							{
 								this.ClearCollidingPlants();
 								this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
 								return;
 							}
 						}
+						else if (!collider2.gameObject.IsWater() && !this.m_LayerMasksToIgnore.Contains(collider2.gameObject.layer) && !collider2.isTrigger)
+						{
+							this.ClearCollidingPlants();
+							this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+							return;
+						}
 					}
-					else if (!collider.gameObject.IsWater() && !this.m_LayerMasksToIgnore.Contains(collider.gameObject.layer) && !collider.isTrigger)
+				}
+			}
+		}
+		Collider collider3 = null;
+		foreach (Collider collider4 in this.m_Colliders)
+		{
+			if (collider4.gameObject.IsWater())
+			{
+				collider3 = collider4;
+				break;
+			}
+		}
+		if (this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.MustBeInWater) && !collider3)
+		{
+			if (this.m_Hook)
+			{
+				center2 = this.m_Hook.bounds.center;
+				vector = this.m_Hook.size * 0.5f;
+				int num3 = Physics.OverlapBoxNonAlloc(center2, vector, ConstructionGhost.s_CollidersTemp, this.m_Hook.transform.rotation);
+				for (int l = 0; l < num3; l++)
+				{
+					if (ConstructionGhost.s_CollidersTemp[l].gameObject.IsWater())
 					{
-						this.ClearCollidingPlants();
-						this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
 						return;
 					}
 				}
 			}
+			this.ClearCollidingPlants();
+			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
+			return;
 		}
-		Collider collider2 = null;
-		foreach (Collider collider3 in list)
-		{
-			if (collider3.gameObject.IsWater())
-			{
-				collider2 = collider3;
-				break;
-			}
-		}
-		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.MustBeInWater && !collider2)
+		if (this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.MustBeInWater) && collider3 && this.m_Hook)
 		{
 			this.ClearCollidingPlants();
 			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
 			return;
 		}
-		if ((this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.CantBeInWater || this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.NeedFirecamp) && collider2)
+		if ((this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.CantBeInWater) || this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.NeedFirecamp)) && collider3)
 		{
 			this.ClearCollidingPlants();
 			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
 			return;
 		}
-		if (collider2 && this.m_MaxDepthOfWater > 0f)
+		if (collider3 && this.m_MaxDepthOfWater > 0f && collider3.bounds.max.y - this.m_BoxCollider.bounds.min.y > this.m_MaxDepthOfWater)
 		{
-			float num2 = collider2.bounds.max.y - this.m_BoxCollider.bounds.min.y;
-			if (num2 > this.m_MaxDepthOfWater)
-			{
-				this.ClearCollidingPlants();
-				this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Hard;
-				return;
-			}
+			this.ClearCollidingPlants();
+			this.m_ProhibitionType = ConstructionGhost.ProhibitionType.Depth;
+			return;
 		}
-		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.Whatever || this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.CantBeInWater)
+		if (this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.Whatever) || this.m_AdditionalPlacingConditions.Contains(ConstructionGhost.GhostPlacingCondition.CantBeInWater))
 		{
-			List<GameObject> list2 = new List<GameObject>();
-			foreach (Collider collider4 in list)
+			List<GameObject> list = new List<GameObject>();
+			foreach (Collider collider5 in this.m_Colliders)
 			{
-				if (this.m_LayerMasksToIgnore.Contains(collider4.gameObject.layer) && collider4.gameObject.layer != this.m_ItemLayer)
+				if (this.m_LayerMasksToIgnore.Contains(collider5.gameObject.layer) && collider5.gameObject.layer != this.m_ItemLayer)
 				{
-					if (!this.m_CollidingPlants.ContainsKey(collider4.gameObject))
+					if (!this.m_CollidingPlants.ContainsKey(collider5.gameObject))
 					{
-						this.AddCollidingPlant(collider4.gameObject);
+						this.AddCollidingPlant(collider5.gameObject);
 					}
-					list2.Add(collider4.gameObject);
+					list.Add(collider5.gameObject);
 				}
 			}
-			int j = 0;
-			while (j < this.m_CollidingPlants.Keys.Count)
+			int m = 0;
+			while (m < this.m_CollidingPlants.Keys.Count)
 			{
-				if (!list2.Contains(this.m_CollidingPlants.ElementAt(j).Key))
+				if (!list.Contains(this.m_CollidingPlants.ElementAt(m).Key))
 				{
-					this.RemoveCollidingPlant(this.m_CollidingPlants.ElementAt(j).Key);
+					this.RemoveCollidingPlant(this.m_CollidingPlants.ElementAt(m).Key);
 				}
 				else
 				{
-					j++;
+					m++;
 				}
 			}
 		}
@@ -469,6 +621,7 @@ public class ConstructionGhost : Trigger
 		if (!this.m_Rotate && InputsManager.Get().IsActionActive(InputsManager.InputAction.ConstructionRotate))
 		{
 			this.m_Rotate = true;
+			this.m_Rotation = 0f;
 			Player.Get().BlockRotation();
 		}
 		else if (this.m_Rotate && !InputsManager.Get().IsActionActive(InputsManager.InputAction.ConstructionRotate))
@@ -478,9 +631,9 @@ public class ConstructionGhost : Trigger
 		}
 		if (this.m_Rotate)
 		{
-			float num = Mathf.Clamp(CrossPlatformInputManager.GetAxis("Mouse X"), -this.m_MaxRot, this.m_MaxRot);
-			float num2 = num * this.m_RotationSpeed * Time.deltaTime;
-			this.m_Rotation -= num2;
+			float num = Mathf.Clamp(InputHelpers.GetLookInput(1f, 1f, 150f).x, -this.m_MaxRot, this.m_MaxRot) * this.m_RotationSpeed * Time.deltaTime;
+			this.m_Rotation -= num;
+			this.m_RotationSnap = (int)(this.m_Rotation / 10f);
 		}
 	}
 
@@ -488,7 +641,7 @@ public class ConstructionGhost : Trigger
 	{
 		Color color = this.m_AvailableCol;
 		Color color_fresnel = this.m_AvailableColorFresnel;
-		if (this.m_ProhibitionType == ConstructionGhost.ProhibitionType.Hard)
+		if (this.m_ProhibitionType == ConstructionGhost.ProhibitionType.Hard || this.m_ProhibitionType == ConstructionGhost.ProhibitionType.Depth)
 		{
 			color = this.m_NotAvailableHardCol;
 			color_fresnel = this.m_NotAvailableHardColorFresnel;
@@ -501,9 +654,37 @@ public class ConstructionGhost : Trigger
 		this.SetColor(color, color_fresnel);
 	}
 
+	private void UpdateShaderProps()
+	{
+		Component[] componentsInChildren = base.gameObject.GetComponentsInChildren(typeof(Renderer));
+		for (int i = 0; i < componentsInChildren.Length; i++)
+		{
+			foreach (Material material in ((Renderer)componentsInChildren[i]).materials)
+			{
+				material.SetVector(this.m_ShaderObjectWorldPos, base.transform.position);
+				if (this.IsOnUpperLevel())
+				{
+					material.SetFloat(this.m_ShaderCutLevel, this.m_UpperLevelCutLevel);
+				}
+				else
+				{
+					material.SetFloat(this.m_ShaderCutLevel, this.m_LowerLevelCutLevel);
+				}
+			}
+		}
+	}
+
+	private bool IsOnUpperLevel()
+	{
+		ConstructionSlot selectedSlot = this.m_SelectedSlot;
+		return this.m_ConstructionBelow || (selectedSlot && selectedSlot.m_UpperLevelSlot) || (selectedSlot && selectedSlot.m_ParentConstruction.m_Level > 0) || this.m_UpperLevel;
+	}
+
 	private void UpdateTransform()
 	{
 		this.m_SelectedSlot = null;
+		this.m_OnTopOfConstruction = false;
+		this.m_ConstructionBelow = null;
 		if (this.UpdateAttaching())
 		{
 			return;
@@ -513,8 +694,10 @@ public class ConstructionGhost : Trigger
 		base.gameObject.transform.Rotate(Vector3.up, this.m_Rotation);
 		bool enabled = this.m_BoxCollider.enabled;
 		this.m_BoxCollider.enabled = false;
-		Vector3 vector = base.gameObject.transform.position;
-		vector.y += 5f;
+		Vector3 position = Player.Get().transform.position;
+		Vector3 normalized2D = Player.Get().transform.forward.GetNormalized2D();
+		Vector3 vector = position + normalized2D * CJTools.Math.GetProportionalClamp(this.m_PositionOffsetMin, this.m_PositionOffsetMax, Camera.main.transform.forward.y, -0.5f, 0f);
+		vector.y += 0.2f;
 		float terrainY = MainLevel.GetTerrainY(vector);
 		if (terrainY >= vector.y)
 		{
@@ -523,30 +706,46 @@ public class ConstructionGhost : Trigger
 		else
 		{
 			float num = float.MinValue;
-			foreach (RaycastHit raycastHit in Physics.RaycastAll(vector, -Vector3.up))
+			bool onTopOfConstruction = false;
+			int num2 = Physics.RaycastNonAlloc(vector, -Vector3.up, ConstructionGhost.s_RaycastHitsTmp);
+			for (int i = 0; i < num2; i++)
 			{
-				if (!(raycastHit.collider.gameObject.GetComponent<Water>() != null))
+				RaycastHit raycastHit = ConstructionGhost.s_RaycastHitsTmp[i];
+				if (!(raycastHit.collider.gameObject.GetComponent<WaterCollider>() != null))
 				{
-					if (raycastHit.collider.GetType() == typeof(TerrainCollider))
+					Item item = null;
+					if (raycastHit.collider.GetType() != typeof(TerrainCollider))
 					{
-						if (raycastHit.point.y > num)
+						item = raycastHit.collider.gameObject.GetComponent<Item>();
+						if (!item || !item.m_Info.m_CanPlaceGhostOnTop)
 						{
-							vector = raycastHit.point;
-							num = raycastHit.point.y;
+							goto IL_212;
 						}
 					}
+					if (raycastHit.point.y > num)
+					{
+						onTopOfConstruction = (item && item.m_Info.m_CanPlaceGhostOnTop);
+						if (item && item.m_Info.IsConstruction())
+						{
+							this.m_ConstructionBelow = (Construction)item;
+						}
+						vector = raycastHit.point;
+						num = raycastHit.point.y;
+					}
 				}
+				IL_212:;
 			}
+			this.m_OnTopOfConstruction = onTopOfConstruction;
 		}
-		float num2 = vector.y;
+		float num3 = vector.y;
 		this.m_BoxCollider.enabled = enabled;
-		num2 -= this.m_BoxCollider.bounds.min.y - base.gameObject.transform.position.y;
-		Vector3 position = Player.Get().transform.position;
-		Vector3 forward = Player.Get().transform.forward;
-		Vector3 normalized2D = forward.GetNormalized2D();
-		Vector3 position2 = position + normalized2D * CJTools.Math.GetProportionalClamp(this.m_PositionOffsetMin, this.m_PositionOffsetMax, Camera.main.transform.forward.y, -0.5f, 0f);
-		position2.y = num2;
-		base.gameObject.transform.position = position2;
+		num3 -= this.m_BoxCollider.bounds.min.y - base.gameObject.transform.position.y;
+		if (this.m_ResultItemID == ItemID.Small_Fire || this.m_ResultItemID == ItemID.Stone_Ring || this.m_ResultItemID == ItemID.Campfire || this.m_ResultItemID == ItemID.Campfire_Rack || this.m_ResultItemID == ItemID.Dryer || this.m_ResultItemID == ItemID.Bamboo_Dryer || this.m_ResultItemID == ItemID.mud_charcoal_furnace || this.m_ResultItemID == ItemID.mud_mixer || this.m_ResultItemID == ItemID.Weapon_Rack || this.m_ResultItemID == ItemID.Acre || this.m_ResultItemID == ItemID.Acre_Small || this.m_ResultItemID == ItemID.Logs_Bed)
+		{
+			num3 += 0.1f;
+		}
+		vector.y = num3;
+		base.gameObject.transform.position = vector;
 		if (this.UpdateAttachingToSlot())
 		{
 			return;
@@ -559,27 +758,27 @@ public class ConstructionGhost : Trigger
 
 	private void AllignToTerrain()
 	{
-		if (!this.m_AllignToTerrain)
+		if (!this.m_AllignToTerrain || this.m_OnTopOfConstruction)
 		{
 			return;
 		}
 		bool enabled = this.m_BoxCollider.enabled;
 		this.m_BoxCollider.enabled = false;
 		RaycastHit raycastHit = default(RaycastHit);
-		Vector3 normalized2D = base.transform.forward.GetNormalized2D();
-		Vector3 vector = this.m_BoxCollider.bounds.center + normalized2D * this.m_BoxCollider.size.z + Vector3.up * this.m_BoxCollider.size.y;
+		Vector3 a = base.transform.forward.GetNormalized2D() * 0.5f;
+		Vector3 vector = this.m_BoxCollider.bounds.center + a * this.m_BoxCollider.size.z + Vector3.up * this.m_BoxCollider.size.y;
 		this.GetRaycastHit(vector, ref raycastHit);
 		vector = raycastHit.point;
-		Vector3 vector2 = this.m_BoxCollider.bounds.center - normalized2D * this.m_BoxCollider.size.z + Vector3.up * this.m_BoxCollider.size.y;
+		Vector3 vector2 = this.m_BoxCollider.bounds.center - a * this.m_BoxCollider.size.z + Vector3.up * this.m_BoxCollider.size.y;
 		this.GetRaycastHit(vector2, ref raycastHit);
 		vector2 = raycastHit.point;
 		Vector3 vector3 = vector - vector2;
-		Vector3 normalized2D2 = base.transform.right.GetNormalized2D();
+		Vector3 a2 = base.transform.right.GetNormalized2D() * 0.5f;
 		Vector3 vector4 = Vector3.zero;
-		Vector3 vector5 = this.m_BoxCollider.bounds.center + normalized2D2 * this.m_BoxCollider.size.x + Vector3.up * this.m_BoxCollider.size.y;
+		Vector3 vector5 = this.m_BoxCollider.bounds.center + a2 * this.m_BoxCollider.size.x + Vector3.up * this.m_BoxCollider.size.y;
 		this.GetRaycastHit(vector5, ref raycastHit);
 		vector5 = raycastHit.point;
-		Vector3 vector6 = this.m_BoxCollider.bounds.center - normalized2D2 * this.m_BoxCollider.size.x + Vector3.up * this.m_BoxCollider.size.y;
+		Vector3 vector6 = this.m_BoxCollider.bounds.center - a2 * this.m_BoxCollider.size.x + Vector3.up * this.m_BoxCollider.size.y;
 		this.GetRaycastHit(vector6, ref raycastHit);
 		vector6 = raycastHit.point;
 		Vector3 vector7 = vector5 - vector6;
@@ -610,25 +809,24 @@ public class ConstructionGhost : Trigger
 		return 0;
 	}
 
+	private void SortHitsByDist(RaycastHit[] hits, int hits_cnt)
+	{
+		ConstructionGhost.s_CompareHitsByDist.m_Parent = this;
+		Array.Sort<RaycastHit>(ConstructionGhost.s_RaycastHitsTmp, 0, hits_cnt, ConstructionGhost.s_CompareHitsByDist);
+	}
+
 	private void GetRaycastHit(Vector3 pos, ref RaycastHit hit)
 	{
 		pos.y = Mathf.Max(pos.y, MainLevel.GetTerrainY(pos) + 0.1f);
-		RaycastHit[] collection = Physics.RaycastAll(pos, -Vector3.up);
+		int hits_cnt = Physics.RaycastNonAlloc(pos, -Vector3.up, ConstructionGhost.s_RaycastHitsTmp);
 		this.m_RaycastOrig = pos;
-		List<RaycastHit> list = new List<RaycastHit>(collection);
-		list.Sort(new Comparison<RaycastHit>(this.CompareListByDist));
-		foreach (RaycastHit raycastHit in list)
+		this.SortHitsByDist(ConstructionGhost.s_RaycastHitsTmp, hits_cnt);
+		foreach (RaycastHit raycastHit in ConstructionGhost.s_RaycastHitsTmp)
 		{
-			if (!(raycastHit.collider.gameObject == base.gameObject))
+			if (!(raycastHit.collider.gameObject == base.gameObject) && !raycastHit.collider.isTrigger && !this.m_LayerMasksToIgnore.Contains(raycastHit.collider.gameObject.layer))
 			{
-				if (!raycastHit.collider.isTrigger)
-				{
-					if (!this.m_LayerMasksToIgnore.Contains(raycastHit.collider.gameObject.layer))
-					{
-						hit = raycastHit;
-						break;
-					}
-				}
+				hit = raycastHit;
+				return;
 			}
 		}
 	}
@@ -644,11 +842,14 @@ public class ConstructionGhost : Trigger
 		Firecamp firecamp = null;
 		foreach (Firecamp firecamp2 in Firecamp.s_Firecamps)
 		{
-			float num2 = Vector3.Distance(base.transform.position, firecamp2.transform.position);
-			if (num2 < num)
+			if (!ItemInfo.IsStoneRing(this.m_ResultItemID) || firecamp2.GetInfoID() != ItemID.Campfire)
 			{
-				firecamp = firecamp2;
-				num = num2;
+				float num2 = Vector3.Distance(base.transform.position, firecamp2.transform.position);
+				if (num2 < num)
+				{
+					firecamp = firecamp2;
+					num = num2;
+				}
 			}
 		}
 		if (!firecamp)
@@ -668,25 +869,32 @@ public class ConstructionGhost : Trigger
 
 	private bool UpdateSnapToRack()
 	{
-		if (!ItemInfo.IsFirecamp(this.m_ResultItemID) && !ItemInfo.IsStoneRing(this.m_ResultItemID))
+		if ((!ItemInfo.IsFirecamp(this.m_ResultItemID) || this.m_ResultItemID == ItemID.Campfire) && !ItemInfo.IsStoneRing(this.m_ResultItemID))
 		{
 			return false;
 		}
 		this.m_FirecampRacks.Clear();
 		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
 		{
-			float num = Vector3.Distance(base.transform.position, firecampRack.transform.position);
-			if (num < this.m_FirecampSnapDist)
+			if ((!ItemInfo.IsStoneRing(this.m_ResultItemID) || !ItemInfo.IsStoneRing(firecampRack.GetInfoID())) && Vector3.Distance(base.transform.position, firecampRack.transform.position) < this.m_FirecampSnapDist)
 			{
 				this.m_FirecampRacks.Add(firecampRack);
 			}
 		}
 		if (this.m_FirecampRacks.Count > 0)
 		{
-			Vector3 position = this.m_FirecampRacks[0].transform.position;
-			position.y -= this.m_BoxCollider.bounds.min.y - base.gameObject.transform.position.y;
-			base.transform.position = position;
-			this.AllignToTerrain();
+			if (this.m_FirecampRacks[0].m_FirecampDummy)
+			{
+				base.transform.rotation = this.m_FirecampRacks[0].m_FirecampDummy.rotation;
+				base.transform.position = this.m_FirecampRacks[0].m_FirecampDummy.position;
+			}
+			else
+			{
+				Vector3 position = this.m_FirecampRacks[0].transform.position;
+				position.y -= this.m_BoxCollider.bounds.min.y - base.gameObject.transform.position.y;
+				base.transform.position = position;
+				this.AllignToTerrain();
+			}
 			return true;
 		}
 		return false;
@@ -701,14 +909,14 @@ public class ConstructionGhost : Trigger
 		this.m_Smoker = null;
 		float num = float.MaxValue;
 		Construction construction = null;
-		for (int i = 0; i < Construction.s_Constructions.Count; i++)
+		for (int i = 0; i < Construction.s_EnabledConstructions.Count; i++)
 		{
-			if (ItemInfo.IsSmoker(Construction.s_Constructions[i].GetInfoID()))
+			if (ItemInfo.IsSmoker(Construction.s_EnabledConstructions[i].GetInfoID()))
 			{
-				float num2 = Vector3.Distance(base.transform.position, Construction.s_Constructions[i].transform.position);
+				float num2 = Vector3.Distance(base.transform.position, Construction.s_EnabledConstructions[i].transform.position);
 				if (num2 < num)
 				{
-					construction = Construction.s_Constructions[i];
+					construction = Construction.s_EnabledConstructions[i];
 					num = num2;
 				}
 			}
@@ -742,29 +950,29 @@ public class ConstructionGhost : Trigger
 		Quaternion rotation = Quaternion.identity;
 		Vector3 position = Vector3.zero;
 		int i = 0;
-		while (i < Construction.s_Constructions.Count)
+		while (i < Construction.s_EnabledConstructions.Count)
 		{
-			Construction construction2 = Construction.s_Constructions[i];
+			Construction construction2 = Construction.s_EnabledConstructions[i];
 			if (!(construction2 == null))
 			{
-				goto IL_A2;
+				goto IL_94;
 			}
-			if (Construction.s_Constructions[i])
+			if (Construction.s_EnabledConstructions[i])
 			{
-				construction2 = Construction.s_Constructions[i];
+				construction2 = Construction.s_EnabledConstructions[i];
 			}
 			if (!(construction2 == null))
 			{
-				goto IL_A2;
+				goto IL_94;
 			}
-			IL_1EA:
+			IL_1C9:
 			i++;
 			continue;
-			IL_A2:
+			IL_94:
 			Vector3 vector = construction2.gameObject.transform.position;
 			if ((vector - Player.Get().transform.position).magnitude > this.m_PositionOffsetMax)
 			{
-				goto IL_1EA;
+				goto IL_1C9;
 			}
 			IPlaceToAttach component = construction2.gameObject.GetComponent<IPlaceToAttach>();
 			if (component != null)
@@ -795,9 +1003,9 @@ public class ConstructionGhost : Trigger
 						}
 					}
 				}
-				goto IL_1EA;
+				goto IL_1C9;
 			}
-			goto IL_1EA;
+			goto IL_1C9;
 		}
 		if (construction != null)
 		{
@@ -805,6 +1013,13 @@ public class ConstructionGhost : Trigger
 			base.gameObject.transform.position = position;
 			this.m_ConstructionToAttachTo = construction;
 			this.AllignToTerrain();
+			foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+			{
+				if (construction == firecampRack)
+				{
+					this.m_FirecampRacks.Add(firecampRack);
+				}
+			}
 			return true;
 		}
 		return false;
@@ -820,59 +1035,122 @@ public class ConstructionGhost : Trigger
 		Construction construction = null;
 		Quaternion rotation = Quaternion.identity;
 		Vector3 position = Vector3.zero;
-		int i = 0;
-		while (i < Construction.s_Constructions.Count)
+		Camera mainCamera = CameraManager.Get().m_MainCamera;
+		if (!mainCamera)
 		{
-			Construction construction2 = Construction.s_Constructions[i];
+			return false;
+		}
+		Vector3 position2 = mainCamera.transform.position;
+		Vector3 forward = mainCamera.transform.forward;
+		this.m_AttachmentData.Clear();
+		float num = 1.5f;
+		int i = 0;
+		while (i < Construction.s_EnabledConstructions.Count)
+		{
+			Construction construction2 = Construction.s_EnabledConstructions[i];
 			if (!(construction2 == null))
 			{
-				goto IL_7A;
+				goto IL_B1;
 			}
-			if (Construction.s_Constructions[i])
+			if (Construction.s_EnabledConstructions[i])
 			{
-				construction2 = Construction.s_Constructions[i];
+				construction2 = Construction.s_EnabledConstructions[i];
 			}
 			if (!(construction2 == null))
 			{
-				goto IL_7A;
+				goto IL_B1;
 			}
-			IL_181:
+			IL_1A4:
 			i++;
 			continue;
-			IL_7A:
-			float num = 1.5f;
+			IL_B1:
 			foreach (ConstructionSlot constructionSlot2 in construction2.m_ConstructionSlots)
 			{
-				if (constructionSlot2.m_MatchingItemIDs.Contains(this.m_ResultItemID))
+				if (!constructionSlot2.m_Construction && constructionSlot2.m_MatchingItemIDs.Contains(this.m_ResultItemID))
 				{
-					Vector3 position2 = base.transform.position;
-					position2.y = constructionSlot2.transform.position.y;
-					float num2 = constructionSlot2.transform.position.Distance(position2);
+					Vector3 position3 = base.transform.position;
+					position3.y = constructionSlot2.transform.position.y;
+					Vector3 vector = constructionSlot2.transform.position - position2;
+					float num2 = constructionSlot2.transform.position.Distance(position3);
 					if (num2 <= num)
 					{
-						num = num2;
-						construction = construction2;
-						position = constructionSlot2.transform.position;
-						rotation = constructionSlot2.transform.rotation;
-						constructionSlot = constructionSlot2;
+						ConstructionSlotData item;
+						item.con = construction2;
+						item.slot = constructionSlot2;
+						item.dot = Vector3.Dot(forward, vector.normalized);
+						item.dist = ((num2 > 0.01f) ? num2 : 0.01f);
+						this.m_AttachmentData.Add(item);
 					}
 				}
 			}
-			if (construction != null && constructionSlot.m_ChangeToID != ItemID.None && constructionSlot.m_ChangeToID != this.m_ResultItemID)
-			{
-				ConstructionController.Get().ReplaceGhost(constructionSlot.m_ChangeTo + "Ghost");
-				goto IL_181;
-			}
-			goto IL_181;
+			goto IL_1A4;
+		}
+		if (this.m_AttachmentData.Count > 0)
+		{
+			this.m_AttachmentData.Sort(ConstructionGhost.s_DotComparer);
+			ConstructionSlotData constructionSlotData = this.m_AttachmentData[0];
+			construction = constructionSlotData.con;
+			position = constructionSlotData.slot.transform.position;
+			rotation = constructionSlotData.slot.transform.rotation;
+			constructionSlot = constructionSlotData.slot;
+		}
+		if (construction != null && constructionSlot.m_ChangeToID != ItemID.None && constructionSlot.m_ChangeToID != this.m_ResultItemID)
+		{
+			ConstructionController.Get().ReplaceGhost(constructionSlot.m_ChangeTo + "Ghost");
+		}
+		if (construction != null && construction.m_Level >= 2 && constructionSlot.m_UpperLevelSlot)
+		{
+			return false;
 		}
 		if (construction != null)
 		{
-			base.gameObject.transform.rotation = rotation;
+			if (this.m_CanBeRotatedWhenSnapped)
+			{
+				base.gameObject.transform.rotation = rotation;
+				Quaternion quaternion = base.gameObject.transform.localRotation;
+				float num3 = (float)this.m_RotationSnap;
+				if (this.m_SnappedRotationAngle == ConstructionGhost.SnappedRotationAngle.Angle90)
+				{
+					num3 *= 90f;
+				}
+				else if (this.m_SnappedRotationAngle == ConstructionGhost.SnappedRotationAngle.Angle180)
+				{
+					num3 *= 180f;
+				}
+				if (this.m_SnappedRotationAxis == ConstructionGhost.SnappedRotationAxis.X)
+				{
+					quaternion *= Quaternion.Euler(num3, 0f, 0f);
+				}
+				else if (this.m_SnappedRotationAxis == ConstructionGhost.SnappedRotationAxis.Y)
+				{
+					quaternion *= Quaternion.Euler(0f, num3, 0f);
+				}
+				else if (this.m_SnappedRotationAxis == ConstructionGhost.SnappedRotationAxis.Z)
+				{
+					quaternion *= Quaternion.Euler(0f, 0f, num3);
+				}
+				base.gameObject.transform.localRotation = quaternion;
+			}
+			else
+			{
+				base.gameObject.transform.rotation = rotation;
+			}
 			base.gameObject.transform.position = position;
 			this.m_ConstructionToAttachTo = construction;
 			this.m_SelectedSlot = constructionSlot;
 			this.AllignToTerrain();
+			foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+			{
+				if (construction == firecampRack)
+				{
+					this.m_FirecampRacks.Add(firecampRack);
+				}
+			}
 			return true;
+		}
+		if (this.m_RestoreIfNotAttached)
+		{
+			ConstructionController.Get().RestoreGhost();
 		}
 		return false;
 	}
@@ -886,9 +1164,9 @@ public class ConstructionGhost : Trigger
 		this.m_Color = color;
 		this.m_ColorFresnel = color_fresnel;
 		Component[] componentsInChildren = base.gameObject.GetComponentsInChildren(typeof(Renderer));
-		foreach (Renderer renderer in componentsInChildren)
+		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
-			foreach (Material material in renderer.materials)
+			foreach (Material material in ((Renderer)componentsInChildren[i]).materials)
 			{
 				material.color = this.m_Color;
 				material.SetColor(this.m_ShaderPropertyFresnelColor, this.m_ColorFresnel);
@@ -900,13 +1178,15 @@ public class ConstructionGhost : Trigger
 	{
 		ItemInfo info = ItemsManager.Get().GetInfo(item_id);
 		bool flag = true;
-		GhostStep ghostStep = this.m_Steps[this.m_CurrentStep];
-		foreach (GhostSlot ghostSlot in ghostStep.m_Slots)
+		using (List<GhostSlot>.Enumerator enumerator = this.m_Steps[this.m_CurrentStep].m_Slots.GetEnumerator())
 		{
-			if (!ghostSlot.m_Fulfilled)
+			while (enumerator.MoveNext())
 			{
-				flag = false;
-				break;
+				if (!enumerator.Current.m_Fulfilled)
+				{
+					flag = false;
+					break;
+				}
 			}
 		}
 		if (flag)
@@ -917,6 +1197,10 @@ public class ConstructionGhost : Trigger
 		if (!from_save)
 		{
 			this.PlayInsertSound(info);
+		}
+		if (this.ReplIsOwner())
+		{
+			this.ReplSetDirty();
 		}
 	}
 
@@ -933,28 +1217,26 @@ public class ConstructionGhost : Trigger
 					this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Enviro);
 				}
 				this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
+				return;
 			}
-			else
+			if (this.m_AudioSource == null)
+			{
+				this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
+				this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Enviro);
+			}
+			if (this.m_InsertItemClipsDict.TryGetValue(314, out list))
 			{
 				if (this.m_AudioSource == null)
 				{
 					this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
 					this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Enviro);
 				}
-				if (this.m_InsertItemClipsDict.TryGetValue(314, out list))
-				{
-					if (this.m_AudioSource == null)
-					{
-						this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
-						this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Enviro);
-					}
-					this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
-				}
+				this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
 			}
 		}
 	}
 
-	private bool IsReady()
+	public bool IsReady()
 	{
 		return this.m_CurrentStep >= this.m_Steps.Count;
 	}
@@ -966,28 +1248,28 @@ public class ConstructionGhost : Trigger
 		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.NeedFirecamp)
 		{
 			IFirecampAttach[] components = item.gameObject.GetComponents<IFirecampAttach>();
-			foreach (IFirecampAttach firecampAttach in components)
+			for (int i = 0; i < components.Length; i++)
 			{
-				firecampAttach.SetFirecamp(this.m_Firecamp);
+				components[i].SetFirecamp(this.m_Firecamp);
 			}
 		}
 		if (this.m_FirecampRacks.Count > 0 && ItemInfo.IsFirecamp(item.GetInfoID()))
 		{
 			foreach (FirecampRack firecampRack in this.m_FirecampRacks)
 			{
-				IFirecampAttach[] components2 = firecampRack.gameObject.GetComponents<IFirecampAttach>();
-				foreach (IFirecampAttach firecampAttach2 in components2)
+				IFirecampAttach[] components = firecampRack.gameObject.GetComponents<IFirecampAttach>();
+				for (int i = 0; i < components.Length; i++)
 				{
-					firecampAttach2.SetFirecamp((Firecamp)item);
+					components[i].SetFirecamp((Firecamp)item);
 				}
 			}
 		}
 		if (this.m_Smoker && ItemInfo.IsFirecamp(item.GetInfoID()))
 		{
-			IFirecampAttach[] components3 = this.m_Smoker.gameObject.GetComponents<IFirecampAttach>();
-			foreach (IFirecampAttach firecampAttach3 in components3)
+			IFirecampAttach[] components = this.m_Smoker.gameObject.GetComponents<IFirecampAttach>();
+			for (int i = 0; i < components.Length; i++)
 			{
-				firecampAttach3.SetFirecamp((Firecamp)item);
+				components[i].SetFirecamp((Firecamp)item);
 			}
 		}
 		if (this.m_ConstructionObjectName.Length > 0)
@@ -998,19 +1280,46 @@ public class ConstructionGhost : Trigger
 		{
 			this.m_SelectedSlot.SetConstruction((Construction)item);
 		}
-		ScenarioAction.OnItemCreated(item.gameObject);
-		ScenarioCndTF.OnItemCreated(item.gameObject);
+		ScenarioManager.Get().OnItemCreated(item.gameObject);
 		EventsManager.OnEvent(Enums.Event.Build, 1, (int)this.m_ResultItemID);
-		HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
-		hudmessages.AddMessage(GreenHellGame.Instance.GetLocalization().Get(this.m_ResultItemID.ToString()) + " " + GreenHellGame.Instance.GetLocalization().Get("HUDConstruction_Created"), null, HUDMessageIcon.None, string.Empty);
+		((HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages))).AddMessage(GreenHellGame.Instance.GetLocalization().Get(this.m_ResultItemID.ToString(), true) + " " + GreenHellGame.Instance.GetLocalization().Get("HUDConstruction_Created", true), null, HUDMessageIcon.None, "", null);
 		PlayerAudioModule.Get().PlayBuildCompletedSound();
 		ItemsManager.Get().OnCreateItem(this.m_ResultItemID);
-		item.SetLayer(item.transform, LayerMask.NameToLayer("Item"));
+		if (item.gameObject.layer != LayerMask.NameToLayer("Ignore Raycast"))
+		{
+			item.SetLayer(item.transform, LayerMask.NameToLayer("Item"));
+		}
 		foreach (IGhostObserver ghostObserver in this.m_Observers)
 		{
 			ghostObserver.OnCreateConstruction(this, item);
 		}
 		HintsManager.Get().ShowHint("Destroy_Construction", 10f);
+		foreach (string hint_name in this.m_CreateConstructionHints)
+		{
+			HintsManager.Get().ShowHint(hint_name, 10f);
+		}
+		if (this.m_DestroyOnCreateConstruction)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
+		else
+		{
+			base.gameObject.SetActive(false);
+		}
+		if (this.m_SelectedSlot && this.m_SelectedSlot.m_ParentConstruction.m_Level > 0)
+		{
+			bool set = this.m_SelectedSlot.m_ParentConstruction.m_Level > 0;
+			((Construction)item).SetUpperLevel(set, this.m_SelectedSlot.m_UpperLevelSlot ? (this.m_SelectedSlot.m_ParentConstruction.m_Level + 1) : this.m_SelectedSlot.m_ParentConstruction.m_Level);
+		}
+		else if (this.m_SelectedSlot && this.m_SelectedSlot.m_UpperLevelSlot)
+		{
+			((Construction)item).SetUpperLevel(true, this.m_SelectedSlot.m_ParentConstruction.m_Level + 1);
+		}
+		else if (this.m_ConstructionBelow)
+		{
+			((Construction)item).SetUpperLevel(true, this.m_ConstructionBelow.m_Level + 1);
+		}
+		((Construction)item).m_ConstructionBelow = this.m_ConstructionBelow;
 	}
 
 	public virtual bool CanBePlaced()
@@ -1061,7 +1370,7 @@ public class ConstructionGhost : Trigger
 
 	public override bool CanTrigger()
 	{
-		return !GreenHellGame.TWITCH_DEMO;
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !GreenHellGame.TWITCH_DEMO;
 	}
 
 	public override bool IsAdditionalTrigger()
@@ -1080,21 +1389,19 @@ public class ConstructionGhost : Trigger
 
 	public override string GetName()
 	{
-		return this.m_ResultItemID.ToString();
+		return EnumUtils<ItemID>.GetName((int)this.m_ResultItemID);
 	}
 
 	private void AddCollidingPlant(GameObject obj)
 	{
-		List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(obj);
-		for (int i = 0; i < componentsDeepChild.Count; i++)
+		foreach (Renderer renderer in General.GetComponentsDeepChild<Renderer>(obj))
 		{
-			Renderer renderer = componentsDeepChild[i];
 			for (int j = 0; j < renderer.materials.Length; j++)
 			{
 				Material material = renderer.materials[j];
-				Texture texture = (!material.HasProperty("_MainTex")) ? null : material.GetTexture("_MainTex");
-				Texture texture2 = (!material.HasProperty("_BumpMap")) ? null : material.GetTexture("_BumpMap");
-				Texture texture3 = (!material.HasProperty("_RoughTex")) ? null : material.GetTexture("_RoughTex");
+				Texture texture = material.HasProperty("_MainTex") ? material.GetTexture("_MainTex") : null;
+				Texture texture2 = material.HasProperty("_BumpMap") ? material.GetTexture("_BumpMap") : null;
+				Texture texture3 = material.HasProperty("_RoughTex") ? material.GetTexture("_RoughTex") : null;
 				if (!this.m_CollidingPlants.ContainsKey(obj))
 				{
 					this.m_CollidingPlants[obj] = new List<Shader>();
@@ -1124,15 +1431,13 @@ public class ConstructionGhost : Trigger
 			this.m_CollidingPlants.Remove(obj);
 			return;
 		}
-		List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(obj);
+		Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(obj);
 		int num = 0;
-		for (int i = 0; i < componentsDeepChild.Count; i++)
+		foreach (Renderer renderer in componentsDeepChild)
 		{
-			Renderer renderer = componentsDeepChild[i];
 			for (int j = 0; j < renderer.materials.Length; j++)
 			{
-				Material material = renderer.materials[j];
-				material.shader = this.m_CollidingPlants[obj][num];
+				renderer.materials[j].shader = this.m_CollidingPlants[obj][num];
 				num++;
 			}
 		}
@@ -1152,22 +1457,119 @@ public class ConstructionGhost : Trigger
 		{
 			for (int j = 0; j < this.m_Steps[i].m_Slots.Count; j++)
 			{
-				SaveGame.SaveVal("GhostSlot" + index.ToString() + i.ToString() + j.ToString(), this.m_Steps[i].m_Slots[j].m_Fulfilled);
+				SaveGame.SaveVal("GhostSlot" + (index * this.m_SaveLoadIndexMul).ToString() + i.ToString() + j.ToString(), this.m_Steps[i].m_Slots[j].m_Fulfilled);
 			}
 		}
+		SaveGame.SaveVal("GhostSelectedSlot" + index, this.m_SelectedSlot ? this.m_SelectedSlot.transform.position : Vector3.zero);
+		SaveGame.SaveVal("GhostUpperLevel" + index, this.IsOnUpperLevel());
+		SaveGame.SaveVal("GhostConstructionBelow" + index, this.m_ConstructionBelow ? this.m_ConstructionBelow.gameObject.transform.position : Vector3.zero);
+		SaveGame.SaveVal("GhostConstructionBelowName" + index, this.m_ConstructionBelow ? this.m_ConstructionBelow.name : "None");
 	}
 
 	public void Load(int index)
 	{
 		base.transform.position = SaveGame.LoadV3Val("GhostPos" + index);
 		base.transform.rotation = SaveGame.LoadQVal("GhostRot" + index);
+		float num = (float)((SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate11) ? this.m_SaveLoadIndexMul : 1);
 		for (int i = 0; i < this.m_Steps.Count; i++)
 		{
 			for (int j = 0; j < this.m_Steps[i].m_Slots.Count; j++)
 			{
-				if (SaveGame.LoadBVal("GhostSlot" + index.ToString() + i.ToString() + j.ToString()))
+				if (SaveGame.LoadBVal("GhostSlot" + ((float)index * num).ToString() + i.ToString() + j.ToString()))
 				{
 					this.m_Steps[i].m_Slots[j].Fulfill(true);
+				}
+			}
+		}
+		this.m_Firecamp = null;
+		this.m_FirecampRacks.Clear();
+		this.m_Smoker = null;
+		if (this.m_PlacingCondition == ConstructionGhost.GhostPlacingCondition.NeedFirecamp)
+		{
+			int num2 = Physics.OverlapBoxNonAlloc(base.transform.TransformPoint(this.m_BoxCollider.center), this.m_BoxCollider.size * 0.5f, ConstructionGhost.s_CollidersTemp);
+			for (int k = 0; k < num2; k++)
+			{
+				this.m_Firecamp = ConstructionGhost.s_CollidersTemp[k].gameObject.GetComponent<Firecamp>();
+				if (this.m_Firecamp != null)
+				{
+					break;
+				}
+			}
+		}
+		else if (ItemInfo.IsFirecamp(this.m_ResultItemID))
+		{
+			int num3 = Physics.OverlapBoxNonAlloc(base.transform.TransformPoint(this.m_BoxCollider.center), this.m_BoxCollider.size * 0.5f, ConstructionGhost.s_CollidersTemp);
+			for (int l = 0; l < num3; l++)
+			{
+				FirecampRack component = ConstructionGhost.s_CollidersTemp[l].gameObject.GetComponent<FirecampRack>();
+				if (component)
+				{
+					this.m_FirecampRacks.Add(component);
+				}
+				else
+				{
+					FoodProcessor component2 = ConstructionGhost.s_CollidersTemp[l].gameObject.GetComponent<FoodProcessor>();
+					if (component2 && component2.m_Type == FoodProcessor.Type.Smoker)
+					{
+						this.m_Smoker = ConstructionGhost.s_CollidersTemp[l].gameObject.GetComponent<Construction>();
+						break;
+					}
+				}
+			}
+		}
+		Vector3 vector = SaveGame.LoadV3Val("GhostSelectedSlot" + index);
+		this.m_UpperLevel = SaveGame.LoadBVal("GhostUpperLevel" + index);
+		if (vector != Vector3.zero)
+		{
+			for (int m = 0; m < Construction.s_AllConstructions.Count; m++)
+			{
+				Construction construction = Construction.s_AllConstructions[m];
+				if (!(construction == null))
+				{
+					ConstructionSlot[] constructionSlots = construction.m_ConstructionSlots;
+					int n = 0;
+					while (n < constructionSlots.Length)
+					{
+						ConstructionSlot constructionSlot = constructionSlots[n];
+						if (constructionSlot.m_MatchingItemIDs.Contains(this.m_ResultItemID) && (vector - constructionSlot.transform.position).sqrMagnitude < 0.01f)
+						{
+							this.m_SelectedSlot = constructionSlot;
+							if (!constructionSlot.m_ParentConstruction)
+							{
+								break;
+							}
+							FirecampRack component3 = constructionSlot.m_ParentConstruction.gameObject.GetComponent<FirecampRack>();
+							if (component3 && !this.m_FirecampRacks.Contains(component3))
+							{
+								this.m_FirecampRacks.Add(component3);
+							}
+							FoodProcessor component4 = constructionSlot.m_ParentConstruction.gameObject.GetComponent<FoodProcessor>();
+							if (component4 && component4.m_Type == FoodProcessor.Type.Smoker && this.m_Smoker == null)
+							{
+								this.m_Smoker = constructionSlot.m_ParentConstruction.gameObject.GetComponent<Construction>();
+								break;
+							}
+							break;
+						}
+						else
+						{
+							n++;
+						}
+					}
+				}
+			}
+		}
+		Vector3 vector2 = SaveGame.LoadV3Val("GhostConstructionBelow" + index);
+		string text = SaveGame.LoadSVal("GhostConstructionBelowName" + index);
+		if (vector2 != Vector3.zero && text != "None")
+		{
+			for (int num4 = 0; num4 < Construction.s_AllConstructions.Count; num4++)
+			{
+				Construction construction2 = Construction.s_AllConstructions[num4];
+				if (!(construction2 == null) && (vector2 - construction2.transform.position).sqrMagnitude < 0.01f && construction2.name == text)
+				{
+					this.m_ConstructionBelow = construction2;
+					return;
 				}
 			}
 		}
@@ -1176,6 +1578,90 @@ public class ConstructionGhost : Trigger
 	public ConstructionGhost.ProhibitionType GetProhibitionType()
 	{
 		return this.m_ProhibitionType;
+	}
+
+	public int GetInsertedItemsCountInCurrentStep(ItemID id)
+	{
+		int num = 0;
+		foreach (GhostSlot ghostSlot in this.m_Steps[this.m_CurrentStep].m_Slots)
+		{
+			if (ghostSlot.m_Fulfilled && ghostSlot.m_ItemID == id)
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	public int GetItemsCountInCurrentStep(ItemID id)
+	{
+		int num = 0;
+		using (List<GhostSlot>.Enumerator enumerator = this.m_Steps[this.m_CurrentStep].m_Slots.GetEnumerator())
+		{
+			while (enumerator.MoveNext())
+			{
+				if (enumerator.Current.m_ItemID == id)
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	public void OnReplicationSerialize(P2PNetworkWriter writer, bool initial_state)
+	{
+		if (this.m_ReplStepsState == null)
+		{
+			this.m_ReplStepsState = new int[this.m_Steps.Count];
+		}
+		for (int i = 0; i < this.m_Steps.Count; i++)
+		{
+			for (int j = 0; j < this.m_Steps[i].m_Slots.Count; j++)
+			{
+				if (this.m_Steps[i].m_Slots[j].m_Fulfilled)
+				{
+					this.m_ReplStepsState[i] |= 1 << j;
+				}
+			}
+		}
+		writer.Write(this.m_ReplStepsState);
+	}
+
+	public void OnReplicationDeserialize(P2PNetworkReader reader, bool initial_state)
+	{
+		this.m_ReplStepsState = reader.ReadIntArray();
+		DebugUtils.Assert(this.m_ReplStepsState.Length == this.m_Steps.Count, true);
+		if (this.m_ReplStepsState.Length == this.m_Steps.Count)
+		{
+			for (int i = 0; i < this.m_Steps.Count; i++)
+			{
+				for (int j = 0; j < this.m_Steps[i].m_Slots.Count; j++)
+				{
+					bool flag = (this.m_ReplStepsState[i] & 1 << j) != 0;
+					if (flag && flag != this.m_Steps[i].m_Slots[j].m_Fulfilled)
+					{
+						this.m_Steps[i].m_Slots[j].Fulfill(false);
+					}
+				}
+			}
+		}
+	}
+
+	public void OnReplicationPrepare()
+	{
+	}
+
+	public void OnReplicationResolve()
+	{
+	}
+
+	public void ReplOnChangedOwner(bool was_owner)
+	{
+	}
+
+	public void ReplOnSpawned()
+	{
 	}
 
 	public ConstructionGhost.GhostState m_State;
@@ -1205,6 +1691,12 @@ public class ConstructionGhost : Trigger
 	public Material m_HighlightedMaterial;
 
 	[HideInInspector]
+	public string m_ActiveMaterialName;
+
+	[HideInInspector]
+	public string m_HighlightedMaterialName;
+
+	[HideInInspector]
 	public Material m_PrevMaterial;
 
 	public float m_PositionOffsetMin = 2f;
@@ -1213,7 +1705,8 @@ public class ConstructionGhost : Trigger
 
 	private Construction m_ConstructionToAttachTo;
 
-	private ConstructionSlot m_SelectedSlot;
+	[HideInInspector]
+	public ConstructionSlot m_SelectedSlot;
 
 	public float m_Rotation;
 
@@ -1250,6 +1743,8 @@ public class ConstructionGhost : Trigger
 
 	public ConstructionGhost.GhostPlacingCondition m_PlacingCondition = ConstructionGhost.GhostPlacingCondition.Whatever;
 
+	public List<ConstructionGhost.GhostPlacingCondition> m_AdditionalPlacingConditions = new List<ConstructionGhost.GhostPlacingCondition>();
+
 	public float m_RayCheckLength = 0.3f;
 
 	public float m_RayCheckUpOffset = 0.1f;
@@ -1280,13 +1775,72 @@ public class ConstructionGhost : Trigger
 
 	private AudioSource m_AudioSource;
 
-	private Vector3 m_RaycastOrig = Vector3.zero;
+	protected Vector3 m_RaycastOrig = Vector3.zero;
 
 	private List<IGhostObserver> m_Observers = new List<IGhostObserver>();
 
 	public List<BoxCollider> m_Corners;
 
+	public BoxCollider m_Hook;
+
+	public bool m_IgnoreTerrain;
+
+	[HideInInspector]
+	public bool m_DestroyOnCreateConstruction = true;
+
+	private BoxCollider[] m_TestColliders;
+
+	public bool m_RestoreIfNotAttached;
+
+	private int[] m_ReplStepsState;
+
+	public List<string> m_CreateConstructionHints = new List<string>();
+
+	private static RaycastHit[] s_RaycastHitsTmp = new RaycastHit[20];
+
+	[HideInInspector]
+	public bool m_Challenge;
+
+	public bool m_CanBeRotatedWhenSnapped;
+
+	public ConstructionGhost.SnappedRotationAxis m_SnappedRotationAxis;
+
+	public ConstructionGhost.SnappedRotationAngle m_SnappedRotationAngle;
+
+	public float m_LowerLevelCutLevel = -100f;
+
+	public float m_UpperLevelCutLevel = -10f;
+
+	private int m_ShaderCutLevel = Shader.PropertyToID("_CutLevel");
+
+	private int m_ShaderObjectWorldPos = Shader.PropertyToID("_ObjectWorldPos");
+
+	public List<BoxCollider> m_UpperLevelCorners = new List<BoxCollider>();
+
+	public bool m_CanBePlacedOnTopOfConstruction = true;
+
+	private bool m_UpperLevel;
+
+	private static Collider[] s_CollidersTemp = new Collider[20];
+
+	private List<Collider> m_Colliders = new List<Collider>();
+
+	private int m_RotationSnap;
+
+	private bool m_OnTopOfConstruction;
+
+	[HideInInspector]
+	public Construction m_ConstructionBelow;
+
+	private static ConstructionGhost.CompareHitsByDist s_CompareHitsByDist = new ConstructionGhost.CompareHitsByDist();
+
+	private List<ConstructionSlotData> m_AttachmentData = new List<ConstructionSlotData>(10);
+
+	public static CompareSlotsByDot s_DotComparer = new CompareSlotsByDot();
+
 	private int m_ShaderPropertyFresnelColor = -1;
+
+	private int m_SaveLoadIndexMul = 100000;
 
 	public enum GhostState
 	{
@@ -1309,6 +1863,41 @@ public class ConstructionGhost : Trigger
 	{
 		None,
 		Hard,
-		Soft
+		Soft,
+		Depth
+	}
+
+	public enum SnappedRotationAxis
+	{
+		X,
+		Y,
+		Z
+	}
+
+	public enum SnappedRotationAngle
+	{
+		Angle90,
+		Angle180
+	}
+
+	private class CompareHitsByDist : IComparer<RaycastHit>
+	{
+		public int Compare(RaycastHit i1, RaycastHit i2)
+		{
+			DebugUtils.Assert(this.m_Parent != null, true);
+			float num = Vector3.Distance(this.m_Parent.m_RaycastOrig, i1.point);
+			float num2 = Vector3.Distance(this.m_Parent.m_RaycastOrig, i2.point);
+			if (num > num2)
+			{
+				return 1;
+			}
+			if (num < num2)
+			{
+				return -1;
+			}
+			return 0;
+		}
+
+		public ConstructionGhost m_Parent;
 	}
 }

@@ -4,10 +4,10 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine.PostProcessing
 {
-	[RequireComponent(typeof(Camera))]
 	[ImageEffectAllowedInSceneView]
-	[ExecuteInEditMode]
+	[RequireComponent(typeof(Camera))]
 	[DisallowMultipleComponent]
+	[ExecuteInEditMode]
 	[AddComponentMenu("Effects/Post-Processing Behaviour", -1)]
 	public class PostProcessingBehaviour : MonoBehaviour
 	{
@@ -160,7 +160,7 @@ namespace UnityEngine.PostProcessing
 			flag |= this.TryPrepareUberImageEffect<ColorGradingModel>(this.m_ColorGrading, material);
 			flag |= this.TryPrepareUberImageEffect<VignetteModel>(this.m_Vignette, material);
 			flag |= this.TryPrepareUberImageEffect<UserLutModel>(this.m_UserLut, material);
-			Material material2 = (!active) ? null : this.m_MaterialFactory.Get("Hidden/Post FX/FXAA");
+			Material material2 = active ? this.m_MaterialFactory.Get("Hidden/Post FX/FXAA") : null;
 			if (active)
 			{
 				material2.shaderKeywords = null;
@@ -207,12 +207,14 @@ namespace UnityEngine.PostProcessing
 			if (this.m_EyeAdaptation.active && this.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.EyeAdaptation))
 			{
 				this.m_EyeAdaptation.OnGUI();
+				return;
 			}
-			else if (this.m_ColorGrading.active && this.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.LogLut))
+			if (this.m_ColorGrading.active && this.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.LogLut))
 			{
 				this.m_ColorGrading.OnGUI();
+				return;
 			}
-			else if (this.m_UserLut.active && this.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.UserLut))
+			if (this.m_UserLut.active && this.profile.debugViews.IsModeActive(BuiltinDebugViewsModel.Mode.UserLut))
 			{
 				this.m_UserLut.OnGUI();
 			}
@@ -341,11 +343,9 @@ namespace UnityEngine.PostProcessing
 				CommandBuffer commandBuffer = this.GetCommandBuffer<T>(component.GetCameraEvent(), component.GetName());
 				commandBuffer.Clear();
 				component.PopulateCommandBuffer(commandBuffer);
+				return;
 			}
-			else
-			{
-				this.RemoveCommandBuffer<T>();
-			}
+			this.RemoveCommandBuffer<T>();
 		}
 
 		private bool TryPrepareUberImageEffect<T>(PostProcessingComponentRenderTexture<T> component, Material material) where T : PostProcessingModel

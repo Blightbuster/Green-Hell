@@ -7,8 +7,113 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
 
-public class Item : Trigger
+public class Item : Trigger, IReplicatedBehaviour, ICustomReplicationInterval, IReplicatedTransformParams
 {
+	[HideInInspector]
+	public ItemSlot m_CurrentSlot
+	{
+		get
+		{
+			return this.m_CurrentSlotProp;
+		}
+		set
+		{
+			this.m_CurrentSlotProp = value;
+			this.UpdateScale(false);
+		}
+	}
+
+	[HideInInspector]
+	public bool m_InStorage
+	{
+		get
+		{
+			return this.m_InStorageProp;
+		}
+		set
+		{
+			this.m_InStorageProp = value;
+			this.UpdatePhx();
+			this.UpdateLayer();
+			this.UpdateScale(false);
+		}
+	}
+
+	[HideInInspector]
+	[Replicate(new string[]
+	{
+
+	})]
+	public bool m_InInventory
+	{
+		get
+		{
+			return this.m_InInventoryProp;
+		}
+		set
+		{
+			this.m_InInventoryProp = value;
+			this.UpdatePhx();
+			this.UpdateLayer();
+			this.UpdateScale(false);
+		}
+	}
+
+	[HideInInspector]
+	public bool m_OnCraftingTable
+	{
+		get
+		{
+			return this.m_OnCraftingTableProp;
+		}
+		set
+		{
+			this.m_OnCraftingTableProp = value;
+			this.UpdatePhx();
+			this.UpdateLayer();
+			this.UpdateScale(false);
+		}
+	}
+
+	protected int m_PhxStaticRequests
+	{
+		get
+		{
+			return this.m_PhxStaticRequestsProp;
+		}
+		set
+		{
+			this.m_PhxStaticRequestsProp = value;
+			this.UpdatePhx();
+		}
+	}
+
+	public bool m_StaticPhx
+	{
+		get
+		{
+			return this.m_StaticPhxProp;
+		}
+		set
+		{
+			this.m_StaticPhxProp = value;
+			this.UpdatePhx();
+		}
+	}
+
+	public bool m_ForceNoKinematic
+	{
+		get
+		{
+			return this.m_ForceNoKinematicProp;
+		}
+		set
+		{
+			this.m_ForceNoKinematicProp = value;
+			this.UpdatePhx();
+		}
+	}
+
 	protected override void Awake()
 	{
 		base.Awake();
@@ -18,15 +123,19 @@ public class Item : Trigger
 		DebugUtils.Assert(this.m_InfoName != "None", "m_InfoName of object " + base.name + " is not set!", true, DebugUtils.AssertType.Info);
 		this.m_Holder = base.transform.Find("Holder");
 		this.m_Rigidbody = base.gameObject.GetComponent<Rigidbody>();
+		if (this.m_Rigidbody)
+		{
+			this.m_DefaultDrag = this.m_Rigidbody.drag;
+		}
 		this.m_DamagerStart = base.gameObject.transform.FindDeepChild("DamageStart");
 		this.m_DamagerEnd = base.gameObject.transform.FindDeepChild("DamageEnd");
 		this.m_LODGroup = base.gameObject.GetComponent<LODGroup>();
 		this.InitInventorySlot();
-		string text = this.m_InfoName.ToString().ToLower();
-		this.m_IsPlant = text.Contains("plant");
-		this.m_IsTree = text.Contains("tree");
-		this.m_IsLeaf = text.Contains("leaf");
-		this.m_IsFallen = text.EndsWith("_fallen");
+		ItemID type = this.m_InfoName.Empty() ? ItemID.Banana : EnumUtils<ItemID>.GetValue(this.m_InfoName);
+		this.m_IsPlant = type.IsPlant();
+		this.m_IsTree = type.IsTree();
+		this.m_IsLeaf = type.IsLeaf();
+		this.m_IsFallen = type.IsFallen();
 		Transform transform = base.transform.Find("Pivot");
 		if (transform)
 		{
@@ -38,12 +147,35 @@ public class Item : Trigger
 			this.m_TrailRenderer.enabled = false;
 		}
 		this.m_CanBeOutlined = true;
-		this.m_DefaultLayer = ((!this.m_IsPlant && !this.m_IsTree) ? LayerMask.NameToLayer("Item") : base.gameObject.layer);
+		this.m_DefaultLayer = ((this.m_IsPlant || this.m_IsTree) ? base.gameObject.layer : LayerMask.NameToLayer("Item"));
+		this.SetLayer(base.transform, this.m_DefaultLayer);
+		this.m_Hook = base.gameObject.GetComponent<FishingHook>();
+		if (this.m_StaticPhx)
+		{
+			if (this.m_BoxCollider)
+			{
+				this.m_BoxCollider.isTrigger = true;
+			}
+			if (this.m_Rigidbody)
+			{
+				this.m_Rigidbody.isKinematic = true;
+			}
+			this.UpdatePhx();
+		}
+		if (base.name == "QuestItem_Key")
+		{
+			ItemsManager.Get().m_QuestItemKey = this;
+		}
+		this.SetupInfo();
 	}
 
 	public void InitInventorySlot()
 	{
 		if (this.m_InventorySlot)
+		{
+			return;
+		}
+		if (base.gameObject.GetComponent<DestroyIfNoChildren>())
 		{
 			return;
 		}
@@ -63,8 +195,12 @@ public class Item : Trigger
 
 	protected override void Start()
 	{
-		base.Start();
 		this.Initialize(true);
+		base.Start();
+		if (this.m_Rigidbody && !this.m_Rigidbody.isKinematic)
+		{
+			this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+		}
 	}
 
 	public void Initialize(bool im_register)
@@ -74,7 +210,6 @@ public class Item : Trigger
 			return;
 		}
 		this.m_Initialized = true;
-		this.SetupInfo();
 		if (this.m_InventorySlot)
 		{
 			this.m_InventorySlot.m_Camera = Inventory3DManager.Get().m_Camera;
@@ -95,6 +230,11 @@ public class Item : Trigger
 			Item.s_AllItemIDs.Add((int)this.m_Info.m_ID, 1);
 		}
 		Item.s_AllItems.Add(this);
+		this.m_ScenarioItem = false;
+		if (base.gameObject.scene.IsValid() && GreenHellGame.Instance.m_ScenarioScenes.Contains(base.gameObject.scene.name))
+		{
+			this.m_ScenarioItem = true;
+		}
 		if (GreenHellGame.ROADSHOW_DEMO)
 		{
 			if (this.m_Info.m_BackpackPocket == BackpackPocket.Front || this.m_Info.m_BackpackPocket == BackpackPocket.Right)
@@ -132,6 +272,29 @@ public class Item : Trigger
 		this.m_ThisRenderer = base.gameObject.GetComponent<Renderer>();
 		this.m_ChildrenRenderers = base.gameObject.GetComponentsInChildren<Renderer>(true);
 		this.m_DestroyableFallingObj = base.gameObject.GetComponent<DestroyableFallingObject>();
+		if (this.m_DestroyableFallingObj != null && this.m_AddAngularVelOnStart)
+		{
+			this.m_DestroyableFallingObj.AddAngularVelocityOnStart(this.m_AngularVelocityOnStart, this.m_AddAngularVelocityOnStartDuration);
+		}
+	}
+
+	public void AddAngularVelocityOnStart(Vector3 ang_vel, float duration)
+	{
+		this.m_AddAngularVelOnStart = true;
+		this.m_AngularVelocityOnStart = ang_vel;
+		this.m_AddAngularVelocityOnStartDuration = duration;
+	}
+
+	public static Item Find(ItemID id)
+	{
+		foreach (Item item in Item.s_AllItems)
+		{
+			if (item.GetInfoID() == id)
+			{
+				return item;
+			}
+		}
+		return null;
 	}
 
 	private void CreateNavMeshObstacle()
@@ -146,8 +309,7 @@ public class Item : Trigger
 		}
 		if (base.gameObject.GetComponent<NavMeshObstacle>() == null)
 		{
-			Mesh mesh = base.gameObject.GetMesh();
-			if (!mesh)
+			if (!base.gameObject.GetMesh())
 			{
 				Debug.Log("Can't find mesh of Item - " + this.m_InfoName);
 				return;
@@ -190,39 +352,84 @@ public class Item : Trigger
 
 	public virtual void OnAddToInventory()
 	{
+		this.StaticPhxRequestAdd();
+		this.m_InPlayersHand = false;
 		this.m_InInventory = true;
 		this.m_AttachedToSpear = false;
-		this.StaticPhxRequestAdd();
 		base.TryRemoveFromFallenObjectsMan();
 		this.ItemsManagerUnregister();
+		if (!this.m_WasTriggered)
+		{
+			this.m_WasTriggered = true;
+			this.m_FirstTriggerTime = MainLevel.Instance.m_TODSky.Cycle.GameTime;
+		}
+		this.m_StaticPhx = false;
 		this.m_ForceNoKinematic = false;
 	}
 
 	public virtual void OnRemoveFromInventory()
 	{
 		base.transform.parent = null;
-		this.m_InInventory = false;
 		this.StaticPhxRequestRemove();
+		this.m_InInventory = false;
 		this.ItemsManagerRegister(false);
 		this.m_ShownInInventory = false;
 	}
 
+	public virtual void OnAddToStorage(Storage storage)
+	{
+		this.m_Storage = storage;
+		this.StaticPhxRequestAdd();
+		this.m_InPlayersHand = false;
+		this.m_InStorage = true;
+		this.m_AttachedToSpear = false;
+		base.TryRemoveFromFallenObjectsMan();
+		this.ItemsManagerUnregister();
+		if (!this.m_WasTriggered)
+		{
+			this.m_WasTriggered = true;
+			this.m_FirstTriggerTime = MainLevel.Instance.m_TODSky.Cycle.GameTime;
+		}
+		this.m_StaticPhx = false;
+		this.m_ForceNoKinematic = false;
+	}
+
+	public virtual void OnRemoveFromStorage()
+	{
+		this.m_Storage = null;
+		if (!this.m_IsBeingDestroyed)
+		{
+			base.transform.parent = null;
+		}
+		this.StaticPhxRequestRemove();
+		this.m_InStorage = false;
+		this.ItemsManagerRegister(false);
+	}
+
 	public override bool CanTrigger()
 	{
+		if (this.m_CantTriggerDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
+		{
+			return false;
+		}
 		if (this.m_Thrown || this.m_BlockTrigger || this.m_HallucinationDisappearing)
 		{
 			return false;
 		}
-		if (!Inventory3DManager.Get().isActiveAndEnabled)
+		if (!Inventory3DManager.Get().isActiveAndEnabled && this.m_InPlayersHand)
 		{
-			bool flag = Player.Get().GetCurrentItem(Hand.Right) == this;
-			bool flag2 = Player.Get().GetCurrentItem(Hand.Left) == this;
-			if (flag || flag2)
-			{
-				return false;
-			}
+			return false;
 		}
-		return base.enabled && this.m_Info != null && this.m_Info.m_Health > 0f;
+		bool flag = base.enabled && this.m_Info != null && this.m_Info.m_Health > 0f;
+		if (this.m_Hook != null)
+		{
+			return this.m_Hook.CanTrigger();
+		}
+		if (this.m_CurrentSlot != null && this.m_CurrentSlot.m_IsHookBaitSlot)
+		{
+			return Inventory3DManager.Get().IsActive();
+		}
+		return (!(base.transform.parent != null) || !(base.transform.parent.GetComponent<AcreGrowProcess>() != null)) && flag;
 	}
 
 	public override string GetName()
@@ -234,9 +441,9 @@ public class Item : Trigger
 	{
 		if (this.m_Info.m_LockedInfoID != string.Empty && !ItemsManager.Get().m_UnlockedItemInfos.Contains(this.m_Info.m_ID))
 		{
-			return GreenHellGame.Instance.GetLocalization().Get(this.m_Info.m_LockedInfoID);
+			return GreenHellGame.Instance.GetLocalization().Get(this.m_Info.m_LockedInfoID, true);
 		}
-		return GreenHellGame.Instance.GetLocalization().Get(this.GetName());
+		return GreenHellGame.Instance.GetLocalization().Get(this.GetName(), true);
 	}
 
 	public override void GetInfoText(ref string result)
@@ -258,22 +465,31 @@ public class Item : Trigger
 	public override void OnExecute(TriggerAction.TYPE action)
 	{
 		base.OnExecute(action);
-		this.m_CanSave = true;
-		if (action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold)
+		this.m_CanSaveNotTriggered = true;
+		if (action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold || action == TriggerAction.TYPE.TakeHoldLong)
 		{
 			this.Take();
+			return;
 		}
-		else if (action == TriggerAction.TYPE.Expand)
+		if (action == TriggerAction.TYPE.Expand)
 		{
 			HUDItem.Get().Activate(this);
+			return;
 		}
-		else if (action == TriggerAction.TYPE.PickUp)
+		if (action == TriggerAction.TYPE.PickUp)
 		{
 			this.PickUp(true);
+			return;
 		}
-		else if (action == TriggerAction.TYPE.SwapHold)
+		if (action == TriggerAction.TYPE.SwapHold)
 		{
 			this.Swap();
+			return;
+		}
+		if (action == TriggerAction.TYPE.Pick)
+		{
+			Inventory3DManager.Get().m_BlockLMouseUP = true;
+			Inventory3DManager.Get().StartCarryItem(this, false);
 		}
 	}
 
@@ -283,12 +499,22 @@ public class Item : Trigger
 		{
 			return;
 		}
+		if (this.m_OnCraftingTable)
+		{
+			actions.Add(TriggerAction.TYPE.Remove);
+			return;
+		}
 		if (this.m_Info.m_CanBeAddedToInventory)
 		{
+			if (GreenHellGame.IsPadControllerActive() && Inventory3DManager.Get().IsActive() && Inventory3DManager.Get().CanSetCarriedItem(true))
+			{
+				actions.Add(TriggerAction.TYPE.Pick);
+			}
 			actions.Add(TriggerAction.TYPE.Take);
 			actions.Add(TriggerAction.TYPE.Expand);
+			return;
 		}
-		else if (!this.m_AttachedToSpear && (this.m_Info.m_Harvestable || this.m_Info.m_Eatable || this.m_Info.CanDrink() || this.m_Info.m_Craftable))
+		if (!this.m_AttachedToSpear && (this.m_Info.m_Harvestable || this.m_Info.m_Eatable || this.m_Info.CanDrink() || this.m_Info.m_Craftable))
 		{
 			actions.Add(TriggerAction.TYPE.Expand);
 		}
@@ -311,6 +537,7 @@ public class Item : Trigger
 			base.Disappear(true);
 			return false;
 		}
+		this.ReplRequestOwnership(false);
 		if (base.transform.parent != null)
 		{
 			DestroyIfNoChildren component = base.transform.parent.GetComponent<DestroyIfNoChildren>();
@@ -319,10 +546,22 @@ public class Item : Trigger
 				component.OnObjectDestroyed();
 			}
 		}
+		if (this.m_Storage)
+		{
+			this.m_Storage.RemoveItem(this, false);
+		}
 		ItemSlot currentSlot = this.m_CurrentSlot;
 		if (this.m_CurrentSlot)
 		{
-			this.m_CurrentSlot.RemoveItem();
+			this.m_CurrentSlot.RemoveItem(this, false);
+		}
+		if (!this.m_CurrentSlot && this.m_InventorySlot && this.m_InventorySlot.m_Items.Count > 0)
+		{
+			this.m_InventorySlot.RemoveItem(this, false);
+		}
+		if (this.m_Info.m_InventoryCellsGroup != null)
+		{
+			this.m_Info.m_InventoryCellsGroup.Remove(this);
 		}
 		this.m_PhxStaticRequests = 0;
 		this.m_StaticPhx = false;
@@ -333,12 +572,20 @@ public class Item : Trigger
 		}
 		else
 		{
-			InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(this, null, null, true, false, true, true, true);
-			if (insertResult != InventoryBackpack.InsertResult.Ok)
+			Vector3 position = base.transform.position;
+			Quaternion rotation = base.transform.rotation;
+			InsertResult insertResult = InventoryBackpack.Get().InsertItem(this, null, null, true, false, true, true, true);
+			if (insertResult != InsertResult.Ok)
 			{
 				if (currentSlot)
 				{
 					currentSlot.InsertItem(this);
+				}
+				else if (insertResult == InsertResult.NoSpace)
+				{
+					base.transform.position = position;
+					base.transform.rotation = rotation;
+					this.m_Rigidbody.AddForce(Vector3.up * this.m_Rigidbody.mass * 5f);
 				}
 				return false;
 			}
@@ -374,7 +621,7 @@ public class Item : Trigger
 		{
 			num++;
 		}
-		hudmessages.AddMessage(item.m_Info.GetNameToDisplayLocalized() + " (" + num.ToString() + ")", new Color?(Color.white), HUDMessageIcon.Item, item.GetIconName());
+		hudmessages.AddMessage(item.m_Info.GetNameToDisplayLocalized() + " (" + num.ToString() + ")", new Color?(Color.white), HUDMessageIcon.Item, item.GetIconName(), null);
 	}
 
 	public virtual void OnTake()
@@ -390,11 +637,21 @@ public class Item : Trigger
 		{
 			this.m_Rigidbody.WakeUp();
 		}
-		if (!Inventory3DManager.Get().gameObject.activeSelf && this.m_CurrentSlot == InventoryBackpack.Get().m_EquippedItemSlot)
+		if (!Inventory3DManager.Get().gameObject.activeSelf && this.m_CurrentSlot == InventoryBackpack.Get().m_EquippedItemSlot && !SwimController.Get().IsActive())
 		{
-			Player.Get().SetWantedItem((!this.m_Info.IsBow()) ? Hand.Right : Hand.Left, this, true);
+			Player.Get().SetWantedItem(this.m_Info.IsBow() ? Hand.Left : Hand.Right, this, true);
 		}
 		ItemsManager.Get().OnTaken(this.m_Info.m_ID);
+		base.TryRemoveFromFallenObjectsMan();
+		this.m_ForceZeroLocalPos = false;
+		if (this.m_Info.m_ID == ItemID.animal_droppings_item || this.m_Info.m_ID == ItemID.animal_droppings_toHold)
+		{
+			PlayerConditionModule.Get().GetDirtinessAdd(GetDirtyReason.TakeAnimalDroppings, null);
+		}
+		if (this.m_Acre)
+		{
+			this.m_Acre.OnTake(this);
+		}
 	}
 
 	public void Swap()
@@ -408,6 +665,8 @@ public class Item : Trigger
 		{
 			return;
 		}
+		Item equippedItem = InventoryBackpack.Get().m_EquippedItem;
+		ItemSlot currentSlot = this.m_CurrentSlot;
 		if (Inventory3DManager.Get().gameObject.activeSelf)
 		{
 			InventoryBackpack.Get().RemoveItem(InventoryBackpack.Get().m_EquippedItem, false);
@@ -423,6 +682,18 @@ public class Item : Trigger
 			Player.Get().StartControllerInternal();
 		}
 		this.Take();
+		if (currentSlot)
+		{
+			if (currentSlot.CanInsertItem(equippedItem))
+			{
+				currentSlot.InsertItem(equippedItem);
+				return;
+			}
+			if (currentSlot.m_ItemParent && currentSlot.m_ItemParent.m_Info.m_ID == ItemID.Weapon_Rack)
+			{
+				((WeaponRack)currentSlot.m_ItemParent).InsertWeapon(equippedItem);
+			}
+		}
 	}
 
 	public bool PickUp(bool show_msg = true)
@@ -432,10 +703,11 @@ public class Item : Trigger
 			base.Disappear(true);
 			return false;
 		}
+		this.ReplRequestOwnership(false);
 		this.m_StaticPhx = false;
 		if (CraftingManager.Get().gameObject.activeSelf && CraftingManager.Get().ContainsItem(this))
 		{
-			CraftingManager.Get().RemoveItem(this);
+			CraftingManager.Get().RemoveItem(this, false);
 		}
 		if (LiquidInHandsController.Get().IsActive())
 		{
@@ -459,6 +731,7 @@ public class Item : Trigger
 			currentItem.m_ShownInInventory = true;
 			InventoryBackpack.Get().InsertItem(currentItem, InventoryBackpack.Get().m_EquippedItemSlot, null, true, true, true, true, false);
 		}
+		Player.Get().UpdateHands();
 		if (show_msg)
 		{
 			this.AddItemsCountMessage(this);
@@ -484,20 +757,22 @@ public class Item : Trigger
 		bool flag = InventoryBackpack.Get().Contains(this);
 		if (flag)
 		{
-			InventoryBackpack.Get().RemoveItem(this, false);
+			InventoryBackpack.Get().RemoveItem(this, true);
 		}
 		List<ItemID> harvestingResultItems = this.m_Info.m_HarvestingResultItems;
 		for (int i = 0; i < harvestingResultItems.Count; i++)
 		{
 			ItemID item_id = harvestingResultItems[i];
 			Item item = ItemsManager.Get().CreateItem(item_id, false, Vector3.zero, Quaternion.identity);
-			item.m_Info.m_CreationTime = this.m_Info.m_CreationTime;
-			InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
-			if (insertResult == InventoryBackpack.InsertResult.Ok)
+			item.m_WasTriggered = true;
+			item.m_FirstTriggerTime = MainLevel.Instance.m_TODSky.Cycle.GameTime;
+			if (InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true) == InsertResult.Ok)
 			{
 				this.AddItemsCountMessage(item);
+				PlayerAudioModule.Get().PlayItemSound(item.m_Info.m_GrabSound);
 			}
 		}
+		this.ReplRequestOwnership(false);
 		UnityEngine.Object.Destroy(base.gameObject);
 		if (flag)
 		{
@@ -509,13 +784,14 @@ public class Item : Trigger
 	{
 		if (CraftingManager.Get().gameObject.activeSelf && CraftingManager.Get().ContainsItem(this))
 		{
-			CraftingManager.Get().RemoveItem(this);
+			CraftingManager.Get().RemoveItem(this, false);
 		}
 		if (!this.m_CurrentSlot && this.m_InventorySlot && this.m_InventorySlot.m_Items.Count > 0)
 		{
 			this.m_InventorySlot.RemoveItem(this, false);
+			return;
 		}
-		else if (this.m_CurrentSlot && this.m_CurrentSlot.m_InventoryStackSlot)
+		if (this.m_CurrentSlot && this.m_CurrentSlot.m_InventoryStackSlot)
 		{
 			this.m_CurrentSlot.RemoveItem(this, false);
 		}
@@ -529,11 +805,6 @@ public class Item : Trigger
 	{
 	}
 
-	public override Vector3 GetHudInfoDisplayOffset()
-	{
-		return this.m_Info.m_HudInfoDisplayOffset;
-	}
-
 	protected override void OnEnable()
 	{
 		base.OnEnable();
@@ -541,6 +812,9 @@ public class Item : Trigger
 		{
 			this.m_InventorySlot.gameObject.SetActive(true);
 		}
+		this.UpdateLayer();
+		this.UpdatePhx();
+		this.m_LocalScaleOnEnable = base.transform.lossyScale;
 	}
 
 	protected override void OnDisable()
@@ -550,23 +824,36 @@ public class Item : Trigger
 		{
 			this.m_InventorySlot.gameObject.SetActive(false);
 		}
-		base.SetLayer(base.transform, this.m_DefaultLayer);
+		this.m_CurrentWaters.Clear();
+		if (this.m_Rigidbody)
+		{
+			this.m_Rigidbody.drag = this.m_DefaultDrag;
+		}
+		this.SetLayer(base.transform, this.m_DefaultLayer);
 	}
 
 	protected override void Update()
 	{
 		base.Update();
-		ItemsManager.Get().OnObjectMoved(base.gameObject);
+		Vector3 position = base.transform.position;
+		if ((position - this.m_LastPos).sqrMagnitude > 0.05f)
+		{
+			ItemsManager.Get().OnObjectMoved(base.gameObject);
+			this.m_LastPos = position;
+		}
 		if (this.m_Info != null && this.m_Info.m_Health <= 0f)
 		{
-			bool enabled = Mathf.Sin(Time.time * 20f) > 0f;
-			if (this.m_ThisRenderer != null)
+			if (this.m_TimeFromDestroyToDissapear > 0f)
 			{
-				this.m_ThisRenderer.enabled = enabled;
+				bool enabled = Mathf.Sin(Time.time * 20f) > 0f;
+				if (this.m_ThisRenderer != null)
+				{
+					this.m_ThisRenderer.enabled = enabled;
+				}
 			}
 			for (int i = 0; i < this.m_ChildrenRenderers.Length; i++)
 			{
-				this.m_ChildrenRenderers[i].enabled = enabled;
+				this.m_ChildrenRenderers[i].enabled = base.enabled;
 			}
 			if (this.m_TrailRenderer)
 			{
@@ -584,7 +871,7 @@ public class Item : Trigger
 			{
 				InventoryBackpack.Get().m_EquippedItem = null;
 			}
-			if (Time.time > this.m_DestroyTime + this.m_TimeFromDestroyToDissapear)
+			if (Time.time > this.m_DestroyTime + this.m_TimeFromDestroyToDissapear && (this.m_Info.IsWeapon() || this.m_Info.IsArmor() || !base.gameObject.activeSelf || base.gameObject.IsInvisibleInaccurateCheck()))
 			{
 				for (int j = 0; j < this.m_Info.m_ItemsToBackpackOnDestroy.Count; j++)
 				{
@@ -594,14 +881,16 @@ public class Item : Trigger
 						item.Take();
 					}
 				}
-				UnityEngine.Object.Destroy(base.gameObject);
+				if (this.ReplIsOwner())
+				{
+					UnityEngine.Object.Destroy(base.gameObject);
+					return;
+				}
 			}
 		}
-		this.UpdatePhx();
 		this.UpdateLOD();
-		this.UpdateScale(false);
-		this.UpdateHealth();
 		this.UpdateNavMeshObstacle();
+		this.CheckUnderTerrain();
 		if (this.m_ForceZeroLocalPos)
 		{
 			if (base.transform.parent)
@@ -613,6 +902,7 @@ public class Item : Trigger
 				this.m_ForceZeroLocalPos = false;
 			}
 		}
+		this.UpdateHealth();
 	}
 
 	private void UpdateNavMeshObstacle()
@@ -640,27 +930,52 @@ public class Item : Trigger
 		}
 	}
 
+	private void CheckUnderTerrain()
+	{
+		if (Time.time - this.m_LastCheckUnderTerrain < 2f)
+		{
+			return;
+		}
+		if (Inventory3DManager.Get().m_CarriedItem != this && !Inventory3DManager.Get().m_StackItems.Contains(this) && !this.m_InInventory && !this.m_InStorage && !this.m_OnCraftingTable && base.transform.position.y < MainLevel.GetTerrainY(base.transform.position) - 1f)
+		{
+			this.m_CurrentSlot;
+		}
+		this.m_LastCheckUnderTerrain = Time.time;
+	}
+
 	public void StaticPhxRequestAdd()
 	{
-		this.m_PhxStaticRequests++;
+		int phxStaticRequests = this.m_PhxStaticRequests + 1;
+		this.m_PhxStaticRequests = phxStaticRequests;
+		this.UpdatePhx();
 	}
 
 	public void StaticPhxRequestRemove()
 	{
 		if (this.m_PhxStaticRequests > 0)
 		{
-			this.m_PhxStaticRequests--;
+			int phxStaticRequests = this.m_PhxStaticRequests - 1;
+			this.m_PhxStaticRequests = phxStaticRequests;
+			this.UpdatePhx();
 		}
 	}
 
 	public void StaticPhxRequestReset()
 	{
-		this.m_PhxStaticRequests = 0;
+		if (this.m_PhxStaticRequests != 0)
+		{
+			this.m_PhxStaticRequests = 0;
+			this.UpdatePhx();
+		}
 	}
 
 	public virtual void UpdatePhx()
 	{
-		bool flag = this.m_PhxStaticRequests > 0 || this.m_StaticPhx;
+		if (this.m_IsBeingDestroyed)
+		{
+			return;
+		}
+		bool flag = this.m_PhxStaticRequests > 0 || this.m_StaticPhx || this.m_AttachedToSpear;
 		bool flag2 = flag;
 		bool flag3 = !this.m_ForceNoKinematic && flag;
 		if (!flag && base.transform.parent && this.m_DestroyableFallingObj == null)
@@ -669,13 +984,13 @@ public class Item : Trigger
 			if (Item.s_ComponentsCache.Count > 0)
 			{
 				flag2 = false;
-				if (!this.m_ForceNoKinematic)
+				if (!this.m_ForceNoKinematic && this.m_NoKinematicIfParentIsObject != base.transform.parent.gameObject)
 				{
 					flag3 = true;
 				}
 			}
 		}
-		if (BodyInspectionController.Get().m_CarryingItemDeleech == this)
+		if (BodyInspectionController.Get() && BodyInspectionController.Get().m_CarryingItemDeleech == this)
 		{
 			flag2 = false;
 			if (!this.m_ForceNoKinematic)
@@ -689,36 +1004,44 @@ public class Item : Trigger
 		}
 		if (this.m_Rigidbody && this.m_Rigidbody.isKinematic != flag3)
 		{
+			if (flag3)
+			{
+				this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+			}
 			this.m_Rigidbody.isKinematic = flag3;
+		}
+		if (this.m_Rigidbody && !this.m_Rigidbody.isKinematic && !this.m_Thrown)
+		{
+			this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
 		}
 	}
 
-	protected override void UpdateLayer()
+	public override void UpdateLayer()
 	{
-		if (this.m_ForcedLayer != 0)
+		if (this.m_Info == null)
 		{
-			if (base.gameObject.layer != this.m_ForcedLayer)
+			return;
+		}
+		if (base.m_ForcedLayer != 0)
+		{
+			if (base.gameObject.layer != base.m_ForcedLayer)
 			{
-				base.SetLayer(base.transform, this.m_ForcedLayer);
+				this.SetLayer(base.transform, base.m_ForcedLayer);
 			}
 			return;
 		}
-		if (!this.m_Info.m_CanBeFocusedInInventory)
-		{
-			return;
-		}
 		int num = this.m_DefaultLayer;
-		if (this == TriggerController.Get().GetBestTrigger() && this.CanBeOutlined())
+		if (TriggerController.Get() && this == TriggerController.Get().GetBestTrigger() && this.CanBeOutlined())
 		{
 			num = this.m_OutlineLayer;
 		}
-		else if (this.m_InInventory || this.m_OnCraftingTable || Inventory3DManager.Get().m_CarriedItem == this || Inventory3DManager.Get().m_NewCraftedItem == this)
+		else if (this.m_InInventory || this.m_OnCraftingTable || this.m_InStorage || (Inventory3DManager.Get() && (Inventory3DManager.Get().m_CarriedItem == this || Inventory3DManager.Get().m_StackItems.Contains(this) || Inventory3DManager.Get().m_NewCraftedItem == this)))
 		{
 			num = this.m_InventoryLayer;
 		}
 		if (base.gameObject.layer != num)
 		{
-			base.SetLayer(base.transform, num);
+			this.SetLayer(base.transform, num);
 		}
 	}
 
@@ -728,7 +1051,7 @@ public class Item : Trigger
 		{
 			return;
 		}
-		int num = (!this.m_InInventory && !this.m_OnCraftingTable && !(Inventory3DManager.Get().m_CarriedItem == this)) ? -1 : 0;
+		int num = (this.m_InInventory || this.m_OnCraftingTable || this.m_InStorage || Inventory3DManager.Get().m_CarriedItem == this) ? 0 : -1;
 		if ((float)num != this.m_ForcedLOD)
 		{
 			this.m_LODGroup.ForceLOD(num);
@@ -747,11 +1070,15 @@ public class Item : Trigger
 		{
 			this.m_WantedScale = Vector3.one;
 		}
-		else if (force_inv_scale || (this.m_InInventory && (!this.m_CurrentSlot || !this.m_CurrentSlot.m_InventoryStackSlot)) || this.m_OnCraftingTable || Inventory3DManager.Get().m_CarriedItem == this)
+		else if (Inventory3DManager.Get().m_StackItems.Contains(this))
+		{
+			this.m_WantedScale = Vector3.one;
+		}
+		else if (force_inv_scale || ((this.m_InInventory || this.m_InStorage) && (!this.m_CurrentSlot || !this.m_CurrentSlot.m_InventoryStackSlot)) || this.m_OnCraftingTable || Inventory3DManager.Get().m_CarriedItem == this || Inventory3DManager.Get().m_StackItems.Contains(this))
 		{
 			this.m_WantedScale = this.m_InventoryLocalScale;
 		}
-		else if (this.m_Info.IsArrow() && ((Arrow)this).m_Loaded)
+		else if (this.m_Info != null && this.m_Info.IsArrow() && ((Arrow)this).m_Loaded)
 		{
 			this.m_WantedScale = Vector3.one;
 		}
@@ -765,14 +1092,89 @@ public class Item : Trigger
 		}
 	}
 
-	private void UpdateHealth()
+	private bool CanLoseHealth()
 	{
-		if (this.m_Info.m_HealthLossPerSec > 0f && this.m_Info.m_Health > 0f)
+		if (this.m_Info.m_Health <= 0f)
 		{
-			this.m_Info.m_Health -= this.m_Info.m_HealthLossPerSec * Time.deltaTime;
+			return false;
+		}
+		if (this.m_Info.m_HealthLossPerSec <= 0f)
+		{
+			return false;
+		}
+		if (this.m_Info.m_ID == ItemID.Fire)
+		{
+			return true;
+		}
+		if (this.m_InStorage || this.m_InInventory || this.m_OnCraftingTable)
+		{
+			return false;
+		}
+		if (this.m_CurrentSlot)
+		{
+			return false;
+		}
+		if (Inventory3DManager.Get().m_CarriedItem == this)
+		{
+			return false;
+		}
+		if (Inventory3DManager.Get().m_StackItems.Contains(this))
+		{
+			return false;
+		}
+		if (this.m_Info.IsArmor() && ((Armor)this).m_Limb != Limb.None)
+		{
+			return false;
+		}
+		if (this.m_Info.IsArrow() && ((Arrow)this).m_Loaded)
+		{
+			return false;
+		}
+		Item currentItem = Player.Get().GetCurrentItem();
+		return (!currentItem || (!(currentItem == this) && !currentItem.m_Info.IsHeavyObject())) && (!this.m_Info.IsHeavyObject() || !currentItem || !currentItem.m_Info.IsHeavyObject() || !((HeavyObject)currentItem).m_Attached.ContainsValue((HeavyObject)this)) && (!this.m_SceneObject || this.m_WasTriggered) && (!CraftingController.Get().IsActive() || !CraftingController.Get().m_Items.Contains(this));
+	}
+
+	public virtual void UpdateHealth()
+	{
+		if (!this.ReplIsOwner())
+		{
+			return;
+		}
+		if (this.m_LastHealthUpdate == 0f)
+		{
+			this.m_LastHealthUpdate = Time.time + (float)(this.m_UniqueID % 100) * 0.01f;
+			return;
+		}
+		if (Item.s_ItemUpdatesThisFrame > 100)
+		{
+			if (this.m_LastHealthUpdate > Time.time - 0.6f)
+			{
+				return;
+			}
+		}
+		else if (this.m_LastHealthUpdate > Time.time - 0.2f)
+		{
+			return;
+		}
+		float num = Time.time - this.m_LastHealthUpdate;
+		bool flag = false;
+		if (this.CanLoseHealth())
+		{
+			float num2 = this.m_Info.m_HealthLossPerSec;
+			if (this.GetInfoID() != ItemID.Fire && RainManager.Get().IsRain() && !RainManager.Get().IsInRainCutter(base.transform.position))
+			{
+				num2 *= 2f;
+			}
+			this.m_Info.m_Health -= num2 * num;
 			if (this.m_Info.m_Health < 0f)
 			{
 				this.m_Info.m_Health = 0f;
+				flag = true;
+				if (!base.gameObject.activeSelf)
+				{
+					UnityEngine.Object.Destroy(base.gameObject);
+					return;
+				}
 			}
 		}
 		if (this.m_Info.m_Health <= 0f)
@@ -780,12 +1182,48 @@ public class Item : Trigger
 			if (Time.time < this.m_DestroyTime)
 			{
 				this.m_DestroyTime = Time.time;
-				PlayerAudioModule.Get().PlayToolDestroyedSound();
+				if (!flag)
+				{
+					PlayerAudioModule.Get().PlayToolDestroyedSound();
+				}
 			}
 			Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
 			if (currentItem && currentItem.Equals(this))
 			{
 				Player.Get().OnItemDestroyed(this);
+			}
+		}
+		Item.s_ItemUpdatesThisFrame++;
+		this.m_LastHealthUpdate = Time.time;
+	}
+
+	private void OnDestroyToCollect()
+	{
+		for (int i = 0; i < this.m_ObjectsToCollect.Count; i++)
+		{
+			if (this.m_ObjectsToCollect[i] != null)
+			{
+				PlantFruit component = this.m_ObjectsToCollect[i].GetComponent<PlantFruit>();
+				if (component)
+				{
+					ItemsManager.Get().CreateItem(component.m_ItemInfo.m_ID, true, this.m_ObjectsToCollect[i].transform);
+				}
+				else
+				{
+					ItemReplacer component2 = this.m_ObjectsToCollect[i].GetComponent<ItemReplacer>();
+					if (component2)
+					{
+						ItemsManager.Get().CreateItem(component2.m_ReplaceInfo.m_ID, true, this.m_ObjectsToCollect[i].transform);
+					}
+					else
+					{
+						Food component3 = this.m_ObjectsToCollect[i].GetComponent<Food>();
+						if (component3)
+						{
+							component3.transform.SetParent(null);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -801,15 +1239,28 @@ public class Item : Trigger
 		{
 			InventoryBackpack.Get().RemoveItem(this, true);
 		}
+		if (this.m_Storage)
+		{
+			this.m_Storage.RemoveItem(this, true);
+		}
+		if (this.m_Acre)
+		{
+			this.m_Acre.OnDestroyPlant(base.gameObject);
+		}
 		if (HUDProcess.Get())
 		{
 			HUDProcess.Get().UnregisterProcess(this);
 		}
+		if (InventoryBackpack.Get().m_EquippedItem == this)
+		{
+			InventoryBackpack.Get().m_EquippedItem = null;
+		}
+		HUDItem.Get().OnDestroyItem(this);
 		if (this.m_Group)
 		{
 			this.m_Group.RemoveObject(base.gameObject);
 		}
-		BalanceSystem.Get().OnItemDestroyed(this);
+		BalanceSystem20.Get().OnItemDestroyed(this);
 		base.TryRemoveFromFallenObjectsMan();
 		if (this.m_Info != null && !this.m_Info.m_Static)
 		{
@@ -829,6 +1280,25 @@ public class Item : Trigger
 				Item.s_AllItemIDs[(int)this.m_Info.m_ID] = Item.s_AllItemIDs[(int)this.m_Info.m_ID] - 1;
 			}
 		}
+		if (Player.Get())
+		{
+			if (Player.Get().GetCurrentItem(Hand.Right) == this)
+			{
+				Player.Get().SetCurrentItem(Hand.Right, null);
+			}
+			if (Player.Get().GetCurrentItem(Hand.Left) == this)
+			{
+				Player.Get().SetCurrentItem(Hand.Left, null);
+			}
+			if (Player.Get().GetWantedItem(Hand.Right) == this)
+			{
+				Player.Get().SetWantedItem(Hand.Right, null, true);
+			}
+			if (Player.Get().GetWantedItem(Hand.Left) == this)
+			{
+				Player.Get().SetWantedItem(Hand.Left, null, true);
+			}
+		}
 	}
 
 	public override bool TakeDamage(DamageInfo damage_info)
@@ -844,6 +1314,10 @@ public class Item : Trigger
 		}
 		if (this.m_DestroyableObject)
 		{
+			if (this.ReplIsReplicable())
+			{
+				this.ReplRequestOwnership(false);
+			}
 			this.m_DestroyableObject.TakeDamage(damage_info);
 			return false;
 		}
@@ -871,12 +1345,17 @@ public class Item : Trigger
 		SaveGame.SaveVal("ItemPos" + index, base.transform.position);
 		SaveGame.SaveVal("ItemRot" + index, base.transform.rotation);
 		SaveGame.SaveVal("ItemActive" + index, base.gameObject.activeSelf);
+		SaveGame.SaveVal("ItemEnabled" + index, base.enabled);
+		Vector3 localScale = base.transform.localScale;
+		SaveGame.SaveVal("ItemScale" + index, localScale);
+		SaveGame.SaveVal("ItemDefaultScale" + index, this.m_DefaultLocalScale);
 		SaveGame.SaveVal("ItemPlayerHL" + index, Player.Get().GetCurrentItem(Hand.Left) == this);
 		SaveGame.SaveVal("ItemPlayerHR" + index, Player.Get().GetCurrentItem(Hand.Right) == this);
 		SaveGame.SaveVal("ItemShown" + index, this.m_ShownInInventory);
 		SaveGame.SaveVal("ItemInvRot" + index, this.m_Info.m_InventoryRotated);
 		SaveGame.SaveVal("ItemStatic" + index, this.m_PhxStaticRequests);
 		SaveGame.SaveVal("ItemInv" + index, this.m_InInventory);
+		SaveGame.SaveVal("ItemStorage" + index, this.m_InStorage);
 		if (this.m_InInventory)
 		{
 			bool flag = this.m_CurrentSlot != null;
@@ -890,7 +1369,7 @@ public class Item : Trigger
 				SaveGame.SaveVal("ItemInvGrCount" + index, this.m_Info.m_InventoryCellsGroup.m_Cells.Count);
 				for (int i = 0; i < this.m_Info.m_InventoryCellsGroup.m_Cells.Count; i++)
 				{
-					SaveGame.SaveVal("ItemInvGrCell" + index + i, this.m_Info.m_InventoryCellsGroup.m_Cells[i].m_Object.name);
+					SaveGame.SaveVal("ItemInvGrCell" + index * this.m_SaveLoadIndexMul + i, this.m_Info.m_InventoryCellsGroup.m_Cells[i].m_Object.name);
 				}
 				SaveGame.SaveVal("ItemInvGrPos" + index, this.m_Info.m_InventoryCellsGroup.m_CenterWorld);
 			}
@@ -901,6 +1380,39 @@ public class Item : Trigger
 			else if (flag)
 			{
 				SaveGame.SaveVal("ItemInvSlotName" + index, this.m_CurrentSlot.name);
+			}
+		}
+		else if (this.m_InStorage && this.m_Storage)
+		{
+			if (this.m_Info.m_InventoryCellsGroup == null)
+			{
+				DebugUtils.Assert(string.Concat(new string[]
+				{
+					"Item.Save, m_InStorage == true, m_Info.m_InventoryCellsGroup == null failed to save, previously it caused crash #http://195.136.168.102/mantis/view.php?id=4683 \nitem_name ",
+					base.gameObject.name,
+					"ItemID ",
+					this.m_Info.m_ID.ToString(),
+					" position ",
+					base.transform.position.ToString()
+				}), true, DebugUtils.AssertType.Info);
+			}
+			else
+			{
+				bool flag4 = this.m_CurrentSlot && this.m_CurrentSlot.IsStack() && this.m_CurrentSlot.m_ItemParent;
+				SaveGame.SaveVal("ItemStorageInStackSlot" + index, flag4);
+				bool val = this.m_Info.m_InventoryCellsGroup != null;
+				SaveGame.SaveVal("ItemStorageInCellGr" + index, val);
+				SaveGame.SaveVal("ItemStorageGrCount" + index, this.m_Info.m_InventoryCellsGroup.m_Cells.Count);
+				for (int j = 0; j < this.m_Info.m_InventoryCellsGroup.m_Cells.Count; j++)
+				{
+					SaveGame.SaveVal("ItemStorageGrCell" + index * this.m_SaveLoadIndexMul + j, this.m_Info.m_InventoryCellsGroup.m_Cells[j].m_Object.name);
+				}
+				SaveGame.SaveVal("ItemStoragePos" + index, this.m_Storage.transform.position);
+				SaveGame.SaveVal("ItemStorageGrPos" + index, this.m_Info.m_InventoryCellsGroup.m_CenterWorld);
+				if (flag4)
+				{
+					SaveGame.SaveVal("ItemStorageStackParentId" + index, this.m_CurrentSlot.m_ItemParent.m_UniqueID);
+				}
 			}
 		}
 		else
@@ -917,48 +1429,111 @@ public class Item : Trigger
 		SaveGame.SaveVal("CreationTime" + index, this.m_Info.m_CreationTime);
 		SaveGame.SaveVal("ItemHealth" + index, this.m_Info.m_Health);
 		SaveGame.SaveVal("EquippedItem" + index, InventoryBackpack.Get().m_EquippedItem == this);
+		FishingRod component = base.gameObject.GetComponent<FishingRod>();
+		if (component)
+		{
+			component.Save(index);
+		}
+		SaveGame.SaveVal("ItemStaticPhx" + index, this.m_StaticPhx);
 	}
 
 	public virtual void Load(int index)
 	{
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate11)
+		{
+			this.m_SaveLoadIndexMul = 10000;
+		}
+		else
+		{
+			this.m_SaveLoadIndexMul = 1000;
+		}
 		this.m_UniqueID = SaveGame.LoadIVal("ItemUniqueID" + index);
 		base.gameObject.name = SaveGame.LoadSVal("ItemName" + index);
 		base.transform.rotation = SaveGame.LoadQVal("ItemRot" + index);
-		base.transform.position = SaveGame.LoadV3Val("ItemPos" + index);
-		base.gameObject.SetActive(SaveGame.LoadBVal("ItemActive" + index));
+		Vector3 vector = SaveGame.LoadV3Val("ItemPos" + index);
+		if (float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z))
+		{
+			ItemsManager.Get().AddItemToDestroy(this);
+		}
+		else
+		{
+			base.transform.position = vector;
+		}
+		if (!this.IsCharcoalFurnace() && !this.IsMudMixer())
+		{
+			base.gameObject.SetActive(SaveGame.LoadBVal("ItemActive" + index));
+		}
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionReleaseCandidate)
+		{
+			base.enabled = SaveGame.LoadBVal("ItemEnabled" + index);
+		}
 		if (SaveGame.LoadBVal("ItemPlayerHL" + index))
 		{
 			Player.Get().SetWantedItem(Hand.Left, this, true);
+			base.transform.localScale = this.m_InventoryLocalScale;
 		}
 		if (SaveGame.LoadBVal("ItemPlayerHR" + index))
 		{
-			Player.Get().SetWantedItem(Hand.Right, this, true);
+			Player.Get().SetWantedItem(Hand.Right, this, false);
+			base.transform.localScale = this.m_InventoryLocalScale;
+		}
+		else if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionReleaseCandidate)
+		{
+			base.transform.localScale = SaveGame.LoadV3Val("ItemScale" + index);
+			Vector3 vector2 = SaveGame.LoadV3Val("ItemDefaultScale" + index);
+			if (vector2 != Vector3.zero)
+			{
+				this.m_DefaultLocalScale = vector2;
+			}
+			else
+			{
+				this.m_DefaultLocalScale = base.transform.localScale;
+			}
 		}
 		this.m_ShownInInventory = SaveGame.LoadBVal("ItemShown" + index);
 		this.m_Info.m_InventoryRotated = SaveGame.LoadBVal("ItemInvRot" + index);
 		this.m_PhxStaticRequests = SaveGame.LoadIVal("ItemStatic" + index);
+		this.m_InStorage = (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate11 && SaveGame.LoadBVal("ItemStorage" + index));
 		this.m_InInventory = SaveGame.LoadBVal("ItemInv" + index);
 		if (this.m_InInventory)
 		{
 			this.m_PhxStaticRequests = 0;
 			bool flag = SaveGame.LoadBVal("ItemInvInSlot" + index);
 			bool flag2 = SaveGame.LoadBVal("ItemInvInStackSlot" + index);
-			bool flag3 = SaveGame.LoadBVal("ItemInvInCellGr" + index);
-			if (flag3 && !flag2)
+			if (SaveGame.LoadBVal("ItemInvInCellGr" + index) && !flag2)
 			{
+				InventoryBackpack.Get().SetBackpackTransform(this.m_Info.m_BackpackPocket);
 				InventoryCellsGroup inventoryCellsGroup = null;
 				int num = SaveGame.LoadIVal("ItemInvGrCount" + index);
 				if (num > 0)
 				{
-					inventoryCellsGroup = new InventoryCellsGroup();
+					float num2 = (float)((SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate10) ? this.m_SaveLoadIndexMul : 1);
+					inventoryCellsGroup = new InventoryCellsGroup(this.m_Info.m_BackpackPocket);
 					for (int i = 0; i < num; i++)
 					{
-						inventoryCellsGroup.m_Cells.Add(InventoryBackpack.Get().GetCellByName(SaveGame.LoadSVal("ItemInvGrCell" + index + i), this.m_Info.m_BackpackPocket));
+						InventoryCell cellByName = InventoryBackpack.Get().GetCellByName(SaveGame.LoadSVal("ItemInvGrCell" + (float)index * num2 + i), this.m_Info.m_BackpackPocket);
+						if (cellByName == null)
+						{
+							inventoryCellsGroup = null;
+							break;
+						}
+						inventoryCellsGroup.m_Cells.Add(cellByName);
 					}
-					inventoryCellsGroup.m_CenterWorld = SaveGame.LoadV3Val("ItemInvGrPos" + index);
-					inventoryCellsGroup.Setup();
+					if (inventoryCellsGroup != null)
+					{
+						inventoryCellsGroup.m_CenterWorld = SaveGame.LoadV3Val("ItemInvGrPos" + index);
+						inventoryCellsGroup.Setup();
+					}
 				}
-				InventoryBackpack.Get().InsertItem(this, null, inventoryCellsGroup, false, true, true, true, true);
+				InsertResult insertResult = InventoryBackpack.Get().InsertItem(this, null, inventoryCellsGroup, false, true, false, true, true);
+				if (insertResult != InsertResult.Ok)
+				{
+					insertResult = InventoryBackpack.Get().InsertItem(this, null, null, false, true, false, true, true);
+					if (insertResult != InsertResult.Ok && insertResult != InsertResult.AllreadyInInventory)
+					{
+						this.m_InInventory = false;
+					}
+				}
 			}
 			else if (!flag2)
 			{
@@ -966,13 +1541,22 @@ public class Item : Trigger
 				{
 					string name = SaveGame.LoadSVal("ItemInvSlotName" + index);
 					ItemSlot slotByName = InventoryBackpack.Get().GetSlotByName(name, this.m_Info.m_BackpackPocket);
-					InventoryBackpack.Get().InsertItem(this, slotByName, null, false, true, true, true, true);
+					InventoryBackpack.Get().InsertItem(this, slotByName, null, false, true, false, true, true);
+				}
+				else if (InventoryBackpack.Get().InsertItem(this, null, null, true, true, true, true, true) != InsertResult.Ok)
+				{
+					this.m_InInventory = false;
+					DebugUtils.Assert(DebugUtils.AssertType.Info);
 				}
 			}
 		}
+		else if (this.m_InStorage)
+		{
+			this.m_PhxStaticRequests = 0;
+		}
 		this.m_WasTriggered = SaveGame.LoadBVal("WasTriggered" + index);
 		this.m_FirstTriggerTime = SaveGame.LoadFVal("FirstTriggerTime" + index);
-		if (GreenHellGame.s_GameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate3)
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate3)
 		{
 			this.m_Info.m_CreationTime = SaveGame.LoadFVal("CreationTime" + index);
 		}
@@ -981,63 +1565,169 @@ public class Item : Trigger
 		{
 			InventoryBackpack.Get().m_EquippedItem = this;
 		}
-		bool flag4 = SaveGame.LoadBVal("ItemSlot" + index);
-		if (flag4)
+		if (SaveGame.LoadBVal("ItemSlot" + index))
 		{
 			this.m_InSlotCheckPos = SaveGame.LoadV3Val("ItemSlotPos" + index);
 			if (this.m_InSlotCheckPos == Vector3.zero)
 			{
-				this.m_InSlotCheckPos = ((!this.m_InventoryHolder) ? base.transform.position : this.m_InventoryHolder.transform.position);
+				this.m_InSlotCheckPos = (this.m_InventoryHolder ? this.m_InventoryHolder.transform.position : base.transform.position);
 			}
+		}
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate11)
+		{
+			this.m_StaticPhx = SaveGame.LoadBVal("ItemStaticPhx" + index);
+			this.UpdatePhx();
 		}
 	}
 
 	public virtual void SetupAfterLoad(int index)
 	{
+		if (this.m_IsBeingDestroyed)
+		{
+			return;
+		}
 		if (this.m_InInventory)
 		{
-			bool flag = SaveGame.LoadBVal("ItemInvInStackSlot" + index);
-			if (flag)
+			if (SaveGame.LoadBVal("ItemInvInStackSlot" + index))
 			{
 				this.m_PhxStaticRequests = 0;
 				int num = SaveGame.LoadIVal("ItemInvStackParentId" + index);
-				for (int i = 0; i < Item.s_AllItems.Count; i++)
+				foreach (Item item in Item.s_AllItems)
 				{
-					if (Item.s_AllItems[i].m_UniqueID == num)
+					if (item.m_UniqueID == num && item.m_InInventory)
 					{
-						InventoryBackpack.Get().InsertItem(this, Item.s_AllItems[i].m_InventorySlot, null, true, true, true, true, true);
+						if (item.transform.parent != null && item.transform.parent.GetComponent<ItemSlotStack>() != null)
+						{
+							InventoryBackpack.Get().InsertItem(this, null, null, true, true, false, true, true);
+							return;
+						}
+						InventoryBackpack.Get().InsertItem(this, item.m_InventorySlot, null, true, true, true, true, true);
 						return;
 					}
 				}
-				DebugUtils.Assert(DebugUtils.AssertType.Info);
-			}
-		}
-		else
-		{
-			bool flag2 = SaveGame.LoadBVal("ItemSlot" + index);
-			if (flag2)
-			{
-				string b = SaveGame.LoadSVal("ItemSlotName" + index);
-				this.m_PhxStaticRequests = 0;
-				foreach (ItemSlot itemSlot in ItemSlot.s_AllItemSlots)
+				if (InventoryBackpack.Get().InsertItem(this, null, null, true, true, true, true, true) != InsertResult.Ok)
 				{
-					if (!itemSlot.IsBIWoundSlot())
+					this.m_InInventory = false;
+					DebugUtils.Assert(DebugUtils.AssertType.Info);
+				}
+			}
+			else
+			{
+				bool flag = SaveGame.LoadBVal("ItemInvInSlot" + index);
+				bool flag2 = SaveGame.LoadBVal("ItemInvInCellGr" + index);
+				if (!flag && !flag2)
+				{
+					InsertResult insertResult = InventoryBackpack.Get().InsertItem(this, null, null, true, true, true, true, true);
+					if (insertResult != InsertResult.Ok && insertResult != InsertResult.AllreadyInInventory)
 					{
-						if (!(itemSlot.name != b))
-						{
-							if (!itemSlot.m_GOParent || !(itemSlot.m_GOParent == base.gameObject))
-							{
-								if ((itemSlot.transform.position - this.m_InSlotCheckPos).sqrMagnitude <= 0.01f)
-								{
-									itemSlot.InsertItem(this);
-									return;
-								}
-							}
-						}
+						this.m_InInventory = false;
+						DebugUtils.Assert(DebugUtils.AssertType.Info);
 					}
 				}
+			}
+		}
+		else if (this.m_InStorage)
+		{
+			Storage storage = null;
+			Vector3 vector = SaveGame.LoadV3Val("ItemStoragePos" + index);
+			foreach (Storage storage2 in Storage.s_AllStorages)
+			{
+				if ((storage2.transform.position - vector).sqrMagnitude <= 0.01f)
+				{
+					storage = storage2;
+					break;
+				}
+			}
+			if (storage)
+			{
+				this.m_PhxStaticRequests = 0;
+				bool flag3 = SaveGame.LoadBVal("ItemStorageInStackSlot" + index);
+				if (SaveGame.LoadBVal("ItemStorageInCellGr" + index))
+				{
+					int num2 = SaveGame.LoadIVal("ItemStorageGrCount" + index);
+					InventoryCellsGroup inventoryCellsGroup = new InventoryCellsGroup(BackpackPocket.Storage);
+					for (int i = 0; i < num2; i++)
+					{
+						InventoryCell cellByName = Storage3D.Get().GetGrid(storage.m_Type).GetCellByName(SaveGame.LoadSVal("ItemStorageGrCell" + index * this.m_SaveLoadIndexMul + i));
+						if (cellByName == null)
+						{
+							inventoryCellsGroup = null;
+							break;
+						}
+						inventoryCellsGroup.m_Cells.Add(cellByName);
+					}
+					if (inventoryCellsGroup != null)
+					{
+						inventoryCellsGroup.m_CenterWorld = SaveGame.LoadV3Val("ItemStorageGrPos" + index);
+						inventoryCellsGroup.Setup();
+						this.m_Info.m_InventoryCellsGroup = inventoryCellsGroup;
+					}
+				}
+				if (flag3)
+				{
+					this.m_PhxStaticRequests = 0;
+					int num3 = SaveGame.LoadIVal("ItemStorageStackParentId" + index);
+					foreach (Item item2 in Item.s_AllItems)
+					{
+						if (item2.m_UniqueID == num3)
+						{
+							InventoryCellsGroup inventoryCellsGroup2 = this.m_Info.m_InventoryCellsGroup;
+							if (storage.InsertItem(this, item2.m_InventorySlot, null, false, false) != InsertResult.Ok && storage.InsertItem(this, null, null, false, false) != InsertResult.Ok)
+							{
+								Debug.Log("ERROR - missing storage!");
+								this.m_InStorage = false;
+								base.transform.position = vector;
+								this.ItemsManagerRegister(false);
+							}
+							if (inventoryCellsGroup2 != null)
+							{
+								this.m_Info.m_InventoryCellsGroup = inventoryCellsGroup2;
+							}
+							return;
+						}
+					}
+					storage.InsertItem(this, null, null, false, true);
+				}
+				else
+				{
+					storage.InsertItem(this, null, this.m_Info.m_InventoryCellsGroup, true, true);
+					base.transform.position = SaveGame.LoadV3Val("ItemPos" + index);
+				}
+			}
+			else
+			{
+				Debug.Log("ERROR - missing storage!");
+				this.m_InStorage = false;
+				base.transform.position = vector;
+				this.ItemsManagerRegister(false);
+			}
+		}
+		else if (SaveGame.LoadBVal("ItemSlot" + index) && !this.m_Info.IsArmor())
+		{
+			string text = SaveGame.LoadSVal("ItemSlotName" + index);
+			this.m_PhxStaticRequests = 0;
+			foreach (ItemSlot itemSlot in ItemSlot.s_AllItemSlots)
+			{
+				if (!itemSlot.IsBIWoundSlot() && !(itemSlot.name != text) && (!itemSlot.m_GOParent || !(itemSlot.m_GOParent == base.gameObject)) && (itemSlot.transform.position - this.m_InSlotCheckPos).sqrMagnitude <= 0.1f)
+				{
+					itemSlot.InsertItem(this);
+					base.transform.localScale = SaveGame.LoadV3Val("ItemScale" + index);
+					return;
+				}
+			}
+			if (this.m_Info.m_ID == ItemID.Maggots && text.Contains("BaitSlot"))
+			{
+				UnityEngine.Object.Destroy(base.gameObject);
+			}
+			else
+			{
 				DebugUtils.Assert(base.name, true, DebugUtils.AssertType.Info);
 			}
+		}
+		FishingRod component = base.gameObject.GetComponent<FishingRod>();
+		if (component)
+		{
+			component.SetupAfterLoad(index);
 		}
 	}
 
@@ -1048,6 +1738,10 @@ public class Item : Trigger
 
 	public override string GetParticleOnHit()
 	{
+		if (this.m_Info == null)
+		{
+			return string.Empty;
+		}
 		return this.m_Info.m_ParticleOnHit;
 	}
 
@@ -1071,13 +1765,19 @@ public class Item : Trigger
 
 	private void Throw()
 	{
+		base.transform.parent = null;
+		if (this.m_Info.m_ID == ItemID.Tribe_Arrow)
+		{
+			base.transform.localScale = this.m_DefaultLocalScale;
+		}
 		Vector3 vector = Vector3.zero;
 		Vector3 force = Vector3.zero;
 		Vector3 vector2 = Vector3.zero;
-		if (this.m_Thrower.IsPlayer())
+		if (this.m_Thrower && this.m_Thrower.IsPlayer())
 		{
 			float proportionalClamp = CJTools.Math.GetProportionalClamp(8f, 0f, Player.Get().m_AimPower, 0f, 1f);
 			float angle = UnityEngine.Random.Range(-proportionalClamp, proportionalClamp);
+			Vector3 line_point = Player.Get().m_StopAimCameraMtx.GetColumn(3);
 			if (this.m_Info.IsAxe())
 			{
 				Vector3 vector3 = Quaternion.AngleAxis(angle, Vector3.up) * Player.Get().m_StopAimCameraMtx.GetColumn(2);
@@ -1085,6 +1785,11 @@ public class Item : Trigger
 				base.transform.rotation = Quaternion.LookRotation(vector3, -Player.Get().m_StopAimCameraMtx.GetColumn(0));
 				vector = base.transform.forward;
 				vector2 = base.transform.up;
+			}
+			else if (this.m_Info.IsArrow())
+			{
+				vector = Player.Get().m_StopAimCameraMtx.GetColumn(2);
+				vector2 = base.transform.forward;
 			}
 			else
 			{
@@ -1097,9 +1802,9 @@ public class Item : Trigger
 			float d = 0f;
 			if (this.m_Info.IsSpear())
 			{
-				d = ((this.m_Info.m_ID != ItemID.Bamboo_Spear) ? 1.3f : 1.4f);
+				d = ((this.m_Info.m_ID == ItemID.Bamboo_Spear) ? 1.4f : 1.3f);
 			}
-			Vector3 a = CJTools.Math.ProjectPointOnLine(Player.Get().m_StopAimCameraMtx.GetColumn(3), vector, base.transform.position);
+			Vector3 a = CJTools.Math.ProjectPointOnLine(line_point, vector, base.transform.position);
 			base.transform.position = a + vector * d;
 			float d2;
 			if (this.m_Info.IsSpear())
@@ -1120,11 +1825,17 @@ public class Item : Trigger
 			}
 			force = vector * this.m_Info.m_ThrowForce * d2;
 		}
+		else if (this.m_Thrower && this.m_Thrower.GetComponent<BowTrap>())
+		{
+			vector = base.transform.forward;
+			force = vector * this.m_Info.m_ThrowForce;
+			vector2 = base.transform.right;
+		}
 		else
 		{
 			vector = (Player.Get().GetHeadTransform().position - base.transform.position).normalized;
 			force = vector * this.m_Info.m_ThrowForce;
-			vector2 = base.transform.forward;
+			vector2 = Vector3.Cross(vector, Vector3.up);
 		}
 		this.m_ThrowRight = vector2;
 		this.m_Rigidbody.velocity = force.normalized * 0.01f;
@@ -1135,7 +1846,7 @@ public class Item : Trigger
 			this.m_Rigidbody.angularVelocity = Vector3.zero;
 			this.m_Rigidbody.AddTorque(-vector2 * this.m_Info.m_ThrowTorque, ForceMode.VelocityChange);
 		}
-		this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+		this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 		if (this.m_TrailRenderer && !this.m_TrailRenderer.enabled)
 		{
 			this.m_TrailRenderer.material = ItemsManager.Get().m_TrailMaterial;
@@ -1144,25 +1855,24 @@ public class Item : Trigger
 			this.m_TrailRenderer.time = float.MaxValue;
 		}
 		this.m_Thrown = true;
+		this.ReplSendAsap();
 		if (InventoryBackpack.Get().m_EquippedItem == this)
 		{
 			InventoryBackpack.Get().m_EquippedItem = null;
 		}
+		this.UpdateThrown();
 	}
 
 	private void UpdateThrown()
 	{
 		this.m_ThrowVel = this.m_Rigidbody.velocity.normalized;
-		switch (this.m_Info.m_ID)
+		ItemID id = this.m_Info.m_ID;
+		if (id == ItemID.Stone_Spear || id - ItemID.Four_Pronged_Spear <= 3 || id == ItemID.Tribe_Arrow)
 		{
-		case ItemID.Stone_Spear:
-		case ItemID.Four_Pronged_Spear:
-		case ItemID.Four_Pronged_Bamboo_Spear:
-		case ItemID.Bamboo_Spear:
-		case ItemID.Arrow:
 			base.transform.rotation = Quaternion.LookRotation(-this.m_ThrowRight, Vector3.Cross(this.m_ThrowVel, this.m_ThrowRight));
-			break;
 		}
+		Debug.DrawLine(base.transform.position, base.transform.position + this.m_ThrowRight, Color.red);
+		Debug.DrawLine(base.transform.position, base.transform.position + this.m_ThrowVel, Color.blue);
 	}
 
 	private void OnCollisionEnter(Collision collision)
@@ -1171,15 +1881,43 @@ public class Item : Trigger
 		{
 			return;
 		}
-		if (collision.gameObject == Player.Get().gameObject && this.m_Thrower && this.m_Thrower.gameObject == Player.Get().gameObject)
+		if (collision.gameObject.IsPlayer() && this.m_Thrower && this.m_Thrower.gameObject.IsPlayer())
 		{
 			return;
 		}
 		this.OnThrowHit(collision.gameObject, collision.contacts[0].point, collision.contacts[0].normal);
 	}
 
-	private void OnTriggerEnter(Collider other)
+	protected virtual void OnTriggerExit(Collider other)
 	{
+		if (this.IsInWater())
+		{
+			WaterCollider component = other.gameObject.GetComponent<WaterCollider>();
+			if (component)
+			{
+				this.m_CurrentWaters.Remove(component);
+				if (this.m_CurrentWaters.Count == 0 && this.m_Rigidbody)
+				{
+					this.m_Rigidbody.drag = this.m_DefaultDrag;
+				}
+			}
+		}
+	}
+
+	public void RestoreDrag()
+	{
+		if (this.m_Rigidbody)
+		{
+			this.m_Rigidbody.drag = this.m_DefaultDrag;
+		}
+	}
+
+	protected virtual void OnTriggerEnter(Collider other)
+	{
+		if (this.m_Info != null && this.m_Info.IsArmor() && base.transform.parent)
+		{
+			return;
+		}
 		if (this.m_WasTriggered && other.gameObject.IsWater())
 		{
 			if (Player.Get().GetCurrentItem(Hand.Right) != this && Player.Get().GetCurrentItem(Hand.Left) != this)
@@ -1188,7 +1926,14 @@ public class Item : Trigger
 				position.y = Mathf.Max(position.y, other.bounds.max.y + 0.1f);
 				if (position.Distance(Player.Get().transform.position) < 10f)
 				{
-					ParticlesManager.Get().Spawn("SmallSplash_Size_C", position, Quaternion.identity, null);
+					if (this.m_Info.m_Mass < 1f)
+					{
+						ParticlesManager.Get().Spawn("SmallSplash_Size_C_quiet", position, Quaternion.identity, Vector3.zero, null, -1f, false);
+					}
+					else
+					{
+						ParticlesManager.Get().Spawn("SmallSplash_Size_C", position, Quaternion.identity, Vector3.zero, null, -1f, false);
+					}
 				}
 			}
 		}
@@ -1196,23 +1941,53 @@ public class Item : Trigger
 		{
 			this.OnThrowHit(other.gameObject, other.gameObject.transform.position, -this.m_ThrowVel.normalized);
 		}
+		WaterCollider component = other.gameObject.GetComponent<WaterCollider>();
+		if (component)
+		{
+			this.m_CurrentWaters.Add(component);
+			if (this.m_Rigidbody)
+			{
+				this.m_Rigidbody.drag = 10f;
+			}
+		}
+	}
+
+	protected bool IsInWater()
+	{
+		return this.m_CurrentWaters.Count > 0;
 	}
 
 	private void OnThrowHit(GameObject other, Vector3 hit_point, Vector3 hit_normal)
 	{
-		this.m_Thrown = false;
-		this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
-		bool flag = true;
-		Vector3 normalized = this.m_ThrowVel.normalized;
-		AI ai = null;
-		CJObject component = other.GetComponent<CJObject>();
-		if (component)
+		this.m_Rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+		if (this.m_Thrower == Player.Get().gameObject)
 		{
-			if (component.IsAI())
+			Physics.IgnoreCollision(base.m_Collider, base.m_Collider, false);
+		}
+		if (this.m_Info.IsArrow() && this.m_Thrower && this.m_Thrower.IsHumanAI() && other.IsHumanAI())
+		{
+			return;
+		}
+		AI component = other.GetComponent<AI>();
+		if (component && this.m_Info.IsSpear() && (component.m_ID == AI.AIID.AngelFish || component.m_ID == AI.AIID.DiscusFish))
+		{
+			return;
+		}
+		if (other.IsPlayer())
+		{
+			other = Player.Get().gameObject;
+		}
+		this.m_Thrown = false;
+		bool flag = true;
+		Vector3 vector = (other == Player.Get().gameObject && this.m_Info.IsArrow()) ? UnityEngine.Random.insideUnitSphere : this.m_ThrowVel.normalized;
+		RagdollBone ragdollBone = null;
+		CJObject component2 = other.GetComponent<CJObject>();
+		if (component2)
+		{
+			if (component)
 			{
-				if (this.m_Thrower && this.m_Thrower.gameObject == Player.Get().gameObject)
+				if (component.m_Trap == null && this.m_Thrower && this.m_Thrower.gameObject.IsPlayer())
 				{
-					ai = component.GetComponent<AI>();
 					if (this.m_Info.IsSpear())
 					{
 						Skill.Get<SpearSkill>().OnSkillAction();
@@ -1230,10 +2005,9 @@ public class Item : Trigger
 			else
 			{
 				flag = false;
-				if (this.m_Info.IsArrow() && component.gameObject == Player.Get().gameObject)
+				if (this.m_Info.IsArrow() && component2.gameObject.IsPlayer())
 				{
-					List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
-					foreach (Renderer renderer in componentsDeepChild)
+					foreach (Renderer renderer in General.GetComponentsDeepChild<Renderer>(base.gameObject))
 					{
 						if (renderer != this.m_TrailRenderer)
 						{
@@ -1245,51 +2019,67 @@ public class Item : Trigger
 					base.Invoke("DestroyMe", 3f);
 				}
 			}
-			Item item = (!component.IsItem()) ? null : other.GetComponent<Item>();
+			Item item = component2.IsItem() ? other.GetComponent<Item>() : null;
 			if (item == null || item.CanReceiveDamageOfType(this.m_Info.m_DamageType))
 			{
 				DamageInfo damageInfo = new DamageInfo();
-				damageInfo.m_Damage = ((!this.m_Thrower.IsPlayer()) ? 10f : this.m_Info.m_ThrowDamage);
-				damageInfo.m_Damage *= this.GetThrowDamageMultiplier();
-				if (ai && !ai.IsHuman() && this.m_Info.IsSpear())
+				damageInfo.m_Damage = this.m_Info.m_ThrowDamage;
+				if (component && component.m_RagdollBones.Count > 0)
 				{
-					damageInfo.m_Damage = 9999f;
+					if (this.m_Thrower)
+					{
+						BowTrap component3 = this.m_Thrower.GetComponent<BowTrap>();
+						if (component3 && component3.m_Target.gameObject == component.gameObject)
+						{
+							ragdollBone = component.GetHeadRagdollBone();
+							damageInfo.m_Damage *= 9999f;
+						}
+					}
+					if (!ragdollBone)
+					{
+						ragdollBone = component.GetClosestRagdollBone(hit_point);
+					}
 				}
-				damageInfo.m_Damager = ((!this.m_Thrower) ? base.gameObject : this.m_Thrower.gameObject);
+				if (this.m_Thrower && this.m_Thrower.IsPlayer())
+				{
+					damageInfo.m_Damage *= this.GetThrowDamageMultiplier(ragdollBone);
+				}
+				damageInfo.m_Damager = (this.m_Thrower ? this.m_Thrower.gameObject : base.gameObject);
 				damageInfo.m_DamageItem = this;
 				damageInfo.m_DamageType = this.GetDamageType();
 				damageInfo.m_Position = hit_point;
-				damageInfo.m_Normal = -normalized;
-				component.TakeDamage(damageInfo);
+				damageInfo.m_Normal = -vector;
+				damageInfo.m_HitDir = vector;
+				component2.TakeDamage(damageInfo);
 				if (this.m_Rigidbody)
 				{
 					this.m_Rigidbody.velocity *= 0.1f;
 				}
 			}
 		}
-		RagdollBone component2 = other.GetComponent<RagdollBone>();
-		if (component2)
+		RagdollBone component4 = other.GetComponent<RagdollBone>();
+		if (component4)
 		{
 			flag = false;
-			DeadBody component3 = component2.m_Parent.GetComponent<DeadBody>();
-			if (component3)
+			DeadBody component5 = component4.m_ParentObject.GetComponent<DeadBody>();
+			if (component5)
 			{
-				component3.OnTakeDamage(new DamageInfo
+				component5.OnTakeDamage(new DamageInfo
 				{
 					m_DamageItem = this,
 					m_Damager = base.gameObject,
 					m_Position = hit_point,
-					m_HitDir = normalized,
-					m_Normal = -normalized
+					m_HitDir = vector,
+					m_Normal = -vector
 				});
 			}
 		}
 		else
 		{
-			FlockChild component4 = other.GetComponent<FlockChild>();
-			if (component4)
+			FlockChild component6 = other.GetComponent<FlockChild>();
+			if (component6)
 			{
-				component4.Hit(normalized);
+				component6.Hit(vector);
 				flag = false;
 				if (this.m_Rigidbody)
 				{
@@ -1304,11 +2094,11 @@ public class Item : Trigger
 		}
 		if (flag)
 		{
-			this.TryStickOnHit(hit_point, normalized, ai, other);
+			this.TryStickOnHit(hit_point, vector, hit_normal, component, other, ragdollBone);
 		}
-		if (ai && ai.IsFish() && (this.m_Info.m_ID == ItemID.Arrow || this.m_Info.IsSpear()))
+		if (component && component.IsFish() && (this.m_Info.IsArrow() || this.m_Info.IsSpear()))
 		{
-			Fish fish = (Fish)ai;
+			Fish fish = (Fish)component;
 			if (fish.m_Tank)
 			{
 				fish.OnHitByItem(this, hit_point);
@@ -1342,68 +2132,80 @@ public class Item : Trigger
 		{
 			return false;
 		}
-		if (this.m_Info.IsSpear() && ai && ai.m_HealthModule && !ai.m_HealthModule.m_IsDead)
-		{
-			return false;
-		}
-		if (this.m_Info.m_Type == ItemType.Arrow || this.m_Info.m_Type == ItemType.BlowpipeArrow || this.m_Info.m_Type == ItemType.Spear)
+		if (this.m_Info.IsArrow() || this.m_Info.IsSpear())
 		{
 			return true;
 		}
 		ItemID id = this.m_Info.m_ID;
-		switch (id)
+		if (id <= ItemID.Axe)
 		{
-		case ItemID.Stone_Spear:
-		case ItemID.Four_Pronged_Spear:
-		case ItemID.Four_Pronged_Bamboo_Spear:
-		case ItemID.Bamboo_Spear:
-		case ItemID.Arrow:
-		case ItemID.Machete:
-		case ItemID.Bone_Knife:
-			return true;
-		default:
+			if (id == ItemID.Stone_Blade)
+			{
+				return true;
+			}
+			if (id != ItemID.Axe)
+			{
+				return false;
+			}
+		}
+		else
+		{
 			switch (id)
 			{
-			case ItemID.Stone_Blade:
+			case ItemID.Stone_Spear:
+			case ItemID.Four_Pronged_Spear:
+			case ItemID.Four_Pronged_Bamboo_Spear:
+			case ItemID.Bamboo_Spear:
+			case ItemID.Arrow:
+			case ItemID.Machete:
+			case ItemID.Bone_Knife:
 				return true;
+			case ItemID.Bone_Spear:
+			case ItemID.Obsidian_Spear:
+			case ItemID.Bow:
+			case ItemID.Bamboo_Bow:
+			case ItemID.Rope:
+				return false;
+			case ItemID.Axe_professional:
+				break;
 			default:
 				if (id != ItemID.Tribe_Spear)
 				{
 					return false;
 				}
 				return true;
-			case ItemID.Axe:
-				break;
 			}
-			break;
-		case ItemID.Axe_professional:
-			break;
 		}
 		return ai == null;
 	}
 
-	private float GetThrowDamageMultiplier()
+	private float GetThrowDamageMultiplier(RagdollBone bone)
 	{
-		if (this.IsKnife())
+		float num = 1f;
+		if (this.m_Info.IsKnife())
 		{
-			return Skill.Get<BladeSkill>().GetDamageMul();
+			num = Skill.Get<BladeSkill>().GetDamageMul();
 		}
-		if (this.IsSpear())
+		else if (this.m_Info.IsSpear())
 		{
-			return Skill.Get<SpearSkill>().GetDamageMul();
+			num = Skill.Get<SpearSkill>().GetDamageMul();
 		}
-		if (this.IsAxe())
+		else if (this.m_Info.IsAxe())
 		{
-			return Skill.Get<AxeSkill>().GetDamageMul();
+			num = Skill.Get<AxeSkill>().GetDamageMul();
 		}
-		if (this.IsMachete())
+		if (bone && (this.m_Info.IsArrow() || this.m_Info.IsSpear()))
 		{
-			return Skill.Get<MacheteSkill>().GetDamageMul();
+			RagdollBone.BoneType boneType = bone.m_BoneType;
+			if (boneType == RagdollBone.BoneType.Animal_Head || boneType == RagdollBone.BoneType.Human_Head)
+			{
+				num *= 9999f;
+			}
 		}
-		return 1f;
+		return num;
 	}
 
-	private void TryStickOnHit(Vector3 hit_point, Vector3 hit_dir, AI ai, GameObject other)
+	private void TryStickOnHit(Vector3 hit_point, Vector3 hit_dir, Vector3 hit_normal, AI ai, GameObject other, RagdollBone bone)
 	{
 		if (!this.CanStickOnHit(ai, other))
 		{
@@ -1411,51 +2213,33 @@ public class Item : Trigger
 		}
 		float min = 0.25f;
 		float max = 1f;
-		ItemID id = this.m_Info.m_ID;
-		switch (id)
+		if (this.m_Info.IsAxe())
 		{
-		case ItemID.Axe_professional:
-			break;
-		case ItemID.Machete:
+			if (UnityEngine.Random.Range(0f, 1f) < 0.5f)
+			{
+				return;
+			}
+			base.transform.rotation = Quaternion.LookRotation(-hit_normal, Vector3.Cross(hit_dir, Vector3.up));
+			base.transform.Rotate(Vector3.up, -UnityEngine.Random.Range(0f, 20f));
+			min = 0.5f;
+			max = 0.7f;
+		}
+		else if (this.m_Info.IsMachete())
+		{
 			if (Vector3.Angle(hit_dir, base.transform.right) > 45f)
 			{
 				return;
 			}
 			max = 0.5f;
-			goto IL_11D;
-		default:
-			switch (id)
+		}
+		else if (this.m_Info.IsKnife())
+		{
+			if (Vector3.Angle(hit_dir, base.transform.right) > 75f)
 			{
-			case ItemID.Stone_Blade:
-				goto IL_F6;
-			case ItemID.Obsidian_Blade:
-			case ItemID.Stone_Axe:
-				goto IL_11D;
-			case ItemID.Axe:
-				break;
-			default:
-				goto IL_11D;
+				return;
 			}
-			break;
-		case ItemID.Bone_Knife:
-			goto IL_F6;
+			min = 0.5f;
 		}
-		float num = 0.3f;
-		if (-hit_dir.y < -num || -hit_dir.y > num)
-		{
-			return;
-		}
-		base.transform.rotation = Quaternion.LookRotation(hit_dir, Vector3.Cross(hit_dir, Vector3.up));
-		base.transform.Rotate(Vector3.up, -UnityEngine.Random.Range(0f, 20f));
-		max = 0.5f;
-		goto IL_11D;
-		IL_F6:
-		if (Vector3.Angle(hit_dir, base.transform.right) > 75f)
-		{
-			return;
-		}
-		min = 0.5f;
-		IL_11D:
 		Vector3 a = Vector3.zero;
 		if (this.m_Info.IsAxe())
 		{
@@ -1470,7 +2254,10 @@ public class Item : Trigger
 		base.transform.position += a * (this.m_DamagerStart.position - this.m_DamagerEnd.position).magnitude * UnityEngine.Random.Range(min, max);
 		if (ai && (ai.m_Params.m_BigAnimal || ai.m_Params.m_Human))
 		{
-			base.transform.parent = ai.GetClosestRagdollBone(hit_point);
+			if (bone)
+			{
+				base.transform.parent = bone.transform;
+			}
 			if (!base.transform.parent)
 			{
 				this.m_Rigidbody.velocity = Vector3.zero;
@@ -1479,6 +2266,10 @@ public class Item : Trigger
 			}
 			base.transform.localPosition = Vector3.zero;
 			this.m_ForceZeroLocalPos = true;
+			if (this.m_Info.IsWeapon())
+			{
+				ai.OnStickWeapon((Weapon)this);
+			}
 		}
 		this.StaticPhxRequestAdd();
 		this.m_Rigidbody.Sleep();
@@ -1486,12 +2277,12 @@ public class Item : Trigger
 
 	public virtual void OnItemAttachedToHand()
 	{
-		List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
-		if (this.m_RenderersToRestoreShadows == null && componentsDeepChild.Count > 0)
+		Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
+		if (this.m_RenderersToRestoreShadows == null && componentsDeepChild.Length != 0)
 		{
 			this.m_RenderersToRestoreShadows = new List<Renderer>();
 		}
-		for (int i = 0; i < componentsDeepChild.Count; i++)
+		for (int i = 0; i < componentsDeepChild.Length; i++)
 		{
 			if (componentsDeepChild[i].shadowCastingMode == ShadowCastingMode.On)
 			{
@@ -1500,6 +2291,10 @@ public class Item : Trigger
 			}
 		}
 		this.UpdatePhx();
+		if (this.m_Rigidbody)
+		{
+			this.m_Rigidbody.drag = this.m_DefaultDrag;
+		}
 	}
 
 	public virtual void OnItemDetachedFromHand()
@@ -1516,6 +2311,7 @@ public class Item : Trigger
 			}
 		}
 		this.m_RenderersToRestoreShadows = null;
+		this.m_InPlayersHand = false;
 		this.UpdatePhx();
 	}
 
@@ -1526,7 +2322,7 @@ public class Item : Trigger
 
 	public override bool CanExecuteActions()
 	{
-		return !(Inventory3DManager.Get().m_CarriedItem == this) && (this.m_InInventory || base.CanExecuteActions());
+		return !(Inventory3DManager.Get().m_CarriedItem == this) && (this.m_InInventory || this.m_InStorage || base.CanExecuteActions());
 	}
 
 	public override bool CheckDot()
@@ -1556,31 +2352,11 @@ public class Item : Trigger
 
 	public void ApplyMaterial(Material material)
 	{
-		List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
-		for (int i = 0; i < componentsDeepChild.Count; i++)
+		Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
+		for (int i = 0; i < componentsDeepChild.Length; i++)
 		{
 			componentsDeepChild[i].material = material;
 		}
-	}
-
-	public bool IsKnife()
-	{
-		return this.m_Info.m_ID == ItemID.Obsidian_Blade || this.m_Info.m_ID == ItemID.Obsidian_Bone_Blade || this.m_Info.m_ID == ItemID.Stick_Blade || this.m_Info.m_ID == ItemID.Stone_Blade || this.m_Info.m_ID == ItemID.Bone_Knife;
-	}
-
-	public bool IsSpear()
-	{
-		return this.m_Info.m_ID == ItemID.Bamboo_Spear || this.m_Info.m_ID == ItemID.Four_Pronged_Bamboo_Spear || this.m_Info.m_ID == ItemID.Four_Pronged_Spear || this.m_Info.m_ID == ItemID.Obsidian_Spear || this.m_Info.m_ID == ItemID.Stone_Spear || this.m_Info.m_ID == ItemID.Tribe_Spear;
-	}
-
-	public bool IsAxe()
-	{
-		return this.m_Info.m_ID == ItemID.Axe || this.m_Info.m_ID == ItemID.Axe_professional || this.m_Info.m_ID == ItemID.Obsidian_Axe || this.m_Info.m_ID == ItemID.Rusted_Axe || this.m_Info.m_ID == ItemID.Tribe_Axe;
-	}
-
-	public bool IsMachete()
-	{
-		return this.m_Info.m_ID == ItemID.Machete || this.m_Info.m_ID == ItemID.Rusted_Machete;
 	}
 
 	public DamageType GetDamageType()
@@ -1593,6 +2369,224 @@ public class Item : Trigger
 		return false;
 	}
 
+	public virtual bool IsSpikes()
+	{
+		return false;
+	}
+
+	public virtual bool IsStorage()
+	{
+		return false;
+	}
+
+	public virtual bool IsMudMixer()
+	{
+		return false;
+	}
+
+	public virtual bool CanShowExpandMenu()
+	{
+		return true;
+	}
+
+	private void OnTransformParentChanged()
+	{
+		this.UpdatePhx();
+		this.UpdateScale(false);
+		this.UpdateLayer();
+	}
+
+	public override float CalculateRelevance(IPeerWorldRepresentation peer, bool is_owner)
+	{
+		float num = base.CalculateRelevance(peer, is_owner);
+		if (num == 0f)
+		{
+			return num;
+		}
+		if (is_owner)
+		{
+			if (this.m_InInventory || this.m_OnCraftingTable)
+			{
+				if (this.m_Info.m_BackpackPocket == BackpackPocket.None)
+				{
+					return 1f;
+				}
+				if (!base.isActiveAndEnabled)
+				{
+					return 0.1f;
+				}
+				return 1f;
+			}
+			else if (Inventory3DManager.Get().m_CarriedItem == this)
+			{
+				return 1f;
+			}
+		}
+		return -1f;
+	}
+
+	public override bool CanBeRemovedByRelevance(bool on_owner)
+	{
+		return (!on_owner || (!this.m_InInventory && !this.m_InStorage && !this.m_OnCraftingTable && ((this.m_Info != null && this.m_Info.m_DestroyByItemsManager) || this.m_FallenObject))) && base.CanBeRemovedByRelevance(on_owner);
+	}
+
+	public virtual void ReplOnChangedOwner(bool was_owner)
+	{
+		if (was_owner && (Player.Get().GetCurrentItem(Hand.Right) == this || Player.Get().GetCurrentItem(Hand.Left) == this))
+		{
+			Player.Get().DropItem(this);
+			if (this.m_CurrentSlot)
+			{
+				this.m_CurrentSlot.RemoveItem(this, false);
+			}
+			if (this.m_InInventory)
+			{
+				InventoryBackpack.Get().RemoveItem(this, false);
+			}
+			if (this.m_Storage)
+			{
+				this.m_Storage.RemoveItem(this, false);
+			}
+			if (HUDProcess.Get())
+			{
+				HUDProcess.Get().UnregisterProcess(this);
+			}
+			if (InventoryBackpack.Get().m_EquippedItem == this)
+			{
+				InventoryBackpack.Get().m_EquippedItem = null;
+			}
+		}
+	}
+
+	public virtual void ReplOnSpawned()
+	{
+		this.SetupInfo();
+	}
+
+	public virtual void OnReplicationPrepare()
+	{
+		this.m_ReplPhxStaticRequests = this.m_PhxStaticRequests;
+	}
+
+	public virtual void OnReplicationSerialize(P2PNetworkWriter writer, bool initial_state)
+	{
+		if (initial_state)
+		{
+			writer.Write(this.m_FallenObject);
+		}
+		writer.Write(base.enabled);
+	}
+
+	public virtual void OnReplicationDeserialize(P2PNetworkReader reader, bool initial_state)
+	{
+		if (initial_state)
+		{
+			this.m_FallenObject = reader.ReadBoolean();
+		}
+		base.enabled = reader.ReadBoolean();
+	}
+
+	public virtual void OnReplicationResolve()
+	{
+		this.m_PhxStaticRequests = this.m_ReplPhxStaticRequests;
+	}
+
+	public virtual void ConstantUpdate()
+	{
+	}
+
+	protected void RegisterConstantUpdateItem()
+	{
+		if (ItemsManager.Get())
+		{
+			ItemsManager.Get().RegisterConstantUpdateItem(this);
+		}
+	}
+
+	protected void UnregisterConstantUpdateItem()
+	{
+		if (ItemsManager.Get())
+		{
+			ItemsManager.Get().UnregisterConstantUpdateItem(this);
+		}
+	}
+
+	public float GetReplicationIntervalMin()
+	{
+		if (this.m_Thrown)
+		{
+			return 0.1f;
+		}
+		return -1f;
+	}
+
+	public float GetReplicationIntervalMax()
+	{
+		if (this.m_Thrown)
+		{
+			return 0.2f;
+		}
+		return -1f;
+	}
+
+	public bool CanUseSimulatedVerticalVelocity()
+	{
+		return !this.m_Thrown;
+	}
+
+	public virtual void OnReplicationPrepare_CJGenerated()
+	{
+		if (this.m_InInventory_Repl != this.m_InInventory)
+		{
+			this.m_InInventory_Repl = this.m_InInventory;
+			this.ReplSetDirty();
+		}
+		if (System.Math.Abs(this.m_Info_m_Health_Repl - this.m_Info.m_Health) >= 1f)
+		{
+			this.m_Info_m_Health_Repl = this.m_Info.m_Health;
+			this.ReplSetDirty();
+		}
+		if (this.m_ReplPhxStaticRequests_Repl != this.m_ReplPhxStaticRequests)
+		{
+			this.m_ReplPhxStaticRequests_Repl = this.m_ReplPhxStaticRequests;
+			this.ReplSetDirty();
+		}
+		if (this.m_Thrown_Repl != this.m_Thrown)
+		{
+			this.m_Thrown_Repl = this.m_Thrown;
+			this.ReplSetDirty();
+		}
+	}
+
+	public virtual void OnReplicationSerialize_CJGenerated(P2PNetworkWriter writer, bool initial_state)
+	{
+		writer.Write(this.m_InInventory_Repl);
+		writer.Write(this.m_Info_m_Health_Repl);
+		writer.Write(this.m_ReplPhxStaticRequests_Repl);
+		writer.Write(this.m_Thrown_Repl);
+	}
+
+	public virtual void OnReplicationDeserialize_CJGenerated(P2PNetworkReader reader, bool initial_state)
+	{
+		this.m_InInventory_Repl = reader.ReadBoolean();
+		this.m_Info_m_Health_Repl = reader.ReadFloat();
+		this.m_ReplPhxStaticRequests_Repl = reader.ReadInt32();
+		this.m_Thrown_Repl = reader.ReadBoolean();
+	}
+
+	public virtual void OnReplicationResolve_CJGenerated()
+	{
+		this.m_InInventory = this.m_InInventory_Repl;
+		this.m_Info.m_Health = this.m_Info_m_Health_Repl;
+		this.m_ReplPhxStaticRequests = this.m_ReplPhxStaticRequests_Repl;
+		this.m_Thrown = this.m_Thrown_Repl;
+	}
+
+	[Replicate(new string[]
+	{
+		"field:m_Health",
+		"precision:1"
+	})]
 	public ItemInfo m_Info;
 
 	[HideInInspector]
@@ -1601,8 +2595,7 @@ public class Item : Trigger
 	[HideInInspector]
 	public bool m_Registered;
 
-	[HideInInspector]
-	public ItemSlot m_CurrentSlot;
+	private ItemSlot m_CurrentSlotProp;
 
 	[HideInInspector]
 	public ItemSlot m_PrevSlot;
@@ -1618,15 +2611,24 @@ public class Item : Trigger
 	public Rigidbody m_Rigidbody;
 
 	[HideInInspector]
-	public bool m_InInventory;
+	public Storage m_Storage;
+
+	private bool m_InStorageProp;
+
+	private bool m_InInventoryProp;
 
 	[HideInInspector]
 	public bool m_ShownInInventory;
 
-	[HideInInspector]
-	public bool m_OnCraftingTable;
+	private bool m_OnCraftingTableProp;
 
-	protected int m_PhxStaticRequests;
+	private int m_PhxStaticRequestsProp;
+
+	[Replicate(new string[]
+	{
+
+	})]
+	private int m_ReplPhxStaticRequests;
 
 	private DestroyableObject m_DestroyableObject;
 
@@ -1639,7 +2641,7 @@ public class Item : Trigger
 	[HideInInspector]
 	public bool m_IsLeaf;
 
-	public static List<Item> s_AllItems = new List<Item>();
+	public static HashSet<Item> s_AllItems = new HashSet<Item>();
 
 	public static Dictionary<int, int> s_AllItemIDs = new Dictionary<int, int>();
 
@@ -1660,9 +2662,13 @@ public class Item : Trigger
 	public bool m_RequestThrow;
 
 	[HideInInspector]
-	public Being m_Thrower;
+	public GameObject m_Thrower;
 
 	[HideInInspector]
+	[Replicate(new string[]
+	{
+
+	})]
 	public bool m_Thrown;
 
 	[HideInInspector]
@@ -1678,9 +2684,6 @@ public class Item : Trigger
 
 	[HideInInspector]
 	public ItemSlotStack m_InventorySlot;
-
-	[HideInInspector]
-	public bool m_Initialized;
 
 	[HideInInspector]
 	public GameObject m_Pivot;
@@ -1708,7 +2711,7 @@ public class Item : Trigger
 
 	public int m_UniqueID = -1;
 
-	public bool m_StaticPhx;
+	public bool m_StaticPhxProp;
 
 	[HideInInspector]
 	public GameObject m_ConnectedParticleObj;
@@ -1725,19 +2728,77 @@ public class Item : Trigger
 
 	public bool m_AttractedByItemSlot;
 
-	private bool m_BlockTrigger;
+	[HideInInspector]
+	public bool m_BlockTrigger;
 
-	public bool m_ForceNoKinematic;
+	private bool m_ForceNoKinematicProp;
 
 	private bool m_ForceZeroLocalPos;
 
 	[NonSerialized]
-	public bool m_CanSave = true;
+	public bool m_CanSaveNotTriggered = true;
+
+	[NonSerialized]
+	public bool m_CantSave;
 
 	[NonSerialized]
 	public bool m_DestroyingOnlyScript;
 
+	protected List<WaterCollider> m_CurrentWaters = new List<WaterCollider>();
+
+	private FishingHook m_Hook;
+
+	public GameVersion m_GameVersion = new GameVersion(0, 0);
+
+	[HideInInspector]
+	public bool m_ScenarioItem;
+
+	private float m_LastCheckUnderTerrain;
+
+	private float m_DefaultDrag;
+
+	[HideInInspector]
+	public Acre m_Acre;
+
+	public List<GameObject> m_ObjectsToCollect = new List<GameObject>();
+
+	private bool m_ReplEnabled;
+
+	[HideInInspector]
+	public bool m_AddAngularVelOnStart;
+
+	[HideInInspector]
+	public Vector3 m_AngularVelocityOnStart = Vector3.zero;
+
+	[HideInInspector]
+	public float m_AddAngularVelocityOnStartDuration;
+
+	public bool m_InPlayersHand;
+
+	[HideInInspector]
+	public Vector3 m_LocalScaleOnEnable = Vector3.one;
+
+	private Vector3 m_LastPos = Vector3.zero;
+
 	private static List<MonoBehaviour> s_ComponentsCache = new List<MonoBehaviour>(10);
 
+	public GameObject m_NoKinematicIfParentIsObject;
+
+	private const float HEALTH_UPDATE_INTERVAL = 0.2f;
+
+	private float m_LastHealthUpdate;
+
+	public static int s_ItemUpdatesThisFrame = 0;
+
+	private int m_SaveLoadIndexMul = 10000;
+
 	private Vector3 m_InSlotCheckPos = Vector3.zero;
+
+	private bool m_InInventory_Repl;
+
+	private float m_Info_m_Health_Repl;
+
+	private int m_ReplPhxStaticRequests_Repl;
+
+	private bool m_Thrown_Repl;
 }

@@ -53,7 +53,8 @@ namespace Pathfinding
 		protected override void Prepare()
 		{
 			this.nnConstraint.tags = this.enabledTags;
-			this.startNode = AstarPath.active.GetNearest(this.startPoint, this.nnConstraint).node;
+			NNInfo nearest = AstarPath.active.GetNearest(this.startPoint, this.nnConstraint);
+			this.startNode = nearest.node;
 			if (this.startNode == null)
 			{
 				base.Error();
@@ -101,7 +102,7 @@ namespace Pathfinding
 				if (this.endingCondition.TargetFound(this.currentR))
 				{
 					base.CompleteState = PathCompleteState.Complete;
-					break;
+					return;
 				}
 				if (!this.currentR.flag1)
 				{
@@ -112,7 +113,7 @@ namespace Pathfinding
 				if (this.pathHandler.heap.isEmpty)
 				{
 					base.CompleteState = PathCompleteState.Complete;
-					break;
+					return;
 				}
 				this.currentR = this.pathHandler.heap.Remove();
 				if (num > 500)

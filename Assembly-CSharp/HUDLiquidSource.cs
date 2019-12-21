@@ -59,9 +59,8 @@ public class HUDLiquidSource : HUDBase
 			}
 			this.m_Container.StaticPhxRequestRemove();
 			this.m_Active = false;
-			Inventory3DManager.Get().SetCarriedItem(this.m_Container);
-			HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
-			hudmessages.AddMessage("LiquidType_" + this.m_LiquidSource.m_LiquidType.ToString() + " " + GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Taken"), new Color?(Color.white), HUDMessageIcon.None, string.Empty);
+			Inventory3DManager.Get().SetCarriedItem(this.m_Container, true);
+			((HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages))).AddMessage("LiquidType_" + this.m_LiquidSource.m_LiquidType.ToString() + " " + GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Taken", true), new Color?(Color.white), HUDMessageIcon.None, "", null);
 		}
 	}
 

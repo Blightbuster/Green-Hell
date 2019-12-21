@@ -9,8 +9,7 @@ public class PushLeaves : MonoBehaviour
 		base.gameObject.GetComponentsInChildren<Renderer>(PushLeaves.s_RendererCache);
 		for (int i = 0; i < PushLeaves.s_RendererCache.Count; i++)
 		{
-			Renderer renderer = PushLeaves.s_RendererCache[i];
-			Material[] materials = renderer.materials;
+			Material[] materials = PushLeaves.s_RendererCache[i].materials;
 			for (int j = 0; j < materials.Length; j++)
 			{
 				this.m_AllMaterials.Add(materials[j]);

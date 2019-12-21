@@ -41,7 +41,7 @@ namespace Pathfinding
 
 		internal void Destroy()
 		{
-			if (this.nodes.Length > 0)
+			if (this.nodes.Length != 0)
 			{
 				int tileIndex = NavmeshBase.GetTileIndex(this.nodes[0].GetVertexIndex(0));
 				uint graphIndex = this.nodes[0].GraphIndex;

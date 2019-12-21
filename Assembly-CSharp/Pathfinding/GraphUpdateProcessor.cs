@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Pathfinding.Util;
@@ -9,11 +8,6 @@ namespace Pathfinding
 {
 	internal class GraphUpdateProcessor
 	{
-		public GraphUpdateProcessor(AstarPath astar)
-		{
-			this.astar = astar;
-		}
-
 		public event Action OnGraphsUpdated;
 
 		public bool IsAnyGraphUpdateQueued
@@ -30,6 +24,11 @@ namespace Pathfinding
 			{
 				return this.anyGraphUpdateInProgress;
 			}
+		}
+
+		public GraphUpdateProcessor(AstarPath astar)
+		{
+			this.astar = astar;
 		}
 
 		public AstarWorkItem GetWorkItem()
@@ -76,30 +75,17 @@ namespace Pathfinding
 				{
 					flag = true;
 				}
-				IEnumerator enumerator = this.astar.data.GetUpdateableGraphs().GetEnumerator();
-				try
+				foreach (object obj in this.astar.data.GetUpdateableGraphs())
 				{
-					while (enumerator.MoveNext())
+					IUpdatableGraph updatableGraph = (IUpdatableGraph)obj;
+					NavGraph graph = updatableGraph as NavGraph;
+					if (graphUpdateObject.nnConstraint == null || graphUpdateObject.nnConstraint.SuitableGraph(this.astar.data.GetGraphIndex(graph), graph))
 					{
-						object obj = enumerator.Current;
-						IUpdatableGraph updatableGraph = (IUpdatableGraph)obj;
-						NavGraph graph = updatableGraph as NavGraph;
-						if (graphUpdateObject.nnConstraint == null || graphUpdateObject.nnConstraint.SuitableGraph(this.astar.data.GetGraphIndex(graph), graph))
-						{
-							GraphUpdateProcessor.GUOSingle item = default(GraphUpdateProcessor.GUOSingle);
-							item.order = GraphUpdateProcessor.GraphUpdateOrder.GraphUpdate;
-							item.obj = graphUpdateObject;
-							item.graph = updatableGraph;
-							this.graphUpdateQueueRegular.Enqueue(item);
-						}
-					}
-				}
-				finally
-				{
-					IDisposable disposable;
-					if ((disposable = (enumerator as IDisposable)) != null)
-					{
-						disposable.Dispose();
+						GraphUpdateProcessor.GUOSingle item = default(GraphUpdateProcessor.GUOSingle);
+						item.order = GraphUpdateProcessor.GraphUpdateOrder.GraphUpdate;
+						item.obj = graphUpdateObject;
+						item.graph = updatableGraph;
+						this.graphUpdateQueueRegular.Enqueue(item);
 					}
 				}
 			}
@@ -141,8 +127,8 @@ namespace Pathfinding
 		{
 			while (this.graphUpdateQueueRegular.Count > 0)
 			{
-				GraphUpdateProcessor.GUOSingle item = this.graphUpdateQueueRegular.Peek();
-				GraphUpdateThreading graphUpdateThreading = (item.order != GraphUpdateProcessor.GraphUpdateOrder.FloodFill) ? item.graph.CanUpdateAsync(item.obj) : GraphUpdateThreading.SeparateThread;
+				GraphUpdateProcessor.GUOSingle guosingle = this.graphUpdateQueueRegular.Peek();
+				GraphUpdateThreading graphUpdateThreading = (guosingle.order == GraphUpdateProcessor.GraphUpdateOrder.FloodFill) ? GraphUpdateThreading.SeparateThread : guosingle.graph.CanUpdateAsync(guosingle.obj);
 				if (force || !Application.isPlaying || this.graphUpdateThread == null || !this.graphUpdateThread.IsAlive)
 				{
 					graphUpdateThreading &= (GraphUpdateThreading)(-2);
@@ -153,12 +139,12 @@ namespace Pathfinding
 					{
 						return false;
 					}
-					item.graph.UpdateAreaInit(item.obj);
+					guosingle.graph.UpdateAreaInit(guosingle.obj);
 				}
 				if ((graphUpdateThreading & GraphUpdateThreading.SeparateThread) != GraphUpdateThreading.UnityThread)
 				{
 					this.graphUpdateQueueRegular.Dequeue();
-					this.graphUpdateQueueAsync.Enqueue(item);
+					this.graphUpdateQueueAsync.Enqueue(guosingle);
 					if ((graphUpdateThreading & GraphUpdateThreading.UnityPost) != GraphUpdateThreading.UnityThread && this.StartAsyncUpdatesIfQueued())
 					{
 						return false;
@@ -171,7 +157,7 @@ namespace Pathfinding
 						return false;
 					}
 					this.graphUpdateQueueRegular.Dequeue();
-					if (item.order == GraphUpdateProcessor.GraphUpdateOrder.FloodFill)
+					if (guosingle.order == GraphUpdateProcessor.GraphUpdateOrder.FloodFill)
 					{
 						this.FloodFill();
 					}
@@ -179,7 +165,7 @@ namespace Pathfinding
 					{
 						try
 						{
-							item.graph.UpdateArea(item.obj);
+							guosingle.graph.UpdateArea(guosingle.obj);
 						}
 						catch (Exception arg)
 						{
@@ -188,7 +174,7 @@ namespace Pathfinding
 					}
 					if ((graphUpdateThreading & GraphUpdateThreading.UnityPost) != GraphUpdateThreading.UnityThread)
 					{
-						item.graph.UpdateAreaPost(item.obj);
+						guosingle.graph.UpdateAreaPost(guosingle.obj);
 					}
 				}
 			}
@@ -211,8 +197,7 @@ namespace Pathfinding
 			while (this.graphUpdateQueuePost.Count > 0)
 			{
 				GraphUpdateProcessor.GUOSingle guosingle = this.graphUpdateQueuePost.Dequeue();
-				GraphUpdateThreading graphUpdateThreading = guosingle.graph.CanUpdateAsync(guosingle.obj);
-				if ((graphUpdateThreading & GraphUpdateThreading.UnityPost) != GraphUpdateThreading.UnityThread)
+				if ((guosingle.graph.CanUpdateAsync(guosingle.obj) & GraphUpdateThreading.UnityPost) != GraphUpdateThreading.UnityThread)
 				{
 					try
 					{
@@ -228,33 +213,33 @@ namespace Pathfinding
 
 		private void ProcessGraphUpdatesAsync()
 		{
-			AutoResetEvent[] waitHandles = new AutoResetEvent[]
+			AutoResetEvent[] array = new AutoResetEvent[]
 			{
 				this.graphUpdateAsyncEvent,
 				this.exitAsyncThread
 			};
 			for (;;)
 			{
-				int num = WaitHandle.WaitAny(waitHandles);
-				if (num == 1)
+				WaitHandle[] waitHandles = array;
+				if (WaitHandle.WaitAny(waitHandles) == 1)
 				{
 					break;
 				}
 				while (this.graphUpdateQueueAsync.Count > 0)
 				{
-					GraphUpdateProcessor.GUOSingle item = this.graphUpdateQueueAsync.Dequeue();
+					GraphUpdateProcessor.GUOSingle guosingle = this.graphUpdateQueueAsync.Dequeue();
 					try
 					{
-						if (item.order == GraphUpdateProcessor.GraphUpdateOrder.GraphUpdate)
+						if (guosingle.order == GraphUpdateProcessor.GraphUpdateOrder.GraphUpdate)
 						{
-							item.graph.UpdateArea(item.obj);
-							this.graphUpdateQueuePost.Enqueue(item);
+							guosingle.graph.UpdateArea(guosingle.obj);
+							this.graphUpdateQueuePost.Enqueue(guosingle);
 						}
 						else
 						{
-							if (item.order != GraphUpdateProcessor.GraphUpdateOrder.FloodFill)
+							if (guosingle.order != GraphUpdateProcessor.GraphUpdateOrder.FloodFill)
 							{
-								throw new NotSupportedException(string.Empty + item.order);
+								throw new NotSupportedException(string.Concat(guosingle.order));
 							}
 							this.FloodFill();
 						}
@@ -319,38 +304,48 @@ namespace Pathfinding
 			uint area = 0u;
 			int forcedSmallAreas = 0;
 			Stack<GraphNode> stack = StackPool<GraphNode>.Claim();
+			Action<GraphNode> <>9__1;
 			foreach (NavGraph navGraph2 in graphs)
 			{
 				if (navGraph2 != null)
 				{
-					navGraph2.GetNodes(delegate(GraphNode node)
+					NavGraph navGraph3 = navGraph2;
+					Action<GraphNode> action;
+					if ((action = <>9__1) == null)
 					{
-						if (node.Walkable && node.Area == 0u)
+						action = (<>9__1 = delegate(GraphNode node)
 						{
-							uint area;
-							area += 1u;
-							area = area;
-							if (area > 131071u)
+							if (node.Walkable && node.Area == 0u)
 							{
-								area -= 1u;
-								area = area;
-								if (forcedSmallAreas == 0)
+								uint area = area;
+								area += 1u;
+								uint area2 = area;
+								if (area > 131071u)
 								{
-									forcedSmallAreas = 1;
+									area = area;
+									area -= 1u;
+									area2 = area;
+									int forcedSmallAreas;
+									if (forcedSmallAreas == 0)
+									{
+										forcedSmallAreas = 1;
+									}
+									forcedSmallAreas = forcedSmallAreas;
+									forcedSmallAreas++;
 								}
-								forcedSmallAreas++;
+								stack.Clear();
+								stack.Push(node);
+								int num = 1;
+								node.Area = area2;
+								while (stack.Count > 0)
+								{
+									num++;
+									stack.Pop().FloodFill(stack, area2);
+								}
 							}
-							stack.Clear();
-							stack.Push(node);
-							int num = 1;
-							node.Area = area;
-							while (stack.Count > 0)
-							{
-								num++;
-								stack.Pop().FloodFill(stack, area);
-							}
-						}
-					});
+						});
+					}
+					navGraph3.GetNodes(action);
 				}
 			}
 			this.lastUniqueAreaIndex = area;

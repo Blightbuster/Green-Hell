@@ -18,7 +18,7 @@ public class MenuSleepTime : MenuScreen
 	{
 	}
 
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 	}

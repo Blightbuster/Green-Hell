@@ -44,5 +44,8 @@ public enum PlayerControllerType
 	HarvestingSmallAnimal,
 	PlayerCutscene,
 	FistFight,
+	MudMixer,
+	AnimationTrigger,
+	FreeHandsLadder,
 	Count
 }

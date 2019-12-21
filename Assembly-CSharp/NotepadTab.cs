@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class NotepadTab : MonoBehaviour
 {
+	public virtual void Init()
+	{
+	}
+
 	public virtual void OnShow()
 	{
 	}
@@ -80,11 +84,25 @@ public class NotepadTab : MonoBehaviour
 		return false;
 	}
 
+	public virtual void Save(string name)
+	{
+	}
+
+	public virtual void Load(string name)
+	{
+	}
+
+	public virtual int GetNewEntriesCount()
+	{
+		return 0;
+	}
+
 	protected int m_CurrentPage;
 
 	protected int m_NumActivePages;
 
-	protected int m_NumActiveElementsOnPage;
+	[HideInInspector]
+	public int m_NumActiveElementsOnPage;
 
 	public MenuNotepad.MenuNotepadTab m_Tab = MenuNotepad.MenuNotepadTab.None;
 }

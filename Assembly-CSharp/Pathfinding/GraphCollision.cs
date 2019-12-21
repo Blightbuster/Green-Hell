@@ -26,38 +26,38 @@ namespace Pathfinding
 			if (this.use2D)
 			{
 				ColliderType colliderType = this.type;
+				if (colliderType == ColliderType.Sphere)
+				{
+					return Physics2D.OverlapCircle(position, this.finalRadius, this.mask) == null;
+				}
 				if (colliderType == ColliderType.Capsule)
 				{
 					throw new Exception("Capsule mode cannot be used with 2D since capsules don't exist in 2D. Please change the Physics Testing -> Collider Type setting.");
 				}
-				if (colliderType != ColliderType.Sphere)
-				{
-					return Physics2D.OverlapPoint(position, this.mask) == null;
-				}
-				return Physics2D.OverlapCircle(position, this.finalRadius, this.mask) == null;
+				return Physics2D.OverlapPoint(position, this.mask) == null;
 			}
 			else
 			{
 				position += this.up * this.collisionOffset;
-				ColliderType colliderType2 = this.type;
-				if (colliderType2 == ColliderType.Capsule)
-				{
-					return !Physics.CheckCapsule(position, position + this.upheight, this.finalRadius, this.mask);
-				}
-				if (colliderType2 == ColliderType.Sphere)
+				ColliderType colliderType = this.type;
+				if (colliderType == ColliderType.Sphere)
 				{
 					return !Physics.CheckSphere(position, this.finalRadius, this.mask);
 				}
+				if (colliderType == ColliderType.Capsule)
+				{
+					return !Physics.CheckCapsule(position, position + this.upheight, this.finalRadius, this.mask);
+				}
 				RayDirection rayDirection = this.rayDirection;
+				if (rayDirection == RayDirection.Up)
+				{
+					return !Physics.Raycast(position, this.up, this.height, this.mask);
+				}
 				if (rayDirection == RayDirection.Both)
 				{
 					return !Physics.Raycast(position, this.up, this.height, this.mask) && !Physics.Raycast(position + this.upheight, -this.up, this.height, this.mask);
 				}
-				if (rayDirection != RayDirection.Up)
-				{
-					return !Physics.Raycast(position + this.upheight, -this.up, this.height, this.mask);
-				}
-				return !Physics.Raycast(position, this.up, this.height, this.mask);
+				return !Physics.Raycast(position + this.upheight, -this.up, this.height, this.mask);
 			}
 		}
 
@@ -152,7 +152,7 @@ namespace Pathfinding
 				this.Raycast(vector, out item, out flag);
 				if (item.transform == null)
 				{
-					break;
+					goto IL_131;
 				}
 				if (item.point != vector2 || list.Count == 0)
 				{
@@ -167,12 +167,10 @@ namespace Pathfinding
 					num++;
 					if (num > 10)
 					{
-						goto Block_5;
+						break;
 					}
 				}
 			}
-			goto IL_15A;
-			Block_5:
 			Debug.LogError(string.Concat(new object[]
 			{
 				"Infinite Loop when raycasting. Please report this error (arongranberg.com)\n",
@@ -180,7 +178,7 @@ namespace Pathfinding
 				" : ",
 				vector2
 			}));
-			IL_15A:
+			IL_131:
 			return list.ToArray();
 		}
 

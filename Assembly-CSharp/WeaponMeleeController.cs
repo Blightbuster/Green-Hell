@@ -18,7 +18,7 @@ public class WeaponMeleeController : WeaponController
 		if (base.GetType() == typeof(WeaponMeleeController))
 		{
 			WeaponMeleeController.s_Instance = this;
-			this.m_ControllerType = PlayerControllerType.WeaponMelee;
+			base.m_ControllerType = PlayerControllerType.WeaponMelee;
 		}
 		this.m_ArmTransform = this.m_Player.gameObject.transform.FindDeepChild("mixamorig:Arm.R");
 		this.m_RHand = this.m_Player.gameObject.transform.FindDeepChild("mixamorig:Hand.R");
@@ -51,6 +51,14 @@ public class WeaponMeleeController : WeaponController
 		this.m_PredictionDataClipNames[315].Add("PL|BladeStoneAttackRightSwing");
 		this.m_PredictionDataClipNames[315].Add("PL|AttackUpBladeSwing");
 		this.m_PredictionDataClipNames[315].Add("PL|BladeStoneCombo");
+		this.m_PredictionDataClipNames[657] = new List<string>();
+		this.m_PredictionDataClipNames[657].Add("PL|BladeStoneAttackRightSwing");
+		this.m_PredictionDataClipNames[657].Add("PL|AttackUpBladeSwing");
+		this.m_PredictionDataClipNames[657].Add("PL|BladeStoneCombo");
+		this.m_PredictionDataClipNames[328] = new List<string>();
+		this.m_PredictionDataClipNames[328].Add("PL|TribeAxeAttackRightSwing");
+		this.m_PredictionDataClipNames[328].Add("PL|TribeAxeAttackUpSwing");
+		this.m_PredictionDataClipNames[328].Add("PL|BladeStoneCombo");
 	}
 
 	protected override void OnEnable()
@@ -85,15 +93,12 @@ public class WeaponMeleeController : WeaponController
 	{
 		AnimatorTransitionInfo animatorTransitionInfo = this.m_Animator.GetAnimatorTransitionInfo(1);
 		AnimatorStateInfo currentAnimatorStateInfo = this.m_Animator.GetCurrentAnimatorStateInfo(1);
-		bool flag = animatorTransitionInfo.userNameHash == this.m_NRightSwingToReleaseTransition || animatorTransitionInfo.userNameHash == this.m_NLeftSwingToReleaseTransition || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateRight1 || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateUp1 || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateLeft1;
-		if (flag)
+		if (animatorTransitionInfo.userNameHash == this.m_NRightSwingToReleaseTransition || animatorTransitionInfo.userNameHash == this.m_NLeftSwingToReleaseTransition || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateRight1 || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateUp1 || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateLeft1)
 		{
 			this.m_Animator.SetFloat(this.m_NSwingSpeedMultiplier, 0f);
+			return;
 		}
-		else
-		{
-			this.m_Animator.SetFloat(this.m_NSwingSpeedMultiplier, 1f);
-		}
+		this.m_Animator.SetFloat(this.m_NSwingSpeedMultiplier, 1f);
 	}
 
 	private void UpdateAttackRelease()
@@ -112,27 +117,32 @@ public class WeaponMeleeController : WeaponController
 			this.m_AttackDirection = AttackDirection.Right;
 			this.m_Animator.SetBool(this.m_BAttackLeft, false);
 			base.SetState(WeaponControllerState.Swing);
+			return;
 		}
-		else if (id == AnimEventID.MeleeLeftAttackStart)
+		if (id == AnimEventID.MeleeLeftAttackStart)
 		{
 			this.m_AttackDirection = AttackDirection.Left;
 			this.m_Animator.SetBool(this.m_BAttackRight, false);
 			base.SetState(WeaponControllerState.Swing);
+			return;
 		}
-		else if (id == AnimEventID.MeleeUpAttackStart)
+		if (id == AnimEventID.MeleeUpAttackStart)
 		{
 			this.m_AttackDirection = AttackDirection.Up;
 			base.SetState(WeaponControllerState.Swing);
+			return;
 		}
-		else if (id == AnimEventID.MeleeRightAttackEnd)
+		if (id == AnimEventID.MeleeRightAttackEnd)
 		{
 			this.PlayerMeleeRightAttackEnd();
+			return;
 		}
-		else if (id == AnimEventID.MeleeUpAttackEnd)
+		if (id == AnimEventID.MeleeUpAttackEnd)
 		{
 			this.PlayerMeleeUpAttackEnd();
+			return;
 		}
-		else if (id == AnimEventID.MeleeLeftAttackEnd)
+		if (id == AnimEventID.MeleeLeftAttackEnd)
 		{
 			this.PlayerMeleeLeftAttackEnd();
 		}
@@ -141,12 +151,12 @@ public class WeaponMeleeController : WeaponController
 	public override bool IsAttack()
 	{
 		AnimatorStateInfo currentAnimatorStateInfo = this.m_Animator.GetCurrentAnimatorStateInfo(1);
-		return currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightWindUp || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightSwing || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackLeftSwing || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackUpWindUp || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackUpSwing;
+		return currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightWindUp || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightSwing || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackLeftSwing || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackUpWindUp || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackUpSwing || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightLowStamina;
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if (action == InputsManager.InputAction.MeleeAttack)
+		if (action_data.m_Action == InputsManager.InputAction.MeleeAttack && (action_data.m_LastReleaseTime == 0f || action_data.m_LastReleaseTime > ItemController.Get().m_LastUnAimTime))
 		{
 			this.Attack();
 		}
@@ -161,7 +171,7 @@ public class WeaponMeleeController : WeaponController
 	{
 		if (!this.CanAttack())
 		{
-			if (!this.m_ComboBlocked && !PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel))
+			if (!this.m_ComboBlocked && !PlayerConditionModule.Get().IsLowStamina())
 			{
 				AnimatorStateInfo currentAnimatorStateInfo = this.m_Animator.GetCurrentAnimatorStateInfo(1);
 				if ((currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightSwing && currentAnimatorStateInfo.normalizedTime > 0.2f) || currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateRight1 || (currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightReturn && currentAnimatorStateInfo.normalizedTime < 0.5f))
@@ -171,16 +181,19 @@ public class WeaponMeleeController : WeaponController
 				if (currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightSwing && currentAnimatorStateInfo.normalizedTime > 0.5f && currentAnimatorStateInfo.normalizedTime < 1f && !this.m_Animator.GetBool(this.m_BAttackLeft))
 				{
 					this.m_ComboScheduled = true;
+					return;
 				}
-				else if (currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateRight1)
+				if (currentAnimatorStateInfo.shortNameHash == this.m_ReleaseStateRight1)
 				{
 					this.m_ComboScheduled = true;
+					return;
 				}
-				else if (currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackLeftSwing && currentAnimatorStateInfo.normalizedTime > 0.5f && currentAnimatorStateInfo.normalizedTime < 1f && !this.m_Animator.GetBool(this.m_BAttackRight))
+				if (currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackLeftSwing && currentAnimatorStateInfo.normalizedTime > 0.5f && currentAnimatorStateInfo.normalizedTime < 1f && !this.m_Animator.GetBool(this.m_BAttackRight))
 				{
 					this.m_ComboScheduled = true;
+					return;
 				}
-				else if (this.m_Animator.GetBool(this.m_BAttackRightRelease))
+				if (this.m_Animator.GetBool(this.m_BAttackRightRelease))
 				{
 					this.m_Animator.SetBool(this.m_BAttackRight, true);
 					this.m_ComboScheduled = true;
@@ -205,11 +218,6 @@ public class WeaponMeleeController : WeaponController
 			{
 				this.m_Animator.SetBool(this.m_BAttackRight, true);
 				this.m_AttackDirection = AttackDirection.Right;
-			}
-			if (Time.time - this.m_LastAttackSoundTime > 0.3f)
-			{
-				this.m_AudioModule.PlayAttackSound(1f, false);
-				this.m_LastAttackSoundTime = Time.time;
 			}
 		}
 		this.m_Animator.SetBool(this.m_BAttackRightRelease, false);
@@ -263,17 +271,13 @@ public class WeaponMeleeController : WeaponController
 		}
 		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 		float num = this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Swing);
-		if (currentItem.IsKnife())
+		if (currentItem.m_Info.IsKnife())
 		{
 			num *= Skill.Get<BladeSkill>().GetStaminaMul();
 		}
-		else if (currentItem.IsAxe())
+		else if (currentItem.m_Info.IsAxe())
 		{
 			num *= Skill.Get<AxeSkill>().GetStaminaMul();
-		}
-		else if (currentItem.IsMachete())
-		{
-			num *= Skill.Get<MacheteSkill>().GetStaminaMul();
 		}
 		this.m_Player.DecreaseStamina(num);
 	}
@@ -311,6 +315,23 @@ public class WeaponMeleeController : WeaponController
 
 	public void PlayerMeleeUpAttackEnd()
 	{
+		if (this.m_Animator.GetBool(this.m_BAttackUp))
+		{
+			Item currentItem = this.m_Player.GetCurrentItem();
+			if (currentItem)
+			{
+				float num = Player.Get().GetStaminaDecrease(StaminaDecreaseReason.Swing);
+				if (currentItem.m_Info.IsKnife())
+				{
+					num *= Skill.Get<BladeSkill>().GetStaminaMul();
+				}
+				else if (currentItem.m_Info.IsAxe())
+				{
+					num *= Skill.Get<AxeSkill>().GetStaminaMul();
+				}
+				Player.Get().DecreaseStamina(num);
+			}
+		}
 		this.m_Animator.SetBool(this.m_BAttackUp, false);
 		this.m_ComboScheduled = false;
 		this.m_ReleaseComboScheduled = false;
@@ -346,20 +367,21 @@ public class WeaponMeleeController : WeaponController
 
 	public override bool StopAnimOnHit(CJObject hit_obj, Collider coll = null)
 	{
-		if (hit_obj == null)
+		ObjectMaterial component = coll.GetComponent<ObjectMaterial>();
+		if (hit_obj == null && (component == null || !ObjectMaterial.IsMaterialHard(component.m_ObjectMaterial)))
 		{
 			return false;
 		}
-		if (hit_obj.GetComponent<AI>() != null)
+		if (hit_obj != null && hit_obj.GetComponent<AI>() != null)
 		{
 			return false;
 		}
 		if (coll != null)
 		{
-			Item component = coll.gameObject.GetComponent<Item>();
-			if (component != null)
+			Item component2 = coll.gameObject.GetComponent<Item>();
+			if (component2 != null)
 			{
-				if (component.m_Info.m_Health <= 0f)
+				if (component2.m_Info != null && component2.m_Info.m_Health <= 0f)
 				{
 					this.m_ComboScheduled = false;
 					this.m_ReleaseComboScheduled = false;
@@ -367,7 +389,7 @@ public class WeaponMeleeController : WeaponController
 					this.m_ComboBlocked = true;
 					return false;
 				}
-				if (component.m_IsPlant)
+				if (component2.m_IsPlant)
 				{
 					return false;
 				}
@@ -387,7 +409,7 @@ public class WeaponMeleeController : WeaponController
 		{
 			return string.Empty;
 		}
-		return this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID.ToString();
+		return EnumUtils<ItemID>.GetName((int)this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID);
 	}
 
 	public override AttackDirection GetAttackDirection()
@@ -428,8 +450,7 @@ public class WeaponMeleeController : WeaponController
 
 	private void SetupPredictionData()
 	{
-		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
-		ItemID id = currentItem.m_Info.m_ID;
+		ItemID id = this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID;
 		if (this.m_PredictionData.ContainsKey((int)id))
 		{
 			return;
@@ -445,36 +466,37 @@ public class WeaponMeleeController : WeaponController
 		{
 			list = this.m_PredictionDataClipNames[291];
 		}
-		for (int i = 0; i < list.Count; i++)
+		AnimationClip[] animationClips = runtimeAnimatorController.animationClips;
+		string[] array = new string[animationClips.Length];
+		for (int i = 0; i < animationClips.Length; i++)
 		{
-			AnimationClip animationClipByName = this.GetAnimationClipByName(runtimeAnimatorController, list[i]);
-			this.m_PredictionData[(int)id][animationClipByName] = new List<MeleeAttackPredictionData>();
-			for (int j = 0; j <= MeleeAttackPredictionData.s_NumSteps; j++)
+			array[i] = animationClips[i].name;
+		}
+		for (int j = 0; j < list.Count; j++)
+		{
+			AnimationClip animationClip = null;
+			for (int k = 0; k < animationClips.Length; k++)
 			{
-				float time = animationClipByName.length * ((float)j / (float)MeleeAttackPredictionData.s_NumSteps);
-				animationClipByName.SampleAnimation(this.m_Player.gameObject, time);
+				if (array[k] == list[j])
+				{
+					animationClip = animationClips[k];
+					break;
+				}
+			}
+			this.m_PredictionData[(int)id][animationClip] = new List<MeleeAttackPredictionData>();
+			for (int l = 0; l <= MeleeAttackPredictionData.s_NumSteps; l++)
+			{
+				float time = animationClip.length * ((float)l / (float)MeleeAttackPredictionData.s_NumSteps);
+				animationClip.SampleAnimation(this.m_Player.gameObject, time);
 				Vector3 position = this.m_Player.GetCurrentItem(Hand.Right).m_DamagerStart.position;
 				Vector3 position2 = this.m_Player.GetCurrentItem(Hand.Right).m_DamagerEnd.position;
 				MeleeAttackPredictionData meleeAttackPredictionData = new MeleeAttackPredictionData();
 				meleeAttackPredictionData.m_DamagerStart = this.m_HeadTransform.InverseTransformPoint(position);
 				meleeAttackPredictionData.m_DamagerEnd = this.m_HeadTransform.InverseTransformPoint(position2);
-				meleeAttackPredictionData.m_NormalizedTime = (float)j / (float)MeleeAttackPredictionData.s_NumSteps;
-				this.m_PredictionData[(int)id][animationClipByName].Add(meleeAttackPredictionData);
+				meleeAttackPredictionData.m_NormalizedTime = (float)l / (float)MeleeAttackPredictionData.s_NumSteps;
+				this.m_PredictionData[(int)id][animationClip].Add(meleeAttackPredictionData);
 			}
 		}
-	}
-
-	private AnimationClip GetAnimationClipByName(RuntimeAnimatorController rac, string clip_name)
-	{
-		AnimationClip[] animationClips = rac.animationClips;
-		for (int i = 0; i < animationClips.Length; i++)
-		{
-			if (animationClips[i].name == clip_name)
-			{
-				return animationClips[i];
-			}
-		}
-		return null;
 	}
 
 	protected override bool UpdateCollisions(Triangle blade_t0, Triangle blade_t1, Triangle handle_t0, Triangle handle_t1, Vector3 hit_dir, bool damage_window, out CJObject cj_obj, out Collider collider, out bool collision_with_handle, float damage_window_start, float damage_window_end, out Vector3 hit_pos)
@@ -494,7 +516,7 @@ public class WeaponMeleeController : WeaponController
 		ItemID id = currentItem.m_Info.m_ID;
 		if (!this.m_PredictionData.ContainsKey((int)id))
 		{
-			return false;
+			return base.UpdateCollisions(blade_t0, blade_t1, handle_t0, handle_t1, hit_dir, damage_window, out cj_obj, out collider, out collision_with_handle, damage_window_start, damage_window_end, out hit_pos);
 		}
 		AnimatorClipInfo[] currentAnimatorClipInfo = this.m_Animator.GetCurrentAnimatorClipInfo(1);
 		AnimationClip animationClip = null;
@@ -507,12 +529,12 @@ public class WeaponMeleeController : WeaponController
 		}
 		if (animationClip == null)
 		{
-			return false;
+			return base.UpdateCollisions(blade_t0, blade_t1, handle_t0, handle_t1, hit_dir, damage_window, out cj_obj, out collider, out collision_with_handle, damage_window_start, damage_window_end, out hit_pos);
 		}
 		List<MeleeAttackPredictionData> list = this.m_PredictionData[(int)id][animationClip];
 		AnimatorStateInfo currentAnimatorStateInfo = this.m_Animator.GetCurrentAnimatorStateInfo(1);
 		float num = 0.02f;
-		float num2 = (this.m_LastAnimFrame < 0f) ? 0f : (this.m_LastAnimFrame / currentAnimatorStateInfo.length);
+		float num2 = (this.m_LastAnimFrame >= 0f) ? (this.m_LastAnimFrame / currentAnimatorStateInfo.length) : 0f;
 		float time = num2;
 		float num3 = currentAnimatorStateInfo.normalizedTime - num2;
 		int num4 = (int)(num3 / num);
@@ -544,32 +566,61 @@ public class WeaponMeleeController : WeaponController
 				this.m_BladeT1Triangle.p1 = damagerEndPos2;
 				this.m_BladeT1Triangle.p2 = damagerEndPos;
 				base.GetBoxParameters(this.m_BladeT0Triangle, this.m_BladeT1Triangle, out zero2, out zero, out identity);
-				Collider[] array = Physics.OverlapBox(zero2, zero, identity);
-				this.SortCollisions(array);
-				for (int k = 0; k < array.Length; k++)
+				int num6 = Physics.OverlapBoxNonAlloc(zero2, zero, this.m_HitCollidersTmp, identity);
+				this.SortCollisions(this.m_HitCollidersTmp, num6);
+				for (int k = 0; k < num6; k++)
 				{
 					bool flag = false;
-					Collider collider2 = array[k];
-					if (collider2.gameObject.IsWater())
+					Collider collider2 = this.m_HitCollidersTmp[k];
+					if (!(collider2 == this.m_Player.m_CharacterController.m_Controller))
 					{
-						this.OnHitWater(collider2);
-					}
-					if (!collider2.isTrigger || collider2.gameObject.IsAI())
-					{
-						if (!(collider2.gameObject == this.m_Player.gameObject) && !(collider2.gameObject == this.m_Player.GetCurrentItem(Hand.Right).gameObject))
+						if (collider2.gameObject.IsWater())
 						{
-							if (!this.m_HitObjects.Contains(collider2.gameObject))
+							this.OnHitWater(collider2);
+						}
+						if ((!collider2.isTrigger || collider2.gameObject.IsAI() || collider2.gameObject.IsFish() || collider2.gameObject.GetComponent<Spikes>()) && !(collider2.gameObject == this.m_Player.gameObject) && !(collider2.gameObject == currentItem.gameObject) && !(collider2.transform.parent == Player.Get().transform.GetChild(0)) && !this.m_HitObjects.Contains(collider2.gameObject) && !(collider2.gameObject.GetComponent<Player>() != null) && !PlayerArmorModule.Get().IsgameObjectEquipedArmor(collider2.gameObject))
+						{
+							Item component = collider2.gameObject.GetComponent<Item>();
+							if (!(component != null) || component.m_Info == null || (!component.m_Info.IsParasite() && !component.m_Info.IsArmor()))
 							{
-								if (!(collider2.gameObject.GetComponent<Player>() != null))
+								ItemReplacer component2 = collider2.gameObject.GetComponent<ItemReplacer>();
+								if (component2)
 								{
-									CJObject component = collider2.gameObject.GetComponent<CJObject>();
-									if (component == null && collider2.gameObject.transform.parent != null)
+									string text = component2.m_ReplaceInfoName.ToString().ToLower();
+									if ((text.Contains("plant") && text != "plantain_lily_leaf") || text.Contains("leaf"))
 									{
-										component = collider2.gameObject.transform.parent.GetComponent<CJObject>();
+										goto IL_62D;
 									}
-									if (component != null && component.GetHitCollisionType() == HitCollisionType.Bones)
+								}
+								ItemHold component3 = collider2.gameObject.GetComponent<ItemHold>();
+								if (component3)
+								{
+									string text2 = component3.m_InfoName.ToString().ToLower();
+									if ((text2.Contains("plant") && text2 != "plantain_lily_leaf") || text2.Contains("leaf"))
 									{
-										if (base.CheckBonesIntersection(blade_t0, blade_t1, component))
+										goto IL_62D;
+									}
+								}
+								AI component4 = collider2.gameObject.GetComponent<AI>();
+								if (!component4 || !component4.m_GoalsModule || component4.m_GoalsModule.m_ActiveGoal == null || component4.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.HumanJumpBack || component4.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.5f)
+								{
+									CJObject component5 = collider2.gameObject.GetComponent<CJObject>();
+									if (component5 == null)
+									{
+										Transform parent = collider2.gameObject.transform.parent;
+										while (parent != null)
+										{
+											component5 = parent.GetComponent<CJObject>();
+											if (component5)
+											{
+												break;
+											}
+											parent = parent.parent;
+										}
+									}
+									if (component5 != null && component5.GetHitCollisionType() == HitCollisionType.Bones)
+									{
+										if (base.CheckBonesIntersection(blade_t0, blade_t1, component5))
 										{
 											flag = true;
 										}
@@ -586,7 +637,7 @@ public class WeaponMeleeController : WeaponController
 										this.m_LastBoxPos = zero2;
 										this.m_LastBoxQuaternion = identity;
 										this.m_LastAnimFrame = this.m_Animator.GetCurrentAnimatorStateInfo(1).length * num5;
-										cj_obj = component;
+										cj_obj = component5;
 										collider = collider2;
 										hit_pos = this.m_BladeT0Triangle.p0;
 										float proportionalClamp = CJTools.Math.GetProportionalClamp(0f, 1f, num5, num2, currentAnimatorStateInfo.normalizedTime);
@@ -598,6 +649,7 @@ public class WeaponMeleeController : WeaponController
 							}
 						}
 					}
+					IL_62D:;
 				}
 				time = num5;
 			}
@@ -654,7 +706,7 @@ public class WeaponMeleeController : WeaponController
 
 	protected override void SetupAnimFrameForHit(Vector3 box_center, Vector3 box_half_sizes, Quaternion q, float anim_frame, Collider coll)
 	{
-		this.m_AnimationStopFrame = anim_frame;
+		base.m_AnimationStopFrame = anim_frame;
 	}
 
 	private DestroyableChunkSource PredictHit()
@@ -706,10 +758,10 @@ public class WeaponMeleeController : WeaponController
 			this.m_BladeT1Triangle.p1 = p3;
 			this.m_BladeT1Triangle.p2 = p2;
 			base.GetBoxParameters(this.m_BladeT0Triangle, this.m_BladeT1Triangle, out zero, out zero2, out identity);
-			Collider[] array = Physics.OverlapBox(zero, zero2, identity);
-			for (int k = 0; k < array.Length; k++)
+			int num2 = Physics.OverlapBoxNonAlloc(zero, zero2, this.m_HitCollidersTmp, identity);
+			for (int k = 0; k < num2; k++)
 			{
-				DestroyableChunkSource component = array[k].gameObject.GetComponent<DestroyableChunkSource>();
+				DestroyableChunkSource component = this.m_HitCollidersTmp[k].gameObject.GetComponent<DestroyableChunkSource>();
 				if (component != null && this.IsValidIKTargetPos(component.m_IKTargetPos))
 				{
 					return component;
@@ -726,7 +778,7 @@ public class WeaponMeleeController : WeaponController
 
 	private bool IsValidIKTargetPos(Vector3 pos)
 	{
-		Vector3 vector = Camera.main.WorldToScreenPoint(pos);
+		Vector3 vector = CameraManager.Get().m_MainCamera.WorldToScreenPoint(pos);
 		return vector.x > (float)Screen.width * 0.1f && vector.x < (float)Screen.width * 0.9f && vector.y > (float)Screen.height * 0.12f && vector.y < (float)Screen.height * 0.88f;
 	}
 
@@ -740,7 +792,7 @@ public class WeaponMeleeController : WeaponController
 	private void DelayedSpawnFX()
 	{
 		Vector3 fxToSpawnPos = this.m_FxToSpawnPos;
-		ParticlesManager.Get().Spawn(this.m_FXToSpawn, fxToSpawnPos, Quaternion.identity, null);
+		ParticlesManager.Get().Spawn(this.m_FXToSpawn, fxToSpawnPos, Quaternion.identity, Vector3.zero, null, -1f, false);
 		this.m_SpawnFX = false;
 	}
 
@@ -759,11 +811,11 @@ public class WeaponMeleeController : WeaponController
 		return this.m_Animator.GetCurrentAnimatorStateInfo(1).shortNameHash == this.m_NMeleeAttackUpSwing;
 	}
 
-	private void SortCollisions(Collider[] colls)
+	private void SortCollisions(Collider[] colls, int length)
 	{
-		for (int i = 0; i < colls.Length; i++)
+		for (int i = 0; i < length; i++)
 		{
-			for (int j = 0; j < colls.Length - 1; j++)
+			for (int j = 0; j < length - 1; j++)
 			{
 				if (colls[j].GetType() == typeof(TerrainCollider))
 				{
@@ -788,8 +840,7 @@ public class WeaponMeleeController : WeaponController
 
 	public bool CanBeInterrupted()
 	{
-		AnimatorStateInfo currentAnimatorStateInfo = this.m_Animator.GetCurrentAnimatorStateInfo(1);
-		return !this.IsActive() || currentAnimatorStateInfo.shortNameHash == this.m_NMeleeIdle;
+		return !this.IsActive() || !this.IsAttack();
 	}
 
 	private int m_BAttackUp = Animator.StringToHash("AttackUp");
@@ -798,15 +849,13 @@ public class WeaponMeleeController : WeaponController
 
 	private int m_BAttackLeft = Animator.StringToHash("AttackLeft");
 
-	private int m_BAttackRightRelease = Animator.StringToHash("AttackRightRelease");
-
 	private int m_BAttackUpRelease = Animator.StringToHash("AttackUpRelease");
 
 	private int m_BAttackLeftRelease = Animator.StringToHash("AttackLeftRelease");
 
-	private int m_NMeleeAttackRightWindUp = Animator.StringToHash("AttackRightWindUp");
-
 	private int m_NMeleeAttackRightSwing = Animator.StringToHash("AttackRightSwing");
+
+	private int m_NMeleeAttackRightLowStamina = Animator.StringToHash("AttackRight_LowStamina");
 
 	private int m_NMeleeAttackUpWindUp = Animator.StringToHash("AttackUpWindUp");
 
@@ -855,6 +904,9 @@ public class WeaponMeleeController : WeaponController
 	private Vector3 m_LastHandPos = Vector3.zero;
 
 	private Vector3 m_AnimationStoppedHandPos = Vector3.zero;
+
+	[NonSerialized]
+	private Collider[] m_HitCollidersTmp = new Collider[20];
 
 	private bool m_SpawnFX;
 

@@ -32,11 +32,17 @@ public class ConstructionsTab : ItemsTab, IInputsReceiver
 		return NotepadController.Get().IsActive() && MenuNotepad.Get().m_ActiveTab == this.m_Tab;
 	}
 
-	public void OnInputAction(InputsManager.InputAction action)
+	public bool CanReceiveActionPaused()
 	{
-		if (action == InputsManager.InputAction.LMB)
+		return false;
+	}
+
+	public void OnInputAction(InputActionData action_data)
+	{
+		if (action_data.m_Action == InputsManager.InputAction.LMB || action_data.m_Action == InputsManager.InputAction.Button_X)
 		{
-			for (int i = 0; i < this.m_Masks.Count; i++)
+			int i = 0;
+			while (i < this.m_Masks.Count)
 			{
 				if (this.m_Masks[i].gameObject.activeSelf)
 				{
@@ -48,8 +54,13 @@ public class ConstructionsTab : ItemsTab, IInputsReceiver
 						ItemInfo info = ItemsManager.Get().GetInfo(id);
 						component.SetupPrefab(info);
 						Player.Get().StartController(PlayerControllerType.Construction);
+						return;
 					}
 					break;
+				}
+				else
+				{
+					i++;
 				}
 			}
 		}
@@ -67,8 +78,7 @@ public class ConstructionsTab : ItemsTab, IInputsReceiver
 		bool mouseOverConstruction = false;
 		for (int i = 0; i < this.m_Masks.Count; i++)
 		{
-			RectTransform component = this.m_Masks[i].gameObject.GetComponent<RectTransform>();
-			if (RectTransformUtility.RectangleContainsScreenPoint(component, notepadCanvasCursorPos) && this.m_Masks[i].gameObject.transform.parent.gameObject.activeSelf && MenuNotepad.Get().m_CollisionFound)
+			if (RectTransformUtility.RectangleContainsScreenPoint(this.m_Masks[i].gameObject.GetComponent<RectTransform>(), notepadCanvasCursorPos) && this.m_Masks[i].gameObject.transform.parent.gameObject.activeSelf && MenuNotepad.Get().m_CollisionFound)
 			{
 				this.m_Masks[i].gameObject.SetActive(true);
 				mouseOverConstruction = true;

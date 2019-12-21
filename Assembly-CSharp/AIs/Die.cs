@@ -32,11 +32,9 @@ namespace AIs
 			if (this.m_AI.m_Trap && this.m_AI.m_Trap.m_Info.m_ID == ItemID.Snare_Trap)
 			{
 				this.m_Animation = "SnareTrap";
+				return;
 			}
-			else
-			{
-				this.m_Animation = this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)];
-			}
+			this.m_Animation = this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)];
 		}
 
 		protected override bool ShouldFinish()

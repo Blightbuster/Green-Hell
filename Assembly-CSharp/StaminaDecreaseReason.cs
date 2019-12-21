@@ -9,6 +9,10 @@ public enum StaminaDecreaseReason
 	Bow,
 	Block,
 	PuchBlock,
+	PuchWeaponBlock,
 	Dodge,
+	RodCast,
+	RodStrike,
+	RodReel,
 	Count
 }

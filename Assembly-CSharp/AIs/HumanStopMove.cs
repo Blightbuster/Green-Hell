@@ -42,21 +42,20 @@ namespace AIs
 				break;
 			}
 			Vector3 normalized2D = this.m_AI.transform.forward.GetNormalized2D();
-			Vector3 normalized2D2 = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
+			Vector3 normalized2D2 = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 			float num = normalized2D.AngleSigned(normalized2D2, Vector3.up);
 			float num2 = Mathf.Abs(num);
 			if (num2 <= 45f)
 			{
 				this.m_Animation = "Stop" + str;
+				return;
 			}
-			else if (num2 <= 135f)
+			if (num2 <= 135f)
 			{
-				this.m_Animation = ((num < 0f) ? ("Stop" + str + "Left_90") : ("Stop" + str + "Right_90"));
+				this.m_Animation = ((num >= 0f) ? ("Stop" + str + "Right_90") : ("Stop" + str + "Left_90"));
+				return;
 			}
-			else
-			{
-				this.m_Animation = ((num < 0f) ? ("Stop" + str + "Left_180") : ("Stop" + str + "Right_180"));
-			}
+			this.m_Animation = ((num >= 0f) ? ("Stop" + str + "Right_180") : ("Stop" + str + "Left_180"));
 		}
 
 		protected override bool ShouldFinish()
@@ -76,7 +75,7 @@ namespace AIs
 		public override void Update()
 		{
 			base.Update();
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
+			Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 			this.m_AI.transform.rotation = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(normalized2D), Time.deltaTime * 0.5f);
 		}
 

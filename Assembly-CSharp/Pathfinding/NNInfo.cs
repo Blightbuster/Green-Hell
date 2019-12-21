@@ -5,12 +5,6 @@ namespace Pathfinding
 {
 	public struct NNInfo
 	{
-		public NNInfo(NNInfoInternal internalInfo)
-		{
-			this.node = internalInfo.node;
-			this.position = internalInfo.clampedPosition;
-		}
-
 		[Obsolete("This field has been renamed to 'position'")]
 		public Vector3 clampedPosition
 		{
@@ -18,6 +12,12 @@ namespace Pathfinding
 			{
 				return this.position;
 			}
+		}
+
+		public NNInfo(NNInfoInternal internalInfo)
+		{
+			this.node = internalInfo.node;
+			this.position = internalInfo.clampedPosition;
 		}
 
 		public static explicit operator Vector3(NNInfo ob)

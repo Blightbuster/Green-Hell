@@ -16,38 +16,28 @@ public class WeaponSpearController : WeaponController
 	{
 		base.Awake();
 		WeaponSpearController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.WeaponSpear;
+		base.m_ControllerType = PlayerControllerType.WeaponSpear;
 	}
 
 	protected override void OnEnable()
 	{
 		base.OnEnable();
 		this.m_Animator.SetBool(TriggerController.s_BGrabItem, false);
-		this.SetState(WeaponSpearController.State.Idle);
 		this.m_ImpaledObject = null;
 	}
 
 	protected override void OnDisable()
 	{
 		base.OnDisable();
-		if (this.m_SpearState != WeaponSpearController.State.Throw)
-		{
-			this.SetState(WeaponSpearController.State.None);
-			this.m_Animator.Play(this.m_SpearIdleHash);
-		}
-		else
-		{
-			this.m_Animator.SetInteger(this.m_StateHash, 999);
-		}
-		if (this.m_MovesBlocked)
-		{
-			this.m_Player.UnblockMoves();
-		}
+		this.SetState(WeaponSpearController.State.None);
 		if (this.m_ItemBody != null)
 		{
 			this.m_ItemBody.transform.parent = null;
+			this.ResetBodyAnimator();
+			this.m_ItemBody.Take();
 			this.m_ItemBody = null;
 		}
+		Player.Get().StopAim();
 	}
 
 	private void SetState(WeaponSpearController.State state)
@@ -58,16 +48,17 @@ public class WeaponSpearController : WeaponController
 			return;
 		}
 		this.m_Animator.SetInteger(this.m_StateHash, (int)state);
-		this.m_Animator.speed = ((!this.IsAttack()) ? 1f : Skill.Get<SpearFishingSkill>().GetAnimationSpeedMul());
+		this.m_Animator.speed = (this.IsAttack() ? Skill.Get<SpearFishingSkill>().GetAnimationSpeedMul() : (1f * Player.Get().m_SpeedMul));
 		if (state == WeaponSpearController.State.None)
 		{
+			this.m_SpearPrevState = this.m_SpearState;
 			this.m_SpearState = WeaponSpearController.State.None;
 		}
 	}
 
 	public override bool IsAttack()
 	{
-		return this.m_SpearState == WeaponSpearController.State.Attack || this.m_SpearState == WeaponSpearController.State.AttackDown;
+		return this.m_SpearState == WeaponSpearController.State.Attack || this.m_SpearState == WeaponSpearController.State.AttackDown || this.m_SpearState == WeaponSpearController.State.AttackHit || this.m_SpearState == WeaponSpearController.State.AttackNonHit || this.m_SpearState == WeaponSpearController.State.UnAim;
 	}
 
 	protected override void EndAttackNonStop()
@@ -99,6 +90,11 @@ public class WeaponSpearController : WeaponController
 		return this.m_SpearState == WeaponSpearController.State.ThrowAim || this.m_SpearState == WeaponSpearController.State.ThrowAimIdle || this.m_SpearState == WeaponSpearController.State.ThrowAimWalk || this.m_SpearState == WeaponSpearController.State.ThrowAimRun;
 	}
 
+	public bool IsThrow()
+	{
+		return this.m_SpearState == WeaponSpearController.State.Throw;
+	}
+
 	public override string ReplaceClipsGetItemName()
 	{
 		if (this.m_Player.GetCurrentItem(Hand.Right) == null)
@@ -109,61 +105,86 @@ public class WeaponSpearController : WeaponController
 		{
 			return string.Empty;
 		}
-		return this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID.ToString();
+		return EnumUtils<ItemID>.GetName((int)this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID);
 	}
 
 	protected override bool CanAttack()
 	{
-		return !MainLevel.Instance.IsPause() && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && !this.IsAttack() && !PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel);
+		return !MainLevel.Instance.IsPause() && Time.time - MainLevel.Instance.m_LastUnpauseTime >= 0.35f && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && !this.IsAttack() && !HUDSelectDialog.Get().enabled && !HUDSelectDialogNode.Get().enabled && Time.time - HUDSelectDialog.Get().m_LastSelectDialogTime >= 0.35f && Time.time - HUDSelectDialogNode.Get().m_LastSelectNodeTime >= 0.35f;
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public void Jump()
 	{
-		base.OnInputAction(action);
+		this.SetState(WeaponSpearController.State.Jump);
+	}
+
+	public override void OnInputAction(InputActionData action_data)
+	{
+		base.OnInputAction(action_data);
+		if (action_data.m_Action != InputsManager.InputAction.SpearAttack && action_data.m_Action != InputsManager.InputAction.SpearUpAim && action_data.m_Action != InputsManager.InputAction.SpearAttackUp && action_data.m_Action != InputsManager.InputAction.SpearThrowAim && action_data.m_Action != InputsManager.InputAction.SpearThrowReleaseAim && action_data.m_Action != InputsManager.InputAction.SpearThrow)
+		{
+			return;
+		}
 		if (!this.CanAttack())
 		{
 			return;
 		}
-		if (action == InputsManager.InputAction.SpearAttack)
+		if (action_data.m_Action == InputsManager.InputAction.SpearAttack)
 		{
 			if (this.m_SpearState == WeaponSpearController.State.Idle)
 			{
-				this.SetState(WeaponSpearController.State.AttackDown);
+				if (GreenHellGame.IsPCControllerActive() || this.m_SpearPrevState != WeaponSpearController.State.ThrowUnAim)
+				{
+					this.SetState(WeaponSpearController.State.AttackDown);
+					return;
+				}
+				this.m_SpearPrevState = WeaponSpearController.State.None;
+				return;
 			}
 			else if (this.m_SpearState == WeaponSpearController.State.AttackDown)
 			{
 				this.m_AttackDownCombo = true;
+				return;
 			}
 		}
-		else if (action == InputsManager.InputAction.SpearUpAim)
+		else if (action_data.m_Action == InputsManager.InputAction.SpearUpAim)
 		{
 			if (this.m_SpearState == WeaponSpearController.State.Idle)
 			{
 				this.SetState(WeaponSpearController.State.Aim);
+				return;
 			}
 		}
-		else if (action == InputsManager.InputAction.SpearAttackUp)
+		else if (action_data.m_Action == InputsManager.InputAction.SpearAttackUp)
 		{
 			if (this.IsAim())
 			{
 				this.SetState(WeaponSpearController.State.Attack);
+				return;
 			}
 		}
-		else if (action == InputsManager.InputAction.SpearThrowAim)
+		else if (action_data.m_Action == InputsManager.InputAction.SpearThrowAim)
 		{
 			if (this.m_SpearState == WeaponSpearController.State.Idle)
 			{
 				this.SetState(WeaponSpearController.State.ThrowAim);
+				return;
 			}
 		}
-		else if (action == InputsManager.InputAction.SpearThrowReleaseAim)
+		else if (action_data.m_Action == InputsManager.InputAction.SpearThrowReleaseAim)
 		{
 			if (this.IsThrowAim())
 			{
 				this.SetState(WeaponSpearController.State.ThrowUnAim);
+				return;
+			}
+			if (GreenHellGame.IsPadControllerActive() && this.IsAim())
+			{
+				this.SetState(WeaponSpearController.State.UnAim);
+				return;
 			}
 		}
-		else if (action == InputsManager.InputAction.SpearThrow && this.IsThrowAim())
+		else if (action_data.m_Action == InputsManager.InputAction.SpearThrow && this.IsThrowAim())
 		{
 			this.SetState(WeaponSpearController.State.Throw);
 		}
@@ -176,7 +197,22 @@ public class WeaponSpearController : WeaponController
 		{
 			return;
 		}
-		if (this.m_Animator.GetBool(TriggerController.s_BGrabItem))
+		if (base.IsBlock() && this.m_SpearState != WeaponSpearController.State.BlockIn && this.m_SpearState != WeaponSpearController.State.BlockIdle && this.m_SpearState != WeaponSpearController.State.BlockOut)
+		{
+			this.SetState(WeaponSpearController.State.BlockIn);
+		}
+		else if (this.m_SpearState == WeaponSpearController.State.BlockIdle && !base.IsBlock())
+		{
+			if (this.m_Animator.GetBool(this.m_LowStaminaHash))
+			{
+				this.SetState(WeaponSpearController.State.Idle);
+			}
+			else
+			{
+				this.SetState(WeaponSpearController.State.BlockOut);
+			}
+		}
+		else if (this.m_Animator.GetBool(TriggerController.s_BGrabItem))
 		{
 			if (this.m_StateAfterGrab == WeaponSpearController.State.None)
 			{
@@ -193,6 +229,10 @@ public class WeaponSpearController : WeaponController
 		{
 			this.SetState(WeaponSpearController.State.Idle);
 		}
+		else if (this.m_SpearState == WeaponSpearController.State.Jump)
+		{
+			this.SetState(WeaponSpearController.State.Idle);
+		}
 		this.UpdateState();
 		this.UpdateItemBody();
 		if (Inventory3DManager.Get().gameObject.activeSelf)
@@ -200,8 +240,9 @@ public class WeaponSpearController : WeaponController
 			if (this.IsThrowAim())
 			{
 				this.SetState(WeaponSpearController.State.ThrowUnAim);
+				return;
 			}
-			else if (this.IsAim())
+			if (this.IsAim())
 			{
 				this.SetState(WeaponSpearController.State.UnAim);
 			}
@@ -219,6 +260,7 @@ public class WeaponSpearController : WeaponController
 		int integer = this.m_Animator.GetInteger(this.m_StateHash);
 		if (integer != (int)this.m_SpearState)
 		{
+			this.m_SpearPrevState = this.m_SpearState;
 			this.m_SpearState = (WeaponSpearController.State)integer;
 			this.OnEnterState();
 		}
@@ -229,82 +271,106 @@ public class WeaponSpearController : WeaponController
 		WeaponSpearController.State spearState = this.m_SpearState;
 		switch (spearState)
 		{
+		case WeaponSpearController.State.Aim:
+			this.m_Player.StartAim(Player.AimType.SpearFishing, 18f);
+			return;
+		case WeaponSpearController.State.AimIdle:
+		case WeaponSpearController.State.AimWalk:
+		case WeaponSpearController.State.AimRun:
+			return;
 		case WeaponSpearController.State.UnAim:
-		case WeaponSpearController.State.ThrowUnAim:
-			this.m_Player.StopAim();
 			break;
 		case WeaponSpearController.State.AttackDown:
 			this.Attack();
 			this.m_WasWaterHit = false;
 			this.m_CanHitWater = false;
-			PlayerAudioModule.Get().PlayAttackSound(1f, false);
 			this.m_Player.DecreaseStamina(this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Attack) * Skill.Get<SpearSkill>().GetStaminaMul());
-			break;
+			return;
 		case WeaponSpearController.State.Attack:
 			this.Attack();
 			this.m_WasWaterHit = false;
 			this.m_CanHitWater = false;
-			PlayerAudioModule.Get().PlayAttackSound(1f, false);
 			this.m_Player.DecreaseStamina(this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Attack) * Skill.Get<SpearSkill>().GetStaminaMul());
 			this.m_Player.StopAim();
-			break;
+			return;
 		default:
-			if (spearState == WeaponSpearController.State.Aim)
+			switch (spearState)
 			{
-				this.m_Player.StartAim(Player.AimType.SpearFishing);
-			}
-			break;
-		case WeaponSpearController.State.ThrowAim:
-			this.m_Player.StartAim(Player.AimType.SpearHunting);
-			break;
-		case WeaponSpearController.State.Throw:
-			this.m_Player.StopAim();
-			this.m_Player.DecreaseStamina(this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Throw) * Skill.Get<SpearSkill>().GetStaminaMul());
-			break;
-		case WeaponSpearController.State.Presentation:
-		{
-			this.m_ImpaledObject.transform.parent = null;
-			AI component = this.m_ImpaledObject.GetComponent<AI>();
-			this.m_ImpaledIsStingRay = false;
-			this.m_ImpaledArowana = false;
-			this.m_ImpaledPiranha = false;
-			AI.AIID id = component.m_ID;
-			Item item = ItemsManager.Get().CreateItem(id.ToString() + "_Body", false);
-			Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
-			Vector3 b = (currentItem.m_DamagerStart.position - currentItem.m_DamagerEnd.position).normalized * -0.07f;
-			item.transform.rotation = currentItem.m_DamagerStart.rotation;
-			if (component.m_ID == AI.AIID.Arowana)
+			case WeaponSpearController.State.ThrowAim:
+				this.m_Player.StartAim(Player.AimType.SpearHunting, 18f);
+				return;
+			case WeaponSpearController.State.ThrowAimIdle:
+			case WeaponSpearController.State.ThrowAimWalk:
+			case WeaponSpearController.State.ThrowAimRun:
+			case WeaponSpearController.State.PresentationIdle:
+				return;
+			case WeaponSpearController.State.ThrowUnAim:
+				break;
+			case WeaponSpearController.State.Throw:
+				this.m_Player.StopAim();
+				this.m_Player.DecreaseStamina(this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Throw) * Skill.Get<SpearSkill>().GetStaminaMul());
+				return;
+			case WeaponSpearController.State.Presentation:
 			{
-				this.m_ImpaledArowana = true;
-				item.transform.Rotate(Vector3.forward, -60f);
-			}
-			else if (component.m_ID == AI.AIID.Piranha)
-			{
-				this.m_ImpaledPiranha = true;
-				item.transform.Rotate(Vector3.forward, -90f);
-			}
-			else if (component.IsStringray())
-			{
-				this.m_ImpaledIsStingRay = true;
-				item.transform.Rotate(Vector3.forward, -210f);
-			}
-			else
-			{
-				item.transform.Rotate(Vector3.forward, 0f);
+				this.m_ImpaledObject.transform.parent = null;
+				AI component = this.m_ImpaledObject.GetComponent<AI>();
 				this.m_ImpaledIsStingRay = false;
+				this.m_ImpaledArowana = false;
+				this.m_ImpaledPiranha = false;
+				this.m_ImpaledCrab = false;
+				AI.AIID id = component.m_ID;
+				Item item = ItemsManager.Get().CreateItem(id.ToString() + "_Body", false);
+				Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
+				Vector3 b = (currentItem.m_DamagerStart.position - currentItem.m_DamagerEnd.position).normalized * -0.07f;
+				item.transform.rotation = currentItem.m_DamagerStart.rotation;
+				if (component.m_ID == AI.AIID.Arowana)
+				{
+					this.m_ImpaledArowana = true;
+					item.transform.Rotate(Vector3.forward, -60f);
+				}
+				else if (component.m_ID == AI.AIID.Piranha)
+				{
+					this.m_ImpaledPiranha = true;
+					item.transform.Rotate(Vector3.forward, -90f);
+				}
+				else if (component.IsStringray())
+				{
+					this.m_ImpaledIsStingRay = true;
+					item.transform.Rotate(Vector3.forward, -210f);
+				}
+				else if (component.m_ID == AI.AIID.Crab)
+				{
+					this.m_ImpaledCrab = true;
+					item.transform.Rotate(Vector3.forward, 90f);
+				}
+				else
+				{
+					item.transform.Rotate(Vector3.forward, 0f);
+				}
+				item.transform.position = currentItem.m_DamagerStart.position + b;
+				item.transform.parent = this.m_Player.GetCurrentItem(Hand.Right).transform;
+				item.m_BlockGrabAnimOnExecute = true;
+				item.m_AttachedToSpear = true;
+				this.m_ItemBody = item;
+				UnityEngine.Object.Destroy(this.m_ImpaledObject.gameObject);
+				this.m_ImpaledObject = null;
+				item.m_CanBeOutlined = false;
+				item.UpdateLayer();
+				item.UpdatePhx();
+				item.UpdateScale(false);
+				this.PlayCatchAnimation();
+				return;
 			}
-			item.transform.position = currentItem.m_DamagerStart.position + b;
-			item.transform.parent = this.m_Player.GetCurrentItem(Hand.Right).transform;
-			item.m_BlockGrabAnimOnExecute = true;
-			item.m_AttachedToSpear = true;
-			this.m_ItemBody = item;
-			UnityEngine.Object.Destroy(this.m_ImpaledObject.gameObject);
-			this.m_ImpaledObject = null;
-			item.m_CanBeOutlined = false;
-			this.PlayCatchAnimation();
+			case WeaponSpearController.State.Jump:
+				this.m_Player.DecreaseStamina(this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Jump));
+				this.m_Player.StopAim();
+				return;
+			default:
+				return;
+			}
 			break;
 		}
-		}
+		this.m_Player.StopAim();
 	}
 
 	protected override bool CanBlock()
@@ -314,16 +380,15 @@ public class WeaponSpearController : WeaponController
 
 	private void UpdateItemBody()
 	{
-		if (!this.m_ItemBody)
-		{
-			return;
-		}
-		if (this.m_ItemBody.m_InInventory || this.m_ItemBody.transform.parent == null || Inventory3DManager.Get().m_CarriedItem == this.m_ItemBody)
+		if ((!this.m_ItemBody && (this.m_SpearState == WeaponSpearController.State.Presentation || this.m_SpearState == WeaponSpearController.State.PresentationIdle)) || (this.m_ItemBody && (this.m_ItemBody.m_InInventory || this.m_ItemBody.transform.parent == null || Inventory3DManager.Get().m_CarriedItem == this.m_ItemBody)))
 		{
 			this.SetState(WeaponSpearController.State.Idle);
 			this.ResetBodyAnimator();
-			this.m_ItemBody.m_CanBeOutlined = true;
-			this.m_ItemBody = null;
+			if (this.m_ItemBody)
+			{
+				this.m_ItemBody.m_CanBeOutlined = true;
+				this.m_ItemBody = null;
+			}
 			if (this.m_MovesBlocked)
 			{
 				this.m_Player.UnblockMoves();
@@ -334,6 +399,10 @@ public class WeaponSpearController : WeaponController
 
 	protected override void HitObject(CJObject obj, Vector3 hit_pos, Vector3 hit_dir)
 	{
+		if (obj.IsFish() && !obj.CanBeImpaledOnSpear())
+		{
+			return;
+		}
 		base.HitObject(obj, hit_pos, hit_dir);
 		if (obj.CanBeImpaledOnSpear())
 		{
@@ -352,19 +421,26 @@ public class WeaponSpearController : WeaponController
 		this.m_ImpaledObject = obj.gameObject;
 		this.m_ImpaledObject.transform.position = currentItem.m_DamagerStart.position;
 		this.m_ImpaledObject.transform.parent = currentItem.m_DamagerStart;
-		Rigidbody component = this.m_ImpaledObject.GetComponent<Rigidbody>();
+		Collider component = obj.GetComponent<Collider>();
 		if (component)
 		{
-			UnityEngine.Object.Destroy(component);
+			Physics.IgnoreCollision(this.m_Player.m_Collider, component);
+		}
+		Rigidbody component2 = this.m_ImpaledObject.GetComponent<Rigidbody>();
+		if (component2)
+		{
+			UnityEngine.Object.Destroy(component2);
 		}
 		obj.OnImpaleOnSpear();
 		HintsManager.Get().ShowHint("Take_Item_From_Spear", 10f);
-		Item component2 = this.m_ImpaledObject.GetComponent<Item>();
-		if (component2)
+		Item component3 = this.m_ImpaledObject.GetComponent<Item>();
+		if (component3)
 		{
-			component2.ItemsManagerUnregister();
-			component2.enabled = false;
+			component3.ItemsManagerUnregister();
+			component3.enabled = false;
 		}
+		this.m_Player.BlockMoves();
+		this.m_MovesBlocked = true;
 	}
 
 	public GameObject GetImpaledObject()
@@ -380,10 +456,12 @@ public class WeaponSpearController : WeaponController
 			if (this.m_SpearState == WeaponSpearController.State.Aim)
 			{
 				this.SetState(WeaponSpearController.State.AimIdle);
+				return;
 			}
-			else if (this.m_SpearState == WeaponSpearController.State.ThrowAim)
+			if (this.m_SpearState == WeaponSpearController.State.ThrowAim)
 			{
 				this.SetState(WeaponSpearController.State.ThrowAimIdle);
+				return;
 			}
 		}
 		else if (id == AnimEventID.SpearAttackEnd)
@@ -395,51 +473,73 @@ public class WeaponSpearController : WeaponController
 					this.m_AttackDownCombo = false;
 					this.m_Animator.Play(this.m_AttackDownHash, 1, 0f);
 					this.SetState(WeaponSpearController.State.AttackDown);
+					return;
 				}
-				else
-				{
-					this.SetState(WeaponSpearController.State.Idle);
-				}
+				this.SetState(WeaponSpearController.State.Idle);
+				return;
 			}
 			else if (this.m_SpearState == WeaponSpearController.State.AttackNonHit)
 			{
 				if (InputsManager.Get().IsActionActive(InputsManager.InputAction.SpearThrow))
 				{
 					this.SetState(WeaponSpearController.State.AimIdle);
+					return;
 				}
-				else
-				{
-					this.SetState(WeaponSpearController.State.Idle);
-				}
+				this.SetState(WeaponSpearController.State.UnAim);
+				return;
 			}
 			else if (this.m_SpearState == WeaponSpearController.State.Attack)
 			{
 				this.SetState(WeaponSpearController.State.AttackNonHit);
+				return;
 			}
 		}
-		else if (id == AnimEventID.SpearUnAimEnd)
+		else
 		{
-			this.SetState(WeaponSpearController.State.Idle);
-		}
-		else if (id == AnimEventID.SpearShot && this.m_SpearState == WeaponSpearController.State.Throw)
-		{
-			this.Shot();
-		}
-		else if (id == AnimEventID.SpearShotEnd)
-		{
-			this.SetState(WeaponSpearController.State.None);
-		}
-		else if (id == AnimEventID.DamageStart)
-		{
-			this.m_CanHitWater = true;
-		}
-		else if (id == AnimEventID.DamageEnd)
-		{
-			this.m_CanHitWater = false;
-		}
-		else if (id == AnimEventID.SpearEnterPresentationEnd)
-		{
-			this.SetState(WeaponSpearController.State.PresentationIdle);
+			if (id == AnimEventID.SpearUnAimEnd)
+			{
+				this.SetState(WeaponSpearController.State.Idle);
+				return;
+			}
+			if (id == AnimEventID.SpearShot && this.m_SpearState == WeaponSpearController.State.Throw)
+			{
+				this.Shot();
+				return;
+			}
+			if (id == AnimEventID.SpearShotEnd)
+			{
+				this.SetState(WeaponSpearController.State.None);
+				return;
+			}
+			if (id == AnimEventID.DamageStart)
+			{
+				this.m_CanHitWater = true;
+				return;
+			}
+			if (id == AnimEventID.DamageEnd)
+			{
+				this.m_CanHitWater = false;
+				return;
+			}
+			if (id == AnimEventID.SpearEnterPresentationEnd)
+			{
+				this.SetState(WeaponSpearController.State.PresentationIdle);
+				return;
+			}
+			if (id == AnimEventID.JumpSpearEnd)
+			{
+				this.SetState(WeaponSpearController.State.Idle);
+				return;
+			}
+			if (id == AnimEventID.SpearBlockInEnd && this.m_SpearState == WeaponSpearController.State.BlockIn)
+			{
+				this.SetState(WeaponSpearController.State.BlockIdle);
+				return;
+			}
+			if (id == AnimEventID.SpearBlockOutEnd && this.m_SpearState == WeaponSpearController.State.BlockOut)
+			{
+				this.SetState(WeaponSpearController.State.Idle);
+			}
 		}
 	}
 
@@ -466,14 +566,17 @@ public class WeaponSpearController : WeaponController
 			actions.Add(6);
 			actions.Add(7);
 			actions.Add(9);
+			return;
 		}
-		else if (this.m_SpearState == WeaponSpearController.State.Aim)
+		if (this.m_SpearState == WeaponSpearController.State.Aim)
 		{
 			actions.Add(8);
+			return;
 		}
-		else if (this.m_SpearState == WeaponSpearController.State.ThrowAim || this.m_SpearState == WeaponSpearController.State.ThrowAimIdle)
+		if (this.m_SpearState == WeaponSpearController.State.ThrowAim || this.m_SpearState == WeaponSpearController.State.ThrowAimIdle)
 		{
 			actions.Add(11);
+			actions.Add(4);
 		}
 	}
 
@@ -489,12 +592,12 @@ public class WeaponSpearController : WeaponController
 			return;
 		}
 		water_coll.isTrigger = false;
-		RaycastHit[] array = Physics.RaycastAll(Camera.main.transform.position, Camera.main.transform.forward, 5f);
-		for (int i = 0; i < array.Length; i++)
+		int num = Physics.RaycastNonAlloc(CameraManager.Get().m_MainCamera.transform.position, CameraManager.Get().m_MainCamera.transform.forward, this.m_RaycastResultsTmp, 5f);
+		for (int i = 0; i < num; i++)
 		{
-			if (array[i].collider.gameObject == water_coll.gameObject)
+			if (this.m_RaycastResultsTmp[i].collider.gameObject == water_coll.gameObject)
 			{
-				ParticlesManager.Get().Spawn("SmallSplash_Size_C", array[i].point - Camera.main.transform.forward * 0.2f, Quaternion.identity, null);
+				ParticlesManager.Get().Spawn("SmallSplash_Size_C", this.m_RaycastResultsTmp[i].point - CameraManager.Get().m_MainCamera.transform.forward * 0.2f, Quaternion.identity, Vector3.zero, null, -1f, false);
 				this.m_WasWaterHit = true;
 				break;
 			}
@@ -526,6 +629,10 @@ public class WeaponSpearController : WeaponController
 						this.m_ItemBody.transform.Rotate(Vector3.forward, 80f);
 						this.m_ItemBody.transform.Rotate(Vector3.up, 180f);
 					}
+					else if (this.m_ImpaledCrab)
+					{
+						this.m_ItemBody.transform.Rotate(Vector3.forward, 90f);
+					}
 					else
 					{
 						this.m_ItemBody.transform.Rotate(Vector3.forward, 0f);
@@ -534,6 +641,7 @@ public class WeaponSpearController : WeaponController
 					if (this.m_ImpaledArowana)
 					{
 						this.m_ItemBody.transform.position -= this.m_ItemBody.transform.forward * 0.1f;
+						return;
 					}
 				}
 			}
@@ -555,7 +663,10 @@ public class WeaponSpearController : WeaponController
 			return;
 		}
 		Animator componentDeepChild = General.GetComponentDeepChild<Animator>(this.m_ItemBody.gameObject);
-		componentDeepChild.SetBool(WeaponSpearController.s_BodyCatch, true);
+		if (componentDeepChild != null)
+		{
+			componentDeepChild.SetBool(WeaponSpearController.s_BodyCatch, true);
+		}
 	}
 
 	private void ResetBodyAnimator()
@@ -565,18 +676,26 @@ public class WeaponSpearController : WeaponController
 			return;
 		}
 		Animator componentDeepChild = General.GetComponentDeepChild<Animator>(this.m_ItemBody.gameObject);
-		componentDeepChild.SetBool(WeaponSpearController.s_BodyCatch, false);
-		componentDeepChild.SetBool("Backpack", true);
+		if (componentDeepChild != null)
+		{
+			componentDeepChild.SetBool(WeaponSpearController.s_BodyCatch, false);
+			componentDeepChild.SetBool("Backpack", true);
+		}
 	}
 
 	public override void ResetAttack()
 	{
 		base.ResetAttack();
-		this.m_Player.StopAim();
-		this.SetState(WeaponSpearController.State.Idle);
+		if (this.m_SpearState != WeaponSpearController.State.BlockIn && this.m_SpearState != WeaponSpearController.State.BlockIdle && this.m_SpearState != WeaponSpearController.State.BlockOut)
+		{
+			this.m_Player.StopAim();
+			this.SetState(WeaponSpearController.State.Idle);
+		}
 	}
 
 	private WeaponSpearController.State m_SpearState;
+
+	private WeaponSpearController.State m_SpearPrevState;
 
 	private WeaponSpearController.State m_StateAfterGrab;
 
@@ -599,11 +718,15 @@ public class WeaponSpearController : WeaponController
 
 	private bool m_ImpaledPiranha;
 
+	private bool m_ImpaledCrab;
+
 	private static int s_BodyCatch = Animator.StringToHash("Catch");
 
 	private bool m_AttackDownCombo;
 
 	private static WeaponSpearController s_Instance = null;
+
+	private RaycastHit[] m_RaycastResultsTmp = new RaycastHit[20];
 
 	private enum State
 	{
@@ -627,6 +750,10 @@ public class WeaponSpearController : WeaponController
 		ThrowUnAim,
 		Throw,
 		Presentation,
-		PresentationIdle
+		PresentationIdle,
+		Jump,
+		BlockIn,
+		BlockIdle,
+		BlockOut
 	}
 }

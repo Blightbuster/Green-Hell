@@ -3,35 +3,6 @@ using System.IO;
 
 public class CJVariable
 {
-	public CJVariable()
-	{
-	}
-
-	public CJVariable(float var)
-	{
-		this.FValue = var;
-	}
-
-	public CJVariable(int var)
-	{
-		this.IValue = var;
-	}
-
-	public CJVariable(bool var)
-	{
-		this.BValue = var;
-	}
-
-	public CJVariable(long var)
-	{
-		this.LValue = var;
-	}
-
-	public CJVariable(string var)
-	{
-		this.SValue = var;
-	}
-
 	public static string TypeToString(CJVariable.TYPE type)
 	{
 		switch (type)
@@ -80,25 +51,50 @@ public class CJVariable
 		this.m_Name = name;
 	}
 
+	public CJVariable()
+	{
+	}
+
+	public CJVariable(float var)
+	{
+		this.FValue = var;
+	}
+
+	public CJVariable(int var)
+	{
+		this.IValue = var;
+	}
+
+	public CJVariable(bool var)
+	{
+		this.BValue = var;
+	}
+
+	public CJVariable(string var)
+	{
+		this.SValue = var;
+	}
+
 	public void Write(StreamWriter stream)
 	{
 		switch (this.m_Type)
 		{
 		case CJVariable.TYPE.String:
 			stream.Write("\"" + this.SValue + "\"");
-			break;
+			return;
 		case CJVariable.TYPE.Int:
 			stream.Write(this.IValue.ToString());
-			break;
+			return;
 		case CJVariable.TYPE.Float:
 			stream.Write(this.FValue.ToString("F4"));
-			break;
+			return;
 		case CJVariable.TYPE.Long:
-			stream.Write(this.LValue.ToString());
 			break;
 		case CJVariable.TYPE.Bool:
-			stream.Write(string.Empty + this.BValue.ToString() + string.Empty);
+			stream.Write((this.BValue.ToString() ?? "") ?? "");
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -141,19 +137,6 @@ public class CJVariable
 		}
 	}
 
-	public long LValue
-	{
-		get
-		{
-			return this.LValue;
-		}
-		set
-		{
-			this.LValue = value;
-			this.m_Type = CJVariable.TYPE.Long;
-		}
-	}
-
 	public bool BValue
 	{
 		get
@@ -177,12 +160,12 @@ public class CJVariable
 		switch (this.m_Type)
 		{
 		case CJVariable.TYPE.String:
-			if (comp != Condition.TYPE.Equal)
+			if (comp == Condition.TYPE.Equal)
 			{
-				DebugUtils.Assert("Improper conditiotn for String", true, DebugUtils.AssertType.Info);
-				return false;
+				return this.SValue == val;
 			}
-			return this.SValue == val;
+			DebugUtils.Assert("Improper conditiotn for String", true, DebugUtils.AssertType.Info);
+			return false;
 		case CJVariable.TYPE.Int:
 			switch (comp)
 			{
@@ -212,12 +195,12 @@ public class CJVariable
 			}
 			break;
 		case CJVariable.TYPE.Bool:
-			if (comp != Condition.TYPE.Equal)
+			if (comp == Condition.TYPE.Equal)
 			{
-				DebugUtils.Assert("Improper conditiotn for Bool", true, DebugUtils.AssertType.Info);
-				return false;
+				return this.BValue == bool.Parse(val);
 			}
-			return this.BValue == bool.Parse(val);
+			DebugUtils.Assert("Improper conditiotn for Bool", true, DebugUtils.AssertType.Info);
+			return false;
 		}
 		DebugUtils.Assert("Improper conditiotn", true, DebugUtils.AssertType.Info);
 		return false;

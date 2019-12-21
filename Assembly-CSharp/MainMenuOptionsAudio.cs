@@ -1,26 +1,14 @@
 ﻿using System;
 using CJTools;
 using Enums;
-using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuOptionsAudio : MainMenuScreen, IYesNoDialogOwner
+public class MainMenuOptionsAudio : MenuScreen, IYesNoDialogOwner
 {
-	private void Start()
-	{
-		this.m_AcceptButton.interactable = false;
-	}
-
 	public override void OnShow()
 	{
 		base.OnShow();
-		this.m_AcceptButton.interactable = false;
 		this.ApplySliders();
-		this.m_StartVol = this.m_Slider.value;
-		this.m_StartDialogsVol = this.m_DialogsSlider.value;
-		this.m_StartMusicVol = this.m_MusicSlider.value;
-		this.m_StartEnviroVol = this.m_EnviroSlider.value;
-		this.m_StartGeneralVol = this.m_GeneralSlider.value;
 	}
 
 	private void ApplySliders()
@@ -32,42 +20,50 @@ public class MainMenuOptionsAudio : MainMenuScreen, IYesNoDialogOwner
 		this.m_GeneralSlider.value = GreenHellGame.Instance.m_Settings.m_GeneralVolume;
 	}
 
-	private void Update()
+	protected override void Update()
 	{
-		if (!this.m_AcceptButton.interactable && (this.m_Slider.value != this.m_StartVol || this.m_DialogsSlider.value != this.m_StartDialogsVol || this.m_MusicSlider.value != this.m_StartMusicVol || this.m_EnviroSlider.value != this.m_StartEnviroVol || this.m_GeneralSlider.value != this.m_StartGeneralVol))
-		{
-			this.m_AcceptButton.interactable = true;
-		}
+		base.Update();
 		GreenHellGame.Instance.m_Settings.m_Volume = this.m_Slider.value;
 		GreenHellGame.Instance.m_Settings.m_MusicVolume = this.m_MusicSlider.value;
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			this.OnBack();
-		}
 		GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Master).audioMixer.SetFloat("MasterVolume", General.LinearToDecibel(this.m_Slider.value));
 	}
 
-	public void OnBack()
+	public override bool IsMenuButtonEnabled(Button b)
 	{
-		this.m_Question = OptionsGameQuestion.Back;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_BackTitle"), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Back"), true);
+		if (b == this.m_AcceptButton)
+		{
+			return base.IsAnyOptionModified();
+		}
+		return base.IsMenuButtonEnabled(b);
 	}
 
-	public void OnAccept()
+	public override void OnBack()
 	{
-		this.m_Question = OptionsGameQuestion.Accept;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_AcceptTitle"), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Accept"), true);
+		if (base.IsAnyOptionModified())
+		{
+			this.m_Question = MainMenuOptionsAudio.OptionsAudioQuestion.Back;
+			GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_BackTitle", true), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Back", true), !this.m_IsIngame);
+			return;
+		}
+		base.OnBack();
+	}
+
+	public override void OnAccept()
+	{
+		if (base.IsAnyOptionModified())
+		{
+			this.m_Question = MainMenuOptionsAudio.OptionsAudioQuestion.Accept;
+			GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_AcceptTitle", true), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Accept", true), !this.m_IsIngame);
+			return;
+		}
+		this.ShowPreviousScreen();
 	}
 
 	public void OnYesFromDialog()
 	{
-		if (this.m_Question == OptionsGameQuestion.Back)
+		if (this.m_Question == MainMenuOptionsAudio.OptionsAudioQuestion.Back)
 		{
-			this.m_Slider.value = this.m_StartVol;
-			this.m_DialogsSlider.value = this.m_StartDialogsVol;
-			this.m_MusicSlider.value = this.m_StartMusicVol;
-			this.m_EnviroSlider.value = this.m_StartEnviroVol;
-			this.m_GeneralSlider.value = this.m_StartGeneralVol;
+			base.RevertOptionValues();
 		}
 		GreenHellGame.Instance.m_Settings.m_Volume = this.m_Slider.value;
 		GreenHellGame.Instance.m_Settings.m_DialogsVolume = this.m_DialogsSlider.value;
@@ -75,8 +71,8 @@ public class MainMenuOptionsAudio : MainMenuScreen, IYesNoDialogOwner
 		GreenHellGame.Instance.m_Settings.m_EnviroVolume = this.m_EnviroSlider.value;
 		GreenHellGame.Instance.m_Settings.m_GeneralVolume = this.m_GeneralSlider.value;
 		GreenHellGame.Instance.m_Settings.SaveSettings();
-		GreenHellGame.Instance.m_Settings.ApplySettings();
-		MainMenuManager.Get().SetActiveScreen(typeof(MainMenuOptions), true);
+		GreenHellGame.Instance.m_Settings.ApplySettings(false);
+		this.ShowPreviousScreen();
 	}
 
 	public void OnNoFromDialog()
@@ -84,6 +80,10 @@ public class MainMenuOptionsAudio : MainMenuScreen, IYesNoDialogOwner
 	}
 
 	public void OnOkFromDialog()
+	{
+	}
+
+	public void OnCloseDialog()
 	{
 	}
 
@@ -101,15 +101,12 @@ public class MainMenuOptionsAudio : MainMenuScreen, IYesNoDialogOwner
 
 	public Slider m_GeneralSlider;
 
-	private OptionsGameQuestion m_Question;
+	private MainMenuOptionsAudio.OptionsAudioQuestion m_Question;
 
-	private float m_StartVol;
-
-	private float m_StartDialogsVol;
-
-	private float m_StartMusicVol;
-
-	private float m_StartEnviroVol;
-
-	private float m_StartGeneralVol;
+	public enum OptionsAudioQuestion
+	{
+		None,
+		Back,
+		Accept
+	}
 }

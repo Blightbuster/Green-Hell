@@ -52,8 +52,8 @@ namespace UnityEngine.PostProcessing
 				}
 			}
 
-			[Tooltip("Scales the camera far plane before displaying the depth map.")]
 			[Range(0f, 1f)]
+			[Tooltip("Scales the camera far plane before displaying the depth map.")]
 			public float scale;
 		}
 
@@ -84,16 +84,16 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Opacity of the per-pixel motion vector colors.")]
 			public float motionImageOpacity;
 
-			[Tooltip("Because motion vectors are mainly very small vectors, you can use this setting to make them more visible.")]
 			[Min(0f)]
+			[Tooltip("Because motion vectors are mainly very small vectors, you can use this setting to make them more visible.")]
 			public float motionImageAmplitude;
 
-			[Tooltip("Opacity for the motion vector arrows.")]
 			[Range(0f, 1f)]
+			[Tooltip("Opacity for the motion vector arrows.")]
 			public float motionVectorsOpacity;
 
-			[Tooltip("The arrow density on screen.")]
 			[Range(8f, 64f)]
+			[Tooltip("The arrow density on screen.")]
 			public int motionVectorsResolution;
 
 			[Min(0f)]

@@ -5,10 +5,10 @@ using UnityEngine.XR;
 
 namespace DynamicFogAndMist
 {
-	[HelpURL("http://kronnect.com/taptapgo")]
-	[ImageEffectAllowedInSceneView]
 	[ExecuteInEditMode]
 	[RequireComponent(typeof(Camera))]
+	[HelpURL("http://kronnect.com/taptapgo")]
+	[ImageEffectAllowedInSceneView]
 	public class DynamicFog : MonoBehaviour
 	{
 		public FOG_TYPE effectType
@@ -582,9 +582,10 @@ namespace DynamicFogAndMist
 			{
 				if (DynamicFog._fog == null)
 				{
-					foreach (Camera camera in Camera.allCameras)
+					Camera[] allCameras = Camera.allCameras;
+					for (int i = 0; i < allCameras.Length; i++)
 					{
-						DynamicFog._fog = camera.GetComponent<DynamicFog>();
+						DynamicFog._fog = allCameras[i].GetComponent<DynamicFog>();
 						if (DynamicFog._fog != null)
 						{
 							break;
@@ -809,7 +810,7 @@ namespace DynamicFogAndMist
 			{
 			case FOG_PRESET.Clear:
 				this.alpha = 0f;
-				break;
+				return;
 			case FOG_PRESET.Mist:
 				this.alpha = 0.75f;
 				this.skySpeed = 0.11f;
@@ -827,7 +828,7 @@ namespace DynamicFogAndMist
 				this.color2 = this.color;
 				this.maxDistance = 0.999f;
 				this.maxDistanceFallOff = 0f;
-				break;
+				return;
 			case FOG_PRESET.WindyMist:
 				this.alpha = 0.75f;
 				this.skySpeed = 0.3f;
@@ -845,7 +846,7 @@ namespace DynamicFogAndMist
 				this.color2 = this.color;
 				this.maxDistance = 0.999f;
 				this.maxDistanceFallOff = 0f;
-				break;
+				return;
 			case FOG_PRESET.GroundFog:
 				this.alpha = 1f;
 				this.skySpeed = 0.3f;
@@ -863,14 +864,14 @@ namespace DynamicFogAndMist
 				this.color2 = this.color;
 				this.maxDistance = 0.999f;
 				this.maxDistanceFallOff = 0f;
-				break;
+				return;
 			case FOG_PRESET.Fog:
 				this.alpha = 0.96f;
 				this.skySpeed = 0.3f;
 				this.skyHaze = 155f;
 				this.skyNoiseStrength = 0.6f;
 				this.skyAlpha = 0.93f;
-				this.distance = ((!this.effectType.isPlus()) ? 0.01f : 0.2f);
+				this.distance = (this.effectType.isPlus() ? 0.2f : 0.01f);
 				this.distanceFallOff = 0.04f;
 				this.height = 20f;
 				this.heightFallOff = 1f;
@@ -881,14 +882,14 @@ namespace DynamicFogAndMist
 				this.color2 = this.color;
 				this.maxDistance = 0.999f;
 				this.maxDistanceFallOff = 0f;
-				break;
+				return;
 			case FOG_PRESET.HeavyFog:
 				this.alpha = 1f;
 				this.skySpeed = 0.05f;
 				this.skyHaze = 350f;
 				this.skyNoiseStrength = 0.8f;
 				this.skyAlpha = 0.97f;
-				this.distance = ((!this.effectType.isPlus()) ? 0f : 0.1f);
+				this.distance = (this.effectType.isPlus() ? 0.1f : 0f);
 				this.distanceFallOff = 0.045f;
 				this.height = 35f;
 				this.heightFallOff = 0.88f;
@@ -899,14 +900,14 @@ namespace DynamicFogAndMist
 				this.color2 = this.color;
 				this.maxDistance = 0.999f;
 				this.maxDistanceFallOff = 0f;
-				break;
+				return;
 			case FOG_PRESET.SandStorm:
 				this.alpha = 1f;
 				this.skySpeed = 0.49f;
 				this.skyHaze = 333f;
 				this.skyNoiseStrength = 0.72f;
 				this.skyAlpha = 0.97f;
-				this.distance = ((!this.effectType.isPlus()) ? 0f : 0.15f);
+				this.distance = (this.effectType.isPlus() ? 0.15f : 0f);
 				this.distanceFallOff = 0.028f;
 				this.height = 83f;
 				this.heightFallOff = 0f;
@@ -917,7 +918,9 @@ namespace DynamicFogAndMist
 				this.color2 = this.color;
 				this.maxDistance = 0.999f;
 				this.maxDistanceFallOff = 0f;
-				break;
+				return;
+			default:
+				return;
 			}
 		}
 
@@ -983,11 +986,9 @@ namespace DynamicFogAndMist
 			if (Application.isPlaying)
 			{
 				this.shouldUpdateMaterialProperties = true;
+				return;
 			}
-			else
-			{
-				this.UpdateMaterialPropertiesNow();
-			}
+			this.UpdateMaterialPropertiesNow();
 		}
 
 		private void UpdateMaterialPropertiesNow()
@@ -1157,24 +1158,24 @@ namespace DynamicFogAndMist
 			{
 				this.currentCamera = base.GetComponent<Camera>();
 			}
-			this.fogMat.SetFloat("_FogSpeed", (this.effectType != FOG_TYPE.DesktopFogPlusWithSkyHaze) ? this._speed : (this._speed * 5f));
+			this.fogMat.SetFloat("_FogSpeed", (this.effectType == FOG_TYPE.DesktopFogPlusWithSkyHaze) ? (this._speed * 5f) : this._speed);
 			Vector4 value = new Vector4(this._noiseStrength, this._turbulence, this.currentCamera.farClipPlane * 15f / 1000f, this._noiseScale);
 			this.fogMat.SetVector("_FogNoiseData", value);
-			Vector4 value2 = new Vector4(this._height + 0.001f, this._baselineHeight, (!this._clipUnderBaseline) ? -10000f : -0.01f, this._heightFallOff);
+			Vector4 value2 = new Vector4(this._height + 0.001f, this._baselineHeight, this._clipUnderBaseline ? -0.01f : -10000f, this._heightFallOff);
 			if (this._effectType == FOG_TYPE.MobileFogOrthogonal || this._effectType == FOG_TYPE.DesktopFogPlusOrthogonal)
 			{
 				value2.z = this.maxHeight;
 			}
 			this.fogMat.SetVector("_FogHeightData", value2);
 			this.fogMat.SetFloat("_FogAlpha", this.currentFogAlpha);
-			Vector4 value3 = new Vector4(this._distance, this._distanceFallOff, this._maxDistance, this._maxDistanceFallOff);
+			Vector4 vector = new Vector4(this._distance, this._distanceFallOff, this._maxDistance, this._maxDistanceFallOff);
 			if (this.effectType.isPlus())
 			{
-				value3.x = this.currentCamera.farClipPlane * this._distance;
-				value3.y = this.distanceFallOff * value3.x + 0.0001f;
-				value3.z *= this.currentCamera.farClipPlane;
+				vector.x = this.currentCamera.farClipPlane * this._distance;
+				vector.y = this.distanceFallOff * vector.x + 0.0001f;
+				vector.z *= this.currentCamera.farClipPlane;
 			}
-			this.fogMat.SetVector("_FogDistance", value3);
+			this.fogMat.SetVector("_FogDistance", vector);
 			this.UpdateFogColor();
 			this.SetSkyData();
 			if (this.shaderKeywords == null)
@@ -1194,8 +1195,8 @@ namespace DynamicFogAndMist
 				this.fogMat.SetTexture("_FogOfWar", this.fogOfWarTexture);
 				this.fogMat.SetVector("_FogOfWarCenter", this._fogOfWarCenter);
 				this.fogMat.SetVector("_FogOfWarSize", this._fogOfWarSize);
-				Vector3 vector = this.fogOfWarCenter - 0.5f * this._fogOfWarSize;
-				this.fogMat.SetVector("_FogOfWarCenterAdjusted", new Vector3(vector.x / this._fogOfWarSize.x, 1f, vector.z / this._fogOfWarSize.z));
+				Vector3 vector2 = this.fogOfWarCenter - 0.5f * this._fogOfWarSize;
+				this.fogMat.SetVector("_FogOfWarCenterAdjusted", new Vector3(vector2.x / this._fogOfWarSize.x, 1f, vector2.z / this._fogOfWarSize.z));
 				this.shaderKeywords.Add("FOG_OF_WAR_ON");
 			}
 			if (this._enableDithering)
@@ -1410,17 +1411,13 @@ namespace DynamicFogAndMist
 				{
 					for (int j = num3 - num7; j <= num3 + num7; j++)
 					{
-						if (j > 0 && j < width - 1)
+						if (j > 0 && j < width - 1 && Mathf.FloorToInt(Mathf.Sqrt((float)((num4 - i) * (num4 - i) + (num3 - j) * (num3 - j)))) <= num7)
 						{
-							int num8 = Mathf.FloorToInt(Mathf.Sqrt((float)((num4 - i) * (num4 - i) + (num3 - j) * (num3 - j))));
-							if (num8 <= num7)
-							{
-								num5 = i * width + j;
-								Color32 color = this.fogOfWarColorBuffer[num5];
-								color.a = byte.MaxValue;
-								this.fogOfWarColorBuffer[num5] = color;
-								this.fogOfWarTexture.SetPixel(j, i, color);
-							}
+							num5 = i * width + j;
+							Color32 color = this.fogOfWarColorBuffer[num5];
+							color.a = byte.MaxValue;
+							this.fogOfWarColorBuffer[num5] = color;
+							this.fogOfWarTexture.SetPixel(j, i, color);
 						}
 					}
 				}
@@ -1476,8 +1473,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _enableDithering;
 
-		[Range(0f, 0.2f)]
 		[SerializeField]
+		[Range(0f, 0.2f)]
 		private float _ditherStrength = 0.03f;
 
 		[SerializeField]
@@ -1492,24 +1489,24 @@ namespace DynamicFogAndMist
 		[Range(0.01f, 1f)]
 		private float _noiseScale = 0.1f;
 
-		[Range(0f, 0.999f)]
 		[SerializeField]
+		[Range(0f, 0.999f)]
 		private float _distance = 0.1f;
 
 		[SerializeField]
 		[Range(0.0001f, 2f)]
 		private float _distanceFallOff = 0.01f;
 
-		[Range(0f, 1.2f)]
 		[SerializeField]
+		[Range(0f, 1.2f)]
 		private float _maxDistance = 0.999f;
 
 		[SerializeField]
 		[Range(0.0001f, 0.5f)]
 		private float _maxDistanceFallOff;
 
-		[Range(0f, 500f)]
 		[SerializeField]
+		[Range(0f, 500f)]
 		private float _height = 1f;
 
 		[SerializeField]
@@ -1530,8 +1527,8 @@ namespace DynamicFogAndMist
 		[Range(0f, 15f)]
 		private float _turbulence = 0.1f;
 
-		[Range(0f, 5f)]
 		[SerializeField]
+		[Range(0f, 5f)]
 		private float _speed = 0.1f;
 
 		[SerializeField]
@@ -1540,20 +1537,20 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private Color _color2 = Color.gray;
 
-		[Range(0f, 500f)]
 		[SerializeField]
+		[Range(0f, 500f)]
 		private float _skyHaze = 50f;
 
 		[SerializeField]
 		[Range(0f, 1f)]
 		private float _skySpeed = 0.3f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _skyNoiseStrength = 0.1f;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _skyAlpha = 1f;
 
 		[SerializeField]
@@ -1577,8 +1574,8 @@ namespace DynamicFogAndMist
 		[SerializeField]
 		private bool _useXZDistance;
 
-		[Range(0f, 1f)]
 		[SerializeField]
+		[Range(0f, 1f)]
 		private float _scattering = 0.7f;
 
 		[SerializeField]

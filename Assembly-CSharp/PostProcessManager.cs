@@ -16,7 +16,7 @@ public class PostProcessManager : MonoBehaviour
 		{
 			base.transform.GetChild(i).gameObject.SetActive(true);
 		}
-		this.m_Volumes = new PostProcessVolume[9];
+		this.m_Volumes = new PostProcessVolume[12];
 		PostProcessVolume[] componentsInChildren = base.GetComponentsInChildren<PostProcessVolume>();
 		for (int j = 0; j < componentsInChildren.Length; j++)
 		{
@@ -26,7 +26,7 @@ public class PostProcessManager : MonoBehaviour
 				{
 					this.m_Volumes[(int)effect] = componentsInChildren[j];
 					componentsInChildren[j].priority = (float)this.GetPriority(effect);
-					this.SetWeight(effect, (effect != global::PostProcessManager.Effect.Game) ? 0f : 1f);
+					this.SetWeight(effect, (effect == global::PostProcessManager.Effect.Game) ? 1f : 0f);
 				}
 			}
 		}
@@ -54,6 +54,12 @@ public class PostProcessManager : MonoBehaviour
 			return 3;
 		case global::PostProcessManager.Effect.LowEnergy:
 			return 2;
+		case global::PostProcessManager.Effect.Underwater:
+			return 3;
+		case global::PostProcessManager.Effect.Dream:
+			return 3;
+		case global::PostProcessManager.Effect.DebugDof:
+			return 3;
 		default:
 			return 0;
 		}
@@ -81,12 +87,18 @@ public class PostProcessManager : MonoBehaviour
 		postProcessVolume.weight = Mathf.Clamp01(weight);
 	}
 
+	public PostProcessVolume GetVolume(global::PostProcessManager.Effect effect)
+	{
+		return this.m_Volumes[(int)effect];
+	}
+
 	private PostProcessVolume[] m_Volumes;
 
 	private static global::PostProcessManager s_Instance;
 
 	public enum Effect
 	{
+		None = -1,
 		Game,
 		Blood,
 		Poison,
@@ -96,6 +108,9 @@ public class PostProcessManager : MonoBehaviour
 		Coca,
 		LowHP,
 		LowEnergy,
+		Underwater,
+		Dream,
+		DebugDof,
 		Count
 	}
 }

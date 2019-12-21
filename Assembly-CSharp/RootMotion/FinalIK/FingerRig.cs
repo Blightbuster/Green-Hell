@@ -9,9 +9,10 @@ namespace RootMotion.FinalIK
 
 		public bool IsValid(ref string errorMessage)
 		{
-			foreach (Finger finger in this.fingers)
+			Finger[] array = this.fingers;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (!finger.IsValid(ref errorMessage))
+				if (!array[i].IsValid(ref errorMessage))
 				{
 					return false;
 				}
@@ -121,17 +122,19 @@ namespace RootMotion.FinalIK
 			{
 				return;
 			}
-			foreach (Finger finger in this.fingers)
+			Finger[] array = this.fingers;
+			for (int i = 0; i < array.Length; i++)
 			{
-				finger.Update(this.weight);
+				array[i].Update(this.weight);
 			}
 		}
 
 		public void FixFingerTransforms()
 		{
-			foreach (Finger finger in this.fingers)
+			Finger[] array = this.fingers;
+			for (int i = 0; i < array.Length; i++)
 			{
-				finger.FixTransforms();
+				array[i].FixTransforms();
 			}
 		}
 
@@ -145,8 +148,8 @@ namespace RootMotion.FinalIK
 			this.FixFingerTransforms();
 		}
 
-		[Range(0f, 1f)]
 		[Tooltip("The master weight for all fingers.")]
+		[Range(0f, 1f)]
 		public float weight = 1f;
 
 		public Finger[] fingers = new Finger[0];

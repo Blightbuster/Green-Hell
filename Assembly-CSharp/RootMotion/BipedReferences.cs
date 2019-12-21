@@ -34,16 +34,18 @@ namespace RootMotion
 				{
 					return false;
 				}
-				foreach (Transform x in this.spine)
+				Transform[] array = this.spine;
+				for (int i = 0; i < array.Length; i++)
 				{
-					if (x == null)
+					if (array[i] == null)
 					{
 						return false;
 					}
 				}
-				foreach (Transform x2 in this.eyes)
+				array = this.eyes;
+				for (int i = 0; i < array.Length; i++)
 				{
-					if (x2 == null)
+					if (array[i] == null)
 					{
 						return false;
 					}
@@ -86,16 +88,18 @@ namespace RootMotion
 			{
 				return false;
 			}
-			foreach (Transform x in this.spine)
+			Transform[] array = this.spine;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x != null)
+				if (array[i] != null)
 				{
 					return false;
 				}
 			}
-			foreach (Transform x2 in this.eyes)
+			array = this.eyes;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x2 != null)
+				if (array[i] != null)
 				{
 					return false;
 				}
@@ -165,16 +169,18 @@ namespace RootMotion
 			{
 				return true;
 			}
-			foreach (Transform x in this.spine)
+			Transform[] array = this.spine;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x == t)
+				if (array[i] == t)
 				{
 					return true;
 				}
 			}
-			foreach (Transform x2 in this.eyes)
+			array = this.eyes;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x2 == t)
+				if (array[i] == t)
 				{
 					return true;
 				}
@@ -202,15 +208,15 @@ namespace RootMotion
 				Warning.Log("BipedReferences contains one or more missing Transforms.", root, true);
 				return false;
 			}
-			string empty = string.Empty;
-			if (BipedReferences.SetupError(references, ref empty))
+			string message = "";
+			if (BipedReferences.SetupError(references, ref message))
 			{
-				Warning.Log(empty, references.root, true);
+				Warning.Log(message, references.root, true);
 				return false;
 			}
-			if (BipedReferences.SetupWarning(references, ref empty))
+			if (BipedReferences.SetupWarning(references, ref message))
 			{
-				Warning.Log(empty, references.root, true);
+				Warning.Log(message, references.root, true);
 			}
 			return true;
 		}
@@ -226,7 +232,7 @@ namespace RootMotion
 			BipedReferences.DetectLimb(BipedNaming.BoneType.Arm, BipedNaming.BoneSide.Right, ref references.rightUpperArm, ref references.rightForearm, ref references.rightHand, componentsInChildren);
 			BipedReferences.DetectLimb(BipedNaming.BoneType.Leg, BipedNaming.BoneSide.Left, ref references.leftThigh, ref references.leftCalf, ref references.leftFoot, componentsInChildren);
 			BipedReferences.DetectLimb(BipedNaming.BoneType.Leg, BipedNaming.BoneSide.Right, ref references.rightThigh, ref references.rightCalf, ref references.rightFoot, componentsInChildren);
-			references.head = BipedNaming.GetBone(componentsInChildren, BipedNaming.BoneType.Head, BipedNaming.BoneSide.Center, new string[0][]);
+			references.head = BipedNaming.GetBone(componentsInChildren, BipedNaming.BoneType.Head, BipedNaming.BoneSide.Center, Array.Empty<string[]>());
 			references.pelvis = BipedNaming.GetNamingMatch(componentsInChildren, new string[][]
 			{
 				BipedNaming.pelvis
@@ -353,8 +359,7 @@ namespace RootMotion
 			{
 				return false;
 			}
-			bool flag = bone == references.leftThigh.parent;
-			if (flag && !autoDetectParams.legsParentInSpine)
+			if (bone == references.leftThigh.parent && !autoDetectParams.legsParentInSpine)
 			{
 				return false;
 			}
@@ -420,12 +425,13 @@ namespace RootMotion
 				errorMessage = "Bone 3 of a BipedReferences limb is null.";
 				return true;
 			}
-			Transform transform = (Transform)Hierarchy.ContainsDuplicate(new Transform[]
+			UnityEngine.Object[] objects = new Transform[]
 			{
 				bone1,
 				bone2,
 				bone3
-			});
+			};
+			Transform transform = (Transform)Hierarchy.ContainsDuplicate(objects);
 			if (transform != null)
 			{
 				errorMessage = transform.name + " is represented multiple times in the same BipedReferences limb.";
@@ -464,8 +470,7 @@ namespace RootMotion
 
 		private static bool LimbWarning(Transform bone1, Transform bone2, Transform bone3, ref string warningMessage)
 		{
-			Vector3 lhs = Vector3.Cross(bone2.position - bone1.position, bone3.position - bone1.position);
-			if (lhs == Vector3.zero)
+			if (Vector3.Cross(bone2.position - bone1.position, bone3.position - bone1.position) == Vector3.zero)
 			{
 				warningMessage = string.Concat(new string[]
 				{
@@ -494,7 +499,8 @@ namespace RootMotion
 					return true;
 				}
 			}
-			Transform transform = (Transform)Hierarchy.ContainsDuplicate(references.spine);
+			UnityEngine.Object[] objects = references.spine;
+			Transform transform = (Transform)Hierarchy.ContainsDuplicate(objects);
 			if (transform != null)
 			{
 				errorMessage = transform.name + " is represented multiple times in BipedReferences spine.";
@@ -544,7 +550,8 @@ namespace RootMotion
 					return true;
 				}
 			}
-			Transform transform = (Transform)Hierarchy.ContainsDuplicate(references.eyes);
+			UnityEngine.Object[] objects = references.eyes;
+			Transform transform = (Transform)Hierarchy.ContainsDuplicate(objects);
 			if (transform != null)
 			{
 				errorMessage = transform.name + " is represented multiple times in BipedReferences eyes.";
@@ -565,8 +572,7 @@ namespace RootMotion
 				return false;
 			}
 			float verticalOffset = BipedReferences.GetVerticalOffset(references.head.position, references.leftFoot.position, references.root.rotation);
-			float verticalOffset2 = BipedReferences.GetVerticalOffset(references.root.position, references.leftFoot.position, references.root.rotation);
-			if (verticalOffset2 / verticalOffset > 0.2f)
+			if (BipedReferences.GetVerticalOffset(references.root.position, references.leftFoot.position, references.root.rotation) / verticalOffset > 0.2f)
 			{
 				warningMessage = "Biped's root Transform's position should be at ground level relative to the character (at the character's feet not at it's pelvis).";
 				return true;

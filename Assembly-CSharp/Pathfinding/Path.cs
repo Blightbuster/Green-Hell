@@ -54,12 +54,10 @@ namespace Pathfinding
 				{
 					this.manualTagPenalties = null;
 					this.internalTagPenalties = Path.ZeroTagPenalties;
+					return;
 				}
-				else
-				{
-					this.manualTagPenalties = value;
-					this.internalTagPenalties = value;
-				}
+				this.manualTagPenalties = value;
+				this.internalTagPenalties = value;
 			}
 		}
 
@@ -96,6 +94,7 @@ namespace Pathfinding
 				yield return null;
 			}
 			yield break;
+			yield break;
 		}
 
 		public void BlockUntilCalculated()
@@ -105,43 +104,45 @@ namespace Pathfinding
 
 		internal uint CalculateHScore(GraphNode node)
 		{
-			Heuristic heuristic = this.heuristic;
-			uint num;
-			if (heuristic == Heuristic.Euclidean)
+			switch (this.heuristic)
 			{
-				num = (uint)((float)(this.GetHTarget() - node.position).costMagnitude * this.heuristicScale);
-				if (this.hTargetNode != null)
-				{
-					num = Math.Max(num, AstarPath.active.euclideanEmbedding.GetHeuristic(node.NodeIndex, this.hTargetNode.NodeIndex));
-				}
-				return num;
-			}
-			if (heuristic == Heuristic.Manhattan)
+			case Heuristic.Manhattan:
 			{
 				Int3 position = node.position;
-				num = (uint)((float)(Math.Abs(this.hTarget.x - position.x) + Math.Abs(this.hTarget.y - position.y) + Math.Abs(this.hTarget.z - position.z)) * this.heuristicScale);
+				uint num = (uint)((float)(Math.Abs(this.hTarget.x - position.x) + Math.Abs(this.hTarget.y - position.y) + Math.Abs(this.hTarget.z - position.z)) * this.heuristicScale);
 				if (this.hTargetNode != null)
 				{
 					num = Math.Max(num, AstarPath.active.euclideanEmbedding.GetHeuristic(node.NodeIndex, this.hTargetNode.NodeIndex));
 				}
 				return num;
 			}
-			if (heuristic != Heuristic.DiagonalManhattan)
+			case Heuristic.DiagonalManhattan:
 			{
+				Int3 @int = this.GetHTarget() - node.position;
+				@int.x = Math.Abs(@int.x);
+				@int.y = Math.Abs(@int.y);
+				@int.z = Math.Abs(@int.z);
+				int num2 = Math.Min(@int.x, @int.z);
+				int num3 = Math.Max(@int.x, @int.z);
+				uint num = (uint)((float)(14 * num2 / 10 + (num3 - num2) + @int.y) * this.heuristicScale);
+				if (this.hTargetNode != null)
+				{
+					num = Math.Max(num, AstarPath.active.euclideanEmbedding.GetHeuristic(node.NodeIndex, this.hTargetNode.NodeIndex));
+				}
+				return num;
+			}
+			case Heuristic.Euclidean:
+			{
+				uint num = (uint)((float)(this.GetHTarget() - node.position).costMagnitude * this.heuristicScale);
+				if (this.hTargetNode != null)
+				{
+					num = Math.Max(num, AstarPath.active.euclideanEmbedding.GetHeuristic(node.NodeIndex, this.hTargetNode.NodeIndex));
+				}
+				return num;
+			}
+			default:
 				return 0u;
 			}
-			Int3 @int = this.GetHTarget() - node.position;
-			@int.x = Math.Abs(@int.x);
-			@int.y = Math.Abs(@int.y);
-			@int.z = Math.Abs(@int.z);
-			int num2 = Math.Min(@int.x, @int.z);
-			int num3 = Math.Max(@int.x, @int.z);
-			num = (uint)((float)(14 * num2 / 10 + (num3 - num2) + @int.y) * this.heuristicScale);
-			if (this.hTargetNode != null)
-			{
-				num = Math.Max(num, AstarPath.active.euclideanEmbedding.GetHeuristic(node.NodeIndex, this.hTargetNode.NodeIndex));
-			}
-			return num;
 		}
 
 		internal uint GetTagPenalty(int tag)
@@ -179,7 +180,7 @@ namespace Pathfinding
 
 		public bool IsDone()
 		{
-			return this.CompleteState != PathCompleteState.NotCalculated;
+			return this.CompleteState > PathCompleteState.NotCalculated;
 		}
 
 		void IPathInternals.AdvanceState(PathState s)
@@ -268,7 +269,7 @@ namespace Pathfinding
 
 		protected virtual void Reset()
 		{
-			if (object.ReferenceEquals(AstarPath.active, null))
+			if (AstarPath.active == null)
 			{
 				throw new NullReferenceException("No AstarPath object found in the scene. Make sure there is one or do not create paths in Awake");
 			}
@@ -278,7 +279,7 @@ namespace Pathfinding
 			this.pathHandler = null;
 			this.callback = null;
 			this.immediateCallback = null;
-			this._errorLog = string.Empty;
+			this._errorLog = "";
 			this.CompleteState = PathCompleteState.NotCalculated;
 			this.path = ListPool<GraphNode>.Claim();
 			this.vectorPath = ListPool<Vector3>.Claim();
@@ -299,13 +300,13 @@ namespace Pathfinding
 
 		public void Claim(object o)
 		{
-			if (object.ReferenceEquals(o, null))
+			if (o == null)
 			{
 				throw new ArgumentNullException("o");
 			}
 			for (int i = 0; i < this.claimed.Count; i++)
 			{
-				if (object.ReferenceEquals(this.claimed[i], o))
+				if (this.claimed[i] == o)
 				{
 					throw new ArgumentException("You have already claimed the path with that object (" + o + "). Are you claiming the path with the same object twice?");
 				}
@@ -327,7 +328,7 @@ namespace Pathfinding
 			}
 			for (int i = 0; i < this.claimed.Count; i++)
 			{
-				if (object.ReferenceEquals(this.claimed[i], o))
+				if (this.claimed[i] == o)
 				{
 					this.claimed.RemoveAt(i);
 					if (!silent)
@@ -391,14 +392,14 @@ namespace Pathfinding
 
 		protected void DebugStringPrefix(PathLog logMode, StringBuilder text)
 		{
-			text.Append((!this.error) ? "Path Completed : " : "Path Failed : ");
+			text.Append(this.error ? "Path Failed : " : "Path Completed : ");
 			text.Append("Computation Time ");
-			text.Append(this.duration.ToString((logMode != PathLog.Heavy) ? "0.00 ms " : "0.000 ms "));
+			text.Append(this.duration.ToString((logMode == PathLog.Heavy) ? "0.000 ms " : "0.00 ms "));
 			text.Append("Searched Nodes ").Append(this.searchedNodes);
 			if (!this.error)
 			{
 				text.Append(" Path Length ");
-				text.Append((this.path != null) ? this.path.Count.ToString() : "Null");
+				text.Append((this.path == null) ? "Null" : this.path.Count.ToString());
 			}
 		}
 
@@ -427,7 +428,7 @@ namespace Pathfinding
 		{
 			if (logMode == PathLog.None || (!this.error && logMode == PathLog.OnlyErrors))
 			{
-				return string.Empty;
+				return "";
 			}
 			StringBuilder debugStringBuilder = this.pathHandler.DebugStringBuilder;
 			debugStringBuilder.Length = 0;
@@ -540,7 +541,7 @@ namespace Pathfinding
 
 		public ITraversalProvider traversalProvider;
 
-		private string _errorLog = string.Empty;
+		private string _errorLog = "";
 
 		public List<GraphNode> path;
 

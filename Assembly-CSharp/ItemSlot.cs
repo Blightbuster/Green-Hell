@@ -6,6 +6,22 @@ using UnityEngine;
 
 public class ItemSlot : MonoBehaviour
 {
+	public bool m_InventoryStackSlot
+	{
+		get
+		{
+			return this.m_InventoryStackSlotProp;
+		}
+		set
+		{
+			this.m_InventoryStackSlotProp = value;
+			if (this.m_Item)
+			{
+				this.m_Item.UpdateScale(false);
+			}
+		}
+	}
+
 	public virtual bool IsLiquidSlot()
 	{
 		return false;
@@ -15,7 +31,7 @@ public class ItemSlot : MonoBehaviour
 	{
 		this.m_Active = false;
 		ItemSlot.s_AllItemSlots.Add(this);
-		this.m_GOParent = ((!base.transform.parent) ? null : base.transform.parent.gameObject);
+		this.m_GOParent = (base.transform.parent ? base.transform.parent.gameObject : null);
 		if (this.m_GOParent)
 		{
 			this.m_ISParents = this.m_GOParent.GetComponents<IItemSlotParent>();
@@ -52,6 +68,7 @@ public class ItemSlot : MonoBehaviour
 				this.m_ItemIDList.Add(craftingSlotData.item_id);
 			}
 		}
+		this.m_Initialized = true;
 	}
 
 	public void SetIcon(string icon_name)
@@ -70,7 +87,15 @@ public class ItemSlot : MonoBehaviour
 		{
 			return base.transform.position;
 		}
-		return (!(this.m_GOParent != null)) ? ((!this.m_PositionDummy) ? base.transform.position : this.m_PositionDummy.transform.position) : this.m_GOParent.transform.position;
+		if (this.m_GOParent != null)
+		{
+			return this.m_GOParent.transform.position;
+		}
+		if (!this.m_PositionDummy)
+		{
+			return base.transform.position;
+		}
+		return this.m_PositionDummy.transform.position;
 	}
 
 	public void UpdateActivity()
@@ -93,7 +118,13 @@ public class ItemSlot : MonoBehaviour
 			this.m_NextUpdateActivityTime = Time.time;
 			return;
 		}
-		if (this.m_BackpackSlot || (this.m_ItemParent && this.m_ItemParent.gameObject.activeSelf && this.m_ItemParent.m_InInventory))
+		if (ScenarioManager.Get().IsDreamOrPreDream())
+		{
+			this.Deactivate();
+			this.m_NextUpdateActivityTime = Time.time;
+			return;
+		}
+		if (this.m_BackpackSlot || (this.m_ItemParent && this.m_ItemParent.gameObject.activeInHierarchy && this.m_ItemParent.m_InInventory))
 		{
 			if (InventoryBackpack.Get().gameObject.activeSelf && (!this.m_ItemParent || !this.m_ItemParent.m_OnCraftingTable))
 			{
@@ -128,11 +159,9 @@ public class ItemSlot : MonoBehaviour
 		if (activate)
 		{
 			this.Activate();
+			return;
 		}
-		else
-		{
-			this.Deactivate();
-		}
+		this.Deactivate();
 	}
 
 	public void Activate()
@@ -175,6 +204,10 @@ public class ItemSlot : MonoBehaviour
 		{
 			return false;
 		}
+		if (Inventory3DManager.Get().m_StackItems.Contains(this.m_ItemParent))
+		{
+			return false;
+		}
 		if (((float)this.m_ItemTypeList.Count > 0f || this.m_ItemIDList.Count > 0) && !this.m_ItemTypeList.Contains(item.m_Info.m_Type) && !this.m_ItemIDList.Contains(item.m_Info.m_ID))
 		{
 			return false;
@@ -182,9 +215,10 @@ public class ItemSlot : MonoBehaviour
 		bool result = this.m_ISParents == null || this.m_ISParents.Length == 0;
 		if (this.m_ISParents != null)
 		{
-			foreach (IItemSlotParent itemSlotParent in this.m_ISParents)
+			IItemSlotParent[] isparents = this.m_ISParents;
+			for (int i = 0; i < isparents.Length; i++)
 			{
-				if (itemSlotParent.CanInsertItem(item))
+				if (isparents[i].CanInsertItem(item))
 				{
 					result = true;
 					break;
@@ -212,31 +246,59 @@ public class ItemSlot : MonoBehaviour
 		item.StaticPhxRequestAdd();
 		item.UpdatePhx();
 		item.ReseScale();
-		Transform transform = (!(this.m_WeaponRackParent != null) || !item.m_WeaponRackHolder) ? item.m_InventoryHolder : item.m_WeaponRackHolder;
+		item.UpdateLayer();
+		Transform transform = null;
+		for (int i = 0; i < base.transform.childCount; i++)
+		{
+			Transform child = base.transform.GetChild(i);
+			if (child.name == item.m_InfoName && child.GetComponents<Component>().Length == 1)
+			{
+				transform = child;
+				break;
+			}
+		}
 		if (transform)
 		{
-			Quaternion rhs = Quaternion.Inverse(transform.localRotation);
-			item.gameObject.transform.rotation = base.transform.rotation;
-			item.gameObject.transform.rotation *= rhs;
-			Vector3 b = item.transform.position - transform.position;
-			item.gameObject.transform.position = base.transform.position;
-			item.gameObject.transform.position += b;
-			item.gameObject.transform.parent = base.transform;
-		}
-		else
-		{
-			item.transform.parent = base.transform;
+			item.transform.parent = transform;
 			item.transform.localPosition = Vector3.zero;
 			if (this.m_AdjustRotation)
 			{
 				item.transform.localRotation = Quaternion.identity;
 			}
 		}
+		else
+		{
+			Transform transform2 = (this.m_WeaponRackParent != null && item.m_WeaponRackHolder) ? item.m_WeaponRackHolder : item.m_InventoryHolder;
+			if (transform2)
+			{
+				Quaternion rhs = Quaternion.Inverse(transform2.localRotation);
+				item.gameObject.transform.rotation = base.transform.rotation;
+				item.gameObject.transform.rotation *= rhs;
+				Vector3 b = item.transform.position - transform2.position;
+				item.gameObject.transform.position = base.transform.position;
+				item.gameObject.transform.position += b;
+				item.gameObject.transform.parent = base.transform;
+			}
+			else
+			{
+				item.transform.parent = base.transform;
+				item.transform.localPosition = Vector3.zero;
+				if (this.m_AdjustRotation)
+				{
+					item.transform.localRotation = Quaternion.identity;
+				}
+			}
+		}
+		if (this.m_KeepLocalScale)
+		{
+			item.transform.localScale = Vector3.one;
+		}
 		if (this.m_ISParents != null)
 		{
-			foreach (IItemSlotParent itemSlotParent in this.m_ISParents)
+			IItemSlotParent[] isparents = this.m_ISParents;
+			for (int j = 0; j < isparents.Length; j++)
 			{
-				itemSlotParent.OnInsertItem(this);
+				isparents[j].OnInsertItem(this);
 			}
 		}
 		this.UpdateActivity();
@@ -244,6 +306,10 @@ public class ItemSlot : MonoBehaviour
 
 	public virtual void RemoveItem(Item item, bool from_destroy = false)
 	{
+		if (item && item == this.m_Item)
+		{
+			this.RemoveItem();
+		}
 	}
 
 	public void RemoveItem()
@@ -256,7 +322,10 @@ public class ItemSlot : MonoBehaviour
 		this.m_Item.m_PrevSlot = this.m_Item.m_CurrentSlot;
 		this.m_Item.m_CurrentSlot = null;
 		this.m_Item.StaticPhxRequestRemove();
-		this.m_Item.transform.parent = null;
+		if (!this.m_Item.m_IsBeingDestroyed)
+		{
+			this.m_Item.transform.parent = null;
+		}
 		this.m_Item = null;
 	}
 
@@ -264,9 +333,10 @@ public class ItemSlot : MonoBehaviour
 	{
 		if (this.m_ISParents != null)
 		{
-			foreach (IItemSlotParent itemSlotParent in this.m_ISParents)
+			IItemSlotParent[] isparents = this.m_ISParents;
+			for (int i = 0; i < isparents.Length; i++)
 			{
-				itemSlotParent.OnRemoveItem(this);
+				isparents[i].OnRemoveItem(this);
 			}
 		}
 		this.UpdateActivity();
@@ -285,8 +355,13 @@ public class ItemSlot : MonoBehaviour
 
 	public void ReplaceItem(Item item)
 	{
+		Vector3 vector = this.m_Item ? this.m_Item.transform.localScale : Vector3.zero;
 		this.DeleteItem();
 		this.InsertItem(item);
+		if (vector != Vector3.zero)
+		{
+			item.transform.localScale = vector;
+		}
 	}
 
 	private void OnDisable()
@@ -311,23 +386,28 @@ public class ItemSlot : MonoBehaviour
 
 	public virtual Vector3 GetScreenPoint()
 	{
-		Vector3 position = (!this.m_PositionDummy) ? base.transform.position : this.m_PositionDummy.transform.position;
+		Vector3 position = this.m_PositionDummy ? this.m_PositionDummy.transform.position : base.transform.position;
 		if (this.m_Camera)
 		{
-			return Camera.main.ViewportToScreenPoint(this.m_Camera.WorldToViewportPoint(position));
+			return CameraManager.Get().m_MainCamera.ViewportToScreenPoint(this.m_Camera.WorldToViewportPoint(position));
 		}
-		if (this.m_ItemParent && this.m_ItemParent.m_InInventory)
+		if (this.m_ItemParent && (this.m_ItemParent.m_InInventory || this.m_ItemParent.m_InStorage))
 		{
-			return Camera.main.ViewportToScreenPoint(Inventory3DManager.Get().m_Camera.WorldToViewportPoint(position));
+			return CameraManager.Get().m_MainCamera.ViewportToScreenPoint(Inventory3DManager.Get().m_Camera.WorldToViewportPoint(position));
 		}
-		if (Camera.main)
+		if (CameraManager.Get().m_MainCamera)
 		{
-			return Camera.main.WorldToScreenPoint(position);
+			return CameraManager.Get().m_MainCamera.WorldToScreenPoint(position);
 		}
 		return Vector3.zero;
 	}
 
 	public virtual bool IsBIWoundSlot()
+	{
+		return false;
+	}
+
+	public virtual bool IsArmorSlot()
 	{
 		return false;
 	}
@@ -385,7 +465,7 @@ public class ItemSlot : MonoBehaviour
 
 	public bool m_BackpackSlot;
 
-	public bool m_InventoryStackSlot;
+	private bool m_InventoryStackSlotProp;
 
 	[NonSerialized]
 	public float m_AttrRange = 60f;
@@ -405,8 +485,18 @@ public class ItemSlot : MonoBehaviour
 	[HideInInspector]
 	public bool m_IsBeingDestroyed;
 
-	[HideInInspector]
 	public bool m_ForceTransformPos;
 
-	private WeaponRack m_WeaponRackParent;
+	[HideInInspector]
+	public WeaponRack m_WeaponRackParent;
+
+	public bool m_KeepLocalScale;
+
+	[HideInInspector]
+	public bool m_IsHookBaitSlot;
+
+	[HideInInspector]
+	public bool m_Initialized;
+
+	public bool m_CanSelect = true;
 }

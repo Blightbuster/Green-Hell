@@ -9,7 +9,7 @@ public class BlowpipeController : PlayerController
 	protected override void Awake()
 	{
 		base.Awake();
-		this.m_ControllerType = PlayerControllerType.Blowpipe;
+		base.m_ControllerType = PlayerControllerType.Blowpipe;
 	}
 
 	protected override void OnEnable()
@@ -62,29 +62,29 @@ public class BlowpipeController : PlayerController
 		this.m_Animator.SetInteger(this.m_IBlowpipeState, (int)this.m_State);
 		if (this.m_State == BlowpipeController.State.Aim)
 		{
-			this.m_Player.StartAim(Player.AimType.Blowpipe);
+			this.m_Player.StartAim(Player.AimType.Blowpipe, 18f);
 		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		base.OnInputAction(action);
+		base.OnInputAction(action_data);
+		InputsManager.InputAction action = action_data.m_Action;
 		if (action != InputsManager.InputAction.BlowpipeAim)
 		{
-			if (action == InputsManager.InputAction.BlowpipeShot)
+			if (action != InputsManager.InputAction.BlowpipeShot)
 			{
-				if (this.m_State == BlowpipeController.State.Aim)
-				{
-					this.SetState(BlowpipeController.State.Shot);
-				}
+				return;
+			}
+			if (this.m_State == BlowpipeController.State.Aim)
+			{
+				this.SetState(BlowpipeController.State.Shot);
 			}
 		}
-		else if (!Inventory3DManager.Get().gameObject.activeSelf)
+		else if (!Inventory3DManager.Get().gameObject.activeSelf && this.m_State == BlowpipeController.State.Idle)
 		{
-			if (this.m_State == BlowpipeController.State.Idle)
-			{
-				this.SetState(BlowpipeController.State.Aim);
-			}
+			this.SetState(BlowpipeController.State.Aim);
+			return;
 		}
 	}
 
@@ -96,23 +96,25 @@ public class BlowpipeController : PlayerController
 
 	private void UpdateState()
 	{
-		BlowpipeController.State state = this.m_State;
-		if (state != BlowpipeController.State.Idle)
+		switch (this.m_State)
 		{
-			if (state != BlowpipeController.State.Aim)
+		case BlowpipeController.State.Idle:
+			if (!this.m_Loaded && this.HasArrows())
 			{
-				if (state != BlowpipeController.State.Shot)
-				{
-				}
+				this.SetState(BlowpipeController.State.Load);
+				return;
 			}
-			else if (!InputsManager.Get().IsActionActive(InputsManager.InputAction.BlowpipeAim))
+			break;
+		case BlowpipeController.State.Aim:
+			if (!InputsManager.Get().IsActionActive(InputsManager.InputAction.BlowpipeAim))
 			{
 				this.SetState(BlowpipeController.State.Idle);
 			}
-		}
-		else if (!this.m_Loaded && this.HasArrows())
-		{
-			this.SetState(BlowpipeController.State.Load);
+			break;
+		case BlowpipeController.State.Shot:
+			break;
+		default:
+			return;
 		}
 	}
 
@@ -127,6 +129,7 @@ public class BlowpipeController : PlayerController
 				this.m_Arrow.m_Loaded = false;
 				this.m_Arrow = null;
 				this.m_Loaded = false;
+				return;
 			}
 		}
 		else if (id == AnimEventID.BlowpipeShotEnd)
@@ -134,11 +137,10 @@ public class BlowpipeController : PlayerController
 			if (this.HasArrows())
 			{
 				this.SetState(BlowpipeController.State.Load);
+				return;
 			}
-			else
-			{
-				this.SetState(BlowpipeController.State.Idle);
-			}
+			this.SetState(BlowpipeController.State.Idle);
+			return;
 		}
 		else if (id == AnimEventID.BlowpipeLoad)
 		{
@@ -154,6 +156,7 @@ public class BlowpipeController : PlayerController
 				this.m_Arrow.gameObject.SetActive(true);
 				this.m_Arrow.m_Loaded = true;
 				this.m_Loaded = true;
+				return;
 			}
 		}
 		else if (id == AnimEventID.BlowpipeLoadEnd)
@@ -170,17 +173,16 @@ public class BlowpipeController : PlayerController
 	public override void GetInputActions(ref List<int> actions)
 	{
 		BlowpipeController.State state = this.m_State;
-		if (state != BlowpipeController.State.Idle)
-		{
-			if (state == BlowpipeController.State.Aim)
-			{
-				actions.Add(13);
-			}
-		}
-		else
+		if (state == BlowpipeController.State.Idle)
 		{
 			actions.Add(12);
+			return;
 		}
+		if (state != BlowpipeController.State.Aim)
+		{
+			return;
+		}
+		actions.Add(13);
 	}
 
 	private BlowpipeController.State m_State;

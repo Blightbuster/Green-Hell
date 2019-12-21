@@ -43,8 +43,20 @@ public class TOD_Time : MonoBehaviour
 		return deltaTime;
 	}
 
-	public void AddHours(float hours, bool adjust = true)
+	public void AddHoursDebug(float hours)
 	{
+		this.m_AddHoursDebug += hours;
+	}
+
+	public void AddHours(float hours, bool adjust = true, bool from_tod_interpolator = false)
+	{
+		if ((MainLevel.Instance.m_TODInterpolatorState == MainLevel.TODTimeInterpolatorState.Interpolating || MainLevel.Instance.m_TODInterpolatorState == MainLevel.TODTimeInterpolatorState.Interpolating) && !from_tod_interpolator)
+		{
+			this.m_AddHoursDebug = 0f;
+			return;
+		}
+		hours += this.m_AddHoursDebug;
+		this.m_AddHoursDebug = 0f;
 		if (this.UseTimeCurve && adjust)
 		{
 			hours = this.ApplyTimeCurve(hours);
@@ -140,7 +152,7 @@ public class TOD_Time : MonoBehaviour
 
 	public void AddSeconds(float seconds, bool adjust = true)
 	{
-		this.AddHours(seconds / 3600f, true);
+		this.AddHours(seconds / 3600f, true, false);
 	}
 
 	private void CalculateLinearTangents(Keyframe[] keys)
@@ -197,6 +209,20 @@ public class TOD_Time : MonoBehaviour
 
 	protected void Update()
 	{
+		if (this.m_InterpolateTime)
+		{
+			this.InterpolateTime();
+			return;
+		}
+		this.UpdateTime();
+	}
+
+	private void InterpolateTime()
+	{
+	}
+
+	private void UpdateTime()
+	{
 		if (!Player.Get())
 		{
 			return;
@@ -209,21 +235,18 @@ public class TOD_Time : MonoBehaviour
 			}
 			this.sky.Cycle.Hour = 1.3f;
 			this.m_WasDreamActive = true;
+			return;
 		}
-		else
+		if (this.m_WasDreamActive)
 		{
-			if (this.m_WasDreamActive)
-			{
-				this.sky.Cycle.Hour = this.m_HourBeforeDream;
-			}
-			if (this.ProgressTime && this.m_DayLengthInMinutes > 0f && this.m_NightLengthInMinutes > 0f)
-			{
-				bool flag = this.sky.Cycle.Hour > 6f && this.sky.Cycle.Hour <= 18f;
-				float num = (!flag) ? (this.m_NightLen / this.m_NightLengthInMinutes) : (this.m_DayLen / this.m_DayLengthInMinutes);
-				this.AddSeconds(Time.deltaTime * num, true);
-			}
-			this.m_WasDreamActive = false;
+			this.sky.Cycle.Hour = this.m_HourBeforeDream;
 		}
+		if (this.ProgressTime && this.m_DayLengthInMinutes > 0f && this.m_NightLengthInMinutes > 0f)
+		{
+			float num = (this.sky.Cycle.Hour > 6f && this.sky.Cycle.Hour <= 18f) ? (this.m_DayLen / this.m_DayLengthInMinutes) : (this.m_NightLen / this.m_NightLengthInMinutes);
+			this.AddSeconds(Time.deltaTime * num, true);
+		}
+		this.m_WasDreamActive = false;
 	}
 
 	[Tooltip("Progress time at runtime.")]
@@ -259,7 +282,11 @@ public class TOD_Time : MonoBehaviour
 
 	public float m_NightLen = 720f;
 
+	private float m_AddHoursDebug;
+
 	private bool m_WasDreamActive;
 
 	private float m_HourBeforeDream;
+
+	public bool m_InterpolateTime;
 }

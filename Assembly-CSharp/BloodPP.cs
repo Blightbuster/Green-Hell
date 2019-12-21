@@ -87,11 +87,9 @@ public class BloodPP : MonoBehaviour
 		if (this.m_BloodShader != null)
 		{
 			Graphics.Blit(src, dst, this.m_Material);
+			return;
 		}
-		else
-		{
-			Graphics.Blit(src, dst);
-		}
+		Graphics.Blit(src, dst);
 	}
 
 	public void ShowMask(int i)

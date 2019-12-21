@@ -43,12 +43,10 @@ namespace Pathfinding
 			{
 				this.Trace(this.startNode);
 				base.CompleteState = PathCompleteState.Complete;
+				return;
 			}
-			else
-			{
-				base.Error();
-				base.LogError("Could not find valid start node");
-			}
+			base.Error();
+			base.LogError("Could not find valid start node");
 		}
 
 		protected override void CalculateStep(long targetTick)
@@ -73,7 +71,7 @@ namespace Pathfinding
 				if (num > 1024)
 				{
 					Debug.LogWarning("Inifinity loop? >1024 node path. Remove this message if you really have that long paths (FloodPathTracer.cs, Trace function)");
-					break;
+					return;
 				}
 			}
 		}

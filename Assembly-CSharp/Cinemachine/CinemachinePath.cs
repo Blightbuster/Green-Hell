@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[AddComponentMenu("Cinemachine/CinemachinePath")]
 	[DocumentationSorting(18f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("Cinemachine/CinemachinePath")]
+	[SaveDuringPlay]
 	public class CinemachinePath : CinemachinePathBase
 	{
 		public override float MinPos
@@ -26,7 +26,7 @@ namespace Cinemachine
 				{
 					return 0f;
 				}
-				return (float)((!this.m_Looped) ? num : (num + 1));
+				return (float)(this.m_Looped ? (num + 1) : num);
 			}
 		}
 
@@ -52,7 +52,7 @@ namespace Cinemachine
 			int num = Mathf.RoundToInt(pos);
 			if (Mathf.Abs(pos - (float)num) < 0.0001f)
 			{
-				indexA = (indexB = ((num != this.m_Waypoints.Length) ? num : 0));
+				indexA = (indexB = ((num == this.m_Waypoints.Length) ? 0 : num));
 			}
 			else
 			{
@@ -126,7 +126,7 @@ namespace Cinemachine
 		public override Quaternion EvaluateOrientation(float pos)
 		{
 			Quaternion result = base.transform.rotation;
-			if (this.m_Waypoints.Length > 0)
+			if (this.m_Waypoints.Length != 0)
 			{
 				int num;
 				int num2;
@@ -151,8 +151,7 @@ namespace Cinemachine
 				if (!vector.AlmostZero())
 				{
 					Vector3 upwards = base.transform.rotation * Vector3.up;
-					Quaternion lhs = Quaternion.LookRotation(vector, upwards);
-					result = lhs * Quaternion.AngleAxis(angle, Vector3.forward);
+					result = Quaternion.LookRotation(vector, upwards) * Quaternion.AngleAxis(angle, Vector3.forward);
 				}
 			}
 			return result;

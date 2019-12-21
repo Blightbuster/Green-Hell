@@ -32,22 +32,22 @@ namespace RootMotion.FinalIK
 
 		private Vector3 GetLegSpineTangent(Grounding.Leg leg)
 		{
-			Vector3 result = leg.transform.position - this.solver.root.position;
+			Vector3 vector = leg.transform.position - this.solver.root.position;
 			if (!this.solver.rotateSolver || this.solver.root.up == Vector3.up)
 			{
-				return new Vector3(result.x, 0f, result.z);
+				return new Vector3(vector.x, 0f, vector.z);
 			}
 			Vector3 up = this.solver.root.up;
-			Vector3.OrthoNormalize(ref up, ref result);
-			return result;
+			Vector3.OrthoNormalize(ref up, ref vector);
+			return vector;
 		}
 
 		protected abstract void OpenUserManual();
 
 		protected abstract void OpenScriptReference();
 
-		[Range(0f, 1f)]
 		[Tooltip("The master weight. Use this to fade in/out the grounding effect.")]
+		[Range(0f, 1f)]
 		public float weight = 1f;
 
 		[Tooltip("The Grounding solver. Not to confuse with IK solvers.")]

@@ -1,4 +1,5 @@
 ﻿using System;
+using Enums;
 using UnityEngine;
 
 namespace AIs
@@ -14,18 +15,22 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_HumanAI.transform.position).GetNormalized2D();
-			float num = Vector3.Angle(this.m_HumanAI.transform.forward.GetNormalized2D(), normalized2D);
+			Vector3 to = this.m_AI.m_EnemyModule.m_Enemy ? (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_HumanAI.transform.position).GetNormalized2D() : this.m_HumanAI.transform.forward.GetNormalized2D();
+			float num = Vector3.Angle(this.m_HumanAI.transform.forward.GetNormalized2D(), to);
 			float num2 = 40f;
 			float num3 = 0.3f;
 			HitReaction.Type type = HitReaction.Type.Middle;
-			if (num <= num2 && num3 <= UnityEngine.Random.Range(0f, 1f))
+			if (this.m_AI.m_LastDamageInfo != null && this.m_AI.m_LastDamageInfo.m_DamageItem && this.m_AI.m_LastDamageInfo.m_DamageItem.GetInfoID() == ItemID.tribe_spike_trap)
+			{
+				type = HitReaction.Type.Middle;
+			}
+			else if (num <= num2 && num3 <= UnityEngine.Random.Range(0f, 1f))
 			{
 				type = HitReaction.Type.StepBack;
 			}
 			else if (FistFightController.Get().IsActive())
 			{
-				type = ((!FistFightController.Get().IsLeftPunch()) ? HitReaction.Type.Right : HitReaction.Type.Left);
+				type = (FistFightController.Get().IsLeftPunch() ? HitReaction.Type.Left : HitReaction.Type.Right);
 			}
 			else if (WeaponMeleeController.Get().IsActive())
 			{
@@ -64,7 +69,6 @@ namespace AIs
 			}
 			this.m_HitReaction.SetType(type);
 			this.m_AI.m_HumanFightModule.m_LastHitReactionType = type;
-			this.m_HitReaction.Initialize(this.m_AI, this);
 			base.AddToPlan(this.m_HitReaction);
 		}
 

@@ -28,7 +28,7 @@ public class HUDChallengeInfo : HUDBase
 	public void Activate(Challenge challenge)
 	{
 		this.m_Active = true;
-		this.m_InfoText.text = challenge.GetLocalizedInfo();
+		this.SetupText(challenge);
 		this.m_Challenge = challenge;
 	}
 
@@ -42,8 +42,13 @@ public class HUDChallengeInfo : HUDBase
 		base.Update();
 		if (this.m_Active && this.m_Challenge != null && this.m_Challenge.UpdateHUDChallengeInfo())
 		{
-			this.m_InfoText.text = this.m_Challenge.GetLocalizedInfo();
+			this.SetupText(this.m_Challenge);
 		}
+	}
+
+	public void SetupText(Challenge challenge)
+	{
+		this.m_InfoText.text = challenge.GetLocalizedInfo();
 	}
 
 	private bool m_Active;

@@ -31,6 +31,7 @@ namespace RootMotion.FinalIK
 			solver.OnPreUpdate = (IKSolver.UpdateDelegate)Delegate.Combine(solver.OnPreUpdate, new IKSolver.UpdateDelegate(this.ModifyOffset));
 			this.lastTime = Time.time;
 			yield break;
+			yield break;
 		}
 
 		private void ModifyOffset()
@@ -86,38 +87,38 @@ namespace RootMotion.FinalIK
 		{
 			public void Apply(IKEffector e, Quaternion rootRotation)
 			{
-				Vector3 point = Quaternion.Inverse(rootRotation) * e.positionOffset;
+				Vector3 vector = Quaternion.Inverse(rootRotation) * e.positionOffset;
 				if (this.spring <= 0f)
 				{
 					if (this.x)
 					{
-						point.x = Mathf.Clamp(point.x, this.minX, this.maxX);
+						vector.x = Mathf.Clamp(vector.x, this.minX, this.maxX);
 					}
 					if (this.y)
 					{
-						point.y = Mathf.Clamp(point.y, this.minY, this.maxY);
+						vector.y = Mathf.Clamp(vector.y, this.minY, this.maxY);
 					}
 					if (this.z)
 					{
-						point.z = Mathf.Clamp(point.z, this.minZ, this.maxZ);
+						vector.z = Mathf.Clamp(vector.z, this.minZ, this.maxZ);
 					}
 				}
 				else
 				{
 					if (this.x)
 					{
-						point.x = this.SpringAxis(point.x, this.minX, this.maxX);
+						vector.x = this.SpringAxis(vector.x, this.minX, this.maxX);
 					}
 					if (this.y)
 					{
-						point.y = this.SpringAxis(point.y, this.minY, this.maxY);
+						vector.y = this.SpringAxis(vector.y, this.minY, this.maxY);
 					}
 					if (this.z)
 					{
-						point.z = this.SpringAxis(point.z, this.minZ, this.maxZ);
+						vector.z = this.SpringAxis(vector.z, this.minZ, this.maxZ);
 					}
 				}
-				e.positionOffset = rootRotation * point;
+				e.positionOffset = rootRotation * vector;
 			}
 
 			private float SpringAxis(float value, float min, float max)

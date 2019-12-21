@@ -26,8 +26,7 @@ public class SkillCurve
 
 	public float Progress(float val)
 	{
-		SkillCurveKey key = this.GetKey(val);
-		return key.m_Data.z;
+		return this.GetKey(val).m_Data.z;
 	}
 
 	public float Evaluate(float val)
@@ -50,7 +49,11 @@ public class SkillCurve
 	public int GetLevel(float val)
 	{
 		SkillCurveKey key = this.GetKey(val);
-		return (val >= Skill.s_MaxValue) ? (key.m_Index + 1) : key.m_Index;
+		if (val >= Skill.s_MaxValue)
+		{
+			return key.m_Index + 1;
+		}
+		return key.m_Index;
 	}
 
 	public SkillCurveKey GetKey(float val)

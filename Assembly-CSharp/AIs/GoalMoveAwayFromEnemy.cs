@@ -21,21 +21,17 @@ namespace AIs
 			AIMoveStyle moveStyle = this.m_AI.m_MoveStyle;
 			this.m_AI.m_MoveStyle = this.GetWantedMoveStyle();
 			this.m_AI.m_PathModule.CalcPath(PathModule.PathType.MoveAwayFromEnemy);
-			if (this.m_AI.m_ID == AI.AIID.Peccary || this.m_AI.m_ID == AI.AIID.Capybara)
-			{
-				if ((moveStyle == AIMoveStyle.Walk && this.m_AI.m_MoveStyle == AIMoveStyle.Run) || this.m_AI.m_GoalsModule.m_PreviousAction == null || (this.m_AI.m_GoalsModule.m_PreviousAction.GetType() != typeof(MoveTo) && this.m_AI.m_GoalsModule.m_PreviousAction.GetType() != typeof(StartMove)))
-				{
-					base.StartAction(this.m_StartMove);
-				}
-				else
-				{
-					base.Prepare();
-				}
-			}
-			else
+			if (this.m_AI.m_ID != AI.AIID.Peccary && this.m_AI.m_ID != AI.AIID.Capybara)
 			{
 				base.Prepare();
+				return;
 			}
+			if ((moveStyle == AIMoveStyle.Walk && this.m_AI.m_MoveStyle == AIMoveStyle.Run) || this.m_AI.m_GoalsModule.m_PreviousAction == null || (this.m_AI.m_GoalsModule.m_PreviousAction.GetType() != typeof(MoveTo) && this.m_AI.m_GoalsModule.m_PreviousAction.GetType() != typeof(StartMove)))
+			{
+				base.StartAction(this.m_StartMove);
+				return;
+			}
+			base.Prepare();
 		}
 
 		public override AIMoveStyle GetWantedMoveStyle()
@@ -61,8 +57,9 @@ namespace AIs
 			{
 				base.Prepare();
 				this.m_AI.m_AnimationModule.m_TransitionDuration = 0f;
+				return;
 			}
-			else if (action.GetType() == typeof(MoveTo))
+			if (action.GetType() == typeof(MoveTo))
 			{
 				this.Prepare();
 			}

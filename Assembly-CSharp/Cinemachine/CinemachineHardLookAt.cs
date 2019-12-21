@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[AddComponentMenu("")]
 	[DocumentationSorting(23f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineHardLookAt : CinemachineComponentBase
 	{
 		public override bool IsValid
@@ -35,11 +35,9 @@ namespace Cinemachine
 					if (Vector3.Cross(vector.normalized, curState.ReferenceUp).magnitude < 0.0001f)
 					{
 						curState.RawOrientation = Quaternion.FromToRotation(Vector3.forward, vector);
+						return;
 					}
-					else
-					{
-						curState.RawOrientation = Quaternion.LookRotation(vector, curState.ReferenceUp);
-					}
+					curState.RawOrientation = Quaternion.LookRotation(vector, curState.ReferenceUp);
 				}
 			}
 		}

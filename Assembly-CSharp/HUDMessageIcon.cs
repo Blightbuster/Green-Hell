@@ -9,5 +9,6 @@ public enum HUDMessageIcon
 	Hydration,
 	Energy,
 	Item,
-	FoodPoisoning
+	FoodPoisoning,
+	ParasiteSickness
 }

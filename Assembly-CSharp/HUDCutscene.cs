@@ -23,7 +23,7 @@ public class HUDCutscene : HUDBase
 	protected override void OnShow()
 	{
 		base.OnShow();
-		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get(MainLevel.Instance.m_CutsceneName);
+		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get(MainLevel.Instance.m_CutsceneName, true);
 	}
 
 	public Text m_Text;

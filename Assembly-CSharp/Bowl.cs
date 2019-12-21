@@ -60,6 +60,10 @@ public class Bowl : LiquidContainer
 
 	public override bool CanTrigger()
 	{
+		if (this.m_CantTriggerDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
+		{
+			return false;
+		}
 		if (BowlController.Get().m_Bowl == this)
 		{
 			return base.CanTrigger();
@@ -73,12 +77,12 @@ public class Bowl : LiquidContainer
 		if (action == TriggerAction.TYPE.Pour)
 		{
 			base.Fill(LiquidInHandsController.Get().m_Container);
+			return;
 		}
-		else if (action == TriggerAction.TYPE.Drink)
+		if (action == TriggerAction.TYPE.Drink)
 		{
 			this.Drink();
-			LiquidContainerInfo liquidContainerInfo = (LiquidContainerInfo)this.m_Info;
-			if (liquidContainerInfo.m_Amount == 0f)
+			if (((LiquidContainerInfo)this.m_Info).m_Amount == 0f)
 			{
 				if (this.m_Item)
 				{
@@ -101,6 +105,10 @@ public class Bowl : LiquidContainer
 		if (HeavyObjectController.Get().IsActive())
 		{
 			return;
+		}
+		if (GreenHellGame.IsPadControllerActive() && Inventory3DManager.Get().IsActive() && Inventory3DManager.Get().CanSetCarriedItem(true))
+		{
+			actions.Add(TriggerAction.TYPE.Pick);
 		}
 		switch (this.m_State)
 		{
@@ -128,6 +136,7 @@ public class Bowl : LiquidContainer
 			}
 			break;
 		}
+		actions.Add(TriggerAction.TYPE.Expand);
 	}
 
 	public override void OnGet()
@@ -137,15 +146,14 @@ public class Bowl : LiquidContainer
 		if (liquidContainerInfo.m_LiquidType == LiquidType.UnsafeWater || liquidContainerInfo.m_LiquidType == LiquidType.DirtyWater)
 		{
 			this.SetState(Bowl.State.UnsafeWater);
+			return;
 		}
-		else if (liquidContainerInfo.m_LiquidType == LiquidType.Water)
+		if (liquidContainerInfo.m_LiquidType == LiquidType.Water)
 		{
 			this.SetState(Bowl.State.WaterCooked);
+			return;
 		}
-		else
-		{
-			this.SetState(Bowl.State.HerbCooked);
-		}
+		this.SetState(Bowl.State.HerbCooked);
 	}
 
 	public override void OnInsertItem(ItemSlot slot)
@@ -196,7 +204,11 @@ public class Bowl : LiquidContainer
 		{
 			return 0f;
 		}
-		return (this.m_CookingLength <= 0f) ? 1f : (this.m_CookingDuration / this.m_CookingLength);
+		if (this.m_CookingLength <= 0f)
+		{
+			return 1f;
+		}
+		return this.m_CookingDuration / this.m_CookingLength;
 	}
 
 	private void SetState(Bowl.State state)
@@ -231,26 +243,32 @@ public class Bowl : LiquidContainer
 			this.InitializeAudio();
 		}
 		LiquidContainerInfo liquidContainerInfo = (LiquidContainerInfo)this.m_Info;
-		LiquidData liquidData = LiquidManager.Get().GetLiquidData(liquidContainerInfo.m_LiquidType);
+		LiquidManager.Get().GetLiquidData(liquidContainerInfo.m_LiquidType);
 		switch (this.m_State)
 		{
 		case Bowl.State.None:
 			this.m_ItemSlot.gameObject.SetActive(false);
+			if (this.m_ItemVis)
+			{
+				this.m_ItemVis.gameObject.SetActive(false);
+				this.m_ItemVis = null;
+				return;
+			}
 			break;
 		case Bowl.State.UnsafeWater:
 		case Bowl.State.UnsafeWaterCooking:
 			this.m_CookingDuration = 0f;
 			this.m_UnsafeWaterVis.SetActive(true);
-			break;
+			return;
 		case Bowl.State.WaterCooked:
 			liquidContainerInfo.OnCooked();
-			this.m_ItemSlot.gameObject.SetActive(true);
 			this.m_WaterVis.SetActive(true);
-			break;
+			return;
 		case Bowl.State.Herb:
 			if (this.m_ItemVis)
 			{
 				this.m_ItemVis.SetActive(true);
+				return;
 			}
 			break;
 		case Bowl.State.HerbCooking:
@@ -258,16 +276,17 @@ public class Bowl : LiquidContainer
 			if (this.m_ItemVis)
 			{
 				this.m_ItemVis.SetActive(true);
+				return;
 			}
 			break;
 		case Bowl.State.HerbCooked:
 		{
 			this.m_HerbVis.SetActive(true);
-			LiquidData liquidData2 = LiquidManager.Get().GetLiquidData(this.m_LCInfo.m_LiquidType);
+			LiquidData liquidData = LiquidManager.Get().GetLiquidData(this.m_LCInfo.m_LiquidType);
 			bool flag = false;
 			foreach (string text in this.m_HerbVisualisations.Keys)
 			{
-				bool flag2 = liquidData2 != null && text == liquidData2.m_ItemComponent.ToString();
+				bool flag2 = liquidData != null && text == liquidData.m_ItemComponent.ToString();
 				this.m_HerbVisualisations[text].SetActive(flag2);
 				if (!flag && flag2)
 				{
@@ -280,6 +299,8 @@ public class Bowl : LiquidContainer
 			}
 			break;
 		}
+		default:
+			return;
 		}
 	}
 
@@ -336,17 +357,71 @@ public class Bowl : LiquidContainer
 		this.UpdateParticle();
 		this.UpdateState();
 		this.UpdateSounds();
-		if (this.m_LCInfo.m_Amount < this.m_LCInfo.m_Capacity && !base.transform.parent && base.transform.up.y > 0.45f && RainManager.Get().IsRain())
+		if (!this.ReplIsOwner())
 		{
-			if (this.m_LCInfo.m_LiquidType != LiquidType.Water && this.m_LCInfo.m_Amount == 0f)
+			return;
+		}
+		if (base.IsInWater() && !base.m_InInventory)
+		{
+			WaterCollider waterCollider = this.m_CurrentWaters[this.m_CurrentWaters.Count - 1];
+			this.m_LCInfo.m_LiquidType = (waterCollider.m_LiquidSource ? waterCollider.m_LiquidSource.m_LiquidType : LiquidType.UnsafeWater);
+			this.m_LCInfo.m_Amount = this.m_LCInfo.m_Capacity;
+			return;
+		}
+		if (this.m_LCInfo.m_Amount < this.m_LCInfo.m_Capacity && !base.transform.parent && base.transform.up.y > 0.45f && RainManager.Get().IsRain() && !RainManager.Get().IsInRainCutter(base.transform.position))
+		{
+			bool flag = true;
+			if (Inventory3DManager.Get().m_CarriedItem == this && RainManager.Get().IsInRainCutter(Player.Get().transform.position))
 			{
-				this.m_LCInfo.m_LiquidType = LiquidType.Water;
+				flag = false;
 			}
-			if (this.m_LCInfo.m_LiquidType == LiquidType.Water)
+			if (flag)
 			{
-				this.m_LCInfo.m_Amount += Time.deltaTime * 0.2f;
-				this.m_LCInfo.m_Amount = Mathf.Clamp(this.m_LCInfo.m_Amount, 0f, this.m_LCInfo.m_Capacity);
+				if (this.m_LCInfo.m_LiquidType != LiquidType.Water && this.m_LCInfo.m_Amount == 0f)
+				{
+					this.m_LCInfo.m_LiquidType = LiquidType.Water;
+				}
+				if (this.m_LCInfo.m_LiquidType == LiquidType.Water)
+				{
+					float num = Time.deltaTime;
+					if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
+					{
+						num = Player.GetSleepTimeFactor();
+					}
+					this.m_LCInfo.m_Amount += num * 0.2f;
+					this.m_LCInfo.m_Amount = Mathf.Clamp(this.m_LCInfo.m_Amount, 0f, this.m_LCInfo.m_Capacity);
+				}
 			}
+		}
+	}
+
+	private void UpdateSpoiling()
+	{
+		if (this.m_SpoilTime <= 0f)
+		{
+			this.m_SpoilingDuration = 0f;
+			return;
+		}
+		if (base.transform.parent)
+		{
+			this.m_SpoilingDuration = 0f;
+			return;
+		}
+		if (this.m_LCInfo.m_Amount == 0f || this.m_LCInfo.m_LiquidType != LiquidType.Water)
+		{
+			this.m_SpoilingDuration = 0f;
+			return;
+		}
+		float num = Time.deltaTime;
+		if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
+		{
+			num = Player.GetSleepTimeFactor();
+		}
+		this.m_SpoilingDuration += num;
+		if (this.m_SpoilingDuration >= this.m_SpoilTime)
+		{
+			this.m_LCInfo.m_LiquidType = LiquidType.UnsafeWater;
+			this.m_SpoilingDuration = 0f;
 		}
 	}
 
@@ -371,27 +446,28 @@ public class Bowl : LiquidContainer
 		switch (this.m_State)
 		{
 		case Bowl.State.None:
-			if (liquidContainerInfo.m_Amount > 0f)
+			if (liquidContainerInfo.m_Amount >= 1f)
 			{
 				LiquidType liquidType = liquidContainerInfo.m_LiquidType;
 				if (liquidType == LiquidType.UnsafeWater || liquidType == LiquidType.DirtyWater)
 				{
 					this.SetState(Bowl.State.UnsafeWater);
+					return;
 				}
-				else if (liquidType == LiquidType.Water)
+				if (liquidType == LiquidType.Water)
 				{
 					this.SetState(Bowl.State.WaterCooked);
+					return;
 				}
-				else
-				{
-					this.SetState(Bowl.State.HerbCooked);
-				}
+				this.SetState(Bowl.State.HerbCooked);
+				return;
 			}
 			break;
 		case Bowl.State.UnsafeWater:
 			if (this.m_Firecamp && this.m_Firecamp.m_Burning)
 			{
 				this.SetState(Bowl.State.UnsafeWaterCooking);
+				return;
 			}
 			break;
 		case Bowl.State.UnsafeWaterCooking:
@@ -399,22 +475,27 @@ public class Bowl : LiquidContainer
 			if (this.m_CookingDuration >= this.m_CookingLength)
 			{
 				this.SetState(Bowl.State.WaterCooked);
+				return;
 			}
-			else if (this.m_Firecamp && !this.m_Firecamp.m_Burning)
+			if (this.m_Firecamp && !this.m_Firecamp.m_Burning)
 			{
 				this.SetState(Bowl.State.UnsafeWater);
+				return;
 			}
 			break;
 		case Bowl.State.WaterCooked:
 			if (this.m_Item)
 			{
 				this.SetState(Bowl.State.Herb);
+				return;
 			}
-			break;
+			this.m_ItemSlot.gameObject.SetActive(this.m_Firecamp != null);
+			return;
 		case Bowl.State.Herb:
 			if (this.m_Firecamp && this.m_Firecamp.m_Burning)
 			{
 				this.SetState(Bowl.State.HerbCooking);
+				return;
 			}
 			break;
 		case Bowl.State.HerbCooking:
@@ -423,47 +504,36 @@ public class Bowl : LiquidContainer
 			{
 				this.CreateHerb();
 				this.SetState(Bowl.State.HerbCooked);
+				return;
 			}
-			else if (this.m_Firecamp && !this.m_Firecamp.m_Burning)
+			if (this.m_Firecamp && !this.m_Firecamp.m_Burning)
 			{
 				this.SetState(Bowl.State.Herb);
 			}
 			break;
+		case Bowl.State.HerbCooked:
+			break;
+		default:
+			return;
 		}
 	}
 
 	private void UpdateSounds()
 	{
-		switch (this.m_State)
+		Bowl.State state = this.m_State;
+		if (state == Bowl.State.UnsafeWaterCooking || state == Bowl.State.HerbCooking)
 		{
-		case Bowl.State.UnsafeWaterCooking:
-			if (this.m_CookingDuration >= this.m_CookingLength * 0.5f && !this.m_AudioSource.isPlaying)
+			if (this.m_CookingDuration >= this.m_CookingLength * 0.5f && this.m_AudioSource != null && !this.m_AudioSource.isPlaying)
 			{
 				this.m_AudioSource.clip = Bowl.s_BoilingSound[UnityEngine.Random.Range(0, Bowl.s_BoilingSound.Count)];
 				this.m_AudioSource.spatialBlend = 1f;
 				this.m_AudioSource.Play();
+				return;
 			}
-			break;
-		case Bowl.State.WaterCooked:
-			if (this.m_AudioSource.isPlaying)
-			{
-				this.m_AudioSource.Stop();
-			}
-			break;
-		case Bowl.State.HerbCooking:
-			if (this.m_CookingDuration >= this.m_CookingLength * 0.5f && !this.m_AudioSource.isPlaying)
-			{
-				this.m_AudioSource.clip = Bowl.s_BoilingSound[UnityEngine.Random.Range(0, Bowl.s_BoilingSound.Count)];
-				this.m_AudioSource.spatialBlend = 1f;
-				this.m_AudioSource.Play();
-			}
-			break;
-		case Bowl.State.HerbCooked:
-			if (this.m_AudioSource.isPlaying)
-			{
-				this.m_AudioSource.Stop();
-			}
-			break;
+		}
+		else if (this.m_AudioSource != null && this.m_AudioSource.isPlaying)
+		{
+			this.m_AudioSource.Stop();
 		}
 	}
 
@@ -488,39 +558,87 @@ public class Bowl : LiquidContainer
 	{
 		base.Save(index);
 		SaveGame.SaveVal("BowlState" + index, (int)this.m_State);
+		SaveGame.SaveVal("BowlSpoilingDur" + index, this.m_SpoilingDuration);
 	}
 
 	public override void Load(int index)
 	{
 		base.Load(index);
 		this.SetState((Bowl.State)SaveGame.LoadIVal("BowlState" + index));
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionReleaseCandidate)
+		{
+			this.m_SpoilingDuration = SaveGame.LoadFVal("BowlSpoilingDur" + index);
+		}
 	}
 
 	protected override void UpdateSlotsActivity()
 	{
-		if (this.m_InInventory)
+		if (base.m_InInventory)
 		{
 			this.m_PourSlot.gameObject.SetActive(false);
 			this.m_GetSlot.gameObject.SetActive(false);
+			return;
 		}
-		else
-		{
-			base.UpdateSlotsActivity();
-		}
+		base.UpdateSlotsActivity();
 	}
 
 	public override void OnAddToInventory()
 	{
 		base.OnAddToInventory();
-		base.Spill(-1f);
+		this.Spill(-1f);
+		this.SetState(Bowl.State.None);
+	}
+
+	public override void OnAddToStorage(Storage storage)
+	{
+		base.OnAddToStorage(storage);
+		this.Spill(-1f);
 		this.SetState(Bowl.State.None);
 	}
 
 	public override void OnTake()
 	{
 		base.OnTake();
-		base.Spill(-1f);
+		this.Spill(-1f);
 		this.SetState(Bowl.State.None);
+	}
+
+	public override void Spill(float amount = -1f)
+	{
+		base.Spill(-1f);
+		if (this.m_ItemVis)
+		{
+			this.m_ItemVis.gameObject.SetActive(false);
+			this.m_ItemVis = null;
+		}
+	}
+
+	public override void OnReplicationPrepare_CJGenerated()
+	{
+		base.OnReplicationPrepare_CJGenerated();
+		if (Math.Abs(this.m_CookingDuration_Repl - this.m_CookingDuration) >= 1f)
+		{
+			this.m_CookingDuration_Repl = this.m_CookingDuration;
+			this.ReplSetDirty();
+		}
+	}
+
+	public override void OnReplicationSerialize_CJGenerated(P2PNetworkWriter writer, bool initial_state)
+	{
+		base.OnReplicationSerialize_CJGenerated(writer, initial_state);
+		writer.Write(this.m_CookingDuration_Repl);
+	}
+
+	public override void OnReplicationDeserialize_CJGenerated(P2PNetworkReader reader, bool initial_state)
+	{
+		base.OnReplicationDeserialize_CJGenerated(reader, initial_state);
+		this.m_CookingDuration_Repl = reader.ReadFloat();
+	}
+
+	public override void OnReplicationResolve_CJGenerated()
+	{
+		base.OnReplicationResolve_CJGenerated();
+		this.m_CookingDuration = this.m_CookingDuration_Repl;
 	}
 
 	public Bowl.State m_State;
@@ -549,6 +667,10 @@ public class Bowl : LiquidContainer
 
 	private GameObject m_DefaultVis;
 
+	[Replicate(new string[]
+	{
+		"precision:1"
+	})]
 	private float m_CookingDuration;
 
 	public float m_CookingLength = 10f;
@@ -564,9 +686,15 @@ public class Bowl : LiquidContainer
 	[HideInInspector]
 	public bool m_RackChild;
 
+	private float m_SpoilingDuration;
+
+	public float m_SpoilTime;
+
 	private bool m_AudioInitialized;
 
 	private static List<AudioClip> s_BoilingSound = new List<AudioClip>();
+
+	private float m_CookingDuration_Repl;
 
 	public enum State
 	{

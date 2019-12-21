@@ -16,12 +16,16 @@ public class HarvestingAnimalController : PlayerController
 	{
 		base.Awake();
 		HarvestingAnimalController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.HarvestingAnimal;
+		base.m_ControllerType = PlayerControllerType.HarvestingAnimal;
 		GameObject prefab = GreenHellGame.Instance.GetPrefab("Stone_Blade");
 		this.m_StoneBlade = UnityEngine.Object.Instantiate<GameObject>(prefab);
 		Weapon component = this.m_StoneBlade.GetComponent<Weapon>();
 		if (component != null)
 		{
+			if (component.GetComponent<ReplicationComponent>())
+			{
+				component.GetComponent<ReplicationComponent>().enabled = false;
+			}
 			UnityEngine.Object.Destroy(component);
 		}
 		TrailRenderer component2 = this.m_StoneBlade.GetComponent<TrailRenderer>();
@@ -37,20 +41,21 @@ public class HarvestingAnimalController : PlayerController
 	{
 		base.OnEnable();
 		this.m_AnimLoops = 0;
-		Collider component = Player.Get().gameObject.GetComponent<Collider>();
-		Physics.IgnoreCollision(component, this.m_Body.m_BoxCollider);
+		Collider collider = Player.Get().m_Collider;
+		Physics.IgnoreCollision(collider, this.m_Body.m_BoxCollider);
 		if (this.m_Body.m_RagdollBones != null)
 		{
 			foreach (Rigidbody rigidbody in this.m_Body.m_RagdollBones)
 			{
-				Physics.IgnoreCollision(component, rigidbody.gameObject.GetComponent<Collider>());
+				Physics.IgnoreCollision(collider, rigidbody.gameObject.GetComponent<Collider>());
 			}
 		}
-		this.m_Animator.SetTrigger(this.m_HarvestingHash);
+		this.m_Animator.SetBool(this.m_HarvestingHash, true);
 		this.m_StoneBlade.SetActive(true);
 		this.m_StoneBlade.transform.parent = this.m_Player.GetRHand();
 		this.m_Player.m_AudioModule.PlayHarvestAnimalSound();
 		this.m_CorrectPosition = true;
+		this.m_End = false;
 	}
 
 	protected override void OnDisable()
@@ -61,15 +66,19 @@ public class HarvestingAnimalController : PlayerController
 		this.m_StoneBlade.SetActive(false);
 		if (this.m_Animator.isInitialized)
 		{
-			this.m_Animator.ResetTrigger(this.m_HarvestingHash);
 			this.m_Animator.ResetTrigger(this.m_HarvestingFinishHash);
-			this.m_Animator.SetTrigger(this.m_HarvestingAnimalEndHash);
+			this.m_Animator.ResetTrigger(this.m_HarvestingAnimalEndHash);
+			this.m_Animator.SetBool(this.m_HarvestingHash, false);
 		}
 	}
 
 	public override void ControllerUpdate()
 	{
 		base.ControllerUpdate();
+		if (this.m_Animator.GetCurrentAnimatorStateInfo(0).shortNameHash == this.m_CutInHash)
+		{
+			this.m_Animator.SetBool(this.m_HarvestingHash, false);
+		}
 		Vector3 a = this.m_Body.transform.TransformPoint(this.m_Body.m_BoxCollider.center) - base.transform.position;
 		if (a.magnitude > 0.5f && this.m_CorrectPosition)
 		{
@@ -87,11 +96,22 @@ public class HarvestingAnimalController : PlayerController
 		Vector3 b = this.m_StoneBladeHolder.parent.position - this.m_StoneBladeHolder.position;
 		this.m_StoneBlade.transform.position = rhand.position;
 		this.m_StoneBlade.transform.position += b;
+		if (this.m_End && this.m_Animator.GetCurrentAnimatorStateInfo(1).shortNameHash != this.m_AnimalharvestmaskHash)
+		{
+			this.m_Body.Harvest();
+			this.Stop();
+			this.m_CorrectPosition = false;
+		}
 	}
 
 	public void SetBody(DeadBody body)
 	{
 		this.m_Body = body;
+	}
+
+	public DeadBody GetBody()
+	{
+		return this.m_Body;
 	}
 
 	public override Dictionary<Transform, float> GetBodyRotationBonesParams()
@@ -107,17 +127,21 @@ public class HarvestingAnimalController : PlayerController
 			if (this.m_AnimLoops == Skill.Get<HarvestingAnimalsSkill>().GetAnimationsCount())
 			{
 				this.m_Animator.SetTrigger(this.m_HarvestingFinishHash);
+				return;
 			}
 		}
-		else if (id == AnimEventID.HarvestingFinishEnd)
+		else
 		{
-			this.m_Body.Harvest();
-			this.Stop();
-			this.m_CorrectPosition = false;
-		}
-		else if (id == AnimEventID.HarvestingSpawnFX)
-		{
-			ParticlesManager.Get().Spawn("Animal Harvest", Player.Get().GetRHand().position, Player.Get().GetRHand().rotation, null);
+			if (id == AnimEventID.HarvestingFinishEnd)
+			{
+				this.m_Animator.SetTrigger(this.m_HarvestingAnimalEndHash);
+				this.m_End = true;
+				return;
+			}
+			if (id == AnimEventID.HarvestingSpawnFX)
+			{
+				ParticlesManager.Get().Spawn("Animal Harvest", Camera.main.transform.position + Camera.main.transform.forward * 0.1f + Vector3.down * 0.5f, Player.Get().transform.rotation, Vector3.zero, null, -1f, false);
+			}
 		}
 	}
 
@@ -126,11 +150,15 @@ public class HarvestingAnimalController : PlayerController
 		return base.enabled;
 	}
 
+	private int m_CutInHash = Animator.StringToHash("CutIn");
+
 	private int m_HarvestingHash = Animator.StringToHash("HarvestingAnimal");
 
 	private int m_HarvestingFinishHash = Animator.StringToHash("HarvestingAnimalFinish");
 
 	private int m_HarvestingAnimalEndHash = Animator.StringToHash("HarvestingAnimalEnd");
+
+	private int m_AnimalharvestmaskHash = Animator.StringToHash("Animalharvestmask");
 
 	private DeadBody m_Body;
 
@@ -143,4 +171,6 @@ public class HarvestingAnimalController : PlayerController
 	private Transform m_StoneBladeHolder;
 
 	private bool m_CorrectPosition;
+
+	private bool m_End;
 }

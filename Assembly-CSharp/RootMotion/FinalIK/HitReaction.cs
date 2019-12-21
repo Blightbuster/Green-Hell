@@ -9,16 +9,18 @@ namespace RootMotion.FinalIK
 		{
 			get
 			{
-				foreach (HitReaction.HitPointEffector hitPointEffector in this.effectorHitPoints)
+				HitReaction.HitPointEffector[] array = this.effectorHitPoints;
+				for (int i = 0; i < array.Length; i++)
 				{
-					if (hitPointEffector.inProgress)
+					if (array[i].inProgress)
 					{
 						return true;
 					}
 				}
-				foreach (HitReaction.HitPointBone hitPointBone in this.boneHitPoints)
+				HitReaction.HitPointBone[] array2 = this.boneHitPoints;
+				for (int i = 0; i < array2.Length; i++)
 				{
-					if (hitPointBone.inProgress)
+					if (array2[i].inProgress)
 					{
 						return true;
 					}
@@ -29,13 +31,15 @@ namespace RootMotion.FinalIK
 
 		protected override void OnModifyOffset()
 		{
-			foreach (HitReaction.HitPointEffector hitPointEffector in this.effectorHitPoints)
+			HitReaction.HitPointEffector[] array = this.effectorHitPoints;
+			for (int i = 0; i < array.Length; i++)
 			{
-				hitPointEffector.Apply(this.ik.solver, this.weight);
+				array[i].Apply(this.ik.solver, this.weight);
 			}
-			foreach (HitReaction.HitPointBone hitPointBone in this.boneHitPoints)
+			HitReaction.HitPointBone[] array2 = this.boneHitPoints;
+			for (int i = 0; i < array2.Length; i++)
 			{
-				hitPointBone.Apply(this.ik.solver, this.weight);
+				array2[i].Apply(this.ik.solver, this.weight);
 			}
 		}
 
@@ -102,7 +106,7 @@ namespace RootMotion.FinalIK
 				{
 					this.crossFader = 0f;
 				}
-				this.crossFadeSpeed = ((this.crossFadeTime <= 0f) ? 0f : (1f / this.crossFadeTime));
+				this.crossFadeSpeed = ((this.crossFadeTime > 0f) ? (1f / this.crossFadeTime) : 0f);
 				this.CrossFadeStart();
 				this.timer = 0f;
 				this.force = force;
@@ -157,16 +161,17 @@ namespace RootMotion.FinalIK
 		{
 			protected override float GetLength()
 			{
-				float num = (this.offsetInForceDirection.keys.Length <= 0) ? 0f : this.offsetInForceDirection.keys[this.offsetInForceDirection.length - 1].time;
-				float min = (this.offsetInUpDirection.keys.Length <= 0) ? 0f : this.offsetInUpDirection.keys[this.offsetInUpDirection.length - 1].time;
+				float num = (this.offsetInForceDirection.keys.Length != 0) ? this.offsetInForceDirection.keys[this.offsetInForceDirection.length - 1].time : 0f;
+				float min = (this.offsetInUpDirection.keys.Length != 0) ? this.offsetInUpDirection.keys[this.offsetInUpDirection.length - 1].time : 0f;
 				return Mathf.Clamp(num, min, num);
 			}
 
 			protected override void CrossFadeStart()
 			{
-				foreach (HitReaction.HitPointEffector.EffectorLink effectorLink in this.effectorLinks)
+				HitReaction.HitPointEffector.EffectorLink[] array = this.effectorLinks;
+				for (int i = 0; i < array.Length; i++)
 				{
-					effectorLink.CrossFadeStart();
+					array[i].CrossFadeStart();
 				}
 			}
 
@@ -175,9 +180,10 @@ namespace RootMotion.FinalIK
 				Vector3 a = solver.GetRoot().up * base.force.magnitude;
 				Vector3 vector = this.offsetInForceDirection.Evaluate(base.timer) * base.force + this.offsetInUpDirection.Evaluate(base.timer) * a;
 				vector *= weight;
-				foreach (HitReaction.HitPointEffector.EffectorLink effectorLink in this.effectorLinks)
+				HitReaction.HitPointEffector.EffectorLink[] array = this.effectorLinks;
+				for (int i = 0; i < array.Length; i++)
 				{
-					effectorLink.Apply(solver, vector, base.crossFader);
+					array[i].Apply(solver, vector, base.crossFader);
 				}
 			}
 
@@ -221,14 +227,19 @@ namespace RootMotion.FinalIK
 		{
 			protected override float GetLength()
 			{
-				return (this.aroundCenterOfMass.keys.Length <= 0) ? 0f : this.aroundCenterOfMass.keys[this.aroundCenterOfMass.length - 1].time;
+				if (this.aroundCenterOfMass.keys.Length == 0)
+				{
+					return 0f;
+				}
+				return this.aroundCenterOfMass.keys[this.aroundCenterOfMass.length - 1].time;
 			}
 
 			protected override void CrossFadeStart()
 			{
-				foreach (HitReaction.HitPointBone.BoneLink boneLink in this.boneLinks)
+				HitReaction.HitPointBone.BoneLink[] array = this.boneLinks;
+				for (int i = 0; i < array.Length; i++)
 				{
-					boneLink.CrossFadeStart();
+					array[i].CrossFadeStart();
 				}
 			}
 
@@ -241,11 +252,11 @@ namespace RootMotion.FinalIK
 				if (this.rigidbody != null)
 				{
 					Vector3 axis = Vector3.Cross(base.force, base.point - this.rigidbody.worldCenterOfMass);
-					float angle = this.aroundCenterOfMass.Evaluate(base.timer) * weight;
-					Quaternion offset = Quaternion.AngleAxis(angle, axis);
-					foreach (HitReaction.HitPointBone.BoneLink boneLink in this.boneLinks)
+					Quaternion offset = Quaternion.AngleAxis(this.aroundCenterOfMass.Evaluate(base.timer) * weight, axis);
+					HitReaction.HitPointBone.BoneLink[] array = this.boneLinks;
+					for (int i = 0; i < array.Length; i++)
 					{
-						boneLink.Apply(solver, offset, base.crossFader);
+						array[i].Apply(solver, offset, base.crossFader);
 					}
 				}
 			}

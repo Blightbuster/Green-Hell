@@ -3,9 +3,9 @@ using Enums;
 
 public class PlayerModule : BeingModule, IAnimationEventsReceiver
 {
-	public override void Initialize()
+	public override void Initialize(Being being)
 	{
-		base.Initialize();
+		base.Initialize(being);
 		this.m_Player = base.gameObject.GetComponent<Player>();
 		DebugUtils.Assert(this.m_Player, true);
 	}

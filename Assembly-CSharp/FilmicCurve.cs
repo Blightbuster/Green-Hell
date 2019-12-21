@@ -67,8 +67,8 @@ public class FilmicCurve
 		float num3 = 1f - this.m_ShoulderCoef.y / (1f + Mathf.Exp(this.m_ShoulderCoef.z * (num - x2)));
 		float num4 = this.m_ShoulderCoef.w * (num + w);
 		float t = Mathf.Clamp01((num - x) / (x2 - x));
-		float num5 = (num >= x) ? num4 : num2;
-		float num6 = (num <= x2) ? num4 : num3;
+		float num5 = (num < x) ? num2 : num4;
+		float num6 = (num > x2) ? num3 : num4;
 		float result;
 		if (x > x2)
 		{

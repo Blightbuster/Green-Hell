@@ -109,12 +109,13 @@ namespace RootMotion.FinalIK
 				message = "Please assign all Bones to the IK solver.";
 				return false;
 			}
-			Transform transform = (Transform)Hierarchy.ContainsDuplicate(new Transform[]
+			UnityEngine.Object[] objects = new Transform[]
 			{
 				this.bone1.transform,
 				this.bone2.transform,
 				this.bone3.transform
-			});
+			};
+			Transform transform = (Transform)Hierarchy.ContainsDuplicate(objects);
 			if (transform != null)
 			{
 				message = transform.name + " is represented multiple times in the Bones.";

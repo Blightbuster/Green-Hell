@@ -21,15 +21,16 @@ public class LeavesPusher : MonoBehaviour
 		LeavesPusher.s_ShaderPropertyShakeAdd = Shader.PropertyToID("_BranchAmplitudeAdd");
 		LeavesPusher.s_ShaderPropertyShakeTimeAdd = Shader.PropertyToID("_BranchFreqAdd");
 		this.m_SOM = StaticObjectsManager.Get();
-		this.m_CharacterController = Player.Get().GetComponent<CharacterController>();
+		this.m_CharacterController = Player.Get().GetComponent<CharacterControllerProxy>();
 	}
 
-	public void Push(Vector3 pos, float radius)
+	public void Push(GameObject pusher_obj, float radius, Vector3? position_offset = null)
 	{
 		if (!this.m_SOM)
 		{
 			return;
 		}
+		float radius2 = this.GetRadius(pusher_obj.ReplIsOwner());
 		foreach (KeyValuePair<StaticObjectClass, GameObject> keyValuePair in this.m_SOM.m_ReplacedMap)
 		{
 			GameObject value = keyValuePair.Value;
@@ -37,8 +38,7 @@ public class LeavesPusher : MonoBehaviour
 			{
 				return;
 			}
-			Vector3 vector = value.transform.position - pos;
-			vector.y = 0f;
+			float num = value.transform.position.Distance2D(pusher_obj.transform.position + (position_offset ?? Vector3.zero));
 			float def_shake_mul = 0f;
 			float def_shake_time_mul = 0f;
 			PushLeaves pushLeaves = null;
@@ -47,13 +47,13 @@ public class LeavesPusher : MonoBehaviour
 			{
 				pushLeaves = this.m_PushLeavesCache[0];
 			}
-			if (vector.magnitude < this.GetRadius() && this.GetDataByObject(value) == null && pushLeaves != null)
+			if (num < radius2 && this.GetDataByObject(value) == null && pushLeaves != null)
 			{
 				List<Material> materialsToModify = pushLeaves.GetMaterialsToModify();
-				int num = 0;
-				if (num < materialsToModify.Count)
+				int num2 = 0;
+				if (num2 < materialsToModify.Count)
 				{
-					Material material = materialsToModify[num];
+					Material material = materialsToModify[num2];
 					if (material.HasProperty(LeavesPusher.s_ShaderPropertyShakeAdd))
 					{
 						def_shake_mul = material.GetFloat(LeavesPusher.s_ShaderPropertyShakeAdd);
@@ -63,9 +63,12 @@ public class LeavesPusher : MonoBehaviour
 						def_shake_time_mul = material.GetFloat(LeavesPusher.s_ShaderPropertyShakeTimeAdd);
 					}
 				}
-				this.m_Data.Add(new LeavesPusherData(value, value.transform.rotation, Player.Get().transform.right, this.GetRadius(), value.GetComponent<PushLeaves>(), def_shake_mul, def_shake_time_mul));
-				PlayerInjuryModule.Get().SetLeechNextTime(PlayerInjuryModule.Get().GetLeechNextTime() - this.m_LeechCooldownDecrease2);
-				PlayerInjuryModule.Get().CheckLeeches();
+				this.m_Data.Add(new LeavesPusherData(value, value.transform.rotation, pusher_obj.transform.right, radius2, value.GetComponent<PushLeaves>(), def_shake_mul, def_shake_time_mul));
+				if (pusher_obj.gameObject.ReplIsOwner())
+				{
+					PlayerInjuryModule.Get().SetLeechNextTime(PlayerInjuryModule.Get().GetLeechNextTime() - this.m_LeechCooldownDecrease2);
+					PlayerInjuryModule.Get().CheckLeeches();
+				}
 			}
 		}
 	}
@@ -77,31 +80,28 @@ public class LeavesPusher : MonoBehaviour
 		{
 			leavesPusherData.m_HitAxis = Vector3.Cross(hit_dir, Vector3.up);
 			leavesPusherData.m_HitTime = Time.time;
+			return;
 		}
-		else
+		float def_shake_mul = 0f;
+		float def_shake_time_mul = 0f;
+		List<Material> materialsToModify = go.GetComponent<PushLeaves>().GetMaterialsToModify();
+		int num = 0;
+		if (num < materialsToModify.Count)
 		{
-			float def_shake_mul = 0f;
-			float def_shake_time_mul = 0f;
-			PushLeaves component = go.GetComponent<PushLeaves>();
-			List<Material> materialsToModify = component.GetMaterialsToModify();
-			int num = 0;
-			if (num < materialsToModify.Count)
+			Material material = materialsToModify[num];
+			if (material.HasProperty(LeavesPusher.s_ShaderPropertyShakeAdd))
 			{
-				Material material = materialsToModify[num];
-				if (material.HasProperty(LeavesPusher.s_ShaderPropertyShakeAdd))
-				{
-					def_shake_mul = material.GetFloat(LeavesPusher.s_ShaderPropertyShakeAdd);
-				}
-				if (material.HasProperty(LeavesPusher.s_ShaderPropertyShakeTimeAdd))
-				{
-					def_shake_time_mul = material.GetFloat(LeavesPusher.s_ShaderPropertyShakeTimeAdd);
-				}
+				def_shake_mul = material.GetFloat(LeavesPusher.s_ShaderPropertyShakeAdd);
 			}
-			leavesPusherData = new LeavesPusherData(go, go.transform.rotation, Player.Get().transform.right, 0f, go.GetComponent<PushLeaves>(), def_shake_mul, def_shake_time_mul);
-			leavesPusherData.m_HitAxis = Vector3.Cross(hit_dir, Vector3.up);
-			leavesPusherData.m_HitTime = Time.time;
-			this.m_Data.Add(leavesPusherData);
+			if (material.HasProperty(LeavesPusher.s_ShaderPropertyShakeTimeAdd))
+			{
+				def_shake_time_mul = material.GetFloat(LeavesPusher.s_ShaderPropertyShakeTimeAdd);
+			}
 		}
+		leavesPusherData = new LeavesPusherData(go, go.transform.rotation, Player.Get().transform.right, 0f, go.GetComponent<PushLeaves>(), def_shake_mul, def_shake_time_mul);
+		leavesPusherData.m_HitAxis = Vector3.Cross(hit_dir, Vector3.up);
+		leavesPusherData.m_HitTime = Time.time;
+		this.m_Data.Add(leavesPusherData);
 	}
 
 	private LeavesPusherData GetDataByObject(GameObject go)
@@ -130,14 +130,25 @@ public class LeavesPusher : MonoBehaviour
 			else
 			{
 				i++;
-				Vector3 vector = this.m_LeavesPusher_data.m_Object.transform.position - Player.Get().transform.position;
-				vector.y = 0f;
-				if (vector.magnitude < this.m_LeavesPusher_data.m_EnterRadiusSize)
+				float num = float.MaxValue;
+				Vector3 right = Vector3.right;
+				bool flag = false;
+				foreach (ReplicatedLogicalPlayer replicatedLogicalPlayer in ReplicatedLogicalPlayer.s_AllLogicalPlayers)
+				{
+					float num2 = this.m_LeavesPusher_data.m_Object.transform.position.Distance2D(replicatedLogicalPlayer.transform.position);
+					if (num2 < num)
+					{
+						flag = replicatedLogicalPlayer.ReplIsOwner();
+						num = num2;
+						right = replicatedLogicalPlayer.transform.right;
+					}
+				}
+				if (num < this.m_LeavesPusher_data.m_EnterRadiusSize)
 				{
 					if (Mathf.Abs(this.m_LeavesPusher_data.m_Angle) < 0.1f)
 					{
-						this.m_LeavesPusher_data.m_RotationAxis = Player.Get().transform.right;
-						if (!this.m_LeavesPusher_data.m_PushLeaves.m_SmallPlant)
+						this.m_LeavesPusher_data.m_RotationAxis = right;
+						if (flag && !this.m_LeavesPusher_data.m_PushLeaves.m_SmallPlant)
 						{
 							Player.Get().GetComponent<PlayerAudioModule>().PlayPlantsPushingSound(1f, false);
 						}
@@ -149,22 +160,21 @@ public class LeavesPusher : MonoBehaviour
 				else
 				{
 					this.m_LeavesPusher_data.m_Angle -= this.m_LeavesPusher_data.m_Angle * Time.deltaTime * 4f;
-					float num = this.m_LeavesPusher_data.m_Angle / 10f;
-					num = Mathf.Clamp(num, 0f, 0.999f);
-					this.m_LeavesPusher_data.m_ShaderPropertyShake = this.m_LeavesPusher_data.m_DefShake + (this.m_LeavesPusher_data.m_ShaderPropertyShake - this.m_LeavesPusher_data.m_DefShake) * num;
-					this.m_LeavesPusher_data.m_ShaderPropertyShakeTime = this.m_LeavesPusher_data.m_DefShakeTime + (this.m_LeavesPusher_data.m_ShaderPropertyShakeTime - this.m_LeavesPusher_data.m_DefShakeTime) * num;
+					float num3 = this.m_LeavesPusher_data.m_Angle / 10f;
+					num3 = Mathf.Clamp(num3, 0f, 0.999f);
+					this.m_LeavesPusher_data.m_ShaderPropertyShake = this.m_LeavesPusher_data.m_DefShake + (this.m_LeavesPusher_data.m_ShaderPropertyShake - this.m_LeavesPusher_data.m_DefShake) * num3;
+					this.m_LeavesPusher_data.m_ShaderPropertyShakeTime = this.m_LeavesPusher_data.m_DefShakeTime + (this.m_LeavesPusher_data.m_ShaderPropertyShakeTime - this.m_LeavesPusher_data.m_DefShakeTime) * num3;
 				}
 				Quaternion originalQuat = this.m_LeavesPusher_data.m_OriginalQuat;
 				Quaternion lhs = Quaternion.AngleAxis(this.m_LeavesPusher_data.m_Angle, this.m_LeavesPusher_data.m_RotationAxis);
 				this.m_LeavesPusher_data.m_Object.transform.rotation = lhs * originalQuat;
 				if (this.m_LeavesPusher_data.m_HitTime > 0f)
 				{
-					float num2 = Mathf.Clamp01((Time.time - this.m_LeavesPusher_data.m_HitTime) / 1f);
-					float num3 = Mathf.Sin(num2 * 3.14159274f * 1.5f) * (7f * (1f - num2));
-					lhs = Quaternion.AngleAxis(-num3, this.m_LeavesPusher_data.m_HitAxis);
+					float num4 = Mathf.Clamp01((Time.time - this.m_LeavesPusher_data.m_HitTime) / 1f);
+					lhs = Quaternion.AngleAxis(-(Mathf.Sin(num4 * 3.14159274f * 1.5f) * (7f * (1f - num4))), this.m_LeavesPusher_data.m_HitAxis);
 					this.m_LeavesPusher_data.m_Object.transform.rotation = lhs * this.m_LeavesPusher_data.m_Object.transform.rotation;
-					float a = this.m_LeavesPusher_data.m_DefShake + this.m_LeavesPusher_data.m_PushLeaves.m_HitShakeAdd * (1f - num2);
-					float a2 = this.m_LeavesPusher_data.m_DefShakeTime + this.m_LeavesPusher_data.m_PushLeaves.m_HitShakeTimeAdd * (1f - num2);
+					float a = this.m_LeavesPusher_data.m_DefShake + this.m_LeavesPusher_data.m_PushLeaves.m_HitShakeAdd * (1f - num4);
+					float a2 = this.m_LeavesPusher_data.m_DefShakeTime + this.m_LeavesPusher_data.m_PushLeaves.m_HitShakeTimeAdd * (1f - num4);
 					this.m_LeavesPusher_data.m_ShaderPropertyShake = Mathf.Max(a, this.m_LeavesPusher_data.m_ShaderPropertyShake);
 					this.m_LeavesPusher_data.m_ShaderPropertyShakeTime = Mathf.Max(a2, this.m_LeavesPusher_data.m_ShaderPropertyShakeTime);
 				}
@@ -179,8 +189,12 @@ public class LeavesPusher : MonoBehaviour
 		}
 	}
 
-	private float GetRadius()
+	private float GetRadius(bool is_local_player)
 	{
+		if (is_local_player)
+		{
+			return 1f;
+		}
 		return 1f * CJTools.Math.GetProportionalClamp(1f, 2f, this.m_CharacterController.velocity.magnitude, 0f, 4f);
 	}
 
@@ -200,7 +214,7 @@ public class LeavesPusher : MonoBehaviour
 
 	private const float m_RotationSpeedMul = 4f;
 
-	private CharacterController m_CharacterController;
+	private CharacterControllerProxy m_CharacterController;
 
 	private const float m_HitDuration = 1f;
 

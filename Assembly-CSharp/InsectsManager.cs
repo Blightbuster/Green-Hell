@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Enums;
 using UnityEngine;
@@ -19,23 +18,10 @@ public class InsectsManager : MonoBehaviour
 		this.m_AvailableDummies.Add("Wound07");
 		this.m_AvailableDummies.Add("Wound08");
 		this.m_AvailableDummies.Add("Wound12");
-		IEnumerator enumerator = Enum.GetValues(typeof(InsectsManager.InsectType)).GetEnumerator();
-		try
+		foreach (object obj in Enum.GetValues(typeof(InsectsManager.InsectType)))
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj = enumerator.Current;
-				InsectsManager.InsectType key = (InsectsManager.InsectType)obj;
-				this.m_Prefabs.Add(key, Resources.Load("Prefabs/AI/" + key.ToString().ToLower()) as GameObject);
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			InsectsManager.InsectType key = (InsectsManager.InsectType)obj;
+			this.m_Prefabs.Add(key, Resources.Load("Prefabs/AI/" + key.ToString().ToLower()) as GameObject);
 		}
 	}
 
@@ -56,7 +42,7 @@ public class InsectsManager : MonoBehaviour
 		GameObject original = this.m_Prefabs[this.m_Type];
 		for (int i = 0; i < count; i++)
 		{
-			BIWoundSlot woundSlot = BodyInspectionController.Get().GetWoundSlot((hand != Hand.Right) ? InjuryPlace.LHand : InjuryPlace.RHand, InjuryType.Leech, null);
+			BIWoundSlot woundSlot = BodyInspectionController.Get().GetWoundSlot((hand == Hand.Right) ? InjuryPlace.RHand : InjuryPlace.LHand, InjuryType.Leech, null);
 			if (!woundSlot)
 			{
 				break;
@@ -71,19 +57,20 @@ public class InsectsManager : MonoBehaviour
 
 	public void FlyAway(Hand hand)
 	{
+		if (!Camera.main)
+		{
+			return;
+		}
 		for (int i = 0; i < this.m_Insects.Count; i++)
 		{
-			if (!(this.m_Insects[i].m_Insect == null))
+			if (!(this.m_Insects[i].m_Insect == null) && this.m_Insects[i].m_Hand == hand)
 			{
-				if (this.m_Insects[i].m_Hand == hand)
-				{
-					this.m_Insects[i].m_Insect.transform.GetChild(0).transform.localRotation = Quaternion.identity;
-					this.m_Insects[i].m_FlyAwaySpeed = UnityEngine.Random.Range(this.m_MinFlyAwaySpeed, this.m_MaxFlyAwaySpeed);
-					this.m_Insects[i].m_FlyAwayDirection = Quaternion.AngleAxis(UnityEngine.Random.Range(-45f, 45f), Camera.main.transform.up) * Camera.main.transform.forward;
-					this.m_Insects[i].m_FlyAwayDirection.y = Mathf.Max(this.m_Insects[i].m_FlyAwayDirection.y, 0.8f);
-					this.m_Insects[i].m_FlyAwayDirection.Normalize();
-					this.m_Insects[i].m_FlyAway = true;
-				}
+				this.m_Insects[i].m_Insect.transform.GetChild(0).transform.localRotation = Quaternion.identity;
+				this.m_Insects[i].m_FlyAwaySpeed = UnityEngine.Random.Range(this.m_MinFlyAwaySpeed, this.m_MaxFlyAwaySpeed);
+				this.m_Insects[i].m_FlyAwayDirection = Quaternion.AngleAxis(UnityEngine.Random.Range(-45f, 45f), Camera.main.transform.up) * Camera.main.transform.forward;
+				this.m_Insects[i].m_FlyAwayDirection.y = Mathf.Max(this.m_Insects[i].m_FlyAwayDirection.y, 0.8f);
+				this.m_Insects[i].m_FlyAwayDirection.Normalize();
+				this.m_Insects[i].m_FlyAway = true;
 			}
 		}
 	}

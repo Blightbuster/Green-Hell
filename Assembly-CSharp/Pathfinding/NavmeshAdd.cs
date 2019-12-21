@@ -37,27 +37,14 @@ namespace Pathfinding
 		{
 			get
 			{
-				return this.tr.position + ((!this.useRotationAndScale) ? this.center : this.tr.TransformPoint(this.center));
+				return this.tr.position + (this.useRotationAndScale ? this.tr.TransformPoint(this.center) : this.center);
 			}
 		}
 
 		[ContextMenu("Rebuild Mesh")]
 		public void RebuildMesh()
 		{
-			if (this.type == NavmeshAdd.MeshType.CustomMesh)
-			{
-				if (this.mesh == null)
-				{
-					this.verts = null;
-					this.tris = null;
-				}
-				else
-				{
-					this.verts = this.mesh.vertices;
-					this.tris = this.mesh.triangles;
-				}
-			}
-			else
+			if (this.type != NavmeshAdd.MeshType.CustomMesh)
 			{
 				if (this.verts == null || this.verts.Length != 4 || this.tris == null || this.tris.Length != 6)
 				{
@@ -74,7 +61,16 @@ namespace Pathfinding
 				this.verts[1] = new Vector3(this.rectangleSize.x * 0.5f, 0f, -this.rectangleSize.y * 0.5f);
 				this.verts[2] = new Vector3(this.rectangleSize.x * 0.5f, 0f, this.rectangleSize.y * 0.5f);
 				this.verts[3] = new Vector3(-this.rectangleSize.x * 0.5f, 0f, this.rectangleSize.y * 0.5f);
+				return;
 			}
+			if (this.mesh == null)
+			{
+				this.verts = null;
+				this.tris = null;
+				return;
+			}
+			this.verts = this.mesh.vertices;
+			this.tris = this.mesh.triangles;
 		}
 
 		internal override Rect GetBounds(GraphTransform inverseTransform)
@@ -83,7 +79,7 @@ namespace Pathfinding
 			{
 				this.RebuildMesh();
 			}
-			Int3[] array = ArrayPool<Int3>.Claim((this.verts == null) ? 0 : this.verts.Length);
+			Int3[] array = ArrayPool<Int3>.Claim((this.verts != null) ? this.verts.Length : 0);
 			int[] array2;
 			this.GetMesh(ref array, out array2, inverseTransform);
 			Rect result = default(Rect);
@@ -138,19 +134,17 @@ namespace Pathfinding
 					}
 					vbuffer[i] = (Int3)vector;
 				}
+				return;
 			}
-			else
+			Vector3 a = this.tr.position + this.center;
+			for (int j = 0; j < this.verts.Length; j++)
 			{
-				Vector3 a = this.tr.position + this.center;
-				for (int j = 0; j < this.verts.Length; j++)
+				Vector3 vector2 = a + this.verts[j] * this.meshScale;
+				if (inverseTransform != null)
 				{
-					Vector3 vector2 = a + this.verts[j] * this.meshScale;
-					if (inverseTransform != null)
-					{
-						vector2 = inverseTransform.InverseTransform(vector2);
-					}
-					vbuffer[j] = (Int3)vector2;
+					vector2 = inverseTransform.InverseTransform(vector2);
 				}
+				vbuffer[j] = (Int3)vector2;
 			}
 		}
 

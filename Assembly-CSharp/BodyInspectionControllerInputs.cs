@@ -31,6 +31,8 @@ public class BodyInspectionControllerInputs
 
 	public bool m_SelectItem;
 
+	public bool m_SelectItemPrev;
+
 	public bool m_RotateLimb;
 
 	public bool m_SelectLimb;

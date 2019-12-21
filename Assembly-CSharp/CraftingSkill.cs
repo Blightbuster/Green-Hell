@@ -14,11 +14,9 @@ public class CraftingSkill : Skill
 		if (key.GetName() == "InitialHealthMul")
 		{
 			this.m_InitialHealthMul = key.GetVariable(0).FValue;
+			return;
 		}
-		else
-		{
-			base.Load(key);
-		}
+		base.Load(key);
 	}
 
 	public float GetItemHealthMul(Item item)

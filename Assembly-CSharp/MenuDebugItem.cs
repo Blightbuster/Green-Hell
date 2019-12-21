@@ -5,9 +5,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MenuDebugItem : MenuScreen
+public class MenuDebugItem : MenuDebugScreen
 {
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.m_List.SetFocus(true);
@@ -18,7 +18,7 @@ public class MenuDebugItem : MenuScreen
 		this.Setup();
 	}
 
-	protected override void OnHide()
+	public override void OnHide()
 	{
 		base.OnHide();
 		if (!ItemsManager.Get())
@@ -28,14 +28,12 @@ public class MenuDebugItem : MenuScreen
 		if (this.m_List.GetSelectionIndex() < 0 || this.m_List.GetSelectionIndex() >= this.m_Items.Count)
 		{
 			ItemsManager.Get().m_DebugSpawnID = ItemID.None;
+			return;
 		}
-		else
+		string selectedElementText = this.m_List.GetSelectedElementText();
+		if (selectedElementText != string.Empty)
 		{
-			string selectedElementText = this.m_List.GetSelectedElementText();
-			if (selectedElementText != string.Empty)
-			{
-				ItemsManager.Get().m_DebugSpawnID = (ItemID)Enum.Parse(typeof(ItemID), selectedElementText);
-			}
+			ItemsManager.Get().m_DebugSpawnID = (ItemID)Enum.Parse(typeof(ItemID), selectedElementText);
 		}
 	}
 

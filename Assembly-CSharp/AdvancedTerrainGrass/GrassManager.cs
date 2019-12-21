@@ -104,7 +104,7 @@ namespace AdvancedTerrainGrass
 					GrassCellContent grassCellContent2 = this.SavedTerrainData.CellContent[num];
 					grassCellContent.index = num;
 					grassCellContent.Layer = grassCellContent2.Layer;
-					if (grassCellContent2.SoftlyMergedLayers.Length > 0)
+					if (grassCellContent2.SoftlyMergedLayers.Length != 0)
 					{
 						grassCellContent.SoftlyMergedLayers = grassCellContent2.SoftlyMergedLayers;
 					}
@@ -188,14 +188,12 @@ namespace AdvancedTerrainGrass
 							this.mapByte[l][m * (int)this.TerrainDetailSize.y + n] = Convert.ToByte(detailLayer[0, 0]);
 							if (flag)
 							{
-								for (int num3 = 0; num3 < this.OrigNumberOfLayers - 1; num3++)
+								int num3 = 0;
+								while (num3 < this.OrigNumberOfLayers - 1 && array[l][num3] != 0)
 								{
-									if (array[l][num3] == 0)
-									{
-										break;
-									}
 									detailLayer = this.terData.GetDetailLayer(m, n, 1, 1, array[l][num3] - 1);
 									this.mapByte[l][m * (int)this.TerrainDetailSize.y + n] = Convert.ToByte((int)this.mapByte[l][m * (int)this.TerrainDetailSize.y + n] + detailLayer[0, 0]);
+									num3++;
 								}
 							}
 						}
@@ -204,92 +202,89 @@ namespace AdvancedTerrainGrass
 			}
 			int num4 = 0;
 			int num5 = 0;
-			int num6 = 0;
-			for (int num7 = 0; num7 < this.NumberOfCells; num7++)
+			for (int num6 = 0; num6 < this.NumberOfCells; num6++)
 			{
-				for (int num8 = 0; num8 < this.NumberOfCells; num8++)
+				for (int num7 = 0; num7 < this.NumberOfCells; num7++)
 				{
-					int num9 = num7 * this.NumberOfCells + num8;
+					int num8 = num6 * this.NumberOfCells + num7;
 					Vector2 vector;
-					vector.x = ((float)num7 * this.CellSize + 0.5f * this.CellSize) * this.OneOverTerrainSize.x;
-					vector.y = ((float)num8 * this.CellSize + 0.5f * this.CellSize) * this.OneOverTerrainSize.z;
+					vector.x = ((float)num6 * this.CellSize + 0.5f * this.CellSize) * this.OneOverTerrainSize.x;
+					vector.y = ((float)num7 * this.CellSize + 0.5f * this.CellSize) * this.OneOverTerrainSize.z;
 					float interpolatedHeight = this.terData.GetInterpolatedHeight(vector.x, vector.y);
-					this.Cells[num9] = new GrassCell();
-					this.Cells[num9].index = num9;
+					this.Cells[num8] = new GrassCell();
+					this.Cells[num8].index = num8;
 					Vector3 center;
-					center.x = (float)num7 * this.CellSize + 0.5f * this.CellSize + this.TerrainPosition.x;
+					center.x = (float)num6 * this.CellSize + 0.5f * this.CellSize + this.TerrainPosition.x;
 					center.y = interpolatedHeight + this.TerrainPosition.y;
-					center.z = (float)num8 * this.CellSize + 0.5f * this.CellSize + this.TerrainPosition.z;
-					this.Cells[num9].Center = center;
-					for (int num10 = 0; num10 < this.NumberOfLayers; num10++)
+					center.z = (float)num7 * this.CellSize + 0.5f * this.CellSize + this.TerrainPosition.z;
+					this.Cells[num8].Center = center;
+					for (int num9 = 0; num9 < this.NumberOfLayers; num9++)
 					{
-						if (this.LayerToMergeWith[num10] == 0)
+						if (this.LayerToMergeWith[num9] == 0)
 						{
-							for (int num11 = 0; num11 < this.NumberOfBucketsPerCell; num11++)
+							for (int num10 = 0; num10 < this.NumberOfBucketsPerCell; num10++)
 							{
-								for (int num12 = 0; num12 < this.NumberOfBucketsPerCell; num12++)
+								for (int num11 = 0; num11 < this.NumberOfBucketsPerCell; num11++)
 								{
-									int num13 = (int)this.mapByte[num10][num7 * this.NumberOfBucketsPerCell * (int)this.TerrainDetailSize.y + num11 * (int)this.TerrainDetailSize.y + num8 * this.NumberOfBucketsPerCell + num12];
-									if (num13 > this.maxBucketDensity)
+									int num12 = (int)this.mapByte[num9][num6 * this.NumberOfBucketsPerCell * (int)this.TerrainDetailSize.y + num10 * (int)this.TerrainDetailSize.y + num7 * this.NumberOfBucketsPerCell + num11];
+									if (num12 > this.maxBucketDensity)
 									{
-										this.maxBucketDensity = num13;
+										this.maxBucketDensity = num12;
 									}
-									num4 += num13;
+									num4 += num12;
 								}
 							}
-							int num14 = 0;
-							if (array2[num10] != null)
+							int num13 = 0;
+							if (array2[num9] != null)
 							{
-								for (int num15 = 0; num15 < this.OrigNumberOfLayers - 1; num15++)
+								int num14 = 0;
+								while (num14 < this.OrigNumberOfLayers - 1 && array2[num9][num14] != 0)
 								{
-									if (array2[num10][num15] == 0)
+									int num15 = array2[num9][num14] - 1;
+									int num16 = 0;
+									for (int num17 = 0; num17 < this.NumberOfBucketsPerCell; num17++)
 									{
-										break;
-									}
-									int num16 = array2[num10][num15] - 1;
-									int num17 = 0;
-									for (int num18 = 0; num18 < this.NumberOfBucketsPerCell; num18++)
-									{
-										for (int num19 = 0; num19 < this.NumberOfBucketsPerCell; num19++)
+										for (int num18 = 0; num18 < this.NumberOfBucketsPerCell; num18++)
 										{
-											int num13 = (int)this.mapByte[num16][num7 * this.NumberOfBucketsPerCell * (int)this.TerrainDetailSize.y + num18 * (int)this.TerrainDetailSize.y + num8 * this.NumberOfBucketsPerCell + num19];
-											num17 += num13;
+											int num12 = (int)this.mapByte[num15][num6 * this.NumberOfBucketsPerCell * (int)this.TerrainDetailSize.y + num17 * (int)this.TerrainDetailSize.y + num7 * this.NumberOfBucketsPerCell + num18];
+											num16 += num12;
 										}
 									}
-									if (num17 > 0)
+									if (num16 > 0)
 									{
-										num14++;
-										num4 += num17;
+										num13++;
+										num4 += num16;
 									}
+									num14++;
 								}
-								if (num14 * 16 > this.maxBucketDensity)
+								if (num13 * 16 > this.maxBucketDensity)
 								{
-									this.maxBucketDensity = num14 * 16 + 32;
+									this.maxBucketDensity = num13 * 16 + 32;
 								}
 							}
 							if (num4 > 0)
 							{
-								this.Cells[num9].CellContentIndexes.Add(num5);
-								this.Cells[num9].CellContentCount++;
+								this.Cells[num8].CellContentIndexes.Add(num5);
+								this.Cells[num8].CellContentCount++;
 								GrassCellContent grassCellContent = new GrassCellContent();
 								grassCellContent.index = num5;
-								grassCellContent.Layer = num10;
+								grassCellContent.Layer = num9;
 								grassCellContent.GrassMatrixBufferPID = this.GrassMatrixBufferPID;
 								grassCellContent.Center = center;
-								grassCellContent.Pivot = new Vector3((float)num7 * this.CellSize, interpolatedHeight, (float)num8 * this.CellSize);
-								grassCellContent.PatchOffsetX = num7 * this.NumberOfBucketsPerCell * (int)this.TerrainDetailSize.y;
-								grassCellContent.PatchOffsetZ = num8 * this.NumberOfBucketsPerCell;
+								grassCellContent.Pivot = new Vector3((float)num6 * this.CellSize, interpolatedHeight, (float)num7 * this.CellSize);
+								grassCellContent.PatchOffsetX = num6 * this.NumberOfBucketsPerCell * (int)this.TerrainDetailSize.y;
+								grassCellContent.PatchOffsetZ = num7 * this.NumberOfBucketsPerCell;
 								grassCellContent.Instances = num4;
 								grassCellContent.block = new MaterialPropertyBlock();
 								grassCellContent.argsBuffer = new ComputeBuffer(1, 20, ComputeBufferType.DrawIndirect);
-								if (num14 > 0)
+								if (num13 > 0)
 								{
 									List<int> list2 = new List<int>();
-									for (int num20 = 0; num20 < this.OrigNumberOfLayers - 1; num20++)
+									for (int num19 = 0; num19 < this.OrigNumberOfLayers - 1; num19++)
 									{
-										if (array2[num10][num20] != 0)
+										if (array2[num9][num19] != 0)
 										{
-											list2.Add(array2[num10][num20] - 1);
+											list2.Add(array2[num9][num19] - 1);
 										}
 									}
 									grassCellContent.SoftlyMergedLayers = list2.ToArray();
@@ -301,10 +296,28 @@ namespace AdvancedTerrainGrass
 						}
 					}
 				}
-				num6 += (int)this.TerrainDetailSize.x;
 			}
 			this.CellContent = list.ToArray();
 			list.Clear();
+		}
+
+		public void ReinitCellAtBounds(Bounds bounds)
+		{
+			int num = (int)(bounds.min.x / this.terData.size.x * (float)this.NumberOfCells);
+			int num2 = (int)(bounds.max.x / this.terData.size.x * (float)this.NumberOfCells);
+			int num3 = (int)(bounds.min.z / this.terData.size.z * (float)this.NumberOfCells);
+			int num4 = (int)(bounds.max.z / this.terData.size.z * (float)this.NumberOfCells);
+			for (int i = num; i <= num2; i++)
+			{
+				for (int j = num3; j <= num4; j++)
+				{
+					int num5 = i * this.NumberOfCells + j;
+					if (this.Cells[num5].state != 0)
+					{
+						this.Cells[num5].state = 4;
+					}
+				}
+			}
 		}
 
 		public void Init()
@@ -332,10 +345,9 @@ namespace AdvancedTerrainGrass
 			this.GrassMatrixBufferPID = Shader.PropertyToID("GrassMatrixBuffer");
 			this.GrassFadePropsPID = Shader.PropertyToID("_AtgGrassFadeProps");
 			this.GrassShadowFadePropsPID = Shader.PropertyToID("_AtgGrassShadowFadeProps");
-			float num = this.CellSize * 0.5f * (this.CellSize * 0.5f);
-			float num2 = Mathf.Sqrt(num * 2f);
-			float num3 = this.CullDistance - this.FadeLength;
-			Shader.SetGlobalVector(this.GrassFadePropsPID, new Vector4(num3 * num3, 1f / (this.FadeLength * this.FadeLength * (num3 / this.FadeLength * 2f)), this.DetailFadeStart * this.DetailFadeStart, 1f / (this.DetailFadeLength * this.DetailFadeLength)));
+			Mathf.Sqrt(this.CellSize * 0.5f * (this.CellSize * 0.5f) * 2f);
+			float num = this.CullDistance - this.FadeLength;
+			Shader.SetGlobalVector(this.GrassFadePropsPID, new Vector4(num * num, 1f / (this.FadeLength * this.FadeLength * (num / this.FadeLength * 2f)), this.DetailFadeStart * this.DetailFadeStart, 1f / (this.DetailFadeLength * this.DetailFadeLength)));
 			Shader.SetGlobalVector(this.GrassShadowFadePropsPID, new Vector4(this.ShadowStart * this.ShadowStart, 1f / (this.ShadowFadeLength * this.ShadowFadeLength), this.ShadowStartFoliage * this.ShadowStartFoliage, 1f / (this.ShadowFadeLengthFoliage * this.ShadowFadeLengthFoliage)));
 			if (this.SavedTerrainData != null)
 			{
@@ -365,8 +377,7 @@ namespace AdvancedTerrainGrass
 			this.boundingSpheres = new BoundingSphere[this.TotalCellCount];
 			this.resultIndices = new int[this.TotalCellCount];
 			this.isVisibleBoundingSpheres = new bool[this.TotalCellCount];
-			num = this.CellSize * 0.75f * (this.CellSize * 0.75f);
-			float rad = Mathf.Sqrt(num * 2f);
+			float rad = Mathf.Sqrt(this.CellSize * 0.75f * (this.CellSize * 0.75f) * 2f);
 			for (int k = 0; k < this.TotalCellCount; k++)
 			{
 				this.boundingSpheres[k] = new BoundingSphere(this.Cells[k].Center, rad);
@@ -384,9 +395,9 @@ namespace AdvancedTerrainGrass
 			this.SqrTerrainCullingDist = Mathf.Sqrt(this.TerrainSize.x * this.TerrainSize.x + this.TerrainSize.z * this.TerrainSize.z) + this.CullDistance;
 			this.SqrTerrainCullingDist *= this.SqrTerrainCullingDist;
 			Debug.Log("Max Bucket Density: " + this.maxBucketDensity);
-			int num4 = Mathf.CeilToInt((float)(this.NumberOfBucketsPerCell * this.NumberOfBucketsPerCell * this.maxBucketDensity) * this.CurrentDetailDensity);
-			this.tempMatrixArray = new Matrix4x4[num4];
-			Debug.Log("Max Instances per Layer per Cell: " + num4);
+			int num2 = Mathf.CeilToInt((float)(this.NumberOfBucketsPerCell * this.NumberOfBucketsPerCell * this.maxBucketDensity) * this.CurrentDetailDensity);
+			this.tempMatrixArray = new Matrix4x4[num2];
+			Debug.Log("Max Instances per Layer per Cell: " + num2);
 			if (this.useBurst)
 			{
 				this.BurstInit();
@@ -414,8 +425,7 @@ namespace AdvancedTerrainGrass
 			for (int i = 0; i < num; i++)
 			{
 				GrassCell grassCell = this.Cells[i];
-				float num2 = Vector3.Distance(this.CamTransform.position, grassCell.Center);
-				if (num2 < this.BurstRadius)
+				if (Vector3.Distance(this.CamTransform.position, grassCell.Center) < this.BurstRadius)
 				{
 					int cellContentCount = grassCell.CellContentCount;
 					for (int j = 0; j < cellContentCount; j++)
@@ -430,8 +440,7 @@ namespace AdvancedTerrainGrass
 					this.ThreadIsRunning = false;
 					for (int k = 0; k < cellContentCount; k++)
 					{
-						GrassCellContent grassCellContent2 = this.CellContent[grassCell.CellContentIndexes[k]];
-						grassCellContent2.InitCellContent_Delegated();
+						this.CellContent[grassCell.CellContentIndexes[k]].InitCellContent_Delegated();
 					}
 					grassCell.state = 3;
 				}
@@ -539,6 +548,9 @@ namespace AdvancedTerrainGrass
 							this.CellContent[grassCell.CellContentIndexes[l]].DrawCellContent_Delegated(this.CameraInWichGrassWillBeDrawn, this.CameraLayer);
 						}
 						break;
+					case 4:
+						this.InitCellContent(grassCell.index);
+						break;
 					}
 				}
 			}
@@ -547,12 +559,9 @@ namespace AdvancedTerrainGrass
 			{
 				this.wt_cellindexList.Clear();
 				this.wt_cellindexListCount = 0;
-				for (int m = 0; m < this.CellsPerFrame; m++)
+				int num2 = 0;
+				while (num2 < this.CellsPerFrame && num > 0)
 				{
-					if (num <= 0)
-					{
-						break;
-					}
 					if (this.Cells[this.CellsOrCellContentsToInit[0]].state != 1)
 					{
 						this.CellsOrCellContentsToInit.RemoveAt(0);
@@ -563,9 +572,9 @@ namespace AdvancedTerrainGrass
 					}
 					GrassCell grassCell = this.Cells[this.CellsOrCellContentsToInit[0]];
 					int cellContentCount = grassCell.CellContentCount;
-					for (int n = 0; n < cellContentCount; n++)
+					for (int m = 0; m < cellContentCount; m++)
 					{
-						GrassCellContent grassCellContent = this.CellContent[grassCell.CellContentIndexes[n]];
+						GrassCellContent grassCellContent = this.CellContent[grassCell.CellContentIndexes[m]];
 						int layer = grassCellContent.Layer;
 						grassCellContent.v_mat = this.v_mat[layer];
 						grassCellContent.v_mesh = this.v_mesh[layer];
@@ -576,6 +585,7 @@ namespace AdvancedTerrainGrass
 					this.CellsOrCellContentsToInit.RemoveAt(0);
 					num--;
 					this.wt_cellindexListCount++;
+					num2++;
 				}
 				if (this.wt_cellindexListCount > 0)
 				{
@@ -596,8 +606,7 @@ namespace AdvancedTerrainGrass
 			float num8 = (float)num4 - normalizedHeightPos_y;
 			num *= this.TerrainHeightmapHeight;
 			num3 *= this.TerrainHeightmapHeight;
-			float num9 = this.TerrainHeights[num + num2] * num6;
-			num9 += this.TerrainHeights[num3 + num2] * num5;
+			float num9 = this.TerrainHeights[num + num2] * num6 + this.TerrainHeights[num3 + num2] * num5;
 			float num10 = this.TerrainHeights[num + num4] * num6;
 			num10 += this.TerrainHeights[num3 + num4] * num5;
 			return num9 * num8 + num10 * num7;
@@ -657,49 +666,46 @@ namespace AdvancedTerrainGrass
 					{
 						for (int l = 0; l < this.NumberOfBucketsPerCell; l++)
 						{
-							int num9 = cellIndex + num2 + j * 55;
-							GrassManager.ATGSeed = (uint)((float)(num9 - (k * this.NumberOfBucketsPerCell + l)) * 0.0001f * 2.14748365E+09f);
+							GrassManager.ATGSeed = (uint)((float)(cellIndex + num2 + j * 55 - (k * this.NumberOfBucketsPerCell + l)) * 0.0001f * 2.14748365E+09f);
 							Vector2 vector;
 							vector.x = this.tempSamplePosition.x;
 							vector.y = this.tempSamplePosition.y;
-							int num10 = (int)this.mapByte[num2][grassCellContent.PatchOffsetX + grassCellContent.PatchOffsetZ + k * (int)this.TerrainDetailSize.y + l];
-							num10 = (int)Math.Ceiling((double)((float)num10 * this.CurrentDetailDensity));
-							float num11 = (vector.x >= this.TerrainSizeOverHeightmap) ? this.OneOverHeightmapWidth : 0f;
-							float num12 = (vector.x < this.OneOverHeightmapWidthRight) ? this.OneOverHeightmapWidth : 0f;
-							float num13 = (vector.y >= this.TerrainSizeOverHeightmap) ? this.OneOverHeightmapHeight : 0f;
-							float num14 = (vector.y < this.OneOverHeightmapHeightUp) ? this.OneOverHeightmapHeight : 0f;
-							for (int m = 0; m < num10; m++)
+							int num9 = (int)this.mapByte[num2][grassCellContent.PatchOffsetX + grassCellContent.PatchOffsetZ + k * (int)this.TerrainDetailSize.y + l];
+							num9 = (int)Math.Ceiling((double)((float)num9 * this.CurrentDetailDensity));
+							float num10 = (vector.x < this.TerrainSizeOverHeightmap) ? 0f : this.OneOverHeightmapWidth;
+							float num11 = (vector.x >= this.OneOverHeightmapWidthRight) ? 0f : this.OneOverHeightmapWidth;
+							float num12 = (vector.y < this.TerrainSizeOverHeightmap) ? 0f : this.OneOverHeightmapHeight;
+							float num13 = (vector.y >= this.OneOverHeightmapHeightUp) ? 0f : this.OneOverHeightmapHeight;
+							for (int m = 0; m < num9; m++)
 							{
-								float atgrandomNext = GrassManager.GetATGRandomNext();
-								float num15 = atgrandomNext * this.BucketSize;
-								atgrandomNext = GrassManager.GetATGRandomNext();
-								float num16 = atgrandomNext * this.BucketSize;
+								float num14 = GrassManager.GetATGRandomNext() * this.BucketSize;
+								float num15 = GrassManager.GetATGRandomNext() * this.BucketSize;
 								Vector2 vector2;
-								vector2.x = (vector.x + num15) * this.OneOverTerrainSize.x;
-								vector2.y = (vector.y + num16) * this.OneOverTerrainSize.z;
-								float num17 = vector2.x * (float)(this.TerrainHeightmapWidth - 1);
-								float num18 = vector2.y * (float)(this.TerrainHeightmapHeight - 1);
+								vector2.x = (vector.x + num14) * this.OneOverTerrainSize.x;
+								vector2.y = (vector.y + num15) * this.OneOverTerrainSize.z;
+								float num16 = vector2.x * (float)(this.TerrainHeightmapWidth - 1);
+								float num17 = vector2.y * (float)(this.TerrainHeightmapHeight - 1);
+								int num18 = (int)num16;
 								int num19 = (int)num17;
-								int num20 = (int)num18;
+								int num20 = (int)(num16 + 1f);
 								int num21 = (int)(num17 + 1f);
-								int num22 = (int)(num18 + 1f);
-								float num23 = num17 - (float)num19;
-								float num24 = (float)num21 - num17;
-								float num25 = num18 - (float)num20;
-								float num26 = (float)num22 - num18;
-								num19 *= this.TerrainHeightmapHeight;
-								num21 *= this.TerrainHeightmapHeight;
-								float num27 = this.TerrainHeights[num19 + num20] * num24;
-								num27 += this.TerrainHeights[num21 + num20] * num23;
-								float num28 = this.TerrainHeights[num19 + num22] * num24;
-								num28 += this.TerrainHeights[num21 + num22] * num23;
-								this.tempPosition.y = num27 * num26 + num28 * num25;
-								float num29 = this.GetfilteredHeight((vector2.x - num11) * (float)(this.TerrainHeightmapWidth - 1), vector2.y * (float)(this.TerrainHeightmapHeight - 1));
-								float num30 = this.GetfilteredHeight((vector2.x + num12) * (float)(this.TerrainHeightmapWidth - 1), vector2.y * (float)(this.TerrainHeightmapHeight - 1));
-								float num31 = this.GetfilteredHeight(vector2.x * (float)(this.TerrainHeightmapWidth - 1), (vector2.y + num14) * (float)(this.TerrainHeightmapHeight - 1));
-								float num32 = this.GetfilteredHeight(vector2.x * (float)(this.TerrainHeightmapWidth - 1), (vector2.y - num13) * (float)(this.TerrainHeightmapHeight - 1));
+								float num22 = num16 - (float)num18;
+								float num23 = (float)num20 - num16;
+								float num24 = num17 - (float)num19;
+								float num25 = (float)num21 - num17;
+								num18 *= this.TerrainHeightmapHeight;
+								num20 *= this.TerrainHeightmapHeight;
+								float num26 = this.TerrainHeights[num18 + num19] * num23;
+								num26 += this.TerrainHeights[num20 + num19] * num22;
+								float num27 = this.TerrainHeights[num18 + num21] * num23;
+								num27 += this.TerrainHeights[num20 + num21] * num22;
+								this.tempPosition.y = num26 * num25 + num27 * num24;
+								float num28 = this.GetfilteredHeight((vector2.x - num10) * (float)(this.TerrainHeightmapWidth - 1), vector2.y * (float)(this.TerrainHeightmapHeight - 1));
+								float num29 = this.GetfilteredHeight((vector2.x + num11) * (float)(this.TerrainHeightmapWidth - 1), vector2.y * (float)(this.TerrainHeightmapHeight - 1));
+								float num30 = this.GetfilteredHeight(vector2.x * (float)(this.TerrainHeightmapWidth - 1), (vector2.y + num13) * (float)(this.TerrainHeightmapHeight - 1));
+								float num31 = this.GetfilteredHeight(vector2.x * (float)(this.TerrainHeightmapWidth - 1), (vector2.y - num12) * (float)(this.TerrainHeightmapHeight - 1));
 								Vector3 vector3;
-								vector3.x = -2f * (num30 - num29);
+								vector3.x = -2f * (num29 - num28);
 								if (num4 != 2 && num4 != 4)
 								{
 									vector3.y = 6.283184f * this.TerrainSizeOverHeightmap;
@@ -708,19 +714,18 @@ namespace AdvancedTerrainGrass
 								{
 									vector3.y = 4f * this.TerrainSizeOverHeightmap;
 								}
-								vector3.z = (num31 - num32) * -2f;
-								float num33 = vector3.x * vector3.x + vector3.y * vector3.y + vector3.z * vector3.z;
-								float num34 = (float)Math.Sqrt((double)num33);
-								float num35 = 1f / num34;
-								vector3.x *= num35;
-								vector3.y *= num35;
-								vector3.z *= num35;
-								this.tempPosition.x = this.tempSamplePosition.x + num15 + this.TerrainPosition.x;
-								this.tempPosition.z = this.tempSamplePosition.y + num16 + this.TerrainPosition.z;
-								float num36 = num6 + Mathf.PerlinNoise(this.tempPosition.x * num5, this.tempPosition.z * num5) * num7;
-								this.tempScale.x = num36;
-								this.tempScale.y = num36;
-								this.tempScale.z = num36;
+								vector3.z = (num30 - num31) * -2f;
+								float num32 = (float)Math.Sqrt((double)(vector3.x * vector3.x + vector3.y * vector3.y + vector3.z * vector3.z));
+								float num33 = 1f / num32;
+								vector3.x *= num33;
+								vector3.y *= num33;
+								vector3.z *= num33;
+								this.tempPosition.x = this.tempSamplePosition.x + num14 + this.TerrainPosition.x;
+								this.tempPosition.z = this.tempSamplePosition.y + num15 + this.TerrainPosition.z;
+								float num34 = num6 + Mathf.PerlinNoise(this.tempPosition.x * num5, this.tempPosition.z * num5) * num7;
+								this.tempScale.x = num34;
+								this.tempScale.y = num34;
+								this.tempScale.z = num34;
 								Quaternion zeroQuat = this.ZeroQuat;
 								if (num4 != 2)
 								{
@@ -728,46 +733,46 @@ namespace AdvancedTerrainGrass
 									zeroQuat.y = 0f;
 									zeroQuat.z = -vector3.x;
 									zeroQuat.w = (float)Math.Sqrt((double)(1f + vector3.y));
-									float num37 = (float)(1.0 / Math.Sqrt((double)(zeroQuat.w * zeroQuat.w + zeroQuat.x * zeroQuat.x + zeroQuat.y * zeroQuat.y + zeroQuat.z * zeroQuat.z)));
-									zeroQuat.w *= num37;
-									zeroQuat.x *= num37;
-									zeroQuat.y *= num37;
-									zeroQuat.z *= num37;
+									float num35 = (float)(1.0 / Math.Sqrt((double)(zeroQuat.w * zeroQuat.w + zeroQuat.x * zeroQuat.x + zeroQuat.y * zeroQuat.y + zeroQuat.z * zeroQuat.z)));
+									zeroQuat.w *= num35;
+									zeroQuat.x *= num35;
+									zeroQuat.y *= num35;
+									zeroQuat.z *= num35;
 								}
-								float num38 = GrassManager.GetATGRandomNext() * 180f;
-								float num39 = (float)Math.Cos((double)num38);
-								float num40 = (float)Math.Sin((double)num38);
+								float num36 = GrassManager.GetATGRandomNext() * 180f;
+								float num37 = (float)Math.Cos((double)num36);
+								float num38 = (float)Math.Sin((double)num36);
 								Quaternion quaternion = zeroQuat;
-								zeroQuat.x = quaternion.x * num39 - quaternion.z * num40;
-								zeroQuat.y = quaternion.w * num40 + quaternion.y * num39;
-								zeroQuat.z = quaternion.z * num39 + quaternion.x * num40;
-								zeroQuat.w = quaternion.w * num39 - quaternion.y * num40;
+								zeroQuat.x = quaternion.x * num37 - quaternion.z * num38;
+								zeroQuat.y = quaternion.w * num38 + quaternion.y * num37;
+								zeroQuat.z = quaternion.z * num37 + quaternion.x * num38;
+								zeroQuat.w = quaternion.w * num37 - quaternion.y * num38;
 								if (num4 == 1)
 								{
-									num38 = GrassManager.GetATGRandomNext() * 180f;
-									float num41 = (float)Math.Sin((double)num38);
-									float num42 = (float)Math.Cos((double)num38);
+									num36 = GrassManager.GetATGRandomNext() * 180f;
+									float num39 = (float)Math.Sin((double)num36);
+									float num40 = (float)Math.Cos((double)num36);
 									quaternion = zeroQuat;
-									zeroQuat.x = quaternion.w * num41 + quaternion.x * num42;
-									zeroQuat.y = quaternion.y * num42 + quaternion.z * num41;
-									zeroQuat.z = quaternion.z * num42 - quaternion.y * num41;
-									zeroQuat.w = quaternion.w * num42 - quaternion.x * num41;
+									zeroQuat.x = quaternion.w * num39 + quaternion.x * num40;
+									zeroQuat.y = quaternion.y * num40 + quaternion.z * num39;
+									zeroQuat.z = quaternion.z * num40 - quaternion.y * num39;
+									zeroQuat.w = quaternion.w * num40 - quaternion.x * num39;
 								}
 								this.tempMatrix.m03 = this.tempPosition.x;
 								this.tempMatrix.m13 = this.tempPosition.y + this.TerrainPosition.y;
 								this.tempMatrix.m23 = this.tempPosition.z;
-								float num43 = 2f * zeroQuat.x * zeroQuat.x;
-								float num44 = 2f * zeroQuat.y * zeroQuat.y;
-								float num45 = 2f * zeroQuat.z * zeroQuat.z;
-								this.tempMatrix.m00 = 1f - num44 - num45;
+								float num41 = 2f * zeroQuat.x * zeroQuat.x;
+								float num42 = 2f * zeroQuat.y * zeroQuat.y;
+								float num43 = 2f * zeroQuat.z * zeroQuat.z;
+								this.tempMatrix.m00 = 1f - num42 - num43;
 								this.tempMatrix.m01 = 2f * zeroQuat.x * zeroQuat.y - 2f * zeroQuat.z * zeroQuat.w;
 								this.tempMatrix.m02 = 2f * zeroQuat.x * zeroQuat.z + 2f * zeroQuat.y * zeroQuat.w;
 								this.tempMatrix.m10 = 2f * zeroQuat.x * zeroQuat.y + 2f * zeroQuat.z * zeroQuat.w;
-								this.tempMatrix.m11 = 1f - num43 - num45;
+								this.tempMatrix.m11 = 1f - num41 - num43;
 								this.tempMatrix.m12 = 2f * zeroQuat.y * zeroQuat.z - 2f * zeroQuat.x * zeroQuat.w;
 								this.tempMatrix.m20 = 2f * zeroQuat.x * zeroQuat.z - 2f * zeroQuat.y * zeroQuat.w;
 								this.tempMatrix.m21 = 2f * zeroQuat.y * zeroQuat.z + 2f * zeroQuat.x * zeroQuat.w;
-								this.tempMatrix.m22 = 1f - num43 - num44;
+								this.tempMatrix.m22 = 1f - num41 - num42;
 								this.tempMatrix.m00 = this.tempMatrix.m00 * this.tempScale.x;
 								this.tempMatrix.m01 = this.tempMatrix.m01 * this.tempScale.y;
 								this.tempMatrix.m02 = this.tempMatrix.m02 * this.tempScale.z;
@@ -780,14 +785,14 @@ namespace AdvancedTerrainGrass
 								if (num4 == 2 && flag)
 								{
 									Vector3 vector4 = vector3;
-									float num46 = -num38;
-									num39 = (float)Math.Cos((double)num46);
-									num40 = (float)Math.Sin((double)num46);
-									float num47 = num40 * 2f;
-									float num48 = num40 * num47;
-									float num49 = num39 * num47;
-									vector4.x = (1f - num48) * vector3.x + num49 * vector3.z;
-									vector4.z = -num49 * vector3.x + (1f - num48) * vector3.z;
+									float num44 = -num36;
+									num37 = (float)Math.Cos((double)num44);
+									num38 = (float)Math.Sin((double)num44);
+									float num45 = num38 * 2f;
+									float num46 = num38 * num45;
+									float num47 = num37 * num45;
+									vector4.x = (1f - num46) * vector3.x + num47 * vector3.z;
+									vector4.z = -num47 * vector3.x + (1f - num46) * vector3.z;
 									this.tempMatrix.m30 = vector4.x;
 									this.tempMatrix.m31 = vector4.y;
 									this.tempMatrix.m32 = vector4.z;
@@ -799,8 +804,11 @@ namespace AdvancedTerrainGrass
 									this.tempMatrix.m32 = 0f;
 								}
 								this.tempMatrix.m33 = (float)j + this.tempScale.x * 0.01f;
-								this.tempMatrixArray[num3] = this.tempMatrix;
-								num3++;
+								if (!AcresManager.Get().IsPointInsideAny(this.tempPosition))
+								{
+									this.tempMatrixArray[num3] = this.tempMatrix;
+									num3++;
+								}
 							}
 							this.tempSamplePosition.y = this.tempSamplePosition.y + this.BucketSize;
 						}

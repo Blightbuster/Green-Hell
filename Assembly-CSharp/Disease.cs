@@ -11,14 +11,21 @@ public class Disease
 		{
 			string svalue = key.GetVariable(0).SValue;
 			this.m_Symptoms.Add((Enums.DiseaseSymptom)Enum.Parse(typeof(Enums.DiseaseSymptom), svalue));
+			return;
 		}
-		else if (key.GetName() == "AutoHealTimeMinutes")
+		if (key.GetName() == "AutoHealTimeMinutes")
 		{
 			this.m_AutoHealTime = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "EnergyLossPerSecond")
+		if (key.GetName() == "EnergyLossPerSecond")
 		{
 			this.m_EnergyLossPerSecond = key.GetVariable(0).FValue;
+			return;
+		}
+		if (key.GetName() == "MaxLevel")
+		{
+			this.m_MaxLevel = key.GetVariable(0).IValue;
 		}
 	}
 
@@ -57,7 +64,7 @@ public class Disease
 		}
 	}
 
-	public void Activate(DiseaseRequest request)
+	public virtual void Activate(DiseaseRequest request)
 	{
 		if (!this.m_Active)
 		{
@@ -87,7 +94,23 @@ public class Disease
 		}
 	}
 
-	public void Deactivate()
+	public void DeactivateSymptoms()
+	{
+		for (int i = 0; i < this.m_Symptoms.Count; i++)
+		{
+			global::DiseaseSymptom symptom = PlayerDiseasesModule.Get().GetSymptom(this.m_Symptoms[i]);
+			if (symptom == null)
+			{
+				DebugUtils.Assert(DebugUtils.AssertType.Info);
+			}
+			else if (symptom.IsActive())
+			{
+				symptom.Deactivate();
+			}
+		}
+	}
+
+	public virtual void Deactivate()
 	{
 		this.m_Active = false;
 	}
@@ -104,24 +127,41 @@ public class Disease
 
 	public void OnDrink(LiquidType liquid_type)
 	{
-		if (LiquidManager.Get().GetLiquidData(liquid_type).m_ConsumeEffect == this.m_Type)
+		LiquidData liquidData = LiquidManager.Get().GetLiquidData(liquid_type);
+		for (int i = 0; i < liquidData.m_ConsumeEffects.Count; i++)
 		{
-			this.m_Level += LiquidManager.Get().GetLiquidData(liquid_type).m_ConsumeEffectLevel;
+			if (liquidData.m_ConsumeEffects[i].m_ConsumeEffect == this.m_Type)
+			{
+				this.m_Level += liquidData.m_ConsumeEffects[i].m_ConsumeEffectLevel;
+			}
 		}
-		this.m_Level = Mathf.Clamp(this.m_Level, 0, 100);
+		this.m_Level = Mathf.Clamp(this.m_Level, 0, this.m_MaxLevel);
 		if (this.m_Level == 0)
 		{
 			this.Deactivate();
 		}
 	}
 
+	protected virtual bool CanApplyConsumeEffect(ConsumableInfo info)
+	{
+		return true;
+	}
+
 	public virtual void OnEat(ConsumableInfo info)
 	{
-		if (info.m_ConsumeEffect == this.m_Type)
+		if (info.m_ConsumeEffect == this.m_Type && this.CanApplyConsumeEffect(info))
 		{
 			this.m_Level += info.m_ConsumeEffectLevel;
+			Localization localization = GreenHellGame.Instance.GetLocalization();
+			HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
+			string text = string.Empty;
+			if (info.m_ConsumeEffect == ConsumeEffect.ParasiteSickness)
+			{
+				text = info.m_ConsumeEffectLevel.ToString("F0") + " " + localization.Get("HUD_ParasiteSickness", true);
+				hudmessages.AddMessage(text, null, HUDMessageIcon.ParasiteSickness, "", null);
+			}
 		}
-		this.m_Level = Mathf.Clamp(this.m_Level, 0, 100);
+		this.m_Level = Mathf.Clamp(this.m_Level, 0, this.m_MaxLevel);
 		if (this.m_Level == 0)
 		{
 			this.Deactivate();
@@ -157,6 +197,16 @@ public class Disease
 		this.m_Activated = flag;
 	}
 
+	public virtual void Check()
+	{
+	}
+
+	public void IncreaseLevel(int add)
+	{
+		this.m_Level += add;
+		this.m_Level = Mathf.Clamp(this.m_Level, 0, this.m_MaxLevel);
+	}
+
 	public List<Enums.DiseaseSymptom> m_Symptoms = new List<Enums.DiseaseSymptom>();
 
 	private bool m_Active;
@@ -173,6 +223,9 @@ public class Disease
 
 	[HideInInspector]
 	public int m_Level;
+
+	[HideInInspector]
+	public int m_MaxLevel = int.MaxValue;
 
 	private bool m_Activated;
 }

@@ -32,8 +32,7 @@ namespace AIs
 			{
 				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-				float num = Vector3.Angle(normalized2D, normalized2D2);
-				if (num > 25f)
+				if (Vector3.Angle(normalized2D, normalized2D2) > 25f)
 				{
 					this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, true);
 					base.StartAction(this.m_RotateTo);

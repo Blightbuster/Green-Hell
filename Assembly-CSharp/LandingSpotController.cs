@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class LandingSpotController : MonoBehaviour
@@ -19,21 +20,68 @@ public class LandingSpotController : MonoBehaviour
 		{
 			base.StartCoroutine(this.InstantLandOnStart(0.1f));
 		}
+		this.m_AudioSource = base.GetComponent<AudioSource>();
+		this.m_LandingSpots.Clear();
+		for (int i = 0; i < this._thisT.childCount; i++)
+		{
+			LandingSpot component = this._thisT.GetChild(i).GetComponent<LandingSpot>();
+			this.m_LandingSpots.Add(component);
+		}
 	}
 
 	private void LateUpdate()
 	{
 		this.CheckPlayer();
+		if (this.m_ReleaseAllChildrenUpdate)
+		{
+			this.ReleaseAllChildrenUpdate();
+		}
+	}
+
+	private void ReleaseAllChildrenUpdate()
+	{
+		if (this.m_ReleaseAllChildrenSpotList.Count > 0)
+		{
+			this.m_ReleaseAllChildrenSpotList[0].ReleaseFlockChild();
+			this.m_ReleaseAllChildrenSpotList.RemoveAt(0);
+			return;
+		}
+		this.m_ReleaseAllChildrenUpdate = false;
 	}
 
 	private void CheckPlayer()
 	{
-		for (int i = 0; i < this._thisT.childCount; i++)
+		if (this.m_ReleaseAllFlockChildren)
 		{
-			LandingSpot component = this._thisT.GetChild(i).GetComponent<LandingSpot>();
-			if (component != null && component.transform.position.Distance(Player.Get().transform.position) < UnityEngine.Random.Range(this.m_ScareDistMin, this.m_ScareDistMax))
+			if (!this.m_ReleaseAllChildrenUpdate && base.transform.position.Distance(Player.Get().transform.position) < UnityEngine.Random.Range(this.m_ScareDistMin, this.m_ScareDistMax))
 			{
-				component.ReleaseFlockChild();
+				this.m_ReleaseAllChildrenSpotList.Clear();
+				for (int i = 0; i < this._thisT.childCount; i++)
+				{
+					LandingSpot component = this._thisT.GetChild(i).GetComponent<LandingSpot>();
+					if (component != null)
+					{
+						this.m_ReleaseAllChildrenSpotList.Add(component);
+					}
+				}
+				this.m_ReleaseAllChildrenUpdate = true;
+				if (this.m_AudioSource && (!this.m_PlayAudioOnce || !this.m_AudioAlreadyPlayed))
+				{
+					this.m_AudioSource.Play();
+					this.m_AudioAlreadyPlayed = true;
+					return;
+				}
+			}
+		}
+		else
+		{
+			for (int j = 0; j < this.m_LandingSpots.Count; j++)
+			{
+				LandingSpot landingSpot = this.m_LandingSpots[j];
+				if (landingSpot != null && landingSpot.transform.position.Distance(Player.Get().transform.position) < UnityEngine.Random.Range(this.m_ScareDistMin, this.m_ScareDistMax))
+				{
+					landingSpot.ReleaseFlockChild();
+				}
 			}
 		}
 	}
@@ -49,8 +97,7 @@ public class LandingSpotController : MonoBehaviour
 		{
 			if (this._thisT.GetChild(i).GetComponent<LandingSpot>() != null)
 			{
-				LandingSpot component = this._thisT.GetChild(i).GetComponent<LandingSpot>();
-				component.Invoke("ReleaseFlockChild", UnityEngine.Random.Range(minDelay, maxDelay));
+				this._thisT.GetChild(i).GetComponent<LandingSpot>().Invoke("ReleaseFlockChild", UnityEngine.Random.Range(minDelay, maxDelay));
 			}
 		}
 	}
@@ -74,10 +121,10 @@ public class LandingSpotController : MonoBehaviour
 		{
 			if (this._thisT.GetChild(i).GetComponent<LandingSpot>() != null)
 			{
-				LandingSpot component = this._thisT.GetChild(i).GetComponent<LandingSpot>();
-				component.InstantLand();
+				this._thisT.GetChild(i).GetComponent<LandingSpot>().InstantLand();
 			}
 		}
+		yield break;
 		yield break;
 	}
 
@@ -88,10 +135,10 @@ public class LandingSpotController : MonoBehaviour
 		{
 			if (this._thisT.GetChild(i).GetComponent<LandingSpot>() != null)
 			{
-				LandingSpot component = this._thisT.GetChild(i).GetComponent<LandingSpot>();
-				component.InstantLand();
+				this._thisT.GetChild(i).GetComponent<LandingSpot>().InstantLand();
 			}
 		}
+		yield break;
 		yield break;
 	}
 
@@ -132,4 +179,20 @@ public class LandingSpotController : MonoBehaviour
 	public float _snapLandDistance = 0.1f;
 
 	public float _landedRotateSpeed = 0.01f;
+
+	private AudioSource m_AudioSource;
+
+	public bool m_LandOnlyOnStart;
+
+	private List<LandingSpot> m_LandingSpots = new List<LandingSpot>();
+
+	public bool m_ReleaseAllFlockChildren;
+
+	private bool m_ReleaseAllChildrenUpdate;
+
+	private List<LandingSpot> m_ReleaseAllChildrenSpotList = new List<LandingSpot>(20);
+
+	public bool m_PlayAudioOnce;
+
+	private bool m_AudioAlreadyPlayed;
 }

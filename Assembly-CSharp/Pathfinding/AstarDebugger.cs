@@ -5,25 +5,11 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_astar_debugger.php")]
 	[AddComponentMenu("Pathfinding/Pathfinding Debugger")]
 	[ExecuteInEditMode]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_astar_debugger.php")]
 	public class AstarDebugger : VersionedMonoBehaviour
 	{
-		public AstarDebugger()
-		{
-			AstarDebugger.PathTypeDebug[] array = new AstarDebugger.PathTypeDebug[7];
-			array[0] = new AstarDebugger.PathTypeDebug("ABPath", () => PathPool.GetSize(typeof(ABPath)), () => PathPool.GetTotalCreated(typeof(ABPath)));
-			array[1] = new AstarDebugger.PathTypeDebug("MultiTargetPath", () => PathPool.GetSize(typeof(MultiTargetPath)), () => PathPool.GetTotalCreated(typeof(MultiTargetPath)));
-			array[2] = new AstarDebugger.PathTypeDebug("RandomPath", () => PathPool.GetSize(typeof(RandomPath)), () => PathPool.GetTotalCreated(typeof(RandomPath)));
-			array[3] = new AstarDebugger.PathTypeDebug("FleePath", () => PathPool.GetSize(typeof(FleePath)), () => PathPool.GetTotalCreated(typeof(FleePath)));
-			array[4] = new AstarDebugger.PathTypeDebug("ConstantPath", () => PathPool.GetSize(typeof(ConstantPath)), () => PathPool.GetTotalCreated(typeof(ConstantPath)));
-			array[5] = new AstarDebugger.PathTypeDebug("FloodPath", () => PathPool.GetSize(typeof(FloodPath)), () => PathPool.GetTotalCreated(typeof(FloodPath)));
-			array[6] = new AstarDebugger.PathTypeDebug("FloodPathTracer", () => PathPool.GetSize(typeof(FloodPathTracer)), () => PathPool.GetTotalCreated(typeof(FloodPathTracer)));
-			this.debugTypes = array;
-			base..ctor();
-		}
-
 		public void Start()
 		{
 			base.useGUILayout = false;
@@ -64,7 +50,7 @@ namespace Pathfinding
 			}
 			this.allocMem = (int)GC.GetTotalMemory(false);
 			bool flag = this.allocMem < this.peakAlloc;
-			this.peakAlloc = (flag ? this.peakAlloc : this.allocMem);
+			this.peakAlloc = ((!flag) ? this.allocMem : this.peakAlloc);
 			if (Time.realtimeSinceStartup - this.lastAllocSet > 0.3f || !Application.isPlaying)
 			{
 				int num2 = this.allocMem - this.lastAllocMemory;
@@ -78,9 +64,9 @@ namespace Pathfinding
 			}
 			if (Application.isPlaying)
 			{
-				this.fpsDrops[Time.frameCount % this.fpsDrops.Length] = ((Time.unscaledDeltaTime <= 1E-05f) ? 0f : (1f / Time.unscaledDeltaTime));
+				this.fpsDrops[Time.frameCount % this.fpsDrops.Length] = ((Time.unscaledDeltaTime > 1E-05f) ? (1f / Time.unscaledDeltaTime) : 0f);
 				int num3 = Time.frameCount % this.graph.Length;
-				this.graph[num3].fps = ((Time.unscaledDeltaTime >= 1E-05f) ? 0f : (1f / Time.unscaledDeltaTime));
+				this.graph[num3].fps = ((Time.unscaledDeltaTime < 1E-05f) ? (1f / Time.unscaledDeltaTime) : 0f);
 				this.graph[num3].collectEvent = flag;
 				this.graph[num3].memory = (float)this.allocMem;
 			}
@@ -162,7 +148,7 @@ namespace Pathfinding
 				{
 					this.text.AppendLine();
 					this.text.AppendLine();
-					float num = (this.delayedDeltaTime <= 1E-05f) ? 0f : (1f / this.delayedDeltaTime);
+					float num = (this.delayedDeltaTime > 1E-05f) ? (1f / this.delayedDeltaTime) : 0f;
 					this.text.Append("FPS".PadRight(25)).Append(num.ToString("0.0 fps"));
 					float num2 = float.PositiveInfinity;
 					for (int i = 0; i < this.fpsDrops.Length; i++)
@@ -177,7 +163,7 @@ namespace Pathfinding
 				}
 				if (this.showPathProfile)
 				{
-					AstarPath active = AstarPath.active;
+					UnityEngine.Object active = AstarPath.active;
 					this.text.AppendLine();
 					if (active == null)
 					{
@@ -208,7 +194,7 @@ namespace Pathfinding
 				this.style.fontSize = this.fontSize;
 			}
 			this.boxRect.height = this.style.CalcHeight(new GUIContent(this.cachedText), this.boxRect.width);
-			GUI.Box(this.boxRect, string.Empty);
+			GUI.Box(this.boxRect, "");
 			GUI.Label(this.boxRect, this.cachedText, this.style);
 			if (this.showGraph)
 			{
@@ -225,15 +211,29 @@ namespace Pathfinding
 				}
 				GUI.color = Color.blue;
 				float num7 = (float)Mathf.RoundToInt(num4 / 100000f);
-				GUI.Label(new Rect(5f, (float)Screen.height - AstarMath.MapTo(num3, num4, this.graphOffset, this.graphHeight + this.graphOffset, num7 * 1000f * 100f) - 10f, 100f, 20f), (num7 / 10f).ToString("0.0 MB"));
+				GUI.Label(new Rect(5f, (float)Screen.height - AstarMath.MapTo(num3, num4, 0f + this.graphOffset, this.graphHeight + this.graphOffset, num7 * 1000f * 100f) - 10f, 100f, 20f), (num7 / 10f).ToString("0.0 MB"));
 				num7 = Mathf.Round(num3 / 100000f);
-				GUI.Label(new Rect(5f, (float)Screen.height - AstarMath.MapTo(num3, num4, this.graphOffset, this.graphHeight + this.graphOffset, num7 * 1000f * 100f) - 10f, 100f, 20f), (num7 / 10f).ToString("0.0 MB"));
+				GUI.Label(new Rect(5f, (float)Screen.height - AstarMath.MapTo(num3, num4, 0f + this.graphOffset, this.graphHeight + this.graphOffset, num7 * 1000f * 100f) - 10f, 100f, 20f), (num7 / 10f).ToString("0.0 MB"));
 				GUI.color = Color.green;
 				num7 = Mathf.Round(num6);
-				GUI.Label(new Rect(55f, (float)Screen.height - AstarMath.MapTo(num5, num6, this.graphOffset, this.graphHeight + this.graphOffset, num7) - 10f, 100f, 20f), num7.ToString("0 FPS"));
+				GUI.Label(new Rect(55f, (float)Screen.height - AstarMath.MapTo(num5, num6, 0f + this.graphOffset, this.graphHeight + this.graphOffset, num7) - 10f, 100f, 20f), num7.ToString("0 FPS"));
 				num7 = Mathf.Round(num5);
-				GUI.Label(new Rect(55f, (float)Screen.height - AstarMath.MapTo(num5, num6, this.graphOffset, this.graphHeight + this.graphOffset, num7) - 10f, 100f, 20f), num7.ToString("0 FPS"));
+				GUI.Label(new Rect(55f, (float)Screen.height - AstarMath.MapTo(num5, num6, 0f + this.graphOffset, this.graphHeight + this.graphOffset, num7) - 10f, 100f, 20f), num7.ToString("0 FPS"));
 			}
+		}
+
+		public AstarDebugger()
+		{
+			AstarDebugger.PathTypeDebug[] array = new AstarDebugger.PathTypeDebug[7];
+			array[0] = new AstarDebugger.PathTypeDebug("ABPath", () => PathPool.GetSize(typeof(ABPath)), () => PathPool.GetTotalCreated(typeof(ABPath)));
+			array[1] = new AstarDebugger.PathTypeDebug("MultiTargetPath", () => PathPool.GetSize(typeof(MultiTargetPath)), () => PathPool.GetTotalCreated(typeof(MultiTargetPath)));
+			array[2] = new AstarDebugger.PathTypeDebug("RandomPath", () => PathPool.GetSize(typeof(RandomPath)), () => PathPool.GetTotalCreated(typeof(RandomPath)));
+			array[3] = new AstarDebugger.PathTypeDebug("FleePath", () => PathPool.GetSize(typeof(FleePath)), () => PathPool.GetTotalCreated(typeof(FleePath)));
+			array[4] = new AstarDebugger.PathTypeDebug("ConstantPath", () => PathPool.GetSize(typeof(ConstantPath)), () => PathPool.GetTotalCreated(typeof(ConstantPath)));
+			array[5] = new AstarDebugger.PathTypeDebug("FloodPath", () => PathPool.GetSize(typeof(FloodPath)), () => PathPool.GetTotalCreated(typeof(FloodPath)));
+			array[6] = new AstarDebugger.PathTypeDebug("FloodPathTracer", () => PathPool.GetSize(typeof(FloodPathTracer)), () => PathPool.GetTotalCreated(typeof(FloodPathTracer)));
+			this.debugTypes = array;
+			base..ctor();
 		}
 
 		public int yOffset = 5;

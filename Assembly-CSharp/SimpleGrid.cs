@@ -31,8 +31,7 @@ public class SimpleGrid
 
 	public void InsertPoint(Vector3 point, bool use_bounds = false)
 	{
-		SimpleGridCell cellAtPos = this.GetCellAtPos(point);
-		cellAtPos.m_Points.Add(point);
+		this.GetCellAtPos(point).m_Points.Add(point);
 	}
 
 	private SimpleGridCell GetCellAtPos(Vector3 pos)
@@ -58,16 +57,16 @@ public class SimpleGrid
 		return this.m_Cells[num, num2];
 	}
 
-	public List<Vector3> GetPointsInRadius(Vector3 pos, float radius, bool use_bounds = false)
+	public List<Vector3> GetPointsInGivenRadius(Vector3 pos, float rad)
 	{
 		this.m_PointsInRadius.Clear();
 		Vector3 pos2 = pos;
-		pos2.x -= radius;
-		pos2.z -= radius;
+		pos2.x -= rad;
+		pos2.z -= rad;
 		SimpleGridCell cellAtPos = this.GetCellAtPos(pos2);
 		Vector3 pos3 = pos;
-		pos3.x += radius;
-		pos3.z += radius;
+		pos3.x += rad;
+		pos3.z += rad;
 		SimpleGridCell cellAtPos2 = this.GetCellAtPos(pos3);
 		for (int i = cellAtPos.m_X; i <= cellAtPos2.m_X; i++)
 		{
@@ -77,7 +76,7 @@ public class SimpleGrid
 				for (int k = 0; k < simpleGridCell.m_Points.Count; k++)
 				{
 					Vector3 vector = simpleGridCell.m_Points[k];
-					if ((vector - pos).magnitude < radius)
+					if ((vector - pos).magnitude < rad)
 					{
 						this.m_PointsInRadius.Add(vector);
 					}
@@ -92,8 +91,7 @@ public class SimpleGrid
 		SimpleGridCell cellAtPos = this.GetCellAtPos(pos);
 		for (int i = 0; i < cellAtPos.m_Points.Count; i++)
 		{
-			Vector3 lhs = cellAtPos.m_Points[i];
-			if (lhs == pos)
+			if (cellAtPos.m_Points[i] == pos)
 			{
 				return true;
 			}
@@ -112,17 +110,32 @@ public class SimpleGrid
 		}
 	}
 
+	public List<Vector3> GetAllPoints()
+	{
+		this.m_AllPoints.Clear();
+		for (int i = 0; i < this.m_NumCellsX; i++)
+		{
+			for (int j = 0; j < this.m_NumCellsY; j++)
+			{
+				this.m_AllPoints.AddRange(this.m_Cells[i, j].m_Points);
+			}
+		}
+		return this.m_AllPoints;
+	}
+
 	private float m_CellSize = 10f;
 
 	private SimpleGridCell[,] m_Cells;
 
-	private Vector2 m_Start = default(Vector2);
+	private Vector2 m_Start;
 
-	private Vector2 m_Size = default(Vector2);
+	private Vector2 m_Size;
 
 	private int m_NumCellsX;
 
 	private int m_NumCellsY;
 
 	private List<Vector3> m_PointsInRadius = new List<Vector3>();
+
+	private List<Vector3> m_AllPoints = new List<Vector3>();
 }

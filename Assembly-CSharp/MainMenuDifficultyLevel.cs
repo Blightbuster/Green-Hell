@@ -1,118 +1,98 @@
 ﻿using System;
-using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuDifficultyLevel : MainMenuScreen
+public class MainMenuDifficultyLevel : MenuScreen
 {
-	private void Update()
+	protected override void Update()
 	{
+		base.Update();
 		this.UpdateButtons();
+		this.UpdateDescription();
+	}
+
+	private void UpdateDescription()
+	{
+		if (this.m_SelectedDifficulty != null && this.m_DescCanvasGroup.alpha < 1f && Time.time - this.m_SetActiveButtonTime > 0.3f)
+		{
+			this.m_DescCanvasGroup.alpha += Time.deltaTime * 0.5f;
+			return;
+		}
+		if (this.m_SelectedDifficulty == null)
+		{
+			this.m_DescCanvasGroup.alpha = 0f;
+		}
 	}
 
 	private void UpdateButtons()
 	{
-		Color color = this.m_Easy.GetComponentInChildren<Text>().color;
-		Color color2 = this.m_Easy.GetComponentInChildren<Text>().color;
-		color.a = MainMenuScreen.s_ButtonsAlpha;
-		this.m_Easy.GetComponentInChildren<Text>().color = color;
-		this.m_Normal.GetComponentInChildren<Text>().color = color;
-		this.m_Hard.GetComponentInChildren<Text>().color = color;
-		this.m_BackButton.GetComponentInChildren<Text>().color = color;
-		Vector2 screenPoint = Input.mousePosition;
-		this.m_ActiveButton = null;
-		RectTransform component = this.m_Easy.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
+		MenuBase.MenuOptionData activeMenuOption = this.m_ActiveMenuOption;
+		this.SetActiveButton((activeMenuOption != null) ? activeMenuOption.m_Button : null);
+	}
+
+	private void SetActiveButton(Button button)
+	{
+		if (this.m_ActiveButton == button)
 		{
-			this.m_ActiveButton = this.m_Easy;
+			return;
 		}
-		component = this.m_Normal.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
+		this.m_ActiveButton = button;
+		if (this.m_ActiveButton == this.m_Tourist || this.m_ActiveButton == this.m_Easy || this.m_ActiveButton == this.m_Normal || this.m_ActiveButton == this.m_Hard || this.m_ActiveButton == this.m_PermaDeath || this.m_ActiveButton == this.m_Custom)
 		{
-			this.m_ActiveButton = this.m_Normal;
+			this.m_SelectedDifficulty = this.m_ActiveButton;
+			this.m_SetActiveButtonTime = Time.time;
+			this.SetupDescription();
+			return;
 		}
-		component = this.m_Hard.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
+		this.m_SelectedDifficulty = null;
+	}
+
+	private void SetupDescription()
+	{
+		this.m_DescCanvasGroup.alpha = 0f;
+		if (this.m_SelectedDifficulty != null)
 		{
-			this.m_ActiveButton = this.m_Hard;
+			this.m_DescriptionName.text = GreenHellGame.Instance.GetLocalization().Get("DifficultyLevel_" + this.m_SelectedDifficulty.name, true);
+			this.m_Description.text = GreenHellGame.Instance.GetLocalization().Get("DifficultyLevel_" + this.m_SelectedDifficulty.name + "_Description", true);
 		}
-		component = this.m_BackButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-		{
-			this.m_ActiveButton = this.m_BackButton;
-		}
-		component = this.m_Easy.GetComponentInChildren<Text>().GetComponent<RectTransform>();
-		Vector3 position = component.position;
-		float num = (!(this.m_ActiveButton == this.m_Easy)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX;
-		float num2 = Mathf.Ceil(num - position.x) * Time.deltaTime * 10f;
-		num = ((!(this.m_ActiveButton == this.m_Easy)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
-		num2 = Mathf.Ceil(num - position.x) * Time.deltaTime * 10f;
-		position.x += num2;
-		component.position = position;
-		if (this.m_ActiveButton == this.m_Easy)
-		{
-			color = this.m_Easy.GetComponentInChildren<Text>().color;
-			color.a = 1f;
-			this.m_Easy.GetComponentInChildren<Text>().color = color;
-		}
-		component = this.m_Normal.GetComponentInChildren<Text>().GetComponent<RectTransform>();
-		position = component.position;
-		num = ((!(this.m_ActiveButton == this.m_Normal)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
-		num2 = Mathf.Ceil(num - position.x) * Time.deltaTime * 10f;
-		position.x += num2;
-		component.position = position;
-		if (this.m_ActiveButton == this.m_Normal)
-		{
-			color = this.m_Normal.GetComponentInChildren<Text>().color;
-			color.a = 1f;
-			this.m_Normal.GetComponentInChildren<Text>().color = color;
-		}
-		component = this.m_Hard.GetComponentInChildren<Text>().GetComponent<RectTransform>();
-		position = component.position;
-		num = ((!(this.m_ActiveButton == this.m_Hard)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
-		num2 = Mathf.Ceil(num - position.x) * Time.deltaTime * 10f;
-		position.x += num2;
-		component.position = position;
-		if (this.m_ActiveButton == this.m_Hard)
-		{
-			color = this.m_Hard.GetComponentInChildren<Text>().color;
-			color.a = 1f;
-			this.m_Hard.GetComponentInChildren<Text>().color = color;
-		}
-		if (this.m_ActiveButton == this.m_BackButton)
-		{
-			color = this.m_BackButton.GetComponentInChildren<Text>().color;
-			color.a = 1f;
-			this.m_BackButton.GetComponentInChildren<Text>().color = color;
-		}
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			this.OnBack();
-		}
+	}
+
+	public void OnTourist()
+	{
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.Tourist);
+		MainMenuManager.Get().SetActiveScreen(typeof(SaveGameMenu), true);
 	}
 
 	public void OnEasy()
 	{
-		GreenHellGame.Instance.m_GameDifficulty = GameDifficulty.Easy;
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.Easy);
 		MainMenuManager.Get().SetActiveScreen(typeof(SaveGameMenu), true);
 	}
 
 	public void OnNormal()
 	{
-		GreenHellGame.Instance.m_GameDifficulty = GameDifficulty.Normal;
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.Normal);
 		MainMenuManager.Get().SetActiveScreen(typeof(SaveGameMenu), true);
 	}
 
 	public void OnHard()
 	{
-		GreenHellGame.Instance.m_GameDifficulty = GameDifficulty.Hard;
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.Hard);
 		MainMenuManager.Get().SetActiveScreen(typeof(SaveGameMenu), true);
 	}
 
-	public void OnBack()
+	public void OnPermaDeath()
 	{
-		MainMenuManager.Get().SetActiveScreen(typeof(MainMenu), true);
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.PermaDeath);
+		MainMenuManager.Get().SetActiveScreen(typeof(SaveGameMenu), true);
 	}
+
+	public void OnCustom()
+	{
+		MainMenuManager.Get().SetActiveScreen(typeof(MainMenuCustomDifficulty), true);
+	}
+
+	public Button m_Tourist;
 
 	public Button m_Easy;
 
@@ -120,7 +100,21 @@ public class MainMenuDifficultyLevel : MainMenuScreen
 
 	public Button m_Hard;
 
+	public Button m_PermaDeath;
+
+	public Button m_Custom;
+
+	private Button m_SelectedDifficulty;
+
 	private Button m_ActiveButton;
 
 	public Button m_BackButton;
+
+	public CanvasGroup m_DescCanvasGroup;
+
+	public Text m_DescriptionName;
+
+	public Text m_Description;
+
+	private float m_SetActiveButtonTime;
 }

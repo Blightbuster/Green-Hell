@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using CJTools;
+using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,7 +27,7 @@ public class HUDItemSlot : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return this.m_ActiveSlots.Count > 0 && !MapController.Get().IsActive() && !NotepadController.Get().IsActive();
+		return this.m_ActiveSlots.Count > 0 && !MapController.Get().IsActive() && !NotepadController.Get().IsActive() && !ScenarioManager.Get().IsDreamOrPreDream();
 	}
 
 	public void RegisterSlot(ItemSlot slot)
@@ -36,32 +37,32 @@ public class HUDItemSlot : HUDBase
 			return;
 		}
 		GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_ItemSlotPrefab, base.transform);
-		HUDItemSlot.SlotData item = default(HUDItemSlot.SlotData);
-		item.obj = gameObject;
-		item.slot = slot;
-		item.icon = gameObject.transform.Find("Icon").gameObject.GetComponent<RawImage>();
-		item.add_icon = item.icon.transform.Find("AddIcon").gameObject.GetComponent<Image>();
-		if (item.slot.m_AddIcon.Length > 0)
+		SlotData slotData = new SlotData();
+		slotData.obj = gameObject;
+		slotData.slot = slot;
+		slotData.icon = gameObject.transform.Find("Icon").gameObject.GetComponent<RawImage>();
+		slotData.add_icon = slotData.icon.transform.Find("AddIcon").gameObject.GetComponent<Image>();
+		if (slotData.slot.m_AddIcon.Length > 0)
 		{
 			Sprite sprite = null;
-			ItemsManager.Get().m_ItemIconsSprites.TryGetValue(item.slot.m_AddIcon, out sprite);
-			item.add_icon.sprite = sprite;
+			ItemsManager.Get().m_ItemIconsSprites.TryGetValue(slotData.slot.m_AddIcon, out sprite);
+			slotData.add_icon.sprite = sprite;
 		}
 		else
 		{
-			item.add_icon.gameObject.SetActive(false);
+			slotData.add_icon.gameObject.SetActive(false);
 		}
-		this.m_ActiveSlots.Add(item);
+		this.m_ActiveSlots.Add(slotData);
 	}
 
 	public void UnregisterSlot(ItemSlot slot)
 	{
-		foreach (HUDItemSlot.SlotData item in this.m_ActiveSlots)
+		foreach (SlotData slotData in this.m_ActiveSlots)
 		{
-			if (item.slot == slot)
+			if (slotData.slot == slot)
 			{
-				UnityEngine.Object.Destroy(item.obj);
-				this.m_ActiveSlots.Remove(item);
+				UnityEngine.Object.Destroy(slotData.obj);
+				this.m_ActiveSlots.Remove(slotData);
 				break;
 			}
 		}
@@ -74,26 +75,85 @@ public class HUDItemSlot : HUDBase
 		{
 			return;
 		}
-		foreach (HUDItemSlot.SlotData data in this.m_ActiveSlots)
+		this.m_ClosestDistTemp = float.MaxValue;
+		SlotData selectedSlotData = this.m_SelectedSlotData;
+		this.m_SelectedSlotData = null;
+		this.m_VisibleSlots.Clear();
+		foreach (SlotData slotData in this.m_ActiveSlots)
 		{
-			if (data.slot.IsBIWoundSlot())
+			if (slotData.slot.IsBIWoundSlot())
 			{
-				this.UpdateWoundSlots(data);
+				this.UpdateWoundSlots(slotData);
 			}
 			else
 			{
-				this.UpdateSlots(data);
+				this.UpdateSlots(slotData);
 			}
+		}
+		if (this.m_SelectedSlotData == null && Inventory3DManager.Get().IsActive() && Inventory3DManager.Get().m_ActivePocket != BackpackPocket.Left && Player.Get().GetCurrentItem(Hand.Right) && Player.Get().GetCurrentItem(Hand.Right).m_Info.IsFishingRod())
+		{
+			FishingRod component = Player.Get().GetCurrentItem(Hand.Right).gameObject.GetComponent<FishingRod>();
+			ItemSlot y;
+			if (!component.m_Hook)
+			{
+				y = component.m_HookSlot;
+			}
+			else
+			{
+				y = component.m_Hook.m_BaitSlot;
+			}
+			foreach (SlotData slotData2 in this.m_VisibleSlots)
+			{
+				if (slotData2.slot == y)
+				{
+					this.m_SelectedSlotData = slotData2;
+					break;
+				}
+			}
+		}
+		if (this.m_SelectedSlotData != null)
+		{
+			this.m_SelectedSlotData.icon.rectTransform.localScale = Vector2.one * 2f;
+			if (this.m_SelectedSlotData.add_icon)
+			{
+				this.m_SelectedSlotData.add_icon.rectTransform.localScale = Vector2.one * 0.5f;
+			}
+			Color color = this.m_SelectedSlotData.icon.color;
+			color.a *= 1.5f;
+			this.m_SelectedSlotData.icon.color = color;
+		}
+		if (this.m_SelectedSlotData != selectedSlotData)
+		{
+			HUDItem.Get().OnChangeSelectedSlot(this.m_SelectedSlotData);
 		}
 	}
 
-	private void UpdateWoundSlots(HUDItemSlot.SlotData data)
+	private void UpdateWoundSlots(SlotData data)
 	{
-		bool flag = Inventory3DManager.Get().isActiveAndEnabled && BodyInspectionController.Get().IsActive() && (!Inventory3DManager.Get().m_CarriedItem || data.slot.CanInsertItem(Inventory3DManager.Get().m_CarriedItem));
-		data.obj.gameObject.SetActive(flag);
-		if (!flag)
+		if (!Inventory3DManager.Get().isActiveAndEnabled || !BodyInspectionController.Get().IsActive())
 		{
+			data.obj.gameObject.SetActive(false);
 			return;
+		}
+		if (GreenHellGame.IsPCControllerActive() && (Inventory3DManager.Get().m_CarriedItem == null || !data.slot.CanInsertItem(Inventory3DManager.Get().m_CarriedItem)))
+		{
+			data.obj.gameObject.SetActive(false);
+			return;
+		}
+		BIWoundSlot biwoundSlot = (BIWoundSlot)data.slot;
+		if (biwoundSlot == null || biwoundSlot.m_Injury == null)
+		{
+			data.obj.gameObject.SetActive(false);
+			return;
+		}
+		if (biwoundSlot.m_Injury.m_Type == InjuryType.Leech)
+		{
+			data.obj.gameObject.SetActive(false);
+			return;
+		}
+		if (!data.obj.gameObject.activeSelf)
+		{
+			data.obj.gameObject.SetActive(true);
 		}
 		Vector3 screenPoint = data.slot.GetScreenPoint();
 		if (screenPoint.z <= 0f)
@@ -102,19 +162,16 @@ public class HUDItemSlot : HUDBase
 			return;
 		}
 		data.icon.rectTransform.position = screenPoint;
-		BIWoundSlot biwoundSlot = (BIWoundSlot)data.slot;
-		if (biwoundSlot.GetInjury() != null && BodyInspectionController.Get() != null && BodyInspectionController.Get().enabled && biwoundSlot.GetInjury().m_Bandage == null && biwoundSlot.m_Maggots == null && biwoundSlot.GetInjury().m_ParentInjury == null)
+		if (biwoundSlot.GetInjury() != null && BodyInspectionController.Get() != null && BodyInspectionController.Get().enabled && EnumTools.ConvertInjuryPlaceToLimb(biwoundSlot.GetInjury().m_Place) == HUDBodyInspection.Get().GetSelectedLimb() && biwoundSlot.GetInjury().m_Bandage == null && biwoundSlot.m_Maggots == null && biwoundSlot.GetInjury().m_ParentInjury == null)
 		{
 			data.icon.enabled = true;
-			data.icon.color = ((!(Inventory3DManager.Get().m_SelectedSlot == data.slot)) ? this.m_NormalColor : this.m_SelectedColor);
+			this.m_SelectedSlotData = data;
+			return;
 		}
-		else
-		{
-			data.icon.enabled = false;
-		}
+		data.icon.enabled = false;
 	}
 
-	private void UpdateSlots(HUDItemSlot.SlotData data)
+	private void UpdateSlots(SlotData data)
 	{
 		bool flag = !Inventory3DManager.Get().m_CarriedItem || data.slot.CanInsertItem(Inventory3DManager.Get().m_CarriedItem);
 		data.obj.gameObject.SetActive(flag);
@@ -139,6 +196,19 @@ public class HUDItemSlot : HUDBase
 			data.icon.gameObject.SetActive(false);
 			return;
 		}
+		if (data.slot.IsArmorSlot())
+		{
+			if (!BodyInspectionController.Get().IsActive())
+			{
+				data.icon.gameObject.SetActive(false);
+				return;
+			}
+			if (!Inventory3DManager.Get().IsActive() || Inventory3DManager.Get().m_CarriedItem == null || !Inventory3DManager.Get().m_CarriedItem.m_Info.IsArmor())
+			{
+				data.icon.gameObject.SetActive(false);
+				return;
+			}
+		}
 		Color color;
 		if (Inventory3DManager.Get().m_SelectedSlot == data.slot)
 		{
@@ -147,7 +217,7 @@ public class HUDItemSlot : HUDBase
 		else
 		{
 			color = this.m_NormalColor;
-			if (data.slot.m_ItemParent && data.slot.m_ItemParent.m_InInventory)
+			if (data.slot.m_ItemParent && (data.slot.m_ItemParent.m_InInventory || data.slot.m_ItemParent.m_InStorage))
 			{
 				color.a = 1f;
 			}
@@ -157,8 +227,25 @@ public class HUDItemSlot : HUDBase
 				color.a = CJTools.Math.GetProportionalClamp(0f, 0.6f, b, ItemSlot.s_DistToActivate, ItemSlot.s_DistToActivate * 0.5f);
 			}
 		}
+		if (color.a <= 0f)
+		{
+			data.icon.gameObject.SetActive(false);
+			return;
+		}
 		data.icon.color = color;
 		data.icon.gameObject.SetActive(true);
+		data.icon.rectTransform.localScale = Vector2.one;
+		Vector2 zero = Vector2.zero;
+		zero.Set(screenPoint.x, screenPoint.y);
+		Vector2 zero2 = Vector2.zero;
+		zero2.Set((float)Screen.width * 0.5f, (float)Screen.height * 0.5f);
+		float num = Vector2.Distance(zero, zero2);
+		if (data.slot.m_CanSelect && color.a > 0f && num < this.m_MaxDistToSelect && num < this.m_ClosestDistTemp)
+		{
+			this.m_SelectedSlotData = data;
+			this.m_ClosestDistTemp = num;
+		}
+		this.m_VisibleSlots.Add(data);
 	}
 
 	private void OnDestroy()
@@ -168,7 +255,9 @@ public class HUDItemSlot : HUDBase
 
 	public GameObject m_ItemSlotPrefab;
 
-	private List<HUDItemSlot.SlotData> m_ActiveSlots = new List<HUDItemSlot.SlotData>();
+	private List<SlotData> m_ActiveSlots = new List<SlotData>();
+
+	private List<SlotData> m_VisibleSlots = new List<SlotData>();
 
 	private static HUDItemSlot s_Instance;
 
@@ -178,14 +267,10 @@ public class HUDItemSlot : HUDBase
 
 	private bool m_IsBeingDestroyed;
 
-	private struct SlotData
-	{
-		public GameObject obj;
+	[HideInInspector]
+	public SlotData m_SelectedSlotData;
 
-		public ItemSlot slot;
+	private float m_ClosestDistTemp = float.MaxValue;
 
-		public RawImage icon;
-
-		public Image add_icon;
-	}
+	private float m_MaxDistToSelect = 50f;
 }

@@ -38,13 +38,12 @@ public class DisappearEffect : MonoBehaviour
 			UnityEngine.Object.Destroy(this.m_Parent);
 			return;
 		}
-		this.m_Renderer = ((!(this.m_SkinnedRenderer != null)) ? this.m_MeshRenderer : this.m_SkinnedRenderer);
+		this.m_Renderer = ((this.m_SkinnedRenderer != null) ? this.m_SkinnedRenderer : this.m_MeshRenderer);
 		for (int i = 0; i < this.m_Renderer.materials.Length; i++)
 		{
 			this.m_Renderer.materials[i].SetTexture("_CutTex", DisappearEffect.s_NoiseTexture);
 		}
-		Renderer[] componentsInChildren = parent.gameObject.GetComponentsInChildren<Renderer>();
-		foreach (Renderer renderer in componentsInChildren)
+		foreach (Renderer renderer in parent.gameObject.GetComponentsInChildren<Renderer>())
 		{
 			if (renderer != this.m_Renderer)
 			{
@@ -88,17 +87,24 @@ public class DisappearEffect : MonoBehaviour
 			this.m_Animator.speed = 1f - proportionalClamp;
 		}
 		bool flag = false;
-		foreach (ParticleSystem particleSystem in this.m_Particles)
+		using (List<ParticleSystem>.Enumerator enumerator = this.m_Particles.GetEnumerator())
 		{
-			if (particleSystem.IsAlive())
+			while (enumerator.MoveNext())
 			{
-				flag = true;
-				break;
+				if (enumerator.Current.IsAlive())
+				{
+					flag = true;
+					break;
+				}
 			}
 		}
 		if (!flag)
 		{
 			UnityEngine.Object.Destroy(base.gameObject);
+			if (this.m_Parent)
+			{
+				this.m_Parent.transform.parent = null;
+			}
 			UnityEngine.Object.Destroy(this.m_Parent);
 		}
 	}

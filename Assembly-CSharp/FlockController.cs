@@ -21,6 +21,25 @@ public class FlockController : MonoBehaviour
 		this.m_StoredChildAmount = this._childAmount;
 	}
 
+	private void OnDisable()
+	{
+		if (this.m_DestroyChildrenOnDisable)
+		{
+			while (this._roamers.Count > 0)
+			{
+				this.RemoveChild(this._roamers[0]);
+			}
+		}
+	}
+
+	private void OnDestroy()
+	{
+		while (this._roamers.Count > 0)
+		{
+			this.RemoveChild(this._roamers[0]);
+		}
+	}
+
 	public void AddChild(int amount)
 	{
 		if (this._groupChildToNewTransform)
@@ -54,7 +73,10 @@ public class FlockController : MonoBehaviour
 	public void RemoveChild(FlockChild child)
 	{
 		this._roamers.Remove(child);
-		UnityEngine.Object.Destroy(child.gameObject);
+		if (child != null)
+		{
+			UnityEngine.Object.Destroy(child.gameObject);
+		}
 		this._childAmount--;
 	}
 
@@ -64,9 +86,9 @@ public class FlockController : MonoBehaviour
 		{
 			if (this._roamers.Count > 0)
 			{
-				FlockChild flockChild = this._roamers[this._roamers.Count - 1];
+				Component component = this._roamers[this._roamers.Count - 1];
 				this._roamers.RemoveAt(this._roamers.Count - 1);
-				UnityEngine.Object.Destroy(flockChild.gameObject);
+				UnityEngine.Object.Destroy(component.gameObject);
 			}
 		}
 	}
@@ -127,8 +149,9 @@ public class FlockController : MonoBehaviour
 					i++;
 				}
 			}
+			return;
 		}
-		else if (this._childAmount != this.m_StoredChildAmount)
+		if (this._childAmount != this.m_StoredChildAmount)
 		{
 			this._childAmount = this.m_StoredChildAmount;
 		}
@@ -136,9 +159,7 @@ public class FlockController : MonoBehaviour
 
 	private void UpdateActivity()
 	{
-		Vector3 vector = this.m_Bounds.ClosestPoint(Player.Get().transform.position);
-		float num = vector.Distance(Player.Get().transform.position);
-		bool flag = num <= AIManager.Get().m_FlocksActivationRange;
+		bool flag = this.m_Bounds.ClosestPoint(Player.Get().transform.position).Distance(Player.Get().transform.position) <= AIManager.Get().m_FlocksActivationRange;
 		if (this.m_Active != flag)
 		{
 			if (flag)
@@ -169,7 +190,7 @@ public class FlockController : MonoBehaviour
 		GameObject gameObject = new GameObject("FlockGroup");
 		this._groupTransform = gameObject.transform;
 		this._groupTransform.position = this._thisT.position;
-		if (this._groupName != string.Empty)
+		if (this._groupName != "")
 		{
 			gameObject.name = this._groupName;
 			return;
@@ -209,18 +230,20 @@ public class FlockController : MonoBehaviour
 			this._spawnSphereDepth = this._spawnSphere;
 		}
 		Gizmos.color = Color.blue;
-		Gizmos.DrawWireCube(this._posBuffer, new Vector3(this._spawnSphere * 2f, this._spawnSphereHeight * 2f, this._spawnSphereDepth * 2f));
+		DebugRender.DrawBoxGizmos(this._posBuffer, new Vector3(this._spawnSphere * 2f, this._spawnSphereHeight * 2f, this._spawnSphereDepth * 2f), base.transform.rotation);
 		Gizmos.color = Color.cyan;
-		Gizmos.DrawWireCube(this._thisT.position, new Vector3(this._positionSphere * 2f + this._spawnSphere * 2f, this._positionSphereHeight * 2f + this._spawnSphereHeight * 2f, this._positionSphereDepth * 2f + this._spawnSphereDepth * 2f));
+		DebugRender.DrawBoxGizmos(this._thisT.position, new Vector3(this._positionSphere * 2f + this._spawnSphere * 2f, this._positionSphereHeight * 2f + this._spawnSphereHeight * 2f, this._positionSphereDepth * 2f + this._spawnSphereDepth * 2f), base.transform.rotation);
 	}
 
 	public void SetFlockRandomPosition()
 	{
+		Vector3 vector = Vector3.zero;
 		Vector3 zero = Vector3.zero;
-		zero.x = UnityEngine.Random.Range(-this._positionSphere, this._positionSphere) + this._thisT.position.x;
-		zero.z = UnityEngine.Random.Range(-this._positionSphereDepth, this._positionSphereDepth) + this._thisT.position.z;
-		zero.y = UnityEngine.Random.Range(-this._positionSphereHeight, this._positionSphereHeight) + this._thisT.position.y;
-		this._posBuffer = zero;
+		zero.Set(UnityEngine.Random.Range(-this._positionSphere, this._positionSphere), UnityEngine.Random.Range(-this._positionSphereHeight, this._positionSphereHeight), UnityEngine.Random.Range(-this._positionSphereDepth, this._positionSphereDepth));
+		vector = this._thisT.rotation * zero;
+		vector += this._thisT.position;
+		DebugRender.DrawPoint(vector, Color.white, 0.3f, 100f);
+		this._posBuffer = vector;
 		if (this._forceChildWaypoints)
 		{
 			for (int i = 0; i < this._roamers.Count; i++)
@@ -338,13 +361,15 @@ public class FlockController : MonoBehaviour
 
 	public Transform _groupTransform;
 
-	public string _groupName = string.Empty;
+	public string _groupName = "";
 
 	public bool _groupChildToFlock;
 
 	public Vector3 _startPosOffset;
 
 	public Transform _thisT;
+
+	public bool m_DestroyChildrenOnDisable;
 
 	private Bounds m_Bounds;
 

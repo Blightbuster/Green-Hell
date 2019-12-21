@@ -23,19 +23,18 @@ namespace AIs
 				DebugUtils.Assert(DebugUtils.AssertType.Info);
 			}
 			this.m_Animation += "To";
-			Item item = (!(humanAI.m_CurrentWeapon == humanAI.m_PrimaryWeapon)) ? humanAI.m_PrimaryWeapon : humanAI.m_SecondaryWeapon;
+			Item item = (humanAI.m_CurrentWeapon == humanAI.m_PrimaryWeapon) ? humanAI.m_SecondaryWeapon : humanAI.m_PrimaryWeapon;
 			if (item.m_Info.IsBow())
 			{
 				this.m_Animation += "Bow";
+				return;
 			}
-			else if (item.m_Info.IsKnife())
+			if (item.m_Info.IsKnife())
 			{
 				this.m_Animation += "Knife";
+				return;
 			}
-			else
-			{
-				DebugUtils.Assert(DebugUtils.AssertType.Info);
-			}
+			DebugUtils.Assert(DebugUtils.AssertType.Info);
 		}
 
 		public override void OnAnimEvent(AnimEventID id)

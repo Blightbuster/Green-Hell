@@ -89,40 +89,39 @@ public class ReliefTerrainVertexBlendTriplanar : MonoBehaviour
 		{
 			return;
 		}
-		Mesh sharedMesh = meshFilter.sharedMesh;
-		Vector3[] vertices = sharedMesh.vertices;
+		Vector3[] vertices = meshFilter.sharedMesh.vertices;
 		if (vertices.Length == 0)
 		{
 			return;
 		}
 		Vector3 vector = base.transform.TransformPoint(vertices[0]);
-		Vector4 value;
-		value.x = vector.x;
-		value.y = vector.z;
-		value.z = vector.x;
-		value.w = vector.z;
+		Vector4 vector2;
+		vector2.x = vector.x;
+		vector2.y = vector.z;
+		vector2.z = vector.x;
+		vector2.w = vector.z;
 		for (int i = 1; i < vertices.Length; i++)
 		{
 			vector = base.transform.TransformPoint(vertices[i]);
-			if (vector.x < value.x)
+			if (vector.x < vector2.x)
 			{
-				value.x = vector.x;
+				vector2.x = vector.x;
 			}
-			if (vector.z < value.y)
+			if (vector.z < vector2.y)
 			{
-				value.y = vector.z;
+				vector2.y = vector.z;
 			}
-			if (vector.x > value.z)
+			if (vector.x > vector2.z)
 			{
-				value.z = vector.x;
+				vector2.z = vector.x;
 			}
-			if (vector.z > value.w)
+			if (vector.z > vector2.w)
 			{
-				value.w = vector.z;
+				vector2.w = vector.z;
 			}
 		}
-		value.z -= value.x;
-		value.w -= value.y;
+		vector2.z -= vector2.x;
+		vector2.w -= vector2.y;
 		if (base.GetComponent<Renderer>() == null && this.material == null)
 		{
 			return;
@@ -140,7 +139,7 @@ public class ReliefTerrainVertexBlendTriplanar : MonoBehaviour
 		{
 			return;
 		}
-		sharedMaterial.SetVector("_TERRAIN_PosSize", value);
+		sharedMaterial.SetVector("_TERRAIN_PosSize", vector2);
 	}
 
 	private void Awake()
@@ -162,7 +161,7 @@ public class ReliefTerrainVertexBlendTriplanar : MonoBehaviour
 
 	public Texture2D tmp_globalColorMap;
 
-	public string save_path_colormap = string.Empty;
+	public string save_path_colormap = "";
 
 	public GeometryVsTerrainBlend painterInstance;
 

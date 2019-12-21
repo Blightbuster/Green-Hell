@@ -5,9 +5,9 @@ namespace AIs
 {
 	public class AIModule : BeingModule, IAnimationEventsReceiver
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_AI = base.gameObject.GetComponent<AI>();
 			DebugUtils.Assert(this.m_AI, true);
 		}

@@ -15,23 +15,15 @@ public class FistFightController : FightController
 	{
 		base.Awake();
 		FistFightController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.FistFight;
+		base.m_ControllerType = PlayerControllerType.FistFight;
 		this.m_RightHand = base.transform.FindDeepChild("RHolder");
 		this.m_LeftHand = base.transform.FindDeepChild("LHolder");
 		this.SetAttackParam(0);
 		this.m_CurrentPhase = FistFightController.m_FightLeftPunchValue;
-		SphereCollider sphereCollider = this.m_LeftHand.gameObject.AddComponent<SphereCollider>();
-		sphereCollider.radius = 0.4f;
-		sphereCollider.center = Vector3.zero;
-		sphereCollider.isTrigger = true;
-		sphereCollider.enabled = false;
-		this.m_LeftHandCollider = sphereCollider;
-		SphereCollider sphereCollider2 = this.m_RightHand.gameObject.AddComponent<SphereCollider>();
-		sphereCollider2.radius = 0.4f;
-		sphereCollider2.center = Vector3.zero;
-		sphereCollider2.isTrigger = true;
-		sphereCollider2.enabled = false;
-		this.m_RightHandCollider = sphereCollider2;
+		PlayerFist playerFist = this.m_LeftHand.gameObject.AddComponent<PlayerFist>();
+		this.m_LeftHandCollider = playerFist.m_HandCollider;
+		PlayerFist playerFist2 = this.m_RightHand.gameObject.AddComponent<PlayerFist>();
+		this.m_RightHandCollider = playerFist2.m_HandCollider;
 		this.m_Wait = new WaitForEndOfFrame();
 	}
 
@@ -41,7 +33,7 @@ public class FistFightController : FightController
 		if (this.m_Animator.GetInteger(this.m_FFAttack) == 1)
 		{
 			this.m_Time += Time.deltaTime;
-			if (this.m_Time >= this.m_ReleaseTime)
+			if (this.m_Time >= this.m_ReleaseTime && !base.IsBlock())
 			{
 				this.SetAttackParam(0);
 				this.m_LeftHandCollider.enabled = false;
@@ -49,15 +41,14 @@ public class FistFightController : FightController
 				this.m_Time = 0f;
 			}
 		}
-		if ((this.m_CurrentParam == 6 || this.m_CurrentParam == 8) && this.m_Animator.GetCurrentAnimatorStateInfo(1).shortNameHash == this.m_UnarmedIdle)
-		{
-			this.m_ActionAllowed = true;
-			this.SetAttackParam(0);
-		}
 	}
 
 	public override void SetBlock(bool set)
 	{
+		if (set && !this.CanBlock())
+		{
+			return;
+		}
 		base.SetBlock(set);
 		this.SetAttackParam(1);
 		this.m_ActionAllowed = true;
@@ -69,20 +60,24 @@ public class FistFightController : FightController
 		if (id == AnimEventID.FistFightPunchEnd)
 		{
 			this.PlayerFightPunchAttackEnd(FistFightController.Mode.Normal);
+			return;
 		}
-		else if (id == AnimEventID.FistFightPunchHardEnd)
+		if (id == AnimEventID.FistFightPunchHardEnd)
 		{
 			this.PlayerFightPunchAttackEnd(FistFightController.Mode.Hard);
+			return;
 		}
-		else if (id == AnimEventID.FistFightPunchStart)
+		if (id == AnimEventID.FistFightPunchStart)
 		{
 			this.EnableCollider();
+			PlayerAudioModule.Get().PlayAttackSound(1f, false);
+			PlayerAudioModule.Get().PlayFistsSwingSound();
 		}
 	}
 
 	private bool CanAttack()
 	{
-		return !MainLevel.Instance.IsPause() && !this.m_Player.IsDead() && !SwimController.Get().IsActive() && !HUDWheel.Get().enabled && !BodyInspectionController.Get().IsActive() && !WatchController.Get().IsActive() && !NotepadController.Get().IsActive() && !MapController.Get().IsActive() && this.m_ActionAllowed && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && this.m_CurrentParam != 6 && this.m_CurrentParam != 8;
+		return !FightController.s_BlockFight && !MainLevel.Instance.IsPause() && Time.time - MainLevel.Instance.m_LastUnpauseTime >= 0.25f && !this.m_Player.IsDead() && !SwimController.Get().IsActive() && !HUDWheel.Get().enabled && !BodyInspectionController.Get().IsActive() && !WatchController.Get().IsActive() && !NotepadController.Get().IsActive() && !MapController.Get().IsActive() && this.m_ActionAllowed && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && this.m_CurrentParam != 6 && this.m_CurrentParam != 8 && !ScenarioManager.Get().IsBoolVariableTrue("PlayerMechGameEnding") && !HUDSelectDialog.Get().enabled;
 	}
 
 	public override bool IsAttack()
@@ -90,37 +85,34 @@ public class FistFightController : FightController
 		return this.m_Animator.GetInteger(this.m_FFAttack) > 1;
 	}
 
-	private void OnTriggerEnter(Collider other)
+	public void GiveDamage(AI ai)
 	{
-		if (this.m_DamageWindow)
-		{
-			return;
-		}
-		AI component = other.gameObject.GetComponent<AI>();
-		if (component == null)
-		{
-			return;
-		}
-		DamageInfo damageInfo = new DamageInfo();
 		if (this.m_CurrentMode == FistFightController.Mode.Normal)
 		{
-			damageInfo.m_Damage = Player.Get().GetParams().m_FistFightNormalDamage * Skill.Get<FistsSkill>().GetDamageMul();
+			this.m_DamageInfo.m_Damage = Player.Get().GetParams().m_FistFightNormalDamage * Skill.Get<FistsSkill>().GetDamageMul();
 		}
 		else
 		{
-			damageInfo.m_Damage = Player.Get().GetParams().m_FistFightHardDamage * Skill.Get<FistsSkill>().GetDamageMul();
+			this.m_DamageInfo.m_Damage = Player.Get().GetParams().m_FistFightHardDamage * Skill.Get<FistsSkill>().GetDamageMul();
 		}
-		damageInfo.m_Damager = base.gameObject;
-		damageInfo.m_HitDir = base.transform.forward;
-		damageInfo.m_Position = ((!this.m_LeftHandCollider.enabled) ? this.m_RightHandCollider.bounds.center : this.m_LeftHandCollider.bounds.center);
-		bool flag = component.TakeDamage(damageInfo);
-		if (flag)
+		this.m_DamageInfo.m_Damager = base.gameObject;
+		this.m_DamageInfo.m_HitDir = base.transform.forward;
+		this.m_DamageInfo.m_Position = (this.m_LeftHandCollider.enabled ? this.m_LeftHandCollider.bounds.center : this.m_RightHandCollider.bounds.center);
+		if (ai.TakeDamage(this.m_DamageInfo))
 		{
-			PlayerAudioModule.Get().PlayHitSound(1f, false);
+			PlayerAudioModule.Get().PlayFistsHitSound();
 		}
 		this.m_LeftHandCollider.enabled = false;
 		this.m_RightHandCollider.enabled = false;
-		Skill.Get<FistsSkill>().OnSkillAction();
+		bool flag = true;
+		if (ai && ai.m_ID == AI.AIID.ArmadilloThreeBanded && ai.m_GoalsModule != null && ai.m_GoalsModule.m_ActiveGoal != null && ai.m_GoalsModule.m_ActiveGoal.m_Type == AIGoalType.Hide)
+		{
+			flag = false;
+		}
+		if (flag)
+		{
+			Skill.Get<FistsSkill>().OnSkillAction();
+		}
 	}
 
 	private void Attack(FistFightController.Mode mode)
@@ -132,6 +124,10 @@ public class FistFightController : FightController
 	protected override void Attack()
 	{
 		base.Attack();
+		if (WalkieTalkieController.Get().IsActive())
+		{
+			WalkieTalkieController.Get().Stop();
+		}
 		if (PlayerConditionModule.Get().IsStaminaCriticalLevel())
 		{
 			this.SetAttackParam(this.m_CurrentPhase + 4);
@@ -145,6 +141,12 @@ public class FistFightController : FightController
 			this.SetAttackParam(this.m_CurrentPhase + 1);
 		}
 		this.m_ActionAllowed = false;
+		base.Invoke("AllowAction", 0.25f);
+	}
+
+	private void AllowAction()
+	{
+		this.m_ActionAllowed = true;
 	}
 
 	public void PlayerFightPunchAttackEnd(FistFightController.Mode mode)
@@ -163,7 +165,7 @@ public class FistFightController : FightController
 		PlayerConditionModule.Get().DecreaseStamina(StaminaDecreaseReason.Attack, this.GetStaminaConsumptionMul(mode));
 		if (this.m_ClickBuffer > 0 && this.CanAttack())
 		{
-			this.Attack((this.m_ClickBuffer != 1) ? FistFightController.Mode.Hard : FistFightController.Mode.Normal);
+			this.Attack((this.m_ClickBuffer == 1) ? FistFightController.Mode.Normal : FistFightController.Mode.Hard);
 		}
 		else
 		{
@@ -173,34 +175,35 @@ public class FistFightController : FightController
 		this.m_ActionAllowed = true;
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
+		if (action_data.m_Action != InputsManager.InputAction.FistFight && action_data.m_Action != InputsManager.InputAction.FistFightHard)
+		{
+			return;
+		}
 		if (!this.CanAttack())
 		{
 			return;
 		}
-		if (action == InputsManager.InputAction.FistFight)
+		if (action_data.m_Action != InputsManager.InputAction.FistFight)
 		{
-			if (this.IsAttack())
+			if (action_data.m_Action == InputsManager.InputAction.FistFightHard)
 			{
-				this.m_ClickBuffer = 1;
-			}
-			else
-			{
-				this.Attack(FistFightController.Mode.Normal);
-			}
-		}
-		else if (action == InputsManager.InputAction.FistFightHard)
-		{
-			if (this.IsAttack())
-			{
-				this.m_ClickBuffer = 2;
-			}
-			else
-			{
+				if (this.IsAttack())
+				{
+					this.m_ClickBuffer = 2;
+					return;
+				}
 				this.Attack(FistFightController.Mode.Hard);
 			}
+			return;
 		}
+		if (this.IsAttack())
+		{
+			this.m_ClickBuffer = 1;
+			return;
+		}
+		this.Attack(FistFightController.Mode.Normal);
 	}
 
 	private float GetStaminaConsumptionMul(FistFightController.Mode mode)
@@ -221,11 +224,9 @@ public class FistFightController : FightController
 		if (this.m_CurrentPhase == 2)
 		{
 			this.m_LeftHandCollider.enabled = true;
+			return;
 		}
-		else
-		{
-			this.m_RightHandCollider.enabled = true;
-		}
+		this.m_RightHandCollider.enabled = true;
 	}
 
 	protected override void OnDisable()
@@ -259,9 +260,16 @@ public class FistFightController : FightController
 		return this.IsAttack() && this.m_CurrentPhase == FistFightController.m_FightLeftPunchValue;
 	}
 
-	private static FistFightController s_Instance;
+	public override void OnTakeDamage(DamageInfo info)
+	{
+		base.OnTakeDamage(info);
+		if (!info.m_FromInjury)
+		{
+			this.PlayerFightPunchAttackEnd(FistFightController.Mode.Cancelled);
+		}
+	}
 
-	private bool m_DamageWindow;
+	private static FistFightController s_Instance = null;
 
 	private bool m_ActionAllowed = true;
 
@@ -317,6 +325,8 @@ public class FistFightController : FightController
 	public float m_ShakeSpeed;
 
 	public float m_ShakeDuration;
+
+	private DamageInfo m_DamageInfo = new DamageInfo();
 
 	public enum Mode
 	{

@@ -49,12 +49,8 @@ namespace Pathfinding
 					richFunnel2.funnelSimplification = simplificationMode;
 					int num = j;
 					uint graphIndex = path[num].GraphIndex;
-					while (j < path.Count)
+					while (j < path.Count && (path[j].GraphIndex == graphIndex || path[j] is NodeLink3Node))
 					{
-						if (path[j].GraphIndex != graphIndex && !(path[j] is NodeLink3Node))
-						{
-							break;
-						}
 						j++;
 					}
 					j--;
@@ -64,7 +60,7 @@ namespace Pathfinding
 					}
 					else
 					{
-						richFunnel2.exactStart = (Vector3)path[(!mergePartEndpoints) ? num : (num - 1)].position;
+						richFunnel2.exactStart = (Vector3)path[mergePartEndpoints ? (num - 1) : num].position;
 					}
 					if (j == path.Count - 1)
 					{
@@ -72,7 +68,7 @@ namespace Pathfinding
 					}
 					else
 					{
-						richFunnel2.exactEnd = (Vector3)path[(!mergePartEndpoints) ? j : (j + 1)].position;
+						richFunnel2.exactEnd = (Vector3)path[mergePartEndpoints ? (j + 1) : j].position;
 					}
 					richFunnel2.BuildFunnelCorridor(path, num, j);
 					this.parts.Add(richFunnel2);
@@ -82,12 +78,10 @@ namespace Pathfinding
 					NodeLink2 nodeLink = NodeLink2.GetNodeLink(path[j]);
 					int num2 = j;
 					uint graphIndex2 = path[num2].GraphIndex;
-					for (j++; j < path.Count; j++)
+					j++;
+					while (j < path.Count && path[j].GraphIndex == graphIndex2)
 					{
-						if (path[j].GraphIndex != graphIndex2)
-						{
-							break;
-						}
+						j++;
 					}
 					j--;
 					if (j - num2 > 1)
@@ -130,7 +124,11 @@ namespace Pathfinding
 			{
 				return null;
 			}
-			return (this.currentPart >= this.parts.Count) ? this.parts[this.parts.Count - 1] : this.parts[this.currentPart];
+			if (this.currentPart >= this.parts.Count)
+			{
+				return this.parts[this.parts.Count - 1];
+			}
+			return this.parts[this.currentPart];
 		}
 
 		private int currentPart;

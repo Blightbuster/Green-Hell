@@ -44,7 +44,7 @@ namespace Cinemachine.Utility
 			float num = Vector3.Dot(Vector3.Cross(from, to), refNormal);
 			if (Mathf.Abs(num) < -0.0001f)
 			{
-				return (float)((Vector3.Dot(from, to) >= 0f) ? 0 : 180);
+				return (float)((Vector3.Dot(from, to) < 0f) ? 180 : 0);
 			}
 			float num2 = Vector3.Angle(from, to);
 			if (num < 0f)
@@ -66,9 +66,7 @@ namespace Cinemachine.Utility
 			Vector3 forward2 = vB / magnitude2;
 			Quaternion qA = Quaternion.LookRotation(forward, up);
 			Quaternion qB = Quaternion.LookRotation(forward2, up);
-			Quaternion rotation = UnityQuaternionExtensions.SlerpWithReferenceUp(qA, qB, t, up);
-			Vector3 a = rotation * Vector3.forward;
-			return a * Mathf.Lerp(magnitude, magnitude2, t);
+			return UnityQuaternionExtensions.SlerpWithReferenceUp(qA, qB, t, up) * Vector3.forward * Mathf.Lerp(magnitude, magnitude2, t);
 		}
 
 		public const float Epsilon = 0.0001f;

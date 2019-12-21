@@ -47,15 +47,13 @@ public class QuadTreeStaticObjects
 					this.m_ObjCellMap[obj] = this.m_Cells[i, j];
 				}
 			}
+			return;
 		}
-		else
-		{
-			QuadTreeStaticObjectsCell cellAtPos3 = this.GetCellAtPos(obj.transform.position);
-			StaticObjectClass staticObjectClass2 = new StaticObjectClass();
-			staticObjectClass2.m_GameObject = obj;
-			cellAtPos3.m_Objects.Add(staticObjectClass2);
-			this.m_ObjCellMap[obj] = cellAtPos3;
-		}
+		QuadTreeStaticObjectsCell cellAtPos3 = this.GetCellAtPos(obj.transform.position);
+		StaticObjectClass staticObjectClass2 = new StaticObjectClass();
+		staticObjectClass2.m_GameObject = obj;
+		cellAtPos3.m_Objects.Add(staticObjectClass2);
+		this.m_ObjCellMap[obj] = cellAtPos3;
 	}
 
 	public void RemoveObject(GameObject go)
@@ -69,11 +67,9 @@ public class QuadTreeStaticObjects
 		{
 			quadTreeStaticObjectsCell.RemoveObject(go);
 			this.m_ObjCellMap.Remove(go);
+			return;
 		}
-		else
-		{
-			DebugUtils.Assert(false, true);
-		}
+		DebugUtils.Assert(false, true);
 	}
 
 	private QuadTreeStaticObjectsCell GetCellAtPos(Vector3 pos)
@@ -101,8 +97,7 @@ public class QuadTreeStaticObjects
 
 	public StaticObjectClass GetObjectsInPos(Vector3 pos)
 	{
-		QuadTreeStaticObjectsCell cellAtPos = this.GetCellAtPos(pos);
-		foreach (StaticObjectClass staticObjectClass in cellAtPos.m_Objects)
+		foreach (StaticObjectClass staticObjectClass in this.GetCellAtPos(pos).m_Objects)
 		{
 			if (staticObjectClass.m_GameObject.transform.position == pos)
 			{
@@ -228,7 +223,7 @@ public class QuadTreeStaticObjects
 						GameObject gameObject = quadTreeStaticObjectsCell.m_Objects[k].m_GameObject;
 						if (gameObject)
 						{
-							DebugRender.DrawPoint(gameObject.transform.position, (!gameObject.activeSelf) ? Color.green : Color.red, 0.3f, 0f);
+							DebugRender.DrawPoint(gameObject.transform.position, gameObject.activeSelf ? Color.red : Color.green, 0.3f, 0f);
 						}
 					}
 				}
@@ -253,11 +248,11 @@ public class QuadTreeStaticObjects
 
 	private QuadTreeStaticObjectsCell[,] m_Cells;
 
-	private Vector2 m_Start = default(Vector2);
+	private Vector2 m_Start;
 
-	private Vector2 m_Size = default(Vector2);
+	private Vector2 m_Size;
 
-	private Vector2 m_CellSize = default(Vector2);
+	private Vector2 m_CellSize;
 
 	private int m_NumCellsX;
 

@@ -5,16 +5,13 @@ using AdvancedTerrainGrass;
 using AIs;
 using CJTools;
 using Enums;
+using UnityEditor.Rendering.PostProcessing;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
+using UnityEngine.SceneManagement;
 
 public class MainLevel : MonoBehaviour, ISaveLoad
 {
-	private MainLevel()
-	{
-		MainLevel.s_Instance = this;
-	}
-
 	public static float s_GameTime
 	{
 		get
@@ -35,6 +32,13 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 	}
 
+	public bool m_LevelStarted { get; private set; }
+
+	private MainLevel()
+	{
+		MainLevel.s_Instance = this;
+	}
+
 	public static MainLevel Instance
 	{
 		get
@@ -46,9 +50,29 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 	private void Awake()
 	{
 		new IconColors();
+		this.m_LevelScene = SceneManager.GetSceneByName("Level");
+		SceneLoadUnloadRequestHolder.OnSceneLoad += this.OnSceneLoad;
+		SceneLoadUnloadRequestHolder.OnSceneUnload += this.OnSceneUnload;
 	}
 
 	private void Start()
+	{
+		if (GreenHellGame.Instance.m_LoadState == GreenHellGame.LoadState.None)
+		{
+			this.StartLevel();
+		}
+		else
+		{
+			base.enabled = false;
+		}
+		HxVolumetricCamera component = this.m_MainCamera.GetComponent<HxVolumetricCamera>();
+		if (component)
+		{
+			component.enabled = false;
+		}
+	}
+
+	public void StartLevel()
 	{
 		if (GreenHellGame.FORCE_SURVIVAL)
 		{
@@ -67,20 +91,29 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			this.Initialize();
 		}
 		this.m_LevelStartTime = Time.time;
+		base.enabled = true;
+		this.m_LevelStarted = true;
+		if (GreenHellGame.Instance.m_Settings.m_NeverPlayed)
+		{
+			GreenHellGame.Instance.m_Settings.m_NeverPlayed = false;
+			GreenHellGame.Instance.m_Settings.SaveSettings();
+		}
 	}
 
 	private void ShowModeMenu()
 	{
+		ScenarioManager.Get().LoadScene("Story");
+		ScenarioManager.Get().LoadScene("LootBoxes");
 		MenuInGameManager.Get().ShowScreen(typeof(MenuDebugSelectMode));
 	}
 
-	public void Initialize()
+	public void InitObjects()
 	{
+		this.m_UniqueObjects.Clear();
 		this.m_AllObjects.Clear();
-		UnityEngine.Object[] array = Resources.FindObjectsOfTypeAll(typeof(GameObject));
-		foreach (GameObject gameObject in array)
+		foreach (GameObject gameObject in Resources.FindObjectsOfTypeAll(typeof(GameObject)))
 		{
-			if (gameObject.scene.IsValid())
+			if (gameObject.scene.IsValid() && !gameObject.transform.root.gameObject.name.StartsWith("P2PPlayer"))
 			{
 				this.m_AllObjects.Add(gameObject);
 				if (!this.m_UniqueObjects.ContainsKey(gameObject.name))
@@ -89,49 +122,20 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 				}
 			}
 		}
-		if (this.m_AnimalSoundsAudioSource == null)
-		{
-			this.m_AnimalSoundsAudioSource = base.gameObject.AddComponent<AudioSource>();
-			this.m_AnimalSoundsAudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Enviro);
-			this.m_AnimalSounds.Clear();
-			List<AudioClip> value = new List<AudioClip>();
-			List<AudioClip> value2 = new List<AudioClip>();
-			this.m_AnimalSounds.Add(true, value2);
-			this.m_AnimalSounds.Add(false, value);
-			for (int j = 1; j < 24; j++)
-			{
-				string text = MainLevel.s_AnimalSoundsDayName;
-				if (j < 10)
-				{
-					text += "0";
-				}
-				text += j.ToString();
-				AudioClip item = Resources.Load(MSSample.s_SamplesPath + text) as AudioClip;
-				this.m_AnimalSounds[true].Add(item);
-			}
-			for (int k = 1; k < 22; k++)
-			{
-				string text2 = MainLevel.s_AnimalSoundsNightName;
-				if (k < 10)
-				{
-					text2 += "0";
-				}
-				text2 += k.ToString();
-				AudioClip item2 = Resources.Load(MSSample.s_SamplesPath + text2) as AudioClip;
-				this.m_AnimalSounds[false].Add(item2);
-			}
-		}
+	}
+
+	public void Initialize()
+	{
+		this.InitObjects();
+		this.InitAmbientAudioSystem();
 		this.TeleportPlayerOnStart();
 		HUDManager.Get().SetActiveGroup(HUDManager.HUDGroup.Game);
 		ChallengesManager.Get().OnLevelLoaded();
 		ScenarioManager.Get().Initialize();
+		this.SetupSceneItems();
 		if (GreenHellGame.Instance.m_FromSave)
 		{
 			SaveGame.Load();
-		}
-		if (GreenHellGame.ROADSHOW_DEMO)
-		{
-			Cheats.m_GodMode = true;
 		}
 		this.m_FogStartDistance = RenderSettings.fogStartDistance;
 		this.m_FogEndDistance = RenderSettings.fogEndDistance;
@@ -144,10 +148,31 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		this.m_PostProcessLayer = Camera.main.GetComponent<PostProcessLayer>();
 		this.m_DefaultStationaryBlending = this.m_PostProcessLayer.temporalAntialiasing.stationaryBlending;
 		CursorManager.Get().ResetCursorRequests();
-		CursorManager.Get().ShowCursor(false);
+		CursorManager.Get().ShowCursor(false, false);
 		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
 		this.m_NGSSDirectional = this.m_TODSky.gameObject.GetComponentInChildren<NGSS_Directional>();
 		this.m_GrassManager = Terrain.activeTerrain.GetComponent<GrassManager>();
+		AnimationEventsReceiver.PreParseAnimationEventScripts();
+	}
+
+	private void InitAmbientAudioSystem()
+	{
+		if (base.GetComponent<AmbientAudioSystem>() == null)
+		{
+			base.gameObject.AddComponent<AmbientAudioSystem>();
+		}
+	}
+
+	private void SetupSceneItems()
+	{
+		foreach (Item item in Item.s_AllItems)
+		{
+			if (!this.m_SceneItems.ContainsKey(item.m_InfoName))
+			{
+				this.m_SceneItems.Add(item.m_InfoName, new List<Vector3>());
+			}
+			this.m_SceneItems[item.m_InfoName].Add(item.transform.position);
+		}
 	}
 
 	private void ApplyGraphicsSettings()
@@ -181,6 +206,11 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		{
 			this.m_PauseRequestsCount--;
 		}
+		if (ReplicatedLogicalPlayer.s_LocalLogicalPlayer)
+		{
+			ReplicatedLogicalPlayer.s_LocalLogicalPlayer.m_PauseGame = (this.m_PauseRequestsCount > 0);
+		}
+		this.UpdateTimeScale();
 	}
 
 	private void Update()
@@ -203,12 +233,11 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		this.UpdateCurentTimeInMinutes();
 		this.UpdateInputsDebug();
 		EventsManager.OnEvent(Enums.Event.PlayTime, Time.deltaTime);
-		this.UpdateAnimalsSound();
 		this.UpdateLoading();
 		if (GreenHellGame.ROADSHOW_DEMO && Input.GetKeyDown(KeyCode.Escape))
 		{
 			this.m_DebugPause = !this.m_DebugPause;
-			CursorManager.Get().ShowCursor(this.m_DebugPause);
+			CursorManager.Get().ShowCursor(this.m_DebugPause, false);
 			this.Pause(this.m_DebugPause);
 			if (this.m_DebugPause)
 			{
@@ -234,6 +263,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		this.UpdateDebugCutscene();
 		this.UpdateAA();
 		ItemReplacer.UpdateByDistance();
+		this.TODInterpolatorUpdate();
 	}
 
 	private void UpdateInputsDebug()
@@ -252,7 +282,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 		else if (Input.GetKeyDown(KeyCode.KeypadPlus))
 		{
-			this.m_TODTime.AddHours(1f, true);
+			this.m_TODTime.AddHoursDebug(1f);
 			ReflectionProbeUpdater[] array = UnityEngine.Object.FindObjectsOfType<ReflectionProbeUpdater>();
 			for (int i = 0; i < array.Length; i++)
 			{
@@ -261,7 +291,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 		else if (Input.GetKeyDown(KeyCode.KeypadMinus))
 		{
-			this.m_TODTime.AddHours(-1f, true);
+			this.m_TODTime.AddHoursDebug(-1f);
 			ReflectionProbeUpdater[] array2 = UnityEngine.Object.FindObjectsOfType<ReflectionProbeUpdater>();
 			for (int j = 0; j < array2.Length; j++)
 			{
@@ -270,7 +300,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 		else if (Input.GetKeyDown(KeyCode.KeypadEnter))
 		{
-			this.m_TODTime.AddHours(10f, true);
+			this.m_TODTime.AddHours(10f, true, false);
 			ReflectionProbeUpdater[] array3 = UnityEngine.Object.FindObjectsOfType<ReflectionProbeUpdater>();
 			for (int k = 0; k < array3.Length; k++)
 			{
@@ -280,7 +310,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		else if (Input.GetKeyDown(KeyCode.Pause))
 		{
 			this.m_DebugPause = !this.m_DebugPause;
-			CursorManager.Get().ShowCursor(this.m_DebugPause);
+			CursorManager.Get().ShowCursor(this.m_DebugPause, false);
 			this.Pause(this.m_DebugPause);
 			if (this.m_DebugPause)
 			{
@@ -323,15 +353,19 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			{
 				RainManager.Get().ToggleRain();
 			}
+			if (Input.GetKey(KeyCode.RightShift))
+			{
+				RainManager.Get().TogglePeriodDebug();
+			}
 		}
 		else if (Input.GetKeyDown(KeyCode.Semicolon))
 		{
-			this.PlayMovieWithFade("Tutorial_End");
+			HUDManager.Get().ShowCredits();
 		}
 		else if (Input.GetKeyDown(KeyCode.Minus))
 		{
 			this.m_DebugShowCursor = !this.m_DebugShowCursor;
-			CursorManager.Get().ShowCursor(this.m_DebugShowCursor);
+			CursorManager.Get().ShowCursor(this.m_DebugShowCursor, false);
 			if (this.m_DebugShowCursor)
 			{
 				Vector2 zero = Vector2.zero;
@@ -347,7 +381,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			for (int l = 0; l < array4.Length; l++)
 			{
 				bool activeInHierarchy = array4[l].gameObject.activeInHierarchy;
-				Debug.Log("ParticleSystem " + array4[l].gameObject.name + ((!activeInHierarchy) ? " 0" : " 1"));
+				Debug.Log("ParticleSystem " + array4[l].gameObject.name + (activeInHierarchy ? " 1" : " 0"));
 				if (activeInHierarchy)
 				{
 					num++;
@@ -403,6 +437,15 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		{
 			HUDCameraPosition.Get().m_Active = false;
 		}
+		if (Input.GetKey(KeyCode.F10))
+		{
+			if (Input.GetKey(KeyCode.LeftShift))
+			{
+				this.EnableSkyDome();
+				return;
+			}
+			this.DisableSkyDome();
+		}
 	}
 
 	private void CycleTimeScaleSpeedup()
@@ -410,11 +453,9 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		if (this.m_TimeScaleMode == 0)
 		{
 			this.m_TimeScaleMode = 1;
+			return;
 		}
-		else
-		{
-			this.m_TimeScaleMode = 0;
-		}
+		this.m_TimeScaleMode = 0;
 	}
 
 	private void CycleTimeScaleSlowdown()
@@ -422,11 +463,9 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		if (this.m_TimeScaleMode == 2)
 		{
 			this.m_TimeScaleMode = 0;
+			return;
 		}
-		else
-		{
-			this.m_TimeScaleMode = 2;
-		}
+		this.m_TimeScaleMode = 2;
 	}
 
 	private void UpdateSlowMotion()
@@ -438,10 +477,21 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	private void UpdateTimeScale()
+	public void UpdateTimeScale()
 	{
+		bool can_pause = true;
+		if (!ReplTools.IsPlayingAlone())
+		{
+			ReplTools.ForEachLogicalPlayer(delegate(ReplicatedLogicalPlayer player)
+			{
+				if (!player.m_PauseGame)
+				{
+					can_pause = false;
+				}
+			}, ReplTools.EPeerType.All);
+		}
 		float num = 1f;
-		if (this.IsPause())
+		if (this.IsPause() & can_pause)
 		{
 			if (Time.time != 0f)
 			{
@@ -467,6 +517,10 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			if (Time.timeScale == 0f)
 			{
 				this.PauseAllAudio(false);
+			}
+			if (this.m_WasPausedLastFrame)
+			{
+				this.m_LastUnpauseTime = Time.time;
 			}
 			this.m_WasPausedLastFrame = false;
 		}
@@ -530,6 +584,11 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		if (obj)
 		{
 			obj.SetActive(true);
+			Item component = obj.GetComponent<Item>();
+			if (component && !component.m_Registered)
+			{
+				component.Initialize(true);
+			}
 		}
 	}
 
@@ -538,17 +597,22 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		if (obj)
 		{
 			obj.SetActive(false);
+			Item component = obj.GetComponent<Item>();
+			if (component && component.m_Registered)
+			{
+				component.ItemsManagerUnregister();
+			}
 		}
+	}
+
+	public bool IsObjectEnabled(GameObject obj)
+	{
+		return obj && obj.activeSelf;
 	}
 
 	public bool IsObjectInRange(GameObject obj, GameObject dest, float range)
 	{
-		if (!obj || !dest)
-		{
-			return false;
-		}
-		float num = Vector3.Distance(obj.transform.position, dest.transform.position);
-		return num <= range;
+		return obj && dest && Vector3.Distance(obj.transform.position, dest.transform.position) <= range;
 	}
 
 	public void AttachObject(GameObject obj, GameObject parent)
@@ -602,15 +666,16 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			if (!gameObject)
 			{
 				this.m_AttachMap.Clear();
-				break;
+				return;
 			}
 			if (gameObject.transform.parent != null)
 			{
 				this.AttachObject(gameObject, gameObject.transform.parent.gameObject);
 			}
-			Dictionary<GameObject, int> attachMap;
-			GameObject key;
-			(attachMap = this.m_AttachMap)[key = gameObject] = attachMap[key] - 1;
+			Dictionary<GameObject, int> attachMap = this.m_AttachMap;
+			GameObject key = gameObject;
+			int value = attachMap[key] - 1;
+			attachMap[key] = value;
 			if (this.m_AttachMap[gameObject] <= 0)
 			{
 				this.m_AttachMap.Remove(gameObject);
@@ -629,7 +694,7 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		return Terrain.activeTerrain.SampleHeight(pos) + Terrain.activeTerrain.GetPosition().y;
 	}
 
-	private void UpdateCurentTimeInMinutes()
+	public void UpdateCurentTimeInMinutes()
 	{
 		this.m_CurentTimeInMinutes = Mathf.Floor((float)(this.m_TODSky.Cycle.Year - 2016)) * 12f * 30f * 24f * 60f + Mathf.Floor((float)this.m_TODSky.Cycle.Month) * 30f * 24f * 60f + Mathf.Floor((float)this.m_TODSky.Cycle.Day) * 24f * 60f + Mathf.Floor(this.m_TODSky.Cycle.Hour) * 60f + (float)this.m_TODSky.Cycle.DateTime.Minute + (float)this.m_TODSky.Cycle.DateTime.Second / 60f;
 	}
@@ -639,26 +704,9 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		return this.m_CurentTimeInMinutes;
 	}
 
-	private void UpdateAnimalsSound()
+	public void EnableAtmosphereAndCloudsUpdate(bool enable)
 	{
-		if (this.m_AnimalSoundsAudioSource == null)
-		{
-			return;
-		}
-		if (Time.time < this.m_AnimalSoundNextTime)
-		{
-			return;
-		}
-		bool key = !this.IsNight();
-		AudioClip audioClip = this.m_AnimalSounds[key][UnityEngine.Random.Range(0, this.m_AnimalSounds[key].Count)];
-		if (audioClip)
-		{
-			this.m_AnimalSoundsAudioSource.clip = audioClip;
-			this.m_AnimalSoundsAudioSource.loop = false;
-			this.m_AnimalSoundsAudioSource.volume = 0.7f;
-			this.m_AnimalSoundsAudioSource.Play();
-			this.m_AnimalSoundNextTime = Time.time + audioClip.length + UnityEngine.Random.Range(35f, 45f);
-		}
+		this.m_TODAtmosphereAndCloudsUpdateEnabled = enable;
 	}
 
 	public void Save()
@@ -671,10 +719,18 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		SaveGame.SaveVal("GameMode", (int)this.m_GameMode);
 		SaveGame.SaveVal("DayTimeProgress", this.m_TODTime.ProgressTime);
 		SaveGame.SaveVal("Tutorial", this.m_Tutorial);
+		SaveGame.SaveVal("SkipTutorial", ScenarioManager.Get().m_SkipTutorial);
+		SaveGame.SaveVal("SaveGameBlocked", this.m_SaveGameBlocked);
+		SaveGame.SaveVal("RainVolume", this.m_RainVolume);
+		foreach (Elevator elevator in Elevator.s_AllElevators)
+		{
+			elevator.Save();
+		}
 	}
 
 	public void Load()
 	{
+		Music.Get().StopAll();
 		MainLevel.s_GameTime = SaveGame.LoadFVal("GameTime");
 		MainLevel.Instance.m_TODSky.Cycle.Day = SaveGame.LoadIVal("Day");
 		MainLevel.Instance.m_TODSky.Cycle.Hour = SaveGame.LoadFVal("Hour");
@@ -683,6 +739,27 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		this.m_GameMode = (GameMode)SaveGame.LoadIVal("GameMode");
 		this.m_TODTime.ProgressTime = SaveGame.LoadBVal("DayTimeProgress");
 		this.m_Tutorial = SaveGame.LoadBVal("Tutorial");
+		ScenarioManager.Get().m_SkipTutorial = SaveGame.LoadBVal("SkipTutorial");
+		this.UpdateCurentTimeInMinutes();
+		this.m_SaveGameBlocked = SaveGame.LoadBVal("SaveGameBlocked");
+		if (SaveGame.FValExist("RainVolume"))
+		{
+			this.m_RainVolume = SaveGame.LoadFVal("RainVolume");
+		}
+		else
+		{
+			this.m_RainVolume = 1f;
+		}
+		this.MSAmbientStart(0.3f);
+	}
+
+	public void LoadDayTime()
+	{
+		MainLevel.Instance.m_TODSky.Cycle.Day = SaveGame.LoadIVal("Day");
+		MainLevel.Instance.m_TODSky.Cycle.Hour = SaveGame.LoadFVal("Hour");
+		MainLevel.Instance.m_TODSky.Cycle.Month = SaveGame.LoadIVal("Month");
+		MainLevel.Instance.m_TODSky.Cycle.Year = SaveGame.LoadIVal("Year");
+		this.UpdateCurentTimeInMinutes();
 	}
 
 	public void PlayMovie(string movie_name)
@@ -700,19 +777,14 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	public void PlayMovieWithFade(string movie_name)
+	public void PlayMovieWithFade(string movie_name, float volume)
 	{
 		if (SaveGame.m_State != SaveGame.State.None)
 		{
 			return;
 		}
-		bool flag = HUDMovie.Get().PlayMovieWithFade(movie_name);
-		this.m_IsMoviePlaying = flag;
-		if (flag)
-		{
-			this.Pause(true);
-			this.UpdateTimeScale();
-		}
+		bool isMoviePlaying = HUDMovie.Get().PlayMovieWithFade(movie_name, volume);
+		this.m_IsMoviePlaying = isMoviePlaying;
 	}
 
 	public void OnStopMovie()
@@ -728,16 +800,20 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 
 	public bool IsMovieWithFadePlaying()
 	{
-		return HUDMovie.Get().GetMovieType() == MovieType.WithFade && HUDMovie.Get().GetState() > MovieWithFadeState.None && HUDMovie.Get().GetState() < MovieWithFadeState.PostFadeOut;
+		return HUDMovie.Get().GetMovieType() == MovieType.WithFade && HUDMovie.Get().GetState() > MovieWithFadeState.None && HUDMovie.Get().GetState() < MovieWithFadeState.PostFadeIn;
 	}
 
 	public bool IsMovieWithFadeFinished()
 	{
-		return HUDMovie.Get().GetMovieType() == MovieType.None && HUDMovie.Get().GetState() == MovieWithFadeState.None;
+		return HUDMovie.Get().GetMovieType() == MovieType.None || HUDMovie.Get().GetState() == MovieWithFadeState.PostFadeIn;
 	}
 
 	public void ScenarioPerformSave()
 	{
+		if (!ReplTools.IsPlayingAlone() && !ReplTools.AmIMaster())
+		{
+			return;
+		}
 		if (SaveGame.m_State == SaveGame.State.None)
 		{
 			SaveGame.Save();
@@ -773,29 +849,56 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 			{
 				this.m_HideLoadingScreenFrameCount++;
 			}
-			if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.PreloadScheduled)
+			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
+			if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.PreloadScheduled && !fadeSystem.m_FadeIn && !fadeSystem.m_FadingIn)
 			{
 				SaveGame.PlayerLoad();
+				if (ItemsManager.Get())
+				{
+					ItemsManager.Get().Preload();
+				}
 			}
 			else if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.PreloadCompleted)
 			{
-				GreenHellGame.Instance.m_LoadGameState = LoadGameState.FullLoadScheduled;
+				if (SaveGame.s_ExpectedGameMode == GameMode.Story)
+				{
+					GreenHellGame.Instance.m_GameMode = GameMode.Story;
+					SceneLoadUnloadRequestHolder.Get().LoadScene("Story", SceneLoadUnloadRequest.Reason.SavegameLoad);
+				}
+				else if (SaveGame.s_ExpectedGameMode == GameMode.Survival)
+				{
+					GreenHellGame.Instance.m_GameMode = GameMode.Survival;
+					SceneLoadUnloadRequestHolder.Get().UnloadScene("Story", SceneLoadUnloadRequest.Reason.SavegameLoad);
+				}
+				GreenHellGame.Instance.m_LoadGameState = LoadGameState.ScenePreparation;
+			}
+			else if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.ScenePreparation)
+			{
+				if (!SceneLoadUnloadRequestHolder.Get().IsAnyRequest(SceneLoadUnloadRequest.Reason.Any, SceneLoadUnloadRequest.OpType.Any, "Story"))
+				{
+					GreenHellGame.Instance.m_LoadGameState = LoadGameState.FullLoadScheduled;
+				}
 			}
 			else if (this.m_HideLoadingScreenFrameCount > 5 && GreenHellGame.Instance.m_LoadGameState == LoadGameState.FullLoadScheduled)
 			{
+				if (HUDManager.Get())
+				{
+					HUDManager.Get().SetActiveGroup(HUDManager.HUDGroup.Game);
+				}
 				SaveGame.FullLoad();
+			}
+			else if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.FullLoadWaitingForScenario)
+			{
+				SaveGame.UpdateFullLoadWaitingForScenario();
 			}
 			else if (GreenHellGame.Instance.m_LoadGameState == LoadGameState.FullLoadCompleted)
 			{
 				GreenHellGame.Instance.m_LoadGameState = LoadGameState.None;
 			}
-			if (this.m_HideLoadingScreenFrameCount > 5 && GreenHellGame.Instance.m_LoadGameState == LoadGameState.None)
+			if (this.m_HideLoadingScreenFrameCount > 30 && GreenHellGame.Instance.m_LoadGameState == LoadGameState.None && !fadeSystem.m_FadeIn && !fadeSystem.m_FadingIn && !fadeSystem.m_FadeOut && !fadeSystem.m_FadingOut)
 			{
-				FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-				if (!fadeSystem.m_FadeIn && !fadeSystem.m_FadingIn)
-				{
-					fadeSystem.FadeOut(FadeType.All, new VDelegate(this.OnLoadingEndFadeOut), 2f, null);
-				}
+				this.ApplyFixes();
+				fadeSystem.FadeOut(FadeType.All, new VDelegate(this.OnLoadingEndFadeOut), 2f, null);
 			}
 		}
 	}
@@ -804,24 +907,30 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 	{
 		LoadingScreen.Get().Hide();
 		this.m_HideLoadingScreenFrameCount = 0;
-		this.StartRainForestAmbienceMultisample();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 2f);
+		AmbientAudioSystem.Instance.StartRainForestAmbienceMultisample();
+		GreenHellGame.GetFadeSystem().FadeIn(FadeType.All, null, 2f);
 		if (Player.Get().m_MovesBlockedOnChangeScene)
 		{
 			Player.Get().UnblockMoves();
 			Player.Get().m_MovesBlockedOnChangeScene = false;
 		}
 		Player.Get().SetupActiveController();
+		GreenHellGame.Instance.m_Settings.ApplyAntiAliasing();
+		GreenHellGame.Instance.m_Settings.ApplyFOVChange();
 	}
 
-	public void StartRainForestAmbienceMultisample()
+	public void StartMultisample(string name, float fade_in)
 	{
-		if (!this.m_RainforestMSStarted)
+		MSManager.Get().PlayMultiSample(this, name, fade_in);
+	}
+
+	public void StopMultisample(string ms_name, float fade_out)
+	{
+		MSMultiSample msmultiSample = MSManager.Get().FindMultisample(ms_name);
+		if (msmultiSample != null)
 		{
-			this.m_AmbientMS = MSManager.Get().PlayMultiSample("Rainforest_Ambience", 1f);
+			msmultiSample.Stop(this, fade_out);
 		}
-		this.m_RainforestMSStarted = true;
 	}
 
 	public void StopDayTimeProgress()
@@ -836,6 +945,10 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 
 	public void SetDayTime(int hour, int minutes)
 	{
+		if (Scenario.Get().m_IsLoading)
+		{
+			return;
+		}
 		this.m_TODSky.Cycle.Hour = (float)hour + 1.66666663f * ((float)minutes / 100f);
 	}
 
@@ -853,14 +966,12 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		{
 			RenderSettings.fogStartDistance += (FogSensor.s_FogDensityStart - RenderSettings.fogStartDistance) * Time.deltaTime;
 			RenderSettings.fogEndDistance += (FogSensor.s_FogDensityEnd - RenderSettings.fogEndDistance) * Time.deltaTime;
+			return;
 		}
-		else
-		{
-			float proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_FogStartDistance, 10f, RainManager.Get().m_WeatherInterpolated, 0f, 1f);
-			RenderSettings.fogStartDistance += (proportionalClamp - RenderSettings.fogStartDistance) * Time.deltaTime;
-			proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_FogEndDistance, 150f, RainManager.Get().m_WeatherInterpolated, 0f, 1f);
-			RenderSettings.fogEndDistance += (proportionalClamp - RenderSettings.fogEndDistance) * Time.deltaTime;
-		}
+		float proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_FogStartDistance, 10f, RainManager.Get().m_WeatherInterpolated, 0f, 1f);
+		RenderSettings.fogStartDistance += (proportionalClamp - RenderSettings.fogStartDistance) * Time.deltaTime;
+		proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_FogEndDistance, 150f, RainManager.Get().m_WeatherInterpolated, 0f, 1f);
+		RenderSettings.fogEndDistance += (proportionalClamp - RenderSettings.fogEndDistance) * Time.deltaTime;
 	}
 
 	private void UpdateEmissiveMaterials()
@@ -879,31 +990,33 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	public void FadeOutWithScreen(string prefab_name)
+	public void ScenarioFadeOutWithScreen(string prefab_name, float duration)
 	{
 		if (SaveGame.m_State == SaveGame.State.None)
 		{
 			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
 			GameObject screen_prefab = Resources.Load<GameObject>("Prefabs/Systems/" + prefab_name);
-			fadeSystem.FadeOut(FadeType.All, null, 1.5f, screen_prefab);
+			fadeSystem.FadeOut(FadeType.All, null, duration, screen_prefab);
 		}
 	}
 
-	public void FadeOut()
+	public void ScenarioFadeOut(float duration)
+	{
+		if (SaveGame.m_State == SaveGame.State.None)
+		{
+			GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, null, duration, null);
+		}
+	}
+
+	public void ScenarioFadeIn(float duration)
 	{
 		if (SaveGame.m_State == SaveGame.State.None)
 		{
 			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-			fadeSystem.FadeOut(FadeType.All, null, 1.5f, null);
-		}
-	}
-
-	public void FadeIn()
-	{
-		if (SaveGame.m_State == SaveGame.State.None)
-		{
-			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-			fadeSystem.FadeIn(FadeType.All, null, 1.5f);
+			if (fadeSystem.m_VisFadeLevel > 0f || fadeSystem.m_FadeOut || fadeSystem.m_FadingOut)
+			{
+				fadeSystem.FadeIn(FadeType.All, null, duration);
+			}
 		}
 	}
 
@@ -917,6 +1030,46 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 	{
 		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
 		return fadeSystem.m_FadeIn || fadeSystem.m_FadingIn;
+	}
+
+	public void DreamFadeOut(float duration)
+	{
+		HUDDreamFade huddreamFade = HUDDreamFade.Get();
+		huddreamFade.FadeOut(FadeType.All, duration);
+		huddreamFade.SetImagesColor(Color.black);
+	}
+
+	public void DreamFadeIn(float duration)
+	{
+		HUDDreamFade huddreamFade = HUDDreamFade.Get();
+		huddreamFade.FadeIn(FadeType.All, duration);
+		huddreamFade.SetImagesColor(Color.black);
+	}
+
+	public void DreamWhiteFadeOut(float duration)
+	{
+		HUDDreamFade huddreamFade = HUDDreamFade.Get();
+		huddreamFade.FadeOut(FadeType.All, duration);
+		huddreamFade.SetImagesColor(Color.white);
+	}
+
+	public void DreamWhiteFadeIn(float duration)
+	{
+		HUDDreamFade huddreamFade = HUDDreamFade.Get();
+		huddreamFade.FadeIn(FadeType.All, duration);
+		huddreamFade.SetImagesColor(Color.white);
+	}
+
+	public bool IsDreamFadeOut()
+	{
+		HUDDreamFade huddreamFade = HUDDreamFade.Get();
+		return huddreamFade.m_FadeOut || huddreamFade.m_FadingOut;
+	}
+
+	public bool IsDreamFadeIn()
+	{
+		HUDDreamFade huddreamFade = HUDDreamFade.Get();
+		return huddreamFade.m_FadeIn || huddreamFade.m_FadingIn;
 	}
 
 	public bool IsDebugCutscenePlaying()
@@ -953,6 +1106,25 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		{
 			ObjectivesManager.Get().DeactivateAllActiveObjectives();
 		}
+		Player.Get().SetDreamPPActive(false);
+		this.EnableSkyDome();
+		Player.Get().SetSpeedMul(1f);
+		HUDBase[] hudlist = HUDManager.Get().m_HUDList;
+		for (int i = 0; i < hudlist.Length; i++)
+		{
+			hudlist[i].ScenarioUnblock();
+		}
+		FistFightController.Get().UnblockFight();
+		Music.Get().StopAll();
+		MusicJingle.Get().StoppAll();
+		MSManager.Get().StopAllMultiSamples();
+		this.EnableTerrainRendering(true);
+		Watch watch = Watch.Get();
+		if (watch == null)
+		{
+			return;
+		}
+		watch.ClearFakeDate();
 	}
 
 	private void TeleportPlayerOnStart()
@@ -964,9 +1136,10 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 		else if (GreenHellGame.Instance.m_GameMode == GameMode.Story)
 		{
-			GameObject target2 = GameObject.Find("StartTutorialPosition");
+			GameObject target2 = GameObject.Find("Survival_Start");
 			Player.Get().Teleport(target2, false);
 		}
+		Player.Get().m_RespawnPosition = Player.Get().GetWorldPosition();
 	}
 
 	private void UpdateAA()
@@ -978,11 +1151,9 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		if (Player.Get().GetComponent<NotepadController>().IsActive())
 		{
 			this.m_PostProcessLayer.temporalAntialiasing.stationaryBlending = 0.6f;
+			return;
 		}
-		else
-		{
-			this.m_PostProcessLayer.temporalAntialiasing.stationaryBlending = this.m_DefaultStationaryBlending;
-		}
+		this.m_PostProcessLayer.temporalAntialiasing.stationaryBlending = this.m_DefaultStationaryBlending;
 	}
 
 	private void SleepFlocks()
@@ -999,9 +1170,15 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		this.m_Streamers.Remove(streamer);
 	}
 
+	public List<Streamer> GetStreamers()
+	{
+		return this.m_Streamers;
+	}
+
 	public void ScenarioSetTutorial(bool set)
 	{
 		this.m_Tutorial = set;
+		ScenarioManager.Get().SetBoolVariable("IsTutorialFinished", !set);
 	}
 
 	public bool IsAnyStreamerLoading()
@@ -1027,29 +1204,266 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 		}
 		FishTank.s_FishTanks.Clear();
 		HumanAIGroup.s_AIGroups.Clear();
+		AISoundModule.ClearCache();
 		Firecamp.s_Firecamps.Clear();
 		FirecampRack.s_FirecampRacks.Clear();
 		Food.s_AllFoods.Clear();
 		Item.s_AllItems.Clear();
 		Item.s_AllItemIDs.Clear();
+		ItemHold.s_AllItemHolds.Clear();
 		Trigger.s_ActiveTriggers.Clear();
 		Trigger.s_AllTriggers.Clear();
 		ItemReplacer.s_ToreplaceByDistance.Clear();
+		ItemReplacer.s_AllReplacers.Clear();
 		ItemSlot.s_AllItemSlots.Clear();
 		ItemSlot.s_ActiveItemSlots.Clear();
 		EventsManager.m_Receivers.Clear();
 		EventsManager.m_ReceiversToAdd.Clear();
 		EventsManager.m_ReceiversToRemove.Clear();
 		NoiseManager.s_Receivers.Clear();
+		Storage.s_AllStorages.Clear();
+		RainCutter.s_AllRainCutters.Clear();
+		Generator.s_AllGenerators.Clear();
+		LootBox.s_AllLootBoxes.Clear();
+		SaveGame.m_SaveGameVersion = new GameVersion(0, 0);
+		SceneLoadUnloadRequestHolder.OnSceneLoad -= this.OnSceneLoad;
+		SceneLoadUnloadRequestHolder.OnSceneUnload -= this.OnSceneUnload;
 	}
 
 	public void OnFullLoadEnd()
 	{
+		foreach (Elevator elevator in Elevator.s_AllElevators)
+		{
+			elevator.Load();
+		}
 		FallenObjectsManager.Get().OnFullLoadEnd();
-		BalanceSystem.Get().OnFullLoadEnd();
+		ScenarioManager.Get().OnFullLoadEnd();
+		TriggersManager.Get().Load();
+		BalanceSystem20.Get().OnFullLoadEnd();
 	}
 
-	private static MainLevel s_Instance;
+	private void ApplyFixes()
+	{
+		if (SaveGame.m_SaveGameVersion == GreenHellGame.s_GameVersionEarlyAccessUpdate6)
+		{
+			GameObject gameObject = GameObject.Find("PlayerProggresion");
+			if (gameObject == null)
+			{
+				return;
+			}
+			Transform transform = gameObject.transform.FindDeepChild("Refugees_Camp");
+			if (transform == null)
+			{
+				return;
+			}
+			Transform transform2 = transform.FindDeepChild("refugees_items");
+			Transform x = transform.FindDeepChild("shrimp_trap");
+			if (transform2.childCount > 1 || x != null)
+			{
+				return;
+			}
+			for (int i = 0; i < transform.transform.childCount; i++)
+			{
+				if (transform.transform.GetChild(i).gameObject.name == "Unlock_shrimp_Trap")
+				{
+					SensorBase component = transform.transform.GetChild(i).gameObject.GetComponent<SensorBase>();
+					if (component)
+					{
+						component.SetWasInside(false);
+						component.gameObject.SetActive(true);
+					}
+				}
+				else
+				{
+					UnityEngine.Object.Destroy(transform.transform.GetChild(i).gameObject);
+				}
+			}
+			GameObject gameObject2 = UnityEngine.Object.Instantiate<GameObject>(GreenHellGame.Instance.GetPrefab("WaterUpdate_CampItems"), Vector3.zero, Quaternion.identity);
+			for (int j = 0; j < gameObject2.transform.childCount; j++)
+			{
+				gameObject2.transform.GetChild(j).SetParent(transform);
+			}
+		}
+		if (SaveGame.m_SaveGameVersion > GreenHellGame.s_GameVersionEarlyAccessUpdate6 && SaveGame.m_SaveGameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate7)
+		{
+			GameObject gameObject3 = GameObject.Find("PlayerProggresion");
+			if (gameObject3 == null)
+			{
+				return;
+			}
+			Transform transform3 = gameObject3.transform.FindDeepChild("Refugees_Camp");
+			if (transform3 == null)
+			{
+				return;
+			}
+			for (int k = 0; k < transform3.transform.childCount; k++)
+			{
+				if (transform3.transform.GetChild(k).gameObject.name == "Unlock_shrimp_Trap")
+				{
+					SensorBase component2 = transform3.transform.GetChild(k).gameObject.GetComponent<SensorBase>();
+					if (component2)
+					{
+						component2.SetWasInside(false);
+						component2.gameObject.SetActive(true);
+					}
+				}
+			}
+		}
+	}
+
+	public void PostProcessVolumeExDisableWithFade(GameObject obj, float fade_time)
+	{
+		PostProcessVolumeEx component = obj.GetComponent<PostProcessVolumeEx>();
+		DebugUtils.Assert(component, true);
+		if (component)
+		{
+			component.m_FadeOutDuration = fade_time;
+			component.m_FadeOutStartTime = Time.time;
+		}
+	}
+
+	public void DisableSkyDome()
+	{
+		this.m_TODSky.gameObject.SetActive(false);
+	}
+
+	public void EnableSkyDome()
+	{
+		this.m_TODSky.gameObject.SetActive(true);
+	}
+
+	public void TODInterpolatorStoreTime()
+	{
+		this.m_TODInterpolatorStoredHour = this.m_TODSky.Cycle.Hour;
+	}
+
+	public void TODInterpolatorInterpolate(float hour, float duration)
+	{
+		this.m_TODInterpolatorState = MainLevel.TODTimeInterpolatorState.Interpolating;
+		this.m_TODInterpolatorWantedHour = hour;
+		this.m_TODInterpolatorStartTime = Time.time;
+		this.m_TODInterpolatorStartHour = this.m_TODSky.Cycle.Hour;
+		this.m_TODInterpolatorInterpolationDuration = duration;
+	}
+
+	public void TODInterpolatorRestore(float duration)
+	{
+		this.m_TODInterpolatorState = MainLevel.TODTimeInterpolatorState.Restoring;
+		this.m_TODInterpolatorWantedHour = this.m_TODInterpolatorStoredHour;
+		this.m_TODInterpolatorStartTime = Time.time;
+		this.m_TODInterpolatorStartHour = this.m_TODSky.Cycle.Hour;
+		this.m_TODInterpolatorInterpolationDuration = duration;
+	}
+
+	private void TODInterpolatorUpdate()
+	{
+		if (this.m_TODInterpolatorState == MainLevel.TODTimeInterpolatorState.Interpolating || this.m_TODInterpolatorState == MainLevel.TODTimeInterpolatorState.Restoring)
+		{
+			float proportionalClamp;
+			if (this.m_TODInterpolatorCurve != null)
+			{
+				float time = (this.m_TODInterpolatorInterpolationDuration != 0f) ? ((Time.time - this.m_TODInterpolatorStartTime) / this.m_TODInterpolatorInterpolationDuration) : 0f;
+				float b = this.m_TODInterpolatorCurve.Evaluate(time);
+				proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_TODInterpolatorStartHour, this.m_TODInterpolatorWantedHour, b, 0f, 1f);
+			}
+			else
+			{
+				proportionalClamp = CJTools.Math.GetProportionalClamp(this.m_TODInterpolatorStartHour, this.m_TODInterpolatorWantedHour, Time.time, this.m_TODInterpolatorStartTime, this.m_TODInterpolatorStartTime + this.m_TODInterpolatorInterpolationDuration);
+			}
+			float hours = proportionalClamp - this.m_TODSky.Cycle.Hour;
+			this.m_TODTime.AddHours(hours, true, true);
+		}
+		if (Time.time > this.m_TODInterpolatorStartTime + this.m_TODInterpolatorInterpolationDuration)
+		{
+			this.m_TODInterpolatorState = MainLevel.TODTimeInterpolatorState.None;
+		}
+	}
+
+	public void MSAmbientStart(float fade_in)
+	{
+		AmbientAudioSystem.Instance.MSAmbientStart(fade_in);
+	}
+
+	public void MSAmbientStop(float fade_out)
+	{
+		AmbientAudioSystem.Instance.MSAmbientStop(fade_out);
+	}
+
+	public void EnableTerrainRendering(bool set)
+	{
+		if (Terrain.activeTerrain)
+		{
+			Terrain.activeTerrain.drawHeightmap = set;
+		}
+	}
+
+	public bool IsGeneratorFull(GameObject obj)
+	{
+		Generator component = obj.GetComponent<Generator>();
+		return component && component.IsFull();
+	}
+
+	public bool AreStreamersLoaded()
+	{
+		bool result = true;
+		if (Time.unscaledTime - Player.Get().GetTeleportTime() < 1f)
+		{
+			result = false;
+		}
+		if (this.m_Streamers.Count > 0)
+		{
+			for (int i = 0; i < this.m_Streamers.Count; i++)
+			{
+				if (this.m_Streamers[i].IsSomethingToLoad())
+				{
+					result = false;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	public void BlockSaveGame()
+	{
+		this.m_SaveGameBlocked = true;
+	}
+
+	public void UnblockSaveGame()
+	{
+		this.m_SaveGameBlocked = false;
+	}
+
+	public void SetRainVolume(float vol)
+	{
+		this.m_RainVolume = vol;
+	}
+
+	public void OnSceneLoad(Scene scene, SceneLoadUnloadRequest request)
+	{
+		if (request.m_SceneName.StartsWith("Dream"))
+		{
+			HxVolumetricCamera component = this.m_MainCamera.GetComponent<HxVolumetricCamera>();
+			if (component)
+			{
+				component.enabled = true;
+			}
+		}
+	}
+
+	public void OnSceneUnload(Scene scene, SceneLoadUnloadRequest request)
+	{
+		if (request.m_SceneName.StartsWith("Dream"))
+		{
+			HxVolumetricCamera component = this.m_MainCamera.GetComponent<HxVolumetricCamera>();
+			if (component)
+			{
+				component.enabled = false;
+			}
+		}
+	}
+
+	private static MainLevel s_Instance = null;
 
 	public TOD_Sky m_TODSky;
 
@@ -1075,10 +1489,6 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 
 	private static string s_AnimalSoundsNightName = "jungle_night_animal_random_";
 
-	private AudioSource m_AnimalSoundsAudioSource;
-
-	private float m_AnimalSoundNextTime;
-
 	private bool m_DebugShowCursor;
 
 	private bool m_WasPausedLastFrame;
@@ -1086,8 +1496,6 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 	private bool m_DebugPause;
 
 	private bool m_IsMoviePlaying;
-
-	public MSMultiSample m_AmbientMS;
 
 	private Dictionary<GameObject, int> m_AttachMap = new Dictionary<GameObject, int>();
 
@@ -1134,7 +1542,8 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 
 	private NGSS_Directional m_NGSSDirectional;
 
-	private GrassManager m_GrassManager;
+	[HideInInspector]
+	public GrassManager m_GrassManager;
 
 	public AsyncOperation m_UnusedAssetsAsyncOperation;
 
@@ -1142,9 +1551,43 @@ public class MainLevel : MonoBehaviour, ISaveLoad
 
 	private float m_CurentTimeInMinutes;
 
-	private Dictionary<bool, List<AudioClip>> m_AnimalSounds = new Dictionary<bool, List<AudioClip>>();
+	public Scene m_LevelScene;
 
-	private bool m_RainforestMSStarted;
+	public AnimationCurve m_SoundRolloffCurve;
+
+	public Dictionary<string, List<Vector3>> m_SceneItems = new Dictionary<string, List<Vector3>>();
+
+	public float m_LastUnpauseTime;
+
+	[HideInInspector]
+	public bool m_TODAtmosphereAndCloudsUpdateEnabled = true;
 
 	private List<Streamer> m_Streamers = new List<Streamer>();
+
+	public MainLevel.TODTimeInterpolatorState m_TODInterpolatorState;
+
+	private float m_TODInterpolatorStoredHour;
+
+	private float m_TODInterpolatorWantedHour;
+
+	private float m_TODInterpolatorStartTime;
+
+	private float m_TODInterpolatorStartHour;
+
+	private float m_TODInterpolatorInterpolationDuration = 1f;
+
+	public AnimationCurve m_TODInterpolatorCurve;
+
+	[HideInInspector]
+	public bool m_SaveGameBlocked;
+
+	[HideInInspector]
+	public float m_RainVolume = 1f;
+
+	public enum TODTimeInterpolatorState
+	{
+		None,
+		Interpolating,
+		Restoring
+	}
 }

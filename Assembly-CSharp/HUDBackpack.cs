@@ -5,7 +5,7 @@ using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HUDBackpack : HUDBase
+public class HUDBackpack : HUDBase, IInputsReceiver
 {
 	public bool m_IsHovered { get; protected set; }
 
@@ -18,32 +18,31 @@ public class HUDBackpack : HUDBase
 	{
 		HUDBackpack.s_Instance = this;
 		this.m_IsHovered = false;
-		GameObject gameObject = base.transform.FindDeepChild("Pockets").gameObject;
-		RawImage[] componentsInChildren = gameObject.GetComponentsInChildren<RawImage>();
-		this.m_PocketImages = new List<HUDBackpack.PocketImageData>();
+		RawImage[] componentsInChildren = base.transform.FindDeepChild("Pockets").gameObject.GetComponentsInChildren<RawImage>();
+		this.m_PocketImages = new List<PocketImageData>();
 		foreach (RawImage rawImage in componentsInChildren)
 		{
 			if (!(rawImage.name != BackpackPocket.Front.ToString()) || !(rawImage.name != BackpackPocket.Main.ToString()) || !(rawImage.name != BackpackPocket.Left.ToString()) || !(rawImage.name != BackpackPocket.Right.ToString()) || !(rawImage.name != BackpackPocket.Top.ToString()))
 			{
-				HUDBackpack.PocketImageData item = default(HUDBackpack.PocketImageData);
-				item.pocket = (BackpackPocket)Enum.Parse(typeof(BackpackPocket), rawImage.name);
-				item.icon = rawImage;
-				item.selection = rawImage.transform.Find("Selection").gameObject;
-				item.selection.SetActive(false);
-				item.new_count_bg = rawImage.transform.Find("BG").GetComponent<Image>();
-				item.new_count_text = rawImage.transform.GetComponentInChildren<Text>();
-				this.m_PocketImages.Add(item);
+				PocketImageData pocketImageData = new PocketImageData();
+				pocketImageData.pocket = (BackpackPocket)Enum.Parse(typeof(BackpackPocket), rawImage.name);
+				pocketImageData.icon = rawImage;
+				pocketImageData.selection = rawImage.transform.Find("Selection").gameObject;
+				pocketImageData.selection.SetActive(false);
+				pocketImageData.new_count_bg = rawImage.transform.Find("BG").GetComponent<Image>();
+				pocketImageData.new_count_text = rawImage.transform.GetComponentInChildren<Text>();
+				this.m_PocketImages.Add(pocketImageData);
 			}
 		}
-		GameObject gameObject2 = new GameObject("EquippedIcon");
-		this.m_EquippedIcon = gameObject2.AddComponent<Image>();
+		GameObject gameObject = new GameObject("EquippedIcon");
+		this.m_EquippedIcon = gameObject.AddComponent<Image>();
 		Sprite sprite = null;
 		ItemsManager.Get().m_ItemIconsSprites.TryGetValue("Default_Pickup", out sprite);
 		DebugUtils.Assert(sprite, true);
 		this.m_EquippedIcon.sprite = sprite;
 		this.m_EquippedIcon.rectTransform.sizeDelta = new Vector2(20f, 20f);
-		gameObject2.GetComponent<RectTransform>().SetParent(base.transform);
-		gameObject2.SetActive(true);
+		gameObject.GetComponent<RectTransform>().SetParent(base.transform);
+		gameObject.SetActive(true);
 		this.m_BG = base.transform.Find("BG").gameObject.GetComponent<RawImage>();
 		this.InitializeSounds();
 		for (int j = 0; j < base.transform.childCount; j++)
@@ -51,6 +50,10 @@ public class HUDBackpack : HUDBase
 			base.transform.GetChild(j).gameObject.SetActive(false);
 		}
 		base.enabled = false;
+		if (this.m_PADChangeTabs.Count > 0)
+		{
+			this.m_PADChangeTabDefaultAlpha = this.m_PADChangeTabs[0].color.a;
+		}
 	}
 
 	private void InitializeSounds()
@@ -74,7 +77,7 @@ public class HUDBackpack : HUDBase
 
 	private void SetupSelections()
 	{
-		foreach (HUDBackpack.PocketImageData pocketImageData in this.m_PocketImages)
+		foreach (PocketImageData pocketImageData in this.m_PocketImages)
 		{
 			pocketImageData.selection.SetActive(false);
 		}
@@ -85,6 +88,9 @@ public class HUDBackpack : HUDBase
 		base.OnShow();
 		this.SetupSelections();
 		this.PlayOpenSound();
+		this.SetupController();
+		this.m_PadQuitHint.SetActive(GreenHellGame.IsPadControllerActive() && !BodyInspectionController.Get().IsActive());
+		this.m_PadSortHint.SetActive(GreenHellGame.IsPadControllerActive() && !BodyInspectionController.Get().IsActive());
 	}
 
 	protected override void OnHide()
@@ -153,6 +159,10 @@ public class HUDBackpack : HUDBase
 
 	public void OnPocketClick(string pocket_name)
 	{
+		if (Inventory3DManager.Get().m_CarriedItem)
+		{
+			return;
+		}
 		BackpackPocket pocket = (BackpackPocket)Enum.Parse(typeof(BackpackPocket), pocket_name);
 		Inventory3DManager.Get().SetupPocket(pocket);
 		this.PlayChangeTabSound();
@@ -160,11 +170,19 @@ public class HUDBackpack : HUDBase
 
 	public void OnPocketEnter(GameObject obj)
 	{
+		if (Inventory3DManager.Get().m_CarriedItem)
+		{
+			return;
+		}
 		obj.transform.Find("Selection").gameObject.SetActive(true);
 	}
 
 	public void OnPocketExit(GameObject obj)
 	{
+		if (Inventory3DManager.Get().m_CarriedItem)
+		{
+			return;
+		}
 		obj.transform.Find("Selection").gameObject.SetActive(false);
 	}
 
@@ -179,30 +197,30 @@ public class HUDBackpack : HUDBase
 				array[(int)item.m_Info.m_BackpackPocket]++;
 			}
 		}
-		foreach (HUDBackpack.PocketImageData key in this.m_PocketImages)
+		foreach (PocketImageData pocketImageData in this.m_PocketImages)
 		{
-			if (key.new_count_bg && key.new_count_text)
+			if (pocketImageData.new_count_bg && pocketImageData.new_count_text)
 			{
-				if (key.pocket == pocket)
+				if (pocketImageData.pocket == pocket)
 				{
-					key.new_count_bg.gameObject.SetActive(false);
-					key.new_count_text.gameObject.SetActive(false);
+					pocketImageData.new_count_bg.gameObject.SetActive(false);
+					pocketImageData.new_count_text.gameObject.SetActive(false);
 				}
-				else if (array[(int)key.pocket] > 0)
+				else if (array[(int)pocketImageData.pocket] > 0)
 				{
-					key.new_count_bg.gameObject.SetActive(true);
-					key.new_count_text.gameObject.SetActive(true);
-					string text = array[(int)key.pocket].ToString();
-					if (text != key.new_count_text.text && !this.m_Animations.ContainsKey(key))
+					pocketImageData.new_count_bg.gameObject.SetActive(true);
+					pocketImageData.new_count_text.gameObject.SetActive(true);
+					string text = array[(int)pocketImageData.pocket].ToString();
+					if (text != pocketImageData.new_count_text.text && !this.m_Animations.ContainsKey(pocketImageData))
 					{
-						this.m_Animations.Add(key, Time.time);
+						this.m_Animations.Add(pocketImageData, Time.time);
 					}
-					key.new_count_text.text = text;
+					pocketImageData.new_count_text.text = text;
 				}
 				else
 				{
-					key.new_count_bg.gameObject.SetActive(false);
-					key.new_count_text.gameObject.SetActive(false);
+					pocketImageData.new_count_bg.gameObject.SetActive(false);
+					pocketImageData.new_count_text.gameObject.SetActive(false);
 				}
 			}
 		}
@@ -214,19 +232,34 @@ public class HUDBackpack : HUDBase
 		this.UpdateAnimations();
 		this.UpdateColor();
 		this.UpdateEquippedIcon();
+		this.m_PadQuitHint.SetActive(GreenHellGame.IsPadControllerActive() && !BodyInspectionController.Get().IsActive());
+		this.m_PadSortHint.SetActive(GreenHellGame.IsPadControllerActive() && !BodyInspectionController.Get().IsActive());
 		this.m_IsHovered = RectTransformUtility.RectangleContainsScreenPoint(this.m_BG.rectTransform, Input.mousePosition);
 		if (this.m_IsHovered)
 		{
-			bool flag = false;
-			foreach (HUDBackpack.PocketImageData pocketImageData in this.m_PocketImages)
+			PocketImageData pocketImageData = null;
+			foreach (PocketImageData pocketImageData2 in this.m_PocketImages)
 			{
-				if (pocketImageData.selection.gameObject.activeSelf)
+				if (pocketImageData2.selection.gameObject.activeSelf)
 				{
-					flag = true;
+					pocketImageData = pocketImageData2;
 					break;
 				}
 			}
-			CursorManager.Get().SetCursor((!flag) ? CursorManager.TYPE.Normal : CursorManager.TYPE.MouseOver);
+			CursorManager.Get().SetCursor((pocketImageData != null) ? CursorManager.TYPE.MouseOver : CursorManager.TYPE.Normal);
+			if (pocketImageData != null && Input.GetKeyDown(InputHelpers.PadButton.Button_X.KeyFromPad()))
+			{
+				this.OnPocketClick(pocketImageData.pocket.ToString());
+			}
+		}
+		foreach (Image image in this.m_PADChangeTabs)
+		{
+			if (image.gameObject.activeSelf)
+			{
+				Color color = image.color;
+				color.a = (Inventory3DManager.Get().m_CarriedItem ? (this.m_PADChangeTabDefaultAlpha * 0.5f) : this.m_PADChangeTabDefaultAlpha);
+				image.color = color;
+			}
 		}
 	}
 
@@ -238,19 +271,17 @@ public class HUDBackpack : HUDBase
 			Vector3 screenPoint = InventoryBackpack.Get().m_EquippedItemSlot.GetScreenPoint();
 			screenPoint.y -= 20f;
 			this.m_EquippedIcon.rectTransform.position = screenPoint;
+			return;
 		}
-		else
-		{
-			this.m_EquippedIcon.gameObject.SetActive(false);
-		}
+		this.m_EquippedIcon.gameObject.SetActive(false);
 	}
 
 	private void UpdateColor()
 	{
-		foreach (HUDBackpack.PocketImageData pocketImageData in this.m_PocketImages)
+		foreach (PocketImageData pocketImageData in this.m_PocketImages)
 		{
 			Color color = pocketImageData.icon.color;
-			color.a = ((Inventory3DManager.Get().m_ActivePocket != pocketImageData.pocket) ? this.m_NormalAlpha : this.m_SelectedAlpha);
+			color.a = ((Inventory3DManager.Get().m_ActivePocket == pocketImageData.pocket) ? this.m_SelectedAlpha : this.m_NormalAlpha);
 			pocketImageData.icon.color = color;
 		}
 	}
@@ -258,15 +289,15 @@ public class HUDBackpack : HUDBase
 	private void UpdateAnimations()
 	{
 		float num = 8f;
-		List<HUDBackpack.PocketImageData> list = null;
-		foreach (HUDBackpack.PocketImageData pocketImageData in this.m_Animations.Keys)
+		List<PocketImageData> list = null;
+		foreach (PocketImageData pocketImageData in this.m_Animations.Keys)
 		{
 			if (Time.time - this.m_Animations[pocketImageData] >= 3.14159274f / num)
 			{
 				pocketImageData.new_count_bg.transform.localScale = Vector3.one;
 				if (list == null)
 				{
-					list = new List<HUDBackpack.PocketImageData>();
+					list = new List<PocketImageData>();
 				}
 				list.Add(pocketImageData);
 			}
@@ -285,9 +316,81 @@ public class HUDBackpack : HUDBase
 		}
 	}
 
-	private List<HUDBackpack.PocketImageData> m_PocketImages;
+	public void OnInputAction(InputActionData action_data)
+	{
+		if (Inventory3DManager.Get().m_CarriedItem == null)
+		{
+			if (action_data.m_Action == InputsManager.InputAction.InventoryNextTab)
+			{
+				if (HUDItem.Get().m_Active)
+				{
+					HUDItem.Get().Deactivate();
+				}
+				BackpackPocket pocket = Inventory3DManager.Get().m_ActivePocket;
+				switch (pocket)
+				{
+				case BackpackPocket.Main:
+					pocket = BackpackPocket.Front;
+					break;
+				case BackpackPocket.Front:
+					pocket = BackpackPocket.Right;
+					break;
+				case BackpackPocket.Top:
+					pocket = BackpackPocket.Main;
+					break;
+				case BackpackPocket.Left:
+					pocket = BackpackPocket.Top;
+					break;
+				case BackpackPocket.Right:
+					pocket = BackpackPocket.Left;
+					break;
+				}
+				Inventory3DManager.Get().SetupPocket(pocket);
+				return;
+			}
+			if (action_data.m_Action == InputsManager.InputAction.InventoryPrevTab)
+			{
+				if (HUDItem.Get().m_Active)
+				{
+					HUDItem.Get().Deactivate();
+				}
+				BackpackPocket pocket2 = Inventory3DManager.Get().m_ActivePocket;
+				switch (pocket2)
+				{
+				case BackpackPocket.Main:
+					pocket2 = BackpackPocket.Top;
+					break;
+				case BackpackPocket.Front:
+					pocket2 = BackpackPocket.Main;
+					break;
+				case BackpackPocket.Top:
+					pocket2 = BackpackPocket.Left;
+					break;
+				case BackpackPocket.Left:
+					pocket2 = BackpackPocket.Right;
+					break;
+				case BackpackPocket.Right:
+					pocket2 = BackpackPocket.Front;
+					break;
+				}
+				Inventory3DManager.Get().SetupPocket(pocket2);
+			}
+		}
+	}
 
-	private Dictionary<HUDBackpack.PocketImageData, float> m_Animations = new Dictionary<HUDBackpack.PocketImageData, float>();
+	public bool CanReceiveAction()
+	{
+		return base.enabled;
+	}
+
+	public bool CanReceiveActionPaused()
+	{
+		return false;
+	}
+
+	private List<PocketImageData> m_PocketImages;
+
+	private Dictionary<PocketImageData, float> m_Animations = new Dictionary<PocketImageData, float>();
 
 	public float m_NormalAlpha;
 
@@ -301,20 +404,15 @@ public class HUDBackpack : HUDBase
 
 	private List<AudioClip> m_ChangeTabSounds = new List<AudioClip>();
 
+	public List<Image> m_PADChangeTabs = new List<Image>();
+
+	private float m_PADChangeTabDefaultAlpha;
+
 	private RawImage m_BG;
 
 	private Image m_EquippedIcon;
 
-	private struct PocketImageData
-	{
-		public BackpackPocket pocket;
+	public GameObject m_PadQuitHint;
 
-		public RawImage icon;
-
-		public GameObject selection;
-
-		public Image new_count_bg;
-
-		public Text new_count_text;
-	}
+	public GameObject m_PadSortHint;
 }

@@ -11,7 +11,7 @@ public class PlayerPlannerModule : PlayerModule, IEventsReceiver
 		EventsManager.RegisterReceiver(this);
 	}
 
-	private void OnDestroy()
+	public override void OnDestroy()
 	{
 		EventsManager.UnregisterReceiver(this);
 	}
@@ -71,8 +71,9 @@ public class PlayerPlannerModule : PlayerModule, IEventsReceiver
 					plannerTask.OnBuild((ItemID)data, false);
 				}
 			}
+			return;
 		}
-		else if (event_type == Enums.Event.Eat)
+		if (event_type == Enums.Event.Eat)
 		{
 			for (int j = 0; j < this.m_AllTasks.Count; j++)
 			{
@@ -89,8 +90,9 @@ public class PlayerPlannerModule : PlayerModule, IEventsReceiver
 					plannerTask2.OnEat((ItemID)data, false);
 				}
 			}
+			return;
 		}
-		else if (event_type == Enums.Event.IgniteFire)
+		if (event_type == Enums.Event.IgniteFire)
 		{
 			for (int k = 0; k < this.m_AllTasks.Count; k++)
 			{
@@ -107,8 +109,9 @@ public class PlayerPlannerModule : PlayerModule, IEventsReceiver
 					plannerTask3.OnMakeFire(false);
 				}
 			}
+			return;
 		}
-		else if (event_type == Enums.Event.HealWound)
+		if (event_type == Enums.Event.HealWound)
 		{
 			for (int l = 0; l < this.m_AllTasks.Count; l++)
 			{

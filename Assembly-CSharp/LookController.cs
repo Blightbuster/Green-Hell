@@ -13,9 +13,18 @@ public class LookController : PlayerController
 	{
 		base.Awake();
 		LookController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Look;
-		this.m_CharacterController = base.gameObject.GetComponent<CharacterController>();
-		this.m_CharacterControllerLastOffset = this.m_CharacterController.center;
+		base.m_ControllerType = PlayerControllerType.Look;
+		this.m_LookDevSmooth.Init(Vector2.zero, 1f, true);
+	}
+
+	public void SetLookAtObjectFactor(float factor)
+	{
+		this.m_LookAtObjectFactor = factor;
+	}
+
+	public void ResetLookAtObjectFactor()
+	{
+		this.m_LookAtObjectFactor = 2f;
 	}
 
 	public void SetLookAtObject(GameObject obj)
@@ -31,6 +40,10 @@ public class LookController : PlayerController
 	public void UpdateLookDev(float x, float y)
 	{
 		if (this.UpdateLookAtObject())
+		{
+			return;
+		}
+		if (this.UpdateWantedLookDir())
 		{
 			return;
 		}
@@ -54,8 +67,10 @@ public class LookController : PlayerController
 		{
 			this.m_WantedLookDev.x = 360f + this.m_WantedLookDev.x;
 		}
-		this.m_LookDev.x = Mathf.LerpAngle(this.m_WantedLookDev.x, this.m_LookDev.x, 0.5f);
-		this.m_LookDev.y = Mathf.LerpAngle(this.m_WantedLookDev.y, this.m_LookDev.y, 0.5f);
+		this.m_LookDevSmooth.current = this.m_LookDev;
+		this.m_LookDevSmooth.target = this.m_WantedLookDev;
+		this.m_LookDevSmooth.Update(GreenHellGame.Instance.m_Settings.m_LookRotationSpeed * Time.unscaledDeltaTime);
+		this.m_LookDev = this.m_LookDevSmooth.current;
 	}
 
 	public void CalculateLookDev(Vector3 dir)
@@ -70,39 +85,20 @@ public class LookController : PlayerController
 		{
 			vector.Normalize();
 			this.m_LookDev.x = Mathf.Acos(vector.z) * 57.29578f;
-			this.m_LookDev.x = this.m_LookDev.x + ((vector.x >= 0f) ? 0f : (180f - this.m_LookDev.x));
+			this.m_LookDev.x = this.m_LookDev.x + ((vector.x < 0f) ? (180f - this.m_LookDev.x) : 0f);
 		}
 		vector = dir;
 		vector.x = 0f;
 		if (vector.magnitude == 0f)
 		{
 			this.m_LookDev.y = 0f;
+			return;
 		}
-		else
-		{
-			vector.Normalize();
-			this.m_LookDev.y = Mathf.Asin(vector.y) * 57.29578f * Mathf.Sign(vector.y);
-		}
+		vector.Normalize();
+		this.m_LookDev.y = Mathf.Asin(vector.y) * 57.29578f * Mathf.Sign(vector.y);
 	}
 
-	public void UpdateCharacterControllerCenter()
-	{
-		Vector3 center = this.m_CharacterController.center;
-		this.m_CharacterControllerLastOffset = center;
-		float num = -40f;
-		if (this.m_LookDev.y <= num)
-		{
-			center.z = 0.35f;
-		}
-		else
-		{
-			center.z = CJTools.Math.GetProportionalClamp(0.35f, -0.35f, this.m_LookDev.y, num, 80f);
-		}
-		this.m_CharacterController.center = center;
-		this.m_CharacterControllerDelta = center - this.m_CharacterControllerLastOffset;
-	}
-
-	private bool UpdateLookAtObject()
+	public bool UpdateLookAtObject()
 	{
 		if (!this.m_LookAtObject)
 		{
@@ -120,14 +116,13 @@ public class LookController : PlayerController
 		float num = Mathf.Sqrt(vector.x * vector.x + vector.z * vector.z);
 		if (num == 0f)
 		{
-			zero.y = ((vector.y <= 0f) ? -90f : 90f);
+			zero.y = ((vector.y > 0f) ? 90f : -90f);
 		}
 		else
 		{
 			zero.y = 57.29578f * Mathf.Atan(vector.y / num);
 		}
-		float num2 = Mathf.Abs(zero.x - this.m_LookDev.x);
-		if (num2 > 180f)
+		if (Mathf.Abs(zero.x - this.m_LookDev.x) > 180f)
 		{
 			if (zero.x > this.m_LookDev.x)
 			{
@@ -148,11 +143,65 @@ public class LookController : PlayerController
 		return true;
 	}
 
-	public Vector2 m_LookDev = default(Vector2);
+	public void SetWantedLookDir(Vector3 dir)
+	{
+		this.m_WantedLookDir = dir;
+	}
 
-	public Vector2 m_WantedLookDev = default(Vector2);
+	public bool UpdateWantedLookDir()
+	{
+		if (this.m_WantedLookDir == Vector3.zero)
+		{
+			return false;
+		}
+		Vector3 wantedLookDir = this.m_WantedLookDir;
+		wantedLookDir.Normalize();
+		Vector2 zero = Vector2.zero;
+		zero.x = 57.29578f * Mathf.Atan2(wantedLookDir.x, wantedLookDir.z);
+		zero.x %= 360f;
+		if (zero.x < 0f)
+		{
+			zero.x = 360f + zero.x;
+		}
+		float num = Mathf.Sqrt(wantedLookDir.x * wantedLookDir.x + wantedLookDir.z * wantedLookDir.z);
+		if (num == 0f)
+		{
+			zero.y = ((wantedLookDir.y > 0f) ? 90f : -90f);
+		}
+		else
+		{
+			zero.y = 57.29578f * Mathf.Atan(wantedLookDir.y / num);
+		}
+		if (Mathf.Abs(zero.x - this.m_LookDev.x) > 180f)
+		{
+			if (zero.x > this.m_LookDev.x)
+			{
+				this.m_LookDev.x = this.m_LookDev.x + 360f;
+			}
+			else
+			{
+				zero.x += 360f;
+			}
+		}
+		this.m_LookDev += (zero - this.m_LookDev) * Time.deltaTime * this.m_LookAtObjectFactor;
+		this.m_LookDev.x = this.m_LookDev.x % 360f;
+		if (this.m_LookDev.x < 0f)
+		{
+			this.m_LookDev.x = 360f + this.m_LookDev.x;
+		}
+		this.m_WantedLookDev = this.m_LookDev;
+		return true;
+	}
+
+	public Vector2 m_LookDev;
+
+	private SpringVec2 m_LookDevSmooth;
+
+	public Vector2 m_WantedLookDev;
 
 	public float m_LookDevSpeed = 0.5f;
+
+	private Vector3 m_WantedLookDir = Vector3.zero;
 
 	public const float CAMERA_MAX_ANGLE_UP = 80f;
 
@@ -160,15 +209,7 @@ public class LookController : PlayerController
 
 	private GameObject m_LookAtObject;
 
-	private float m_LookAtObjectFactor = 2f;
+	public float m_LookAtObjectFactor = 2f;
 
 	private static LookController s_Instance;
-
-	private CharacterController m_CharacterController;
-
-	private Vector3 m_CharacterControllerLastOffset = Vector3.zero;
-
-	public Vector3 m_CharacterControllerDelta = Vector3.zero;
-
-	public const float m_CharacterColliderMaxOffsetZ = 0.35f;
 }

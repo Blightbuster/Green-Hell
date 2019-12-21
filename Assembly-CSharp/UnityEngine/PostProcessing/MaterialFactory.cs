@@ -34,8 +34,7 @@ namespace UnityEngine.PostProcessing
 		{
 			foreach (KeyValuePair<string, Material> keyValuePair in this.m_Materials)
 			{
-				Material value = keyValuePair.Value;
-				GraphicsUtils.Destroy(value);
+				GraphicsUtils.Destroy(keyValuePair.Value);
 			}
 			this.m_Materials.Clear();
 		}

@@ -28,7 +28,9 @@ namespace UnityEngine.PostProcessing
 
 		public override void Prepare(Material uberMaterial)
 		{
-			if (++this.textureIndex >= 64)
+			int num = this.textureIndex + 1;
+			this.textureIndex = num;
+			if (num >= 64)
 			{
 				this.textureIndex = 0;
 			}

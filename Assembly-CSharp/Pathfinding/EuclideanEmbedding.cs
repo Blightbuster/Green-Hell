@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Pathfinding.Util;
 using UnityEngine;
@@ -45,7 +44,7 @@ namespace Pathfinding
 			nodeIndex2 *= this.pivotCount;
 			if (nodeIndex1 >= this.costs.Length || nodeIndex2 >= this.costs.Length)
 			{
-				this.EnsureCapacity((nodeIndex1 <= nodeIndex2) ? nodeIndex2 : nodeIndex1);
+				this.EnsureCapacity((nodeIndex1 > nodeIndex2) ? nodeIndex1 : nodeIndex2);
 			}
 			uint num = 0u;
 			for (int i = 0; i < this.pivotCount; i++)
@@ -61,55 +60,46 @@ namespace Pathfinding
 
 		private void GetClosestWalkableNodesToChildrenRecursively(Transform tr, List<GraphNode> nodes)
 		{
-			IEnumerator enumerator = tr.GetEnumerator();
-			try
+			foreach (object obj in tr)
 			{
-				while (enumerator.MoveNext())
+				Transform transform = (Transform)obj;
+				NNInfo nearest = AstarPath.active.GetNearest(transform.position, NNConstraint.Default);
+				if (nearest.node != null && nearest.node.Walkable)
 				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					NNInfo nearest = AstarPath.active.GetNearest(transform.position, NNConstraint.Default);
-					if (nearest.node != null && nearest.node.Walkable)
-					{
-						nodes.Add(nearest.node);
-					}
-					this.GetClosestWalkableNodesToChildrenRecursively(transform, nodes);
+					nodes.Add(nearest.node);
 				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
-				}
+				this.GetClosestWalkableNodesToChildrenRecursively(transform, nodes);
 			}
 		}
 
 		private void PickNRandomNodes(int count, List<GraphNode> buffer)
 		{
 			int n = 0;
-			NavGraph[] graphs = AstarPath.active.graphs;
-			for (int i = 0; i < graphs.Length; i++)
+			Action<GraphNode> <>9__0;
+			foreach (NavGraph navGraph in AstarPath.active.graphs)
 			{
-				graphs[i].GetNodes(delegate(GraphNode node)
+				Action<GraphNode> action;
+				if ((action = <>9__0) == null)
 				{
-					if (!node.Destroyed && node.Walkable)
+					action = (<>9__0 = delegate(GraphNode node)
 					{
-						n++;
-						if ((ulong)this.GetRandom() % (ulong)((long)n) < (ulong)((long)count))
+						if (!node.Destroyed && node.Walkable)
 						{
-							if (buffer.Count < count)
+							int n = n;
+							n++;
+							if ((ulong)this.GetRandom() % (ulong)((long)n) < (ulong)((long)count))
 							{
-								buffer.Add(node);
-							}
-							else
-							{
+								if (buffer.Count < count)
+								{
+									buffer.Add(node);
+									return;
+								}
 								buffer[(int)((ulong)this.GetRandom() % (ulong)((long)buffer.Count))] = node;
 							}
 						}
-					}
-				});
+					});
+				}
+				navGraph.GetNodes(action);
 			}
 		}
 
@@ -117,15 +107,21 @@ namespace Pathfinding
 		{
 			NavGraph[] graphs = AstarPath.active.graphs;
 			GraphNode first = null;
-			for (int i = 0; i < graphs.Length; i++)
+			Action<GraphNode> <>9__0;
+			foreach (NavGraph navGraph in graphs)
 			{
-				graphs[i].GetNodes(delegate(GraphNode node)
+				Action<GraphNode> action;
+				if ((action = <>9__0) == null)
 				{
-					if (node != null && node.Walkable && first == null)
+					action = (<>9__0 = delegate(GraphNode node)
 					{
-						first = node;
-					}
-				});
+						if (node != null && node.Walkable && first == null)
+						{
+							first = node;
+						}
+					});
+				}
+				navGraph.GetNodes(action);
 			}
 			return first;
 		}
@@ -217,6 +213,7 @@ namespace Pathfinding
 			int numComplete = 0;
 			OnPathDelegate onComplete = delegate(Path path)
 			{
+				int numComplete = numComplete;
 				numComplete++;
 				if (numComplete == this.pivotCount)
 				{
@@ -242,22 +239,27 @@ namespace Pathfinding
 						}
 					}
 					NavGraph[] graphs = AstarPath.active.graphs;
+					Action<GraphNode> <>9__3;
 					for (int m = graphs.Length - 1; m >= 0; m--)
 					{
-						graphs[m].GetNodes(delegate(GraphNode node)
+						NavGraph navGraph = graphs[m];
+						Action<GraphNode> action;
+						if ((action = <>9__3) == null)
 						{
-							int num6 = node.NodeIndex * this.pivotCount + pivotIndex;
-							this.EnsureCapacity(num6);
-							PathNode pathNode = ((IPathInternals)floodPath).PathHandler.GetPathNode(node);
-							if (costOffset > 0u)
+							action = (<>9__3 = delegate(GraphNode node)
 							{
-								this.costs[num6] = ((pathNode.pathID != floodPath.pathID || pathNode.parent == null) ? 0u : Math.Max(pathNode.parent.G - costOffset, 0u));
-							}
-							else
-							{
-								this.costs[num6] = ((pathNode.pathID != floodPath.pathID) ? 0u : pathNode.G);
-							}
-						});
+								int num6 = node.NodeIndex * this.pivotCount + pivotIndex;
+								this.EnsureCapacity(num6);
+								PathNode pathNode = ((IPathInternals)floodPath).PathHandler.GetPathNode(node);
+								if (costOffset > 0u)
+								{
+									this.costs[num6] = ((pathNode.pathID == floodPath.pathID && pathNode.parent != null) ? Math.Max(pathNode.parent.G - costOffset, 0u) : 0u);
+									return;
+								}
+								this.costs[num6] = ((pathNode.pathID == floodPath.pathID) ? pathNode.G : 0u);
+							});
+						}
+						navGraph.GetNodes(action);
 					}
 					if (this.mode == HeuristicOptimizationMode.RandomSpreadOut && pivotIndex < this.pivots.Length - 1)
 					{
@@ -316,7 +318,7 @@ namespace Pathfinding
 				if (gridGraph != null)
 				{
 					GridNode[] nodes = gridGraph.nodes;
-					int num = (gridGraph.neighbours != NumNeighbours.Four) ? ((gridGraph.neighbours != NumNeighbours.Eight) ? 6 : 8) : 4;
+					int num = (gridGraph.neighbours == NumNeighbours.Four) ? 4 : ((gridGraph.neighbours == NumNeighbours.Eight) ? 8 : 6);
 					for (int j = 0; j < gridGraph.depth; j++)
 					{
 						for (int k = 0; k < gridGraph.width; k++)

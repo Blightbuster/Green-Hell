@@ -16,26 +16,45 @@ public class Stand : Construction
 		if (ItemsManager.Get().IsHeavyObject(this.m_StoredItemId))
 		{
 			Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
-			if (currentItem != null && currentItem.m_Info.m_ID == this.m_StoredItemId && this.m_NumItems < this.m_Vis.Count)
+			if (this.m_CanInsert && currentItem != null && currentItem.m_Info.m_ID == this.m_StoredItemId && this.m_NumItems < this.m_Vis.Count)
 			{
 				actions.Add(TriggerAction.TYPE.InsertToStand);
 			}
 			if ((currentItem == null && this.m_NumItems > 0) || (currentItem != null && (!ItemsManager.Get().IsHeavyObject(currentItem.m_Info.m_ID) || currentItem.m_Info.m_ID == this.m_StoredItemId) && this.m_NumItems > 0))
 			{
+				if (this.m_Info.m_ID == ItemID.mud_stand)
+				{
+					actions.Add(TriggerAction.TYPE.Take);
+					return;
+				}
 				actions.Add(TriggerAction.TYPE.Expand);
+				return;
 			}
 		}
 		else
 		{
-			if (this.m_NumItems < this.m_Vis.Count && InventoryBackpack.Get().Contains(this.m_StoredItemId))
+			if (this.m_CanInsert && this.m_NumItems < this.m_Vis.Count && InventoryBackpack.Get().Contains(this.m_StoredItemId))
 			{
 				actions.Add(TriggerAction.TYPE.InsertToStand);
+			}
+			if (this.m_Info.m_ID == ItemID.Charcoal_Stand)
+			{
+				actions.Add(TriggerAction.TYPE.Take);
 			}
 			if (this.m_NumItems > 0)
 			{
 				actions.Add(TriggerAction.TYPE.Expand);
 			}
 		}
+	}
+
+	public override string GetIconName()
+	{
+		if (this.m_Info.m_ID != ItemID.Charcoal_Stand)
+		{
+			return "Put_into_construction_icon";
+		}
+		return "Charcoal";
 	}
 
 	public override void OnExecute(TriggerAction.TYPE action)
@@ -48,19 +67,27 @@ public class Stand : Construction
 			if (ItemsManager.Get().IsHeavyObject(this.m_StoredItemId))
 			{
 				this.RemoveItemFromHand();
+				return;
 			}
-			else
-			{
-				this.RemoveItemFromBackpack();
-			}
+			this.RemoveItemFromBackpack();
+			return;
 		}
-		else if (action == TriggerAction.TYPE.Expand)
+		else
 		{
-			base.OnExecute(action);
+			if (action == TriggerAction.TYPE.Expand)
+			{
+				base.OnExecute(action);
+				return;
+			}
+			if (action == TriggerAction.TYPE.Take)
+			{
+				this.Take();
+			}
+			return;
 		}
 	}
 
-	private void UpdateVis()
+	public void UpdateVis()
 	{
 		for (int i = 0; i < this.m_Vis.Count; i++)
 		{
@@ -77,6 +104,14 @@ public class Stand : Construction
 
 	public override bool CanTrigger()
 	{
+		if (this.m_CantTriggerDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
+		{
+			return false;
+		}
+		if (this.m_StoredItemId == ItemID.None)
+		{
+			return false;
+		}
 		if (ItemsManager.Get().IsHeavyObject(this.m_StoredItemId))
 		{
 			Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
@@ -102,19 +137,17 @@ public class Stand : Construction
 	private bool AddItemToBackpack()
 	{
 		Item item = ItemsManager.Get().CreateItem(this.m_StoredItemId, true, Vector3.zero, Quaternion.identity);
-		InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
-		bool flag = InventoryBackpack.InsertResult.Ok == insertResult;
+		InsertResult insertResult = InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
+		bool flag = InsertResult.Ok == insertResult;
 		if (!flag)
 		{
 			UnityEngine.Object.Destroy(item.gameObject);
 			this.m_NumItems++;
 			this.UpdateVis();
+			return flag;
 		}
-		else
-		{
-			this.PlayInsertSound();
-			base.AddItemsCountMessage(item);
-		}
+		this.PlayInsertSound();
+		base.AddItemsCountMessage(item);
 		return flag;
 	}
 
@@ -127,7 +160,7 @@ public class Stand : Construction
 		}
 		if (CraftingManager.Get().gameObject.activeSelf && CraftingManager.Get().ContainsItem(item))
 		{
-			CraftingManager.Get().RemoveItem(item);
+			CraftingManager.Get().RemoveItem(item, false);
 		}
 		if (!item.m_CurrentSlot && item.m_InventorySlot && item.m_InventorySlot.m_Items.Count > 0)
 		{
@@ -169,28 +202,24 @@ public class Stand : Construction
 		if (heavyObject.m_Attached.Count > 0)
 		{
 			heavyObject.DetachHeavyObject(heavyObject.m_Attached.Count - 1, true);
+			return;
 		}
-		else
-		{
-			Player.Get().DropItem(heavyObject);
-			UnityEngine.Object.Destroy(heavyObject.gameObject);
-		}
+		Player.Get().DropItem(heavyObject);
+		UnityEngine.Object.Destroy(heavyObject.gameObject);
 	}
 
 	private bool AddItemToHand()
 	{
 		HeavyObject heavyObject = (HeavyObject)ItemsManager.Get().CreateItem(this.m_StoredItemId, false, Vector3.zero, Quaternion.identity);
-		bool flag = heavyObject.Take();
+		bool flag = heavyObject.PickUp(true);
 		if (!flag)
 		{
 			UnityEngine.Object.Destroy(heavyObject.gameObject);
 			this.m_NumItems++;
 			this.UpdateVis();
+			return flag;
 		}
-		else
-		{
-			this.PlayInsertSound();
-		}
+		this.PlayInsertSound();
 		return flag;
 	}
 
@@ -210,6 +239,10 @@ public class Stand : Construction
 		else
 		{
 			this.AddItemToBackpack();
+		}
+		if (this.m_DestroyEmpty && this.m_NumItems <= 0)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
 		}
 		return true;
 	}
@@ -234,6 +267,10 @@ public class Stand : Construction
 				break;
 			}
 		}
+		if (this.m_DestroyEmpty && this.m_NumItems <= 0)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
 		return true;
 	}
 
@@ -257,6 +294,10 @@ public class Stand : Construction
 				break;
 			}
 		}
+		if (this.m_DestroyEmpty && this.m_NumItems <= 0)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
 		return true;
 	}
 
@@ -264,7 +305,7 @@ public class Stand : Construction
 	{
 		return string.Concat(new object[]
 		{
-			GreenHellGame.Instance.GetLocalization().Get(this.GetName()),
+			GreenHellGame.Instance.GetLocalization().Get(this.GetName(), true),
 			" ",
 			this.m_NumItems.ToString(),
 			" / ",
@@ -272,9 +313,14 @@ public class Stand : Construction
 		});
 	}
 
-	public override void DestroyMe()
+	public override void DestroyMe(bool check_connected = true)
 	{
-		base.DestroyMe();
+		base.DestroyMe(check_connected);
+		this.RemoveItems();
+	}
+
+	public void RemoveItems()
+	{
 		for (int i = 0; i < this.m_NumItems; i++)
 		{
 			ItemsManager.Get().CreateItem(this.m_StoredItemId, true, this.m_Vis[i].transform);
@@ -312,9 +358,15 @@ public class Stand : Construction
 
 	private ItemID m_StoredItemId = ItemID.None;
 
-	private int m_NumItems;
+	[HideInInspector]
+	public int m_NumItems;
 
 	public List<GameObject> m_Vis = new List<GameObject>();
 
 	private AudioSource m_AudioSource;
+
+	[HideInInspector]
+	public bool m_CanInsert = true;
+
+	public bool m_DestroyEmpty = true;
 }

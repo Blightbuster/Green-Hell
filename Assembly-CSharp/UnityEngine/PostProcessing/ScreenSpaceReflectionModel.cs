@@ -40,20 +40,20 @@ namespace UnityEngine.PostProcessing
 		[Serializable]
 		public struct IntensitySettings
 		{
-			[Range(0f, 2f)]
 			[Tooltip("Nonphysical multiplier for the SSR reflections. 1.0 is physically based.")]
+			[Range(0f, 2f)]
 			public float reflectionMultiplier;
 
-			[Range(0f, 1000f)]
 			[Tooltip("How far away from the maxDistance to begin fading SSR.")]
+			[Range(0f, 1000f)]
 			public float fadeDistance;
 
-			[Range(0f, 1f)]
 			[Tooltip("Amplify Fresnel fade out. Increase if floor reflections look good close to the surface and bad farther 'under' the floor.")]
+			[Range(0f, 1f)]
 			public float fresnelFade;
 
-			[Range(0.1f, 10f)]
 			[Tooltip("Higher values correspond to a faster Fresnel fade as the reflection changes from the grazing angle.")]
+			[Range(0.1f, 10f)]
 			public float fresnelFadePower;
 		}
 
@@ -66,12 +66,12 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Half resolution SSRR is much faster, but less accurate.")]
 			public ScreenSpaceReflectionModel.SSRResolution reflectionQuality;
 
-			[Range(0.1f, 300f)]
 			[Tooltip("Maximum reflection distance in world units.")]
+			[Range(0.1f, 300f)]
 			public float maxDistance;
 
-			[Range(16f, 1024f)]
 			[Tooltip("Max raytracing length.")]
+			[Range(16f, 1024f)]
 			public int iterationCount;
 
 			[Tooltip("Log base 2 of ray tracing coarse step size. Higher traces farther, lower gives better quality silhouettes.")]
@@ -82,8 +82,8 @@ namespace UnityEngine.PostProcessing
 			[Range(0.01f, 10f)]
 			public float widthModifier;
 
-			[Range(0.1f, 8f)]
 			[Tooltip("Blurriness of reflections.")]
+			[Range(0.1f, 8f)]
 			public float reflectionBlur;
 
 			[Tooltip("Disable for a performance gain in scenes where most glossy objects are horizontal, like floors, water, and tables. Leave on for scenes with glossy vertical objects.")]
@@ -93,8 +93,8 @@ namespace UnityEngine.PostProcessing
 		[Serializable]
 		public struct ScreenEdgeMask
 		{
-			[Range(0f, 1f)]
 			[Tooltip("Higher = fade out SSRR near the edge of the screen so that reflections don't pop under camera motion.")]
+			[Range(0f, 1f)]
 			public float intensity;
 		}
 

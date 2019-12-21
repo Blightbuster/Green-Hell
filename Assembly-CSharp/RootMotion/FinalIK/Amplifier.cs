@@ -15,9 +15,10 @@ namespace RootMotion.FinalIK
 				}
 				return;
 			}
-			foreach (Amplifier.Body body in this.bodies)
+			Amplifier.Body[] array = this.bodies;
+			for (int i = 0; i < array.Length; i++)
 			{
-				body.Update(this.ik.solver, this.weight, base.deltaTime);
+				array[i].Update(this.ik.solver, this.weight, base.deltaTime);
 			}
 		}
 
@@ -40,7 +41,7 @@ namespace RootMotion.FinalIK
 					this.firstUpdate = false;
 				}
 				Vector3 vector = (a - this.lastRelativePos) / deltaTime;
-				this.smoothDelta = ((this.speed > 0f) ? Vector3.Lerp(this.smoothDelta, vector, deltaTime * this.speed) : vector);
+				this.smoothDelta = ((this.speed <= 0f) ? vector : Vector3.Lerp(this.smoothDelta, vector, deltaTime * this.speed));
 				Vector3 v = this.relativeTo.TransformDirection(this.smoothDelta);
 				Vector3 a2 = V3Tools.ExtractVertical(v, solver.GetRoot().up, this.verticalWeight) + V3Tools.ExtractHorizontal(v, solver.GetRoot().up, this.horizontalWeight);
 				for (int i = 0; i < this.effectorLinks.Length; i++)

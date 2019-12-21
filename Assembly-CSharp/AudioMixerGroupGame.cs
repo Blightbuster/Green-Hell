@@ -8,5 +8,6 @@ public enum AudioMixerGroupGame
 	Music,
 	AI,
 	Chatter,
-	Sleep
+	Sleep,
+	EnviroAmplified
 }

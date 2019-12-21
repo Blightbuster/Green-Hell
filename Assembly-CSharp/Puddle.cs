@@ -20,6 +20,7 @@ public class Puddle : LiquidSource
 			if (base.transform.position.y > this.m_RainPos.y)
 			{
 				base.transform.position = this.m_RainPos;
+				return;
 			}
 		}
 		else

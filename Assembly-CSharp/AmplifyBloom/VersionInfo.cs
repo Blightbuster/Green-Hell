@@ -6,20 +6,6 @@ namespace AmplifyBloom
 	[Serializable]
 	public class VersionInfo
 	{
-		private VersionInfo()
-		{
-			this.m_major = 1;
-			this.m_minor = 1;
-			this.m_release = 1;
-		}
-
-		private VersionInfo(byte major, byte minor, byte release)
-		{
-			this.m_major = (int)major;
-			this.m_minor = (int)minor;
-			this.m_release = (int)release;
-		}
-
 		public static string StaticToString()
 		{
 			return string.Format("{0}.{1}.{2}", 1, 1, 1) + VersionInfo.StageSuffix;
@@ -38,6 +24,20 @@ namespace AmplifyBloom
 			}
 		}
 
+		private VersionInfo()
+		{
+			this.m_major = 1;
+			this.m_minor = 1;
+			this.m_release = 1;
+		}
+
+		private VersionInfo(byte major, byte minor, byte release)
+		{
+			this.m_major = (int)major;
+			this.m_minor = (int)minor;
+			this.m_release = (int)release;
+		}
+
 		public static VersionInfo Current()
 		{
 			return new VersionInfo(1, 1, 1);
@@ -45,7 +45,7 @@ namespace AmplifyBloom
 
 		public static bool Matches(VersionInfo version)
 		{
-			return version.m_major == 1 && version.m_minor == 1 && 1 == version.m_release;
+			return 1 == version.m_major && 1 == version.m_minor && 1 == version.m_release;
 		}
 
 		public const byte Major = 1;

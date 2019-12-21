@@ -13,9 +13,9 @@ public class PlayerCocaineModule : PlayerModule
 		PlayerCocaineModule.s_Instance = this;
 	}
 
-	public override void Initialize()
+	public override void Initialize(Being being)
 	{
-		base.Initialize();
+		base.Initialize(being);
 		this.LoadScript();
 	}
 

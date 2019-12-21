@@ -7,10 +7,14 @@ public class MenuStatistics : MenuScreen
 {
 	public override KeyCode GetShortcutKey()
 	{
-		return (!GreenHellGame.DEBUG) ? KeyCode.None : KeyCode.O;
+		if (!GreenHellGame.DEBUG)
+		{
+			return KeyCode.None;
+		}
+		return KeyCode.O;
 	}
 
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.Setup();

@@ -4,27 +4,6 @@ using Enums;
 
 public class FoodInfo : ConsumableInfo
 {
-	public FoodInfo()
-	{
-		this.m_CanCook = false;
-		this.m_CanDry = false;
-		this.m_CanSmoke = false;
-		this.m_CookingLength = 0f;
-		this.m_BurningLength = 0f;
-		this.m_DryingLength = 0f;
-		this.m_SmokingLength = 0f;
-		this.m_CookingItemID = ItemID.None;
-		this.m_BurningItemID = ItemID.None;
-		this.m_DryingItemID = ItemID.None;
-		this.m_SmokingItemID = ItemID.None;
-		this.m_SpoilEffectID = ItemID.None;
-		this.m_SpoilTime = -1f;
-		this.m_DisappearTime = 0f;
-		this.m_EatingResultItems = new List<ItemID>();
-		this.m_MeatType = MeatType.None;
-		this.m_SpoilOnlyIfTriggered = false;
-	}
-
 	public bool m_CanCook { get; set; }
 
 	public bool m_CanDry { get; set; }
@@ -59,6 +38,27 @@ public class FoodInfo : ConsumableInfo
 
 	public bool m_SpoilOnlyIfTriggered { get; set; }
 
+	public FoodInfo()
+	{
+		this.m_CanCook = false;
+		this.m_CanDry = false;
+		this.m_CanSmoke = false;
+		this.m_CookingLength = 0f;
+		this.m_BurningLength = 0f;
+		this.m_DryingLength = 0f;
+		this.m_SmokingLength = 0f;
+		this.m_CookingItemID = ItemID.None;
+		this.m_BurningItemID = ItemID.None;
+		this.m_DryingItemID = ItemID.None;
+		this.m_SmokingItemID = ItemID.None;
+		this.m_SpoilEffectID = ItemID.None;
+		this.m_SpoilTime = -1f;
+		this.m_DisappearTime = 0f;
+		this.m_EatingResultItems = new List<ItemID>();
+		this.m_MeatType = MeatType.None;
+		this.m_SpoilOnlyIfTriggered = false;
+	}
+
 	public override bool IsFood()
 	{
 		return true;
@@ -69,63 +69,76 @@ public class FoodInfo : ConsumableInfo
 		if (key.GetName() == "CanCookOnFire")
 		{
 			this.m_CanCook = (key.GetVariable(0).IValue == 1);
+			return;
 		}
-		else if (key.GetName() == "CanDry")
+		if (key.GetName() == "CanDry")
 		{
 			this.m_CanDry = (key.GetVariable(0).IValue == 1);
+			return;
 		}
-		else if (key.GetName() == "CanSmoke")
+		if (key.GetName() == "CanSmoke")
 		{
 			this.m_CanSmoke = (key.GetVariable(0).IValue == 1);
+			return;
 		}
-		else if (key.GetName() == "CookingLength")
+		if (key.GetName() == "CookingLength")
 		{
 			this.m_CookingLength = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "BurningLength")
+		if (key.GetName() == "BurningLength")
 		{
 			this.m_BurningLength = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "DryingLength")
+		if (key.GetName() == "DryingLength")
 		{
 			this.m_DryingLength = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "SmokingLength")
+		if (key.GetName() == "SmokingLength")
 		{
 			this.m_SmokingLength = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "CookingItemID")
+		if (key.GetName() == "CookingItemID")
 		{
 			this.m_CookingItemID = (ItemID)Enum.Parse(typeof(ItemID), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "BurningItemID")
+		if (key.GetName() == "BurningItemID")
 		{
 			this.m_BurningItemID = (ItemID)Enum.Parse(typeof(ItemID), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "DryingItemID")
+		if (key.GetName() == "DryingItemID")
 		{
 			this.m_DryingItemID = (ItemID)Enum.Parse(typeof(ItemID), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "SmokingItemID")
+		if (key.GetName() == "SmokingItemID")
 		{
 			this.m_SmokingItemID = (ItemID)Enum.Parse(typeof(ItemID), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "SpoilTime")
+		if (key.GetName() == "SpoilTime")
 		{
 			this.m_SpoilTime = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "SpoilEffectID")
+		if (key.GetName() == "SpoilEffectID")
 		{
 			this.m_SpoilEffectID = (ItemID)Enum.Parse(typeof(ItemID), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "DisappearTime")
+		if (key.GetName() == "DisappearTime")
 		{
 			this.m_DisappearTime = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "EatingResult")
+		if (key.GetName() == "EatingResult")
 		{
-			string svalue = key.GetVariable(0).SValue;
-			string[] array = svalue.Split(new char[]
+			string[] array = key.GetVariable(0).SValue.Split(new char[]
 			{
 				';'
 			});
@@ -133,19 +146,19 @@ public class FoodInfo : ConsumableInfo
 			{
 				this.m_EatingResultItems.Add((ItemID)Enum.Parse(typeof(ItemID), array[i]));
 			}
+			return;
 		}
-		else if (key.GetName() == "MeatType")
+		if (key.GetName() == "MeatType")
 		{
 			this.m_MeatType = (MeatType)Enum.Parse(typeof(MeatType), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "SpoilOnlyIfTriggered")
+		if (key.GetName() == "SpoilOnlyIfTriggered")
 		{
 			this.m_SpoilOnlyIfTriggered = (key.GetVariable(0).IValue != 0);
+			return;
 		}
-		else
-		{
-			base.LoadParams(key);
-		}
+		base.LoadParams(key);
 	}
 
 	public override void GetInfoText(ref string result)

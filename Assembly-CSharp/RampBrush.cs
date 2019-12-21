@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-[AddComponentMenu("Terrain/Ramp Brush")]
 [ExecuteInEditMode]
+[AddComponentMenu("Terrain/Ramp Brush")]
 public class RampBrush : MonoBehaviour
 {
 	public void OnDrawGizmos()
 	{
 		if (this.turnBrushOnVar)
 		{
-			Terrain x = (Terrain)base.GetComponent(typeof(Terrain));
-			if (x == null)
+			if ((Terrain)base.GetComponent(typeof(Terrain)) == null)
 			{
 				return;
 			}
@@ -27,29 +26,27 @@ public class RampBrush : MonoBehaviour
 			{
 				Gizmos.color = Color.green;
 				Gizmos.DrawWireSphere(this.beginRamp, this.brushSize / 2f);
+				return;
 			}
-			else
+			Gizmos.color = Color.magenta;
+			for (int i = 0; i < this.controlPoints.Count; i++)
 			{
-				Gizmos.color = Color.magenta;
-				for (int i = 0; i < this.controlPoints.Count; i++)
+				Gizmos.DrawWireSphere(this.controlPoints[i], this.brushSize / 2f);
+			}
+			if (this.controlPoints.Count > 2)
+			{
+				double num2 = 1.0 / (((double)this.controlPoints.Count - 1.0) * 8.0) - 1E-14;
+				this.calculateDistBetweenPoints(this.controlPoints);
+				Ray ray = this.parameterizedLine(0f, this.controlPoints, null);
+				double num3 = num2;
+				int num4 = 0;
+				while (num3 <= 1.0 && num4 < 1000)
 				{
-					Gizmos.DrawWireSphere(this.controlPoints[i], this.brushSize / 2f);
-				}
-				if (this.controlPoints.Count > 2)
-				{
-					double num2 = 1.0 / (((double)this.controlPoints.Count - 1.0) * 8.0) - 1E-14;
-					this.calculateDistBetweenPoints(this.controlPoints);
-					Ray ray = this.parameterizedLine(0f, this.controlPoints, null);
-					double num3 = num2;
-					int num4 = 0;
-					while (num3 <= 1.0 && num4 < 1000)
-					{
-						Ray ray2 = this.parameterizedLine((float)num3, this.controlPoints, null);
-						Gizmos.DrawLine(ray.origin, ray2.origin);
-						ray = ray2;
-						num3 += num2;
-						num4++;
-					}
+					Ray ray2 = this.parameterizedLine((float)num3, this.controlPoints, null);
+					Gizmos.DrawLine(ray.origin, ray2.origin);
+					ray = ray2;
+					num3 += num2;
+					num4++;
 				}
 			}
 		}
@@ -88,11 +85,9 @@ public class RampBrush : MonoBehaviour
 		if (this.turnBrushOnVar)
 		{
 			this.turnBrushOnVar = false;
+			return;
 		}
-		else
-		{
-			this.turnBrushOnVar = true;
-		}
+		this.turnBrushOnVar = true;
 	}
 
 	public void rampBrush()
@@ -302,8 +297,6 @@ public class RampBrush : MonoBehaviour
 			Debug.LogError("No terrain component on this GameObject");
 			return;
 		}
-		int num = 0;
-		int num2 = 0;
 		try
 		{
 			TerrainData terrainData = terrain.terrainData;
@@ -345,8 +338,8 @@ public class RampBrush : MonoBehaviour
 					return;
 				}
 			}
-			int num3 = (int)Mathf.Floor((float)heightmapWidth / size.z * this.brushSize);
-			int num4 = (int)Mathf.Floor((float)heightmapHeight / size.x * this.brushSize);
+			int num = (int)Mathf.Floor((float)heightmapWidth / size.z * this.brushSize);
+			int num2 = (int)Mathf.Floor((float)heightmapHeight / size.x * this.brushSize);
 			float[,] heights = terrainData.GetHeights(0, 0, heightmapWidth, heightmapHeight);
 			for (int k = 0; k < list.Count; k++)
 			{
@@ -357,19 +350,19 @@ public class RampBrush : MonoBehaviour
 			}
 			this.calculateDistBetweenPoints(list);
 			this.calculateDistBetweenPointsInPixels(list, terrainData);
-			float num5 = this.brushSampleDensity / this._totalLengthPixels;
-			float num6 = this.brushSize / this._totalLengthPixels;
+			float num3 = this.brushSampleDensity / this._totalLengthPixels;
+			float num4 = this.brushSize / this._totalLengthPixels;
 			Debug.Log(string.Concat(new object[]
 			{
 				"Sample w ",
-				num3,
+				num,
 				" h ",
-				num4
+				num2
 			}));
-			Debug.Log("parameterized brush width " + num6);
-			if (num6 > 0.5f)
+			Debug.Log("parameterized brush width " + num4);
+			if (num4 > 0.5f)
 			{
-				num6 = 0.5f;
+				num4 = 0.5f;
 			}
 			if (this.VERBOSE)
 			{
@@ -395,29 +388,29 @@ public class RampBrush : MonoBehaviour
 						array4[1]
 					}));
 				}
-				Debug.Log("parameterized brush width " + num6);
+				Debug.Log("parameterized brush width " + num4);
 			}
 			StringBuilder message = new StringBuilder();
-			for (float num7 = 0f; num7 <= 1f; num7 += num5)
+			for (float num5 = 0f; num5 <= 1f; num5 += num3)
 			{
-				Ray ray = this.parameterizedLine(num7, list, null);
+				Ray ray = this.parameterizedLine(num5, list, null);
 				Vector3 vector = Vector3.Cross(new Vector3(-ray.direction.z, 0f, ray.direction.x), ray.direction);
 				vector.Normalize();
 				if (this.spacingJitter > 0f)
 				{
 					float f = 6.28318548f * UnityEngine.Random.value;
-					float num8 = UnityEngine.Random.value + UnityEngine.Random.value;
-					float num9;
-					if (num8 > 1f)
+					float num6 = UnityEngine.Random.value + UnityEngine.Random.value;
+					float num7;
+					if (num6 > 1f)
 					{
-						num9 = 2f - num8;
+						num7 = 2f - num6;
 					}
 					else
 					{
-						num9 = num8;
+						num7 = num6;
 					}
-					num9 *= this.spacingJitter * this.brushSize;
-					Vector3 vector2 = new Vector3(num9 * Mathf.Cos(f), 0f, num9 * Mathf.Sin(f));
+					num7 *= this.spacingJitter * this.brushSize;
+					Vector3 vector2 = new Vector3(num7 * Mathf.Cos(f), 0f, num7 * Mathf.Sin(f));
 					if (this.VERBOSE)
 					{
 						Debug.Log(string.Concat(new object[]
@@ -442,16 +435,16 @@ public class RampBrush : MonoBehaviour
 				Plane plane2 = new Plane((list[0] - list[1]).normalized, list[0]);
 				Plane plane3 = new Plane((list[list.Count - 1] - list[list.Count - 2]).normalized, list[list.Count - 1]);
 				int[] array5 = this.terrainCordsToBitmap(terrainData, ray.origin);
-				num = array5[0] - num3 / 2;
-				num2 = array5[1] - num4 / 2;
-				float[,] array6 = new float[num3, num4];
-				for (int m = 0; m < num3; m++)
+				int num8 = array5[0] - num / 2;
+				int num9 = array5[1] - num2 / 2;
+				float[,] array6 = new float[num, num2];
+				for (int m = 0; m < num; m++)
 				{
-					for (int n = 0; n < num4; n++)
+					for (int n = 0; n < num2; n++)
 					{
-						if (num + m >= 0 && num2 + n >= 0 && num + m < heightmapWidth && num2 + n < heightmapHeight)
+						if (num8 + m >= 0 && num9 + n >= 0 && num8 + m < heightmapWidth && num9 + n < heightmapHeight)
 						{
-							array6[m, n] = heights[num + m, num2 + n];
+							array6[m, n] = heights[num8 + m, num9 + n];
 						}
 						else
 						{
@@ -460,18 +453,18 @@ public class RampBrush : MonoBehaviour
 					}
 				}
 				float[,] array7 = (float[,])array6.Clone();
-				for (int num10 = 0; num10 < num3; num10++)
+				for (int num10 = 0; num10 < num; num10++)
 				{
-					for (int num11 = 0; num11 < num4; num11++)
+					for (int num11 = 0; num11 < num2; num11++)
 					{
-						float[] array8 = this.bitmapCordsToTerrain(terrainData, num + num10, num2 + num11);
+						float[] array8 = this.bitmapCordsToTerrain(terrainData, num8 + num10, num9 + num11);
 						Vector3 vector3 = new Vector3(array8[0], 0f, array8[1]);
 						bool flag = false;
-						if (plane2.GetSide(vector3) && num7 < num6 / 2f)
+						if (plane2.GetSide(vector3) && num5 < num4 / 2f)
 						{
 							flag = true;
 						}
-						else if (plane3.GetSide(vector3) && num7 > 1f - num6 / 2f)
+						else if (plane3.GetSide(vector3) && num5 > 1f - num4 / 2f)
 						{
 							flag = true;
 						}
@@ -487,10 +480,10 @@ public class RampBrush : MonoBehaviour
 						}
 					}
 				}
-				float num13 = Mathf.Min((float)num4 / 2f, (float)num3 / 2f);
-				for (int num14 = 0; num14 < num3; num14++)
+				float num13 = Mathf.Min((float)num2 / 2f, (float)num / 2f);
+				for (int num14 = 0; num14 < num; num14++)
 				{
-					for (int num15 = 0; num15 < num4; num15++)
+					for (int num15 = 0; num15 < num2; num15++)
 					{
 						float num16 = array7[num14, num15];
 						float num17 = array6[num14, num15];
@@ -509,13 +502,13 @@ public class RampBrush : MonoBehaviour
 						array6[num14, num15] = num20;
 					}
 				}
-				for (int num21 = 0; num21 < num3; num21++)
+				for (int num21 = 0; num21 < num; num21++)
 				{
-					for (int num22 = 0; num22 < num4; num22++)
+					for (int num22 = 0; num22 < num2; num22++)
 					{
-						if (num + num21 >= 0 && num2 + num22 >= 0 && num + num21 < heightmapWidth && num2 + num22 < heightmapHeight)
+						if (num8 + num21 >= 0 && num9 + num22 >= 0 && num8 + num21 < heightmapWidth && num9 + num22 < heightmapHeight)
 						{
-							heights[num + num21, num2 + num22] = array6[num21, num22];
+							heights[num8 + num21, num9 + num22] = array6[num21, num22];
 						}
 					}
 				}
@@ -624,8 +617,7 @@ public class RampBrush : MonoBehaviour
 		float d = num3 * num3;
 		float d2 = num3 * num3 * num3;
 		Vector3 origin = 0.5f * (2f * a2 + (-a + vector) * num3 + (2f * a - 5f * a2 + 4f * vector - vector2) * d + (-a + 3f * a2 - 3f * vector + vector2) * d2);
-		Ray result = new Ray(origin, (0.5f * (-a + vector + num3 * (4f * a - 10f * a2 + 8f * vector - 2f * vector2) + d * (-3f * a + 9f * a2 - 9f * vector + 3f * vector2))).normalized);
-		return result;
+		return new Ray(origin, (0.5f * (-a + vector + num3 * (4f * a - 10f * a2 + 8f * vector - 2f * vector2) + d * (-3f * a + 9f * a2 - 9f * vector + 3f * vector2))).normalized);
 	}
 
 	private bool VERBOSE;

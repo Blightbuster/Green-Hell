@@ -49,8 +49,8 @@ public class RTP_MouseOrbit_DynamicDistance : MonoBehaviour
 				}
 			}
 			Vector3 size = bounds.size;
-			float num = (size.x <= size.y) ? size.y : size.x;
-			num = ((size.z <= num) ? num : size.z);
+			float num = (size.x > size.y) ? size.x : size.y;
+			num = ((size.z > num) ? size.z : num);
 			this.bounds_MaxSize = num;
 			this.cur_distance += this.bounds_MaxSize * 1.2f;
 			this.surfaceColliders = this.target.GetComponentsInChildren<Collider>();
@@ -68,9 +68,10 @@ public class RTP_MouseOrbit_DynamicDistance : MonoBehaviour
 				{
 					RaycastHit raycastHit = default(RaycastHit);
 					Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-					foreach (Collider collider in this.surfaceColliders)
+					Collider[] array = this.surfaceColliders;
+					for (int i = 0; i < array.Length; i++)
 					{
-						if (collider.Raycast(ray, out raycastHit, float.PositiveInfinity))
+						if (array[i].Raycast(ray, out raycastHit, float.PositiveInfinity))
 						{
 							this.DraggingObject = true;
 							break;
@@ -130,9 +131,10 @@ public class RTP_MouseOrbit_DynamicDistance : MonoBehaviour
 				Vector3 vector = Vector3.Normalize(this.targetFocus.position - base.transform.position);
 				float num = 0.01f;
 				bool flag = false;
-				foreach (Collider collider2 in this.surfaceColliders)
+				Collider[] array = this.surfaceColliders;
+				for (int i = 0; i < array.Length; i++)
 				{
-					if (collider2.Raycast(new Ray(base.transform.position - vector * this.bounds_MaxSize, vector), out raycastHit2, float.PositiveInfinity))
+					if (array[i].Raycast(new Ray(base.transform.position - vector * this.bounds_MaxSize, vector), out raycastHit2, float.PositiveInfinity))
 					{
 						num = Mathf.Max(Vector3.Distance(raycastHit2.point, this.targetFocus.position) + this.distance, num);
 						flag = true;

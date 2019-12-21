@@ -45,13 +45,11 @@ namespace Pathfinding
 			if (this.usingGravity)
 			{
 				float num;
-				this.velocity2D += this.movementPlane.ToPlane(deltaTime * ((!float.IsNaN(this.gravity.x)) ? this.gravity : Physics.gravity), out num);
+				this.velocity2D += this.movementPlane.ToPlane(deltaTime * (float.IsNaN(this.gravity.x) ? Physics.gravity : this.gravity), out num);
 				this.verticalVelocity += num;
+				return;
 			}
-			else
-			{
-				this.verticalVelocity = 0f;
-			}
+			this.verticalVelocity = 0f;
 		}
 
 		protected Vector2 CalculateDeltaToMoveThisFrame(Vector2 position, float distanceToEndOfPath, float deltaTime)
@@ -117,15 +115,14 @@ namespace Pathfinding
 				if (this.rigid != null)
 				{
 					this.rigid.MovePosition(position3D);
+					return;
 				}
-				else if (this.rigid2D != null)
+				if (this.rigid2D != null)
 				{
 					this.rigid2D.MovePosition(position3D);
+					return;
 				}
-				else
-				{
-					this.tr.position = position3D;
-				}
+				this.tr.position = position3D;
 			}
 		}
 
@@ -157,8 +154,7 @@ namespace Pathfinding
 				this.rigid = base.GetComponent<Rigidbody>();
 				this.rigid2D = base.GetComponent<Rigidbody2D>();
 			}
-			bool flag = (this.rigid == null || this.rigid.isKinematic) && (this.rigid2D == null || this.rigid2D.isKinematic) && !(this.gravity == Vector3.zero);
-			if (flag && (this.controller == null || !this.controller.enabled))
+			if ((this.rigid == null || this.rigid.isKinematic) && (this.rigid2D == null || this.rigid2D.isKinematic) && !(this.gravity == Vector3.zero) && (this.controller == null || !this.controller.enabled))
 			{
 				Gizmos.color = AIBase.GizmoColorRaycast;
 				Gizmos.DrawLine(base.transform.position, base.transform.position + base.transform.up * this.centerOffset);

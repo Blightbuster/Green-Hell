@@ -19,17 +19,19 @@ namespace AIs
 				if (this.m_AI.m_Attractor.name == "Attr_0")
 				{
 					this.m_AI.m_Attractor = JaguarTwitchDemo.s_Object.transform.Find("Attr_1").GetComponent<AIAttractor>();
+					return;
 				}
-				else
-				{
-					UnityEngine.Object.Destroy(this.m_AI.gameObject);
-				}
+				UnityEngine.Object.Destroy(this.m_AI.gameObject);
 			}
 		}
 
 		public override AIMoveStyle GetWantedMoveStyle()
 		{
-			return AIMoveStyle.Walk;
+			if (!this.m_AI.m_Attractor)
+			{
+				return AIMoveStyle.Run;
+			}
+			return this.m_AI.m_Attractor.m_MoveStyle;
 		}
 	}
 }

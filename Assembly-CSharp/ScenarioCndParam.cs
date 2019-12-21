@@ -24,23 +24,26 @@ public class ScenarioCndParam : ScenarioElement
 		}
 		string text = array[1];
 		Type type = Type.GetType(text);
-		this.m_Object = Resources.FindObjectsOfTypeAll(type)[0];
+		this.m_Object = ScenarioManager.Get().GetObjectOfType(type);
 		DebugUtils.Assert(this.m_Object != null, "[ScenarioCndParam:Setup] ERROR - Can't find object " + text, true, DebugUtils.AssertType.Info);
 		this.m_Property = type.GetProperty("m_" + array[2]);
 		this.m_CndType = (ScenarioCndParam.CndType)Enum.Parse(typeof(ScenarioCndParam.CndType), array[3]);
 		if (this.m_Property.PropertyType == typeof(string))
 		{
 			this.m_Var.SValue = array[4];
+			return;
 		}
-		else if (this.m_Property.PropertyType == typeof(float))
+		if (this.m_Property.PropertyType == typeof(float))
 		{
 			this.m_Var.FValue = float.Parse(array[4]);
+			return;
 		}
-		else if (this.m_Property.PropertyType == typeof(bool))
+		if (this.m_Property.PropertyType == typeof(bool))
 		{
 			this.m_Var.BValue = bool.Parse(array[4]);
+			return;
 		}
-		else if (this.m_Property.PropertyType == typeof(int))
+		if (this.m_Property.PropertyType == typeof(int))
 		{
 			this.m_Var.IValue = int.Parse(array[4]);
 		}
@@ -48,39 +51,9 @@ public class ScenarioCndParam : ScenarioElement
 
 	protected override bool ShouldComplete()
 	{
-		ScenarioCndParam.CndType cndType = this.m_CndType;
-		if (cndType != ScenarioCndParam.CndType.Equal)
+		switch (this.m_CndType)
 		{
-			if (cndType != ScenarioCndParam.CndType.Less)
-			{
-				if (cndType == ScenarioCndParam.CndType.Greater)
-				{
-					CJVariable.TYPE variableType = this.m_Var.GetVariableType();
-					if (variableType == CJVariable.TYPE.Float)
-					{
-						return (float)this.m_Property.GetValue(this.m_Object, null) > this.m_Var.FValue;
-					}
-					if (variableType == CJVariable.TYPE.Int)
-					{
-						return (int)this.m_Property.GetValue(this.m_Object, null) > this.m_Var.IValue;
-					}
-				}
-			}
-			else
-			{
-				CJVariable.TYPE variableType2 = this.m_Var.GetVariableType();
-				if (variableType2 == CJVariable.TYPE.Float)
-				{
-					return (float)this.m_Property.GetValue(this.m_Object, null) < this.m_Var.FValue;
-				}
-				if (variableType2 == CJVariable.TYPE.Int)
-				{
-					return (int)this.m_Property.GetValue(this.m_Object, null) < this.m_Var.IValue;
-				}
-			}
-		}
-		else
-		{
+		case ScenarioCndParam.CndType.Equal:
 			switch (this.m_Var.GetVariableType())
 			{
 			case CJVariable.TYPE.String:
@@ -92,6 +65,33 @@ public class ScenarioCndParam : ScenarioElement
 			case CJVariable.TYPE.Bool:
 				return (bool)this.m_Property.GetValue(this.m_Object, null) == this.m_Var.BValue;
 			}
+			break;
+		case ScenarioCndParam.CndType.Less:
+		{
+			CJVariable.TYPE variableType = this.m_Var.GetVariableType();
+			if (variableType == CJVariable.TYPE.Int)
+			{
+				return (int)this.m_Property.GetValue(this.m_Object, null) < this.m_Var.IValue;
+			}
+			if (variableType == CJVariable.TYPE.Float)
+			{
+				return (float)this.m_Property.GetValue(this.m_Object, null) < this.m_Var.FValue;
+			}
+			break;
+		}
+		case ScenarioCndParam.CndType.Greater:
+		{
+			CJVariable.TYPE variableType = this.m_Var.GetVariableType();
+			if (variableType == CJVariable.TYPE.Int)
+			{
+				return (int)this.m_Property.GetValue(this.m_Object, null) > this.m_Var.IValue;
+			}
+			if (variableType == CJVariable.TYPE.Float)
+			{
+				return (float)this.m_Property.GetValue(this.m_Object, null) > this.m_Var.FValue;
+			}
+			break;
+		}
 		}
 		DebugUtils.Assert(DebugUtils.AssertType.Info);
 		return false;

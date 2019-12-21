@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder Quadruped")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder Quadruped")]
 	public class GrounderQuadruped : Grounder
 	{
 		[ContextMenu("User Manual")]
@@ -237,13 +237,12 @@ namespace RootMotion.FinalIK
 			this.forelegSolver.Update();
 			this.pelvis.position += this.solver.pelvis.IKOffset * this.weight;
 			Vector3 fromDirection = this.lastSpineBone.position - this.pelvis.position;
-			Vector3 a = this.lastSpineBone.position + this.forelegSolver.root.up * Mathf.Clamp(this.forelegSolver.pelvis.heightOffset, float.NegativeInfinity, 0f) - this.solver.root.up * this.solver.pelvis.heightOffset;
-			Vector3 toDirection = a - this.pelvis.position;
+			Vector3 toDirection = this.lastSpineBone.position + this.forelegSolver.root.up * Mathf.Clamp(this.forelegSolver.pelvis.heightOffset, float.NegativeInfinity, 0f) - this.solver.root.up * this.solver.pelvis.heightOffset - this.pelvis.position;
 			Quaternion b = Quaternion.FromToRotation(fromDirection, toDirection);
 			this.pelvis.rotation = Quaternion.Slerp(Quaternion.identity, b, this.weight) * this.pelvis.rotation;
 			for (int j = 0; j < this.feet.Length; j++)
 			{
-				this.SetFootIK(this.feet[j], (j >= 2) ? this.maxForeLegOffset : this.maxLegOffset);
+				this.SetFootIK(this.feet[j], (j < 2) ? this.maxLegOffset : this.maxForeLegOffset);
 			}
 			this.solved = true;
 			this.solvedFeet = 0;
@@ -332,16 +331,16 @@ namespace RootMotion.FinalIK
 		[Tooltip("The Grounding solver for the forelegs.")]
 		public Grounding forelegSolver = new Grounding();
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of rotating the character root to the ground angle (range: 0 - 1).")]
+		[Range(0f, 1f)]
 		public float rootRotationWeight = 0.5f;
 
-		[Range(-90f, 0f)]
 		[Tooltip("The maximum angle of rotating the quadruped downwards (going downhill, range: -90 - 0).")]
+		[Range(-90f, 0f)]
 		public float minRootRotation = -25f;
 
-		[Range(0f, 90f)]
 		[Tooltip("The maximum angle of rotating the quadruped upwards (going uphill, range: 0 - 90).")]
+		[Range(0f, 90f)]
 		public float maxRootRotation = 45f;
 
 		[Tooltip("The speed of interpolating the character root rotation (range: 0 - inf).")]
@@ -353,8 +352,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The maximum IK offset for the forelegs (range: 0 - inf).")]
 		public float maxForeLegOffset = 0.5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of maintaining the head's rotation as it was before solving the Grounding (range: 0 - 1).")]
+		[Range(0f, 1f)]
 		public float maintainHeadRotationWeight = 0.5f;
 
 		[Tooltip("The root Transform of the character, with the rigidbody and the collider.")]

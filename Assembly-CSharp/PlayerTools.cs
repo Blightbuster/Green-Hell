@@ -211,23 +211,17 @@ public class PlayerTools
 			PlayerTools.Initialize();
 		}
 		List<Transform> list = null;
-		if (mask != PlayerAvatarMask.Bottom)
+		switch (mask)
 		{
-			if (mask != PlayerAvatarMask.Spine)
-			{
-				if (mask == PlayerAvatarMask.All)
-				{
-					list = PlayerTools.s_AllTransform;
-				}
-			}
-			else
-			{
-				list = PlayerTools.s_SpineTransform;
-			}
-		}
-		else
-		{
+		case PlayerAvatarMask.Spine:
+			list = PlayerTools.s_SpineTransform;
+			break;
+		case PlayerAvatarMask.Bottom:
 			list = PlayerTools.s_BottomTransform;
+			break;
+		case PlayerAvatarMask.All:
+			list = PlayerTools.s_AllTransform;
+			break;
 		}
 		CJPair<Vector3, Quaternion> cjpair = default(CJPair<Vector3, Quaternion>);
 		for (int i = 0; i < list.Count; i++)
@@ -249,23 +243,17 @@ public class PlayerTools
 			return;
 		}
 		List<Transform> list = null;
-		if (mask != PlayerAvatarMask.Bottom)
+		switch (mask)
 		{
-			if (mask != PlayerAvatarMask.Spine)
-			{
-				if (mask == PlayerAvatarMask.All)
-				{
-					list = PlayerTools.s_AllTransform;
-				}
-			}
-			else
-			{
-				list = PlayerTools.s_SpineTransform;
-			}
-		}
-		else
-		{
+		case PlayerAvatarMask.Spine:
+			list = PlayerTools.s_SpineTransform;
+			break;
+		case PlayerAvatarMask.Bottom:
 			list = PlayerTools.s_BottomTransform;
+			break;
+		case PlayerAvatarMask.All:
+			list = PlayerTools.s_AllTransform;
+			break;
 		}
 		CJPair<Vector3, Quaternion> cjpair = default(CJPair<Vector3, Quaternion>);
 		for (int i = 0; i < list.Count; i++)

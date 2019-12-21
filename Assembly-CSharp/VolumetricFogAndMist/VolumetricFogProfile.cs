@@ -102,11 +102,11 @@ namespace VolumetricFogAndMist
 			fog.distanceFallOff = profile1.distanceFallOff * (1f - t) + profile2.distanceFallOff * t;
 			fog.maxFogLength = profile1.maxFogLength * (1f - t) + profile2.maxFogLength * t;
 			fog.maxFogLengthFallOff = profile1.maxFogLengthFallOff * (1f - t) + profile2.maxFogLengthFallOff * t;
-			fog.baselineRelativeToCamera = ((t >= 0.5f) ? profile2.baselineRelativeToCamera : profile1.baselineRelativeToCamera);
+			fog.baselineRelativeToCamera = ((t < 0.5f) ? profile1.baselineRelativeToCamera : profile2.baselineRelativeToCamera);
 			fog.baselineRelativeToCameraDelay = profile1.baselineRelativeToCameraDelay * (1f - t) + profile2.baselineRelativeToCameraDelay * t;
 			fog.noiseScale = profile1.noiseScale * (1f - t) + profile2.noiseScale * t;
 			fog.noiseSparse = profile1.noiseSparse * (1f - t) + profile2.noiseSparse * t;
-			fog.sunCopyColor = ((t >= 0.5f) ? profile2.sunCopyColor : profile1.sunCopyColor);
+			fog.sunCopyColor = ((t < 0.5f) ? profile1.sunCopyColor : profile2.sunCopyColor);
 			fog.alpha = profile1.alpha * (1f - t) + profile2.alpha * t;
 			fog.color = profile1.color * (1f - t) + profile2.color * t;
 			fog.specularColor = profile1.specularColor * (1f - t) + profile2.color * t;
@@ -125,7 +125,7 @@ namespace VolumetricFogAndMist
 			fog.skyAlpha = profile1.skyAlpha * (1f - t) + profile2.skyAlpha * t;
 			fog.stepping = profile1.stepping * (1f - t) + profile2.stepping * t;
 			fog.steppingNear = profile1.steppingNear * (1f - t) + profile2.steppingNear * t;
-			fog.dithering = ((t >= 0.5f) ? profile2.dithering : profile1.dithering);
+			fog.dithering = ((t < 0.5f) ? profile1.dithering : profile2.dithering);
 			fog.ditherStrength = profile1.ditherStrength * (1f - t) + profile2.ditherStrength * t;
 		}
 

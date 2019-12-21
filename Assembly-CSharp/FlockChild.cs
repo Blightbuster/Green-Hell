@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using Enums;
 using UnityEngine;
 
@@ -24,6 +23,11 @@ public class FlockChild : MonoBehaviour
 			FlockChild._updateNextSeed %= num;
 		}
 		this.m_Renderer = base.gameObject.GetComponentInChildren<Renderer>();
+		Collider component = base.GetComponent<Collider>();
+		if (component && Player.Get() && Player.Get().m_CharacterController && Player.Get().m_CharacterController.m_Controller)
+		{
+			Physics.IgnoreCollision(component, Player.Get().m_CharacterController.m_Controller, true);
+		}
 	}
 
 	public Animation GetAnimation()
@@ -41,17 +45,20 @@ public class FlockChild : MonoBehaviour
 		{
 			this.SoarTimeLimit();
 			this.CheckForDistanceToWaypoint();
-			this.RotationBasedOnWaypointOrAvoidance();
-			this.LimitRotationOfModel();
+			this.RotationBasedOnWaypoint();
+			this.UpdateMoveAndAvoidance();
+			if (Time.time > this.m_NextLimitTime)
+			{
+				this.LimitRotationOfModel();
+				this.m_NextLimitTime = Time.time + UnityEngine.Random.Range(0.1f, 0.2f);
+			}
 		}
 		if (!this.m_Renderer.isVisible)
 		{
 			this.m_InvisibleDuration += Time.deltaTime;
+			return;
 		}
-		else
-		{
-			this.m_InvisibleDuration = 0f;
-		}
+		this.m_InvisibleDuration = 0f;
 	}
 
 	public void OnDisable()
@@ -68,11 +75,9 @@ public class FlockChild : MonoBehaviour
 			if (this._landing)
 			{
 				this.GetAnimation().Play(this._spawner._idleAnimation);
+				return;
 			}
-			else
-			{
-				this.GetAnimation().Play(this._spawner._flapAnimation);
-			}
+			this.GetAnimation().Play(this._spawner._flapAnimation);
 		}
 	}
 
@@ -94,23 +99,10 @@ public class FlockChild : MonoBehaviour
 
 	public void RandomizeStartAnimationFrame()
 	{
-		IEnumerator enumerator = this.GetAnimation().GetEnumerator();
-		try
+		foreach (object obj in this.GetAnimation())
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj = enumerator.Current;
-				AnimationState animationState = (AnimationState)obj;
-				animationState.time = UnityEngine.Random.value * animationState.length;
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			AnimationState animationState = (AnimationState)obj;
+			animationState.time = UnityEngine.Random.value * animationState.length;
 		}
 	}
 
@@ -139,11 +131,9 @@ public class FlockChild : MonoBehaviour
 			{
 				this.Flap();
 				this._soarTimer = 0f;
+				return;
 			}
-			else
-			{
-				this._soarTimer += this._spawner._newDelta;
-			}
+			this._soarTimer += this._spawner._newDelta;
 		}
 	}
 
@@ -153,29 +143,32 @@ public class FlockChild : MonoBehaviour
 		{
 			this.Wander(0f);
 			this._stuckCounter = 0f;
+			return;
 		}
-		else if (!this._landing)
+		if (!this._landing)
 		{
 			this._stuckCounter += this._spawner._newDelta;
+			return;
 		}
-		else
-		{
-			this._stuckCounter = 0f;
-		}
+		this._stuckCounter = 0f;
 	}
 
-	public void RotationBasedOnWaypointOrAvoidance()
+	public void RotationBasedOnWaypoint()
 	{
-		Vector3 vector = this._wayPoint - this._thisT.position;
-		if (this._targetSpeed > -1f && vector != Vector3.zero)
+		Vector3 forward = this._wayPoint - this._thisT.position;
+		if (this._targetSpeed > -1f && forward.sqrMagnitude > 0f)
 		{
-			Quaternion b = Quaternion.LookRotation(vector);
+			Quaternion b = Quaternion.LookRotation(forward);
 			this._thisT.rotation = Quaternion.Slerp(this._thisT.rotation, b, this._spawner._newDelta * this._damping);
 		}
 		if (this._spawner._childTriggerPos && (this._thisT.position - this._spawner._posBuffer).magnitude < 1f)
 		{
 			this._spawner.SetFlockRandomPosition();
 		}
+	}
+
+	private void UpdateMoveAndAvoidance()
+	{
 		this._speed = Mathf.Lerp(this._speed, this._targetSpeed, this._spawner._newDelta * 2.5f);
 		if (this._move)
 		{
@@ -244,13 +237,11 @@ public class FlockChild : MonoBehaviour
 			eulerAngles.x = Mathf.LerpAngle(this._modelT.localEulerAngles.x, -this._thisT.localEulerAngles.x, this._spawner._newDelta * 1.75f);
 			localRotation.eulerAngles = eulerAngles;
 			this._modelT.localRotation = localRotation;
+			return;
 		}
-		else
-		{
-			eulerAngles.x = Mathf.LerpAngle(this._modelT.localEulerAngles.x, 0f, this._spawner._newDelta * 1.75f);
-			localRotation.eulerAngles = eulerAngles;
-			this._modelT.localRotation = localRotation;
-		}
+		eulerAngles.x = Mathf.LerpAngle(this._modelT.localEulerAngles.x, 0f, this._spawner._newDelta * 1.75f);
+		localRotation.eulerAngles = eulerAngles;
+		this._modelT.localRotation = localRotation;
 	}
 
 	public void Wander(float delay)
@@ -269,15 +260,14 @@ public class FlockChild : MonoBehaviour
 		if (!this._dived && UnityEngine.Random.value < this._spawner._soarFrequency)
 		{
 			this.Soar();
+			return;
 		}
-		else if (!this._dived && UnityEngine.Random.value < this._spawner._diveFrequency)
+		if (!this._dived && UnityEngine.Random.value < this._spawner._diveFrequency)
 		{
 			this.Dive();
+			return;
 		}
-		else
-		{
-			this.Flap();
-		}
+		this.Flap();
 	}
 
 	public void Flap()
@@ -298,10 +288,11 @@ public class FlockChild : MonoBehaviour
 	public Vector3 findWaypoint()
 	{
 		Vector3 zero = Vector3.zero;
-		zero.x = UnityEngine.Random.Range(-this._spawner._spawnSphere, this._spawner._spawnSphere) + this._spawner._posBuffer.x;
-		zero.z = UnityEngine.Random.Range(-this._spawner._spawnSphereDepth, this._spawner._spawnSphereDepth) + this._spawner._posBuffer.z;
-		zero.y = UnityEngine.Random.Range(-this._spawner._spawnSphereHeight, this._spawner._spawnSphereHeight) + this._spawner._posBuffer.y;
-		return zero;
+		Vector3 zero2 = Vector3.zero;
+		zero2.Set(UnityEngine.Random.Range(-this._spawner._spawnSphere, this._spawner._spawnSphere), UnityEngine.Random.Range(-this._spawner._spawnSphereHeight, this._spawner._spawnSphereHeight), UnityEngine.Random.Range(-this._spawner._spawnSphereDepth, this._spawner._spawnSphereDepth));
+		Vector3 vector = this._spawner._thisT.rotation * zero2 + this._spawner._posBuffer;
+		DebugRender.DrawPoint(vector, Color.black, 0.3f, 100f);
+		return vector;
 	}
 
 	public void Soar()
@@ -322,25 +313,12 @@ public class FlockChild : MonoBehaviour
 		}
 		else
 		{
-			IEnumerator enumerator = this.GetAnimation().GetEnumerator();
-			try
+			foreach (object obj in this.GetAnimation())
 			{
-				while (enumerator.MoveNext())
+				AnimationState animationState = (AnimationState)obj;
+				if (this._thisT.position.y < this._wayPoint.y + 25f)
 				{
-					object obj = enumerator.Current;
-					AnimationState animationState = (AnimationState)obj;
-					if (this._thisT.position.y < this._wayPoint.y + 25f)
-					{
-						animationState.speed = 0.1f;
-					}
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
+					animationState.speed = 0.1f;
 				}
 			}
 		}
@@ -353,36 +331,22 @@ public class FlockChild : MonoBehaviour
 	{
 		string value = base.name + "_Body";
 		ItemID item_id = (ItemID)Enum.Parse(typeof(ItemID), value);
-		Item item = ItemsManager.Get().CreateItem(item_id, true, base.transform.position, UnityEngine.Random.rotation);
-		item.ApplyImpulse(new Vector3(0f, 10f, 0f), new Vector3(0f, 0f, UnityEngine.Random.Range(-100f, 100f)));
+		ItemsManager.Get().CreateItem(item_id, true, base.transform.position, UnityEngine.Random.rotation).ApplyImpulse(new Vector3(0f, 10f, 0f), new Vector3(0f, 0f, UnityEngine.Random.Range(-100f, 100f)));
 		this._spawner.RemoveChild(this);
 	}
 
 	public void animationSpeed()
 	{
-		IEnumerator enumerator = this.GetAnimation().GetEnumerator();
-		try
+		foreach (object obj in this.GetAnimation())
 		{
-			while (enumerator.MoveNext())
+			AnimationState animationState = (AnimationState)obj;
+			if (!this._dived && !this._landing)
 			{
-				object obj = enumerator.Current;
-				AnimationState animationState = (AnimationState)obj;
-				if (!this._dived && !this._landing)
-				{
-					animationState.speed = UnityEngine.Random.Range(this._spawner._minAnimationSpeed, this._spawner._maxAnimationSpeed);
-				}
-				else
-				{
-					animationState.speed = this._spawner._maxAnimationSpeed;
-				}
+				animationState.speed = UnityEngine.Random.Range(this._spawner._minAnimationSpeed, this._spawner._maxAnimationSpeed);
 			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
+			else
 			{
-				disposable.Dispose();
+				animationState.speed = this._spawner._maxAnimationSpeed;
 			}
 		}
 	}
@@ -449,6 +413,8 @@ public class FlockChild : MonoBehaviour
 	public Animation m_Animation;
 
 	public FlockChild.TimeOfDay m_TimeOfDay;
+
+	private float m_NextLimitTime;
 
 	public enum TimeOfDay
 	{

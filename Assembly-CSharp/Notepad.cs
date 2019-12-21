@@ -7,15 +7,38 @@ using UnityEngine;
 
 public class Notepad : MonoBehaviour
 {
+	private void SetupTabs()
+	{
+		if (GreenHellGame.TWITCH_DEMO || GreenHellGame.Instance.m_GameMode == GameMode.Survival)
+		{
+			if (this.m_StoryTabCollider.transform.parent != null)
+			{
+				this.m_StoryTabCollider.transform.parent.gameObject.SetActive(false);
+			}
+			if (this.m_StoryObjectivesTabCollider.transform.parent != null)
+			{
+				this.m_StoryObjectivesTabCollider.transform.parent.gameObject.SetActive(false);
+				return;
+			}
+		}
+		else
+		{
+			if (this.m_StoryTabCollider.transform.parent != null)
+			{
+				this.m_StoryTabCollider.transform.parent.gameObject.SetActive(true);
+			}
+			if (this.m_StoryObjectivesTabCollider.transform.parent != null)
+			{
+				this.m_StoryObjectivesTabCollider.transform.parent.gameObject.SetActive(true);
+			}
+		}
+	}
+
 	private void Awake()
 	{
 		this.m_PrevPageObject = base.gameObject.transform.FindDeepChild("previous_page").gameObject;
 		this.m_NextPageObject = base.gameObject.transform.FindDeepChild("next_page").gameObject;
-		if (GreenHellGame.TWITCH_DEMO || GreenHellGame.Instance.m_GameMode == GameMode.Survival)
-		{
-			this.m_StoryTabCollider.gameObject.SetActive(false);
-			this.m_PlannerTabCollider.gameObject.SetActive(false);
-		}
+		this.SetupTabs();
 		NotepadObjectTab notepadObjectTab = new NotepadObjectTab();
 		notepadObjectTab.m_MenuTab = MenuNotepad.MenuNotepadTab.StoryTab;
 		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_StoryTabCollider.gameObject.transform.parent.gameObject);
@@ -36,11 +59,6 @@ public class Notepad : MonoBehaviour
 		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_TrapsTabCollider.gameObject.transform.parent.gameObject);
 		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_TrapsTabCollider.gameObject.transform.parent.gameObject);
 		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.TrapsTab] = notepadObjectTab;
-		notepadObjectTab = new NotepadObjectTab();
-		notepadObjectTab.m_MenuTab = MenuNotepad.MenuNotepadTab.PlannerTab;
-		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_PlannerTabCollider.gameObject.transform.parent.gameObject);
-		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_PlannerTabCollider.gameObject.transform.parent.gameObject);
-		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.PlannerTab] = notepadObjectTab;
 		notepadObjectTab = new NotepadObjectTab();
 		notepadObjectTab.m_MenuTab = MenuNotepad.MenuNotepadTab.FirecampTab;
 		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_FirecampTabCollider.gameObject.transform.parent.gameObject);
@@ -71,6 +89,21 @@ public class Notepad : MonoBehaviour
 		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_CustomConstructionsTabCollider.gameObject.transform.parent.gameObject);
 		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_CustomConstructionsTabCollider.gameObject.transform.parent.gameObject);
 		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.CustomConstructionsTab] = notepadObjectTab;
+		notepadObjectTab = new NotepadObjectTab();
+		notepadObjectTab.m_MenuTab = MenuNotepad.MenuNotepadTab.StoryObjectivesTab;
+		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_StoryObjectivesTabCollider.gameObject.transform.parent.gameObject);
+		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_StoryObjectivesTabCollider.gameObject.transform.parent.gameObject);
+		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.StoryObjectivesTab] = notepadObjectTab;
+		notepadObjectTab = new NotepadObjectTab();
+		notepadObjectTab.m_MenuTab = MenuNotepad.MenuNotepadTab.MudBuildingsTab;
+		notepadObjectTab.m_GameObjectOn = this.GetOnObject(this.m_MudBuildingsTabCollider.gameObject.transform.parent.gameObject);
+		notepadObjectTab.m_GameObjectOff = this.GetOffObject(this.m_MudBuildingsTabCollider.gameObject.transform.parent.gameObject);
+		this.m_ObjetcTabs[MenuNotepad.MenuNotepadTab.MudBuildingsTab] = notepadObjectTab;
+	}
+
+	private void OnEnable()
+	{
+		this.SetupTabs();
 	}
 
 	private GameObject GetOnObject(GameObject parent)
@@ -116,7 +149,7 @@ public class Notepad : MonoBehaviour
 		}
 		for (int i = 0; i < this.m_ObjetcTabs.Count; i++)
 		{
-			if ((!GreenHellGame.TWITCH_DEMO && GreenHellGame.Instance.m_GameMode != GameMode.Survival) || (this.m_ObjetcTabs.Values.ElementAt(i).m_MenuTab != MenuNotepad.MenuNotepadTab.StoryTab && this.m_ObjetcTabs.Values.ElementAt(i).m_MenuTab != MenuNotepad.MenuNotepadTab.PlannerTab))
+			if ((!GreenHellGame.TWITCH_DEMO && GreenHellGame.Instance.m_GameMode != GameMode.Survival) || this.m_ObjetcTabs.Values.ElementAt(i).m_MenuTab != MenuNotepad.MenuNotepadTab.StoryTab)
 			{
 				if (this.m_ObjetcTabs.Keys.ElementAt(i) == tab)
 				{
@@ -132,27 +165,29 @@ public class Notepad : MonoBehaviour
 		}
 	}
 
-	public Collider m_StoryTabCollider;
+	public BoxCollider m_StoryTabCollider;
 
-	public Collider m_SkillsTabCollider;
+	public BoxCollider m_SkillsTabCollider;
 
-	public Collider m_ItemsTabCollider;
+	public BoxCollider m_ItemsTabCollider;
 
-	public Collider m_ConstructionsTabCollider;
+	public BoxCollider m_ConstructionsTabCollider;
 
-	public Collider m_TrapsTabCollider;
+	public BoxCollider m_TrapsTabCollider;
 
-	public Collider m_PlannerTabCollider;
+	public BoxCollider m_FirecampTabCollider;
 
-	public Collider m_FirecampTabCollider;
+	public BoxCollider m_WaterConstructionsTabCollider;
 
-	public Collider m_WaterConstructionsTabCollider;
+	public BoxCollider m_HealingItemsTabCollider;
 
-	public Collider m_HealingItemsTabCollider;
+	public BoxCollider m_PlantsTabCollider;
 
-	public Collider m_PlantsTabCollider;
+	public BoxCollider m_CustomConstructionsTabCollider;
 
-	public Collider m_CustomConstructionsTabCollider;
+	public BoxCollider m_StoryObjectivesTabCollider;
+
+	public BoxCollider m_MudBuildingsTabCollider;
 
 	private Dictionary<MenuNotepad.MenuNotepadTab, NotepadObjectTab> m_ObjetcTabs = new Dictionary<MenuNotepad.MenuNotepadTab, NotepadObjectTab>();
 

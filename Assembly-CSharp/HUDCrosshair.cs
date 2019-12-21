@@ -45,7 +45,7 @@ public class HUDCrosshair : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return !NotepadController.Get().IsActive() && !MapController.Get().IsActive() && !Inventory3DManager.Get().gameObject.activeSelf;
+		return GreenHellGame.Instance.m_Settings.m_Crosshair && !NotepadController.Get().IsActive() && !MapController.Get().IsActive();
 	}
 
 	public void ShowCrosshair()
@@ -108,7 +108,10 @@ public class HUDCrosshair : HUDBase
 
 	private float m_InitialDistance = 50f;
 
-	private float m_FinalDistance = 18f;
+	public const float FINAL_DISTANCE = 18f;
+
+	[HideInInspector]
+	public float m_FinalDistance;
 
 	private float m_WantedDistance;
 

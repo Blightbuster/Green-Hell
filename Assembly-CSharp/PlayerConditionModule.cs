@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using AIs;
+using CJTools;
 using Enums;
 using UnityEngine;
 
@@ -9,7 +11,31 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float m_MaxHP { get; set; }
 
-	public float m_HP { get; set; }
+	public event PlayerConditionModule.OnStaminaDecreasedDel OnStaminaDecreasedEvent;
+
+	public float m_HP
+	{
+		get
+		{
+			return this.m_HPProp;
+		}
+		set
+		{
+			this.m_HPProp = value;
+		}
+	}
+
+	public int m_Sanity
+	{
+		get
+		{
+			return PlayerSanityModule.Get().m_Sanity;
+		}
+		set
+		{
+			PlayerSanityModule.Get().m_Sanity = value;
+		}
+	}
 
 	public float m_MaxEnergy { get; set; }
 
@@ -22,6 +48,8 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 	public float m_NutritionProteins { get; set; }
 
 	public float m_Hydration { get; set; }
+
+	public float m_Dirtiness { get; set; }
 
 	public static PlayerConditionModule Get()
 	{
@@ -37,9 +65,9 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 	{
 	}
 
-	public override void Initialize()
+	public override void Initialize(Being being)
 	{
-		base.Initialize();
+		base.Initialize(being);
 		this.ResetParams();
 		this.ParseFile();
 		this.m_Sky = UnityEngine.Object.FindObjectOfType<TOD_Sky>();
@@ -48,6 +76,12 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		this.m_InjuryModule = this.m_Player.GetComponent<PlayerInjuryModule>();
 		this.m_SwimController = this.m_Player.GetComponent<SwimController>();
 		this.m_AudioModule = this.m_Player.GetComponent<PlayerAudioModule>();
+	}
+
+	public override void PostInitialize()
+	{
+		base.PostInitialize();
+		this.m_MaxDirtiness = 100f * (float)PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.DirtSickness).m_MaxLevel;
 	}
 
 	public void ResetParams()
@@ -59,6 +93,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		this.m_NutritionProteins = this.m_MaxNutritionProteins;
 		this.m_Hydration = this.m_MaxHydration;
 		this.m_Energy = this.m_MaxEnergy;
+		this.m_Dirtiness = 0f;
 	}
 
 	public void ScenarioSetParamsFromScript(string script_name)
@@ -82,11 +117,9 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		if (GreenHellGame.TWITCH_DEMO)
 		{
 			this.ParseFile("Player_condition_TwitchDemo");
+			return;
 		}
-		else
-		{
-			this.ParseFile("Player_condition");
-		}
+		this.ParseFile("Player_condition");
 	}
 
 	private void ParseFile(string script_name)
@@ -172,6 +205,14 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			{
 				this.m_StaminaDepletedLevel = key.GetVariable(0).FValue;
 			}
+			else if (key.GetName() == "LowStaminaLevel")
+			{
+				this.m_LowStaminaLevel = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "LowStaminaRecoveryLevel")
+			{
+				this.m_LowStaminaRecoveryLevel = key.GetVariable(0).FValue;
+			}
 			else if (key.GetName() == "StaminaDecrease")
 			{
 				this.m_StaminaDecreaseMap.Add((int)Enum.Parse(typeof(StaminaDecreaseReason), key.GetVariable(0).SValue), key.GetVariable(1).FValue);
@@ -208,9 +249,17 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			{
 				this.m_HealthLossPerSecondNoHydration = key.GetVariable(0).FValue;
 			}
-			else if (key.GetName() == "HealthRecoveryPerDay")
+			else if (key.GetName() == "HealthRecoveryPerDayEasyMode")
 			{
-				this.m_HealthRecoveryPerDay = key.GetVariable(0).FValue;
+				this.m_HealthRecoveryPerDayEasyMode = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "HealthRecoveryPerDayNormalMode")
+			{
+				this.m_HealthRecoveryPerDayNormalMode = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "HealthRecoveryPerDayHardMode")
+			{
+				this.m_HealthRecoveryPerDayHardMode = key.GetVariable(0).FValue;
 			}
 			else if (key.GetName() == "NutritionCarbohydratesConsumptionPerSecond")
 			{
@@ -328,6 +377,46 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			{
 				this.m_HealthLossPerSecondNoOxygen = key.GetVariable(0).FValue;
 			}
+			else if (key.GetName() == "DirtinessIncreasePerSecond")
+			{
+				this.m_DirtinessIncreasePerSecond = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddChoppingPlants")
+			{
+				this.m_DirtAddChoppingPlants = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddTakeAnimalDroppings")
+			{
+				this.m_DirtAddTakeAnimalDroppings = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddPlow")
+			{
+				this.m_DirtAddPlow = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddPickickgUpHeavyObject")
+			{
+				this.m_DirtAddPickickgUpHeavyObject = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddSleepingOnGround")
+			{
+				this.m_DirtAddSleepingOnGround = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddUsingMud")
+			{
+				this.m_DirtAddUsingMud = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddCombat")
+			{
+				this.m_DirtAddCombat = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "DirtAddLossConsciousness")
+			{
+				this.m_DirtAddLossConsciousness = key.GetVariable(0).FValue;
+			}
+			else if (key.GetName() == "StaminaConsumptionWalkPerSecond")
+			{
+				this.m_StaminaConsumptionWalkPerSecond = key.GetVariable(0).FValue;
+			}
 		}
 	}
 
@@ -338,17 +427,26 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetStamina()
 	{
+		if (ScenarioManager.Get().IsDream())
+		{
+			return this.m_MaxStamina;
+		}
 		return this.m_Stamina;
 	}
 
 	public bool IsStaminaLevel(float level)
 	{
-		return this.m_Stamina / this.m_MaxStamina <= level;
+		return this.GetStamina() / this.m_MaxEnergy <= level;
+	}
+
+	public bool IsLowStamina()
+	{
+		return this.m_IsLowStamina;
 	}
 
 	public bool IsStaminaCriticalLevel()
 	{
-		return this.m_Stamina / this.m_MaxStamina <= this.m_CriticalLevel;
+		return this.GetStamina() / this.m_MaxEnergy <= this.m_CriticalLevel;
 	}
 
 	public float GetMaxEnergy()
@@ -363,10 +461,6 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetHP()
 	{
-		if (this.m_Player.m_DreamActive)
-		{
-			return this.m_MaxHP;
-		}
 		return this.m_HP;
 	}
 
@@ -377,7 +471,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetEnergy()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return this.m_MaxEnergy;
 		}
@@ -386,7 +480,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public bool IsEnergyCriticalLevel()
 	{
-		return !this.m_Player.m_DreamActive && this.m_HP / this.m_MaxHP <= this.m_CriticalLevel;
+		return !ScenarioManager.Get().IsDream() && this.m_HP / this.m_MaxHP <= this.m_CriticalLevel;
 	}
 
 	public float GetMaxNutritionFat()
@@ -396,7 +490,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetNutritionFat()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return this.m_MaxNutritionFat;
 		}
@@ -420,7 +514,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetNutritionCarbo()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return this.m_MaxNutritionCarbo;
 		}
@@ -444,7 +538,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetNutritionProtein()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return this.m_MaxNutritionProteins;
 		}
@@ -473,7 +567,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float GetHydration()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return this.m_MaxHydration;
 		}
@@ -492,7 +586,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public bool IsStaminaDepleted()
 	{
-		return this.m_Stamina < this.m_StaminaDepletedLevel;
+		return this.GetStamina() < this.m_StaminaDepletedLevel;
 	}
 
 	public void DecreaseStamina(StaminaDecreaseReason reason, float mul = 1f)
@@ -505,6 +599,12 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		{
 			this.DecreaseStamina(this.m_StaminaDecreaseMap[(int)reason] * mul);
 		}
+		PlayerConditionModule.OnStaminaDecreasedDel onStaminaDecreasedEvent = this.OnStaminaDecreasedEvent;
+		if (onStaminaDecreasedEvent == null)
+		{
+			return;
+		}
+		onStaminaDecreasedEvent(reason, this.GetStamina());
 	}
 
 	public void DecreaseStamina(float value)
@@ -513,7 +613,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		{
 			return;
 		}
-		this.m_Stamina -= value * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_StaminaConsumptionMul);
+		this.m_Stamina -= value * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_StaminaConsumptionMul : 1f);
 		this.m_Stamina = Mathf.Clamp(this.m_Stamina, 0f, this.m_MaxStamina);
 		if (value > 0f)
 		{
@@ -540,37 +640,40 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public void DecreaseEnergy(float val)
 	{
-		this.m_Energy -= val;
-		this.m_Energy = Mathf.Clamp(this.m_Energy, 0f, this.m_MaxEnergy);
+		if (DifficultySettings.ActivePreset.m_Energy)
+		{
+			this.m_Energy -= val;
+			this.m_Energy = Mathf.Clamp(this.m_Energy, 0f, this.m_MaxEnergy);
+		}
 	}
 
 	public void DecreaseNutritionCarbo(float val)
 	{
-		if (Cheats.m_GodMode || this.m_LossParametersBlocked)
+		if (DifficultySettings.ActivePreset.m_NutrientsDepletion == NutrientsDepletion.Off || Cheats.m_GodMode || this.m_LossParametersBlocked)
 		{
 			return;
 		}
-		this.m_NutritionCarbo -= val * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_CarboConsumptionMul);
+		this.m_NutritionCarbo -= val * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_CarboConsumptionMul : 1f);
 		this.m_NutritionCarbo = Mathf.Clamp(this.m_NutritionCarbo, 0f, this.m_MaxNutritionCarbo);
 	}
 
 	public void DecreaseNutritionFat(float val)
 	{
-		if (Cheats.m_GodMode || this.m_LossParametersBlocked)
+		if (DifficultySettings.ActivePreset.m_NutrientsDepletion == NutrientsDepletion.Off || Cheats.m_GodMode || this.m_LossParametersBlocked)
 		{
 			return;
 		}
-		this.m_NutritionFat -= val * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_FatConsumptionMul);
+		this.m_NutritionFat -= val * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_FatConsumptionMul : 1f);
 		this.m_NutritionFat = Mathf.Clamp(this.m_NutritionFat, 0f, this.m_MaxNutritionFat);
 	}
 
 	public void DecreaseNutritionProtein(float val)
 	{
-		if (Cheats.m_GodMode || this.m_LossParametersBlocked)
+		if (DifficultySettings.ActivePreset.m_NutrientsDepletion == NutrientsDepletion.Off || Cheats.m_GodMode || this.m_LossParametersBlocked)
 		{
 			return;
 		}
-		this.m_NutritionProteins -= val * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_ProteinsConsumptionMul);
+		this.m_NutritionProteins -= val * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_ProteinsConsumptionMul : 1f);
 		this.m_NutritionProteins = Mathf.Clamp(this.m_NutritionProteins, 0f, this.m_MaxNutritionProteins);
 	}
 
@@ -649,6 +752,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		this.UpdateNutrition();
 		this.UpdateHydration();
 		this.UpdateOxygen();
+		this.UpdateDirtiness();
 	}
 
 	private void UpdateStamina()
@@ -665,17 +769,18 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			return;
 		}
 		float num = this.m_Stamina;
+		bool flag = Player.Get().GetCurrentItem() && Player.Get().GetCurrentItem().m_Info.IsHeavyObject();
 		if (fppcontroller.IsActive() && fppcontroller.IsWalking())
 		{
-			num -= this.m_StaminaConsumptionWalkPerSecond * deltaTime * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_StaminaConsumptionMul);
+			num -= this.m_StaminaConsumptionWalkPerSecond * deltaTime * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_StaminaConsumptionMul : 1f) * (flag ? 1.6f : 1f);
 		}
 		else if (fppcontroller.IsActive() && fppcontroller.IsRunning())
 		{
-			num -= this.m_StaminaConsumptionRunPerSecond * deltaTime * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_StaminaConsumptionMul);
+			num -= this.m_StaminaConsumptionRunPerSecond * deltaTime * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_StaminaConsumptionMul : 1f) * (flag ? 1.6f : 1f);
 		}
 		else if (fppcontroller.IsActive() && fppcontroller.IsDepleted())
 		{
-			num -= this.m_StaminaConsumptionDepletedPerSecond * deltaTime * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_StaminaConsumptionMul);
+			num -= this.m_StaminaConsumptionDepletedPerSecond * deltaTime * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_StaminaConsumptionMul : 1f);
 		}
 		else if (!MakeFireController.Get().IsActive())
 		{
@@ -685,18 +790,32 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		{
 			this.m_Stamina = num;
 		}
-		float num2 = this.m_Stamina - this.m_PrevStamina;
-		if (num2 < 0f)
+		if (this.m_Stamina - this.m_PrevStamina < 0f)
 		{
 			this.m_LastDecreaseStaminaTime = Time.time;
 		}
 		this.m_Stamina = Mathf.Clamp(this.m_Stamina, 0f, this.m_MaxStamina);
+		if (this.m_IsLowStamina)
+		{
+			if (this.m_MaxStamina < this.m_LowStaminaRecoveryLevel)
+			{
+				this.m_IsLowStamina = (this.m_Stamina < this.m_LowStaminaLevel && this.m_Stamina < this.m_MaxStamina);
+			}
+			else if (this.m_Stamina >= this.m_LowStaminaRecoveryLevel)
+			{
+				this.m_IsLowStamina = false;
+			}
+		}
+		else if (this.m_Stamina < this.m_LowStaminaLevel && this.m_Stamina < this.m_MaxStamina)
+		{
+			this.m_IsLowStamina = true;
+		}
 		this.m_PrevStamina = this.m_Stamina;
 	}
 
 	private void UpdateOxygen()
 	{
-		if (this.m_Player.GetComponent<SwimController>().IsActive() && this.m_Player.GetComponent<SwimController>().m_State == SwimState.Dive)
+		if (this.m_Player.GetComponent<SwimController>().IsActive() && this.m_Player.GetComponent<SwimController>().m_State == SwimState.Dive && !Player.Get().m_InfinityDiving)
 		{
 			this.m_Oxygen -= this.m_OxygenConsumptionPerSecond * Time.deltaTime;
 		}
@@ -704,44 +823,52 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		{
 			this.m_Oxygen = this.m_MaxOxygen;
 		}
+		if (this.m_Oxygen <= 0f && this.m_LastOxygen > 0f)
+		{
+			PlayerAudioModule.Get().PlayNoOxygenDivingSounds();
+		}
+		this.m_LastOxygen = this.m_Oxygen;
 	}
 
 	private void UpdateEnergy()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return;
 		}
 		float deltaTime = Time.deltaTime;
-		FPPController fppcontroller = this.m_Player.m_FPPController;
-		if (!fppcontroller)
+		if (!this.m_Player.m_FPPController)
 		{
 			return;
 		}
-		DeathController deathController = this.m_Player.m_DeathController;
-		if (deathController.IsActive())
+		if (this.m_Player.m_DeathController.IsActive())
 		{
 			return;
 		}
-		ConsciousnessController component = this.m_Player.GetComponent<ConsciousnessController>();
-		if (component.IsActive())
+		if (this.m_Player.GetComponent<ConsciousnessController>().IsActive())
 		{
 			return;
 		}
-		if (!Cheats.m_GodMode && !this.m_LossParametersBlocked)
+		float num = 1f;
+		Insomnia insomnia = (Insomnia)this.m_DiseasesModule.GetDisease(ConsumeEffect.Insomnia);
+		if (insomnia.IsActive())
 		{
-			this.m_Energy -= this.m_EnergyConsumptionPerSecond * deltaTime;
+			num = insomnia.m_EnergyLossMulFinal;
+		}
+		if (DifficultySettings.ActivePreset.m_Energy && !Cheats.m_GodMode && !this.m_LossParametersBlocked)
+		{
+			this.m_Energy -= this.m_EnergyConsumptionPerSecond * deltaTime * num;
 			if (this.IsNutritionCarboCriticalLevel() || this.IsNutritionFatCriticalLevel() || this.IsNutritionProteinsCriticalLevel())
 			{
-				this.m_Energy -= this.m_EnergyConsumptionPerSecondNoNutrition * deltaTime;
+				this.m_Energy -= this.m_EnergyConsumptionPerSecondNoNutrition * deltaTime * num;
 			}
 			if (this.m_DiseasesModule.GetDisease(ConsumeEffect.Fever).IsActive())
 			{
-				this.m_Energy -= this.m_EnergyConsumptionPerSecondFever * deltaTime;
+				this.m_Energy -= this.m_EnergyConsumptionPerSecondFever * deltaTime * num;
 			}
 			if (this.m_DiseasesModule.GetDisease(ConsumeEffect.FoodPoisoning).IsActive())
 			{
-				this.m_Energy -= this.m_EnergyConsumptionPerSecondFoodPoison * deltaTime;
+				this.m_Energy -= this.m_EnergyConsumptionPerSecondFoodPoison * deltaTime * num;
 			}
 		}
 		this.m_Energy = Mathf.Clamp(this.m_Energy, 0f, this.m_MaxEnergy);
@@ -759,23 +886,20 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	private void UpdateHP()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return;
 		}
 		float deltaTime = Time.deltaTime;
-		FPPController fppcontroller = this.m_Player.m_FPPController;
-		if (!fppcontroller)
+		if (!this.m_Player.m_FPPController)
 		{
 			return;
 		}
-		DeathController deathController = this.m_Player.m_DeathController;
-		if (deathController.IsActive())
+		if (this.m_Player.m_DeathController.IsActive())
 		{
 			return;
 		}
-		ConsciousnessController component = this.m_Player.GetComponent<ConsciousnessController>();
-		if (component.IsActive())
+		if (this.m_Player.GetComponent<ConsciousnessController>().IsActive())
 		{
 			return;
 		}
@@ -793,20 +917,33 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			List<Injury> injuriesList = this.m_InjuryModule.GetInjuriesList();
 			for (int i = 0; i < injuriesList.Count; i++)
 			{
-				if (injuriesList[i].m_ParentInjury == null)
+				if (injuriesList[i].m_ParentInjury == null && injuriesList[i].m_Type != InjuryType.Worm && injuriesList[i].m_Type != InjuryType.Leech)
 				{
-					if (injuriesList[i].m_Type != InjuryType.Worm && injuriesList[i].m_Type != InjuryType.Rash && injuriesList[i].m_Type != InjuryType.Leech)
-					{
-						flag = false;
-						break;
-					}
+					flag = false;
+					break;
 				}
 			}
 			if (flag)
 			{
-				float num = MainLevel.Instance.m_TODTime.m_DayLengthInMinutes + MainLevel.Instance.m_TODTime.m_NightLengthInMinutes;
-				float num2 = num * 60f;
-				this.IncreaseHP(this.m_MaxHP * this.m_HealthRecoveryPerDay / num2 * deltaTime);
+				float num = (MainLevel.Instance.m_TODTime.m_DayLengthInMinutes + MainLevel.Instance.m_TODTime.m_NightLengthInMinutes) * 60f;
+				float num2 = this.m_HealthRecoveryPerDayNormalMode;
+				GameDifficulty baseDifficulty = DifficultySettings.ActivePreset.m_BaseDifficulty;
+				if (baseDifficulty == GameDifficulty.Easy)
+				{
+					num2 = this.m_HealthRecoveryPerDayEasyMode;
+				}
+				else if (baseDifficulty == GameDifficulty.Hard)
+				{
+					num2 = this.m_HealthRecoveryPerDayHardMode;
+				}
+				if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
+				{
+					this.IncreaseHP(num2 / num * Player.GetSleepTimeFactor());
+				}
+				else
+				{
+					this.IncreaseHP(num2 / num * deltaTime);
+				}
 			}
 			if (this.m_Oxygen <= 0f)
 			{
@@ -819,6 +956,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			if (!this.m_AudioModule.IsHeartBeatSoundPlaying())
 			{
 				this.m_AudioModule.PlayHeartBeatSound(1f, true);
+				return;
 			}
 		}
 		else if (this.m_AudioModule.IsHeartBeatSoundPlaying())
@@ -839,7 +977,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		{
 			this.m_ParasiteSickness = (ParasiteSickness)PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.ParasiteSickness);
 		}
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return;
 		}
@@ -849,6 +987,11 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		}
 		FPPController fppcontroller = this.m_Player.m_FPPController;
 		if (!fppcontroller)
+		{
+			return;
+		}
+		NutrientsDepletion nutrientsDepletion = DifficultySettings.ActivePreset.m_NutrientsDepletion;
+		if (nutrientsDepletion == NutrientsDepletion.Off)
 		{
 			return;
 		}
@@ -911,26 +1054,25 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 			num3 *= this.m_ParasiteSickness.m_MacroNutricientFatLossMul * (float)this.m_ParasiteSickness.m_Level;
 			num4 *= this.m_ParasiteSickness.m_MacroNutricientProteinsLossMul * (float)this.m_ParasiteSickness.m_Level;
 		}
-		GameDifficulty gameDifficulty = GreenHellGame.Instance.m_GameDifficulty;
-		if (gameDifficulty == GameDifficulty.Normal)
+		if (nutrientsDepletion == NutrientsDepletion.Normal)
 		{
 			float s_NormalModeLossMul = GreenHellGame.s_NormalModeLossMul;
 			num2 *= s_NormalModeLossMul;
 			num3 *= s_NormalModeLossMul;
 			num4 *= s_NormalModeLossMul;
 		}
-		else if (gameDifficulty == GameDifficulty.Easy)
+		else if (nutrientsDepletion == NutrientsDepletion.Low)
 		{
 			float s_EasyModeLossMul = GreenHellGame.s_EasyModeLossMul;
 			num2 *= s_EasyModeLossMul;
 			num3 *= s_EasyModeLossMul;
 			num4 *= s_EasyModeLossMul;
 		}
-		this.m_NutritionCarbo -= this.m_NutritionCarbohydratesConsumptionPerSecond * num * num2 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_CarboConsumptionMul);
+		this.m_NutritionCarbo -= this.m_NutritionCarbohydratesConsumptionPerSecond * num * num2 * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_CarboConsumptionMul : 1f);
 		this.m_NutritionCarbo = Mathf.Clamp(this.m_NutritionCarbo, 0f, this.m_MaxNutritionCarbo);
-		this.m_NutritionFat -= this.m_NutritionFatConsumptionPerSecond * num * num3 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_FatConsumptionMul);
+		this.m_NutritionFat -= this.m_NutritionFatConsumptionPerSecond * num * num3 * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_FatConsumptionMul : 1f);
 		this.m_NutritionFat = Mathf.Clamp(this.m_NutritionFat, 0f, this.m_MaxNutritionFat);
-		this.m_NutritionProteins -= this.m_NutritionProteinsConsumptionPerSecond * num * num4 * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_ProteinsConsumptionMul);
+		this.m_NutritionProteins -= this.m_NutritionProteinsConsumptionPerSecond * num * num4 * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_ProteinsConsumptionMul : 1f);
 		this.m_NutritionProteins = Mathf.Clamp(this.m_NutritionProteins, 0f, this.m_MaxNutritionProteins);
 	}
 
@@ -948,22 +1090,27 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public void DecreaseHydration(float amount)
 	{
-		if (Cheats.m_GodMode || this.m_LossParametersBlocked)
+		if (DifficultySettings.ActivePreset.m_NutrientsDepletion == NutrientsDepletion.Off || Cheats.m_GodMode || this.m_LossParametersBlocked)
 		{
 			return;
 		}
-		this.m_Hydration -= amount * ((!PlayerCocaineModule.Get().m_Active) ? 1f : PlayerCocaineModule.Get().m_HydrationConsumptionMul);
+		this.m_Hydration -= amount * (PlayerCocaineModule.Get().m_Active ? PlayerCocaineModule.Get().m_HydrationConsumptionMul : 1f);
 		this.m_Hydration = Mathf.Clamp(this.m_Hydration, 0f, this.m_MaxHydration);
 	}
 
 	private void UpdateHydration()
 	{
-		if (this.m_Player.m_DreamActive)
+		if (ScenarioManager.Get().IsDream())
 		{
 			return;
 		}
 		FPPController fppcontroller = this.m_Player.m_FPPController;
 		if (!fppcontroller)
+		{
+			return;
+		}
+		NutrientsDepletion nutrientsDepletion = DifficultySettings.ActivePreset.m_NutrientsDepletion;
+		if (nutrientsDepletion == NutrientsDepletion.Off)
 		{
 			return;
 		}
@@ -990,12 +1137,11 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 				}
 			}
 		}
-		GameDifficulty gameDifficulty = GreenHellGame.Instance.m_GameDifficulty;
-		if (gameDifficulty == GameDifficulty.Normal)
+		if (nutrientsDepletion == NutrientsDepletion.Normal)
 		{
 			num *= GreenHellGame.s_NormalModeLossMul;
 		}
-		else if (gameDifficulty == GameDifficulty.Easy)
+		else if (nutrientsDepletion == NutrientsDepletion.Low)
 		{
 			num *= GreenHellGame.s_EasyModeLossMul;
 		}
@@ -1004,13 +1150,94 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public override void OnTakeDamage(DamageInfo info)
 	{
+		if (!DifficultySettings.ActivePreset.m_HPLoss && !info.m_FromDamageSensor)
+		{
+			return;
+		}
+		float num = info.m_Damage;
+		info.m_InjuryPlace = PlayerInjuryModule.Get().GetInjuryPlaceFromHit(info);
+		if (!info.m_FromInjury)
+		{
+			if (info.m_Damager != null && info.m_Damager.GetComponent<AI>() != null)
+			{
+				this.GetDirtinessAdd(GetDirtyReason.Combat, null);
+			}
+			Limb limb = EnumTools.ConvertInjuryPlaceToLimb(info.m_InjuryPlace);
+			if (limb == Limb.None)
+			{
+				limb = Limb.LArm;
+			}
+			if (info.m_DamageType != DamageType.Fall && info.m_DamageType != DamageType.SnakePoison && info.m_DamageType != DamageType.VenomPoison && info.m_DamageType != DamageType.Insects && info.m_DamageType != DamageType.Infection)
+			{
+				num = info.m_Damage * (1f - PlayerArmorModule.Get().GetAbsorption(limb));
+			}
+			PlayerArmorModule.Get().SetPhaseCompleted(ArmorTakeDamagePhase.ConditionModule);
+		}
 		if (info.m_Blocked)
 		{
-			this.DecreaseStamina(StaminaDecreaseReason.PuchBlock, 1f);
+			this.DecreaseStamina(Player.Get().GetCurrentItem() ? StaminaDecreaseReason.PuchWeaponBlock : StaminaDecreaseReason.PuchBlock, 1f);
+			return;
 		}
-		else
+		this.m_HP -= num;
+		if (this.m_HP <= 0f)
 		{
-			this.m_HP -= info.m_Damage;
+			DeathController.DeathType type = DeathController.DeathType.Normal;
+			if (info.m_AIType == AI.AIID.BlackCaiman)
+			{
+				type = DeathController.DeathType.Caiman;
+			}
+			else if (info.m_DamageType == DamageType.Claws)
+			{
+				type = DeathController.DeathType.Predator;
+			}
+			else if (info.m_AIType == AI.AIID.Piranha)
+			{
+				type = DeathController.DeathType.Piranha;
+			}
+			else if (info.m_DamageType == DamageType.Cut)
+			{
+				type = DeathController.DeathType.Cut;
+			}
+			else if (info.m_DamageType == DamageType.Fall)
+			{
+				type = DeathController.DeathType.Fall;
+			}
+			else if (info.m_DamageType == DamageType.Insects)
+			{
+				type = DeathController.DeathType.Insects;
+			}
+			else if (info.m_DamageType == DamageType.Melee)
+			{
+				type = DeathController.DeathType.Melee;
+			}
+			else if (info.m_DamageType == DamageType.SnakePoison)
+			{
+				type = DeathController.DeathType.Poison;
+			}
+			else if (info.m_DamageType == DamageType.Thrust)
+			{
+				type = DeathController.DeathType.Thrust;
+			}
+			else if (info.m_DamageType == DamageType.VenomPoison)
+			{
+				type = DeathController.DeathType.Poison;
+			}
+			else if (info.m_DamageType == DamageType.Infection)
+			{
+				type = DeathController.DeathType.Infection;
+			}
+			else if (SwimController.Get().IsActive())
+			{
+				if (SwimController.Get().GetState() == SwimState.Dive)
+				{
+					type = DeathController.DeathType.UnderWater;
+				}
+				else
+				{
+					type = DeathController.DeathType.OnWater;
+				}
+			}
+			Player.Get().Die(type);
 		}
 	}
 
@@ -1023,6 +1250,7 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		SaveGame.SaveVal("PCM_NutritionFat", this.m_NutritionFat);
 		SaveGame.SaveVal("PCM_NutritionProteins", this.m_NutritionProteins);
 		SaveGame.SaveVal("LossParametersBlocked", this.m_LossParametersBlocked);
+		SaveGame.SaveVal("PCM_Dirtiness", this.m_Dirtiness);
 	}
 
 	public void Load()
@@ -1041,6 +1269,11 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		SaveGame.LoadVal("PCM_NutritionProteins", out num, false);
 		this.m_NutritionProteins = num;
 		this.m_LossParametersBlocked = SaveGame.LoadBVal("LossParametersBlocked");
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate11)
+		{
+			SaveGame.LoadVal("PCM_Dirtiness", out num, false);
+			this.m_Dirtiness = num;
+		}
 	}
 
 	public void BlockParametersLoss()
@@ -1058,13 +1291,132 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 		return this.m_LossParametersBlocked;
 	}
 
+	private void UpdateDirtiness()
+	{
+		bool flag = true;
+		if (Player.Get().IsTakingShower())
+		{
+			this.m_Dirtiness -= 50f * Time.deltaTime;
+			this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+			flag = false;
+		}
+		if (SwimController.Get().IsActive())
+		{
+			if (SwimController.Get().GetState() == SwimState.Dive)
+			{
+				this.m_Dirtiness -= 30f * Time.deltaTime;
+			}
+			else
+			{
+				this.m_Dirtiness -= 10f * Time.deltaTime;
+			}
+			this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+			flag = false;
+		}
+		if (RainManager.Get().IsRain() && !RainManager.Get().IsInRainCutter(base.transform.position))
+		{
+			this.m_Dirtiness -= 3f * Time.deltaTime;
+			this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+			flag = false;
+		}
+		if (Player.Get().m_Animator.GetBool(Player.Get().m_CleanUpHash))
+		{
+			this.m_Dirtiness -= 35f * Time.deltaTime;
+			this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+			flag = false;
+		}
+		if (!flag)
+		{
+			return;
+		}
+		if (this.m_BlockGettingDirty)
+		{
+			return;
+		}
+		float num = Time.deltaTime;
+		if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
+		{
+			if (SleepController.Get().GetRestingPlace() != null)
+			{
+				num = 0f;
+			}
+			else
+			{
+				num = Player.GetSleepTimeFactor();
+			}
+		}
+		this.m_Dirtiness += this.m_DirtinessIncreasePerSecond * num;
+		this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+	}
+
+	public void BlockGettingDirty()
+	{
+		this.m_BlockGettingDirty = true;
+	}
+
+	public void UnblockGettingDirty()
+	{
+		this.m_BlockGettingDirty = false;
+	}
+
+	public void SetDirtiness(float set)
+	{
+		this.m_Dirtiness = 1f - set;
+	}
+
+	public void GetDirtinessAdd(GetDirtyReason reason, HeavyObjectInfo item_info = null)
+	{
+		if (this.m_BlockGettingDirty)
+		{
+			return;
+		}
+		switch (reason)
+		{
+		case GetDirtyReason.ChopPlants:
+			this.m_Dirtiness += this.m_DirtAddChoppingPlants;
+			break;
+		case GetDirtyReason.HeavyObject:
+			this.m_Dirtiness += item_info.m_DirtinessOnTake;
+			break;
+		case GetDirtyReason.SleepingOnGround:
+			this.m_Dirtiness += this.m_DirtAddSleepingOnGround;
+			break;
+		case GetDirtyReason.UsingMud:
+			this.m_Dirtiness += this.m_DirtAddUsingMud;
+			break;
+		case GetDirtyReason.Combat:
+			this.m_Dirtiness += this.m_DirtAddCombat;
+			break;
+		case GetDirtyReason.LossConsciousness:
+			this.m_Dirtiness += this.m_DirtAddLossConsciousness;
+			break;
+		case GetDirtyReason.TakeAnimalDroppings:
+			this.m_Dirtiness += this.m_DirtAddTakeAnimalDroppings;
+			break;
+		case GetDirtyReason.Plow:
+			this.m_Dirtiness += this.m_DirtAddPlow;
+			break;
+		}
+		this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+	}
+
+	public void AddDirtiness(float dirt)
+	{
+		this.m_Dirtiness += dirt;
+		this.m_Dirtiness = Mathf.Clamp(this.m_Dirtiness, 0f, this.m_MaxDirtiness);
+	}
+
 	private float m_MaxStamina = 100f;
+
+	private bool m_IsLowStamina;
 
 	private float m_PrevStamina;
 
 	private float m_LastDecreaseStaminaTime;
 
 	private float m_StaminaRenerationDelay = 2f;
+
+	private float m_HPProp = 100f;
 
 	private float m_MaxNutritionFat = 100f;
 
@@ -1074,7 +1426,13 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	public float m_MaxHydration = 100f;
 
+	public float m_MaxDirtiness = 100f;
+
 	private float m_StaminaDepletedLevel = 5f;
+
+	private float m_LowStaminaLevel = 10f;
+
+	private float m_LowStaminaRecoveryLevel = 20f;
 
 	public float m_MaxOxygen = 100f;
 
@@ -1148,7 +1506,11 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	private float m_HealthLossPerSecondNoHydration = 0.05f;
 
-	private float m_HealthRecoveryPerDay = 0.1f;
+	private float m_HealthRecoveryPerDayEasyMode = 0.1f;
+
+	private float m_HealthRecoveryPerDayNormalMode = 0.1f;
+
+	private float m_HealthRecoveryPerDayHardMode = 0.1f;
 
 	private float m_HealthLossPerSecondNoOxygen = 10f;
 
@@ -1163,6 +1525,8 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 	private float m_EnergyRecoveryDueNutritionPerSecond = 1f;
 
 	private float m_EnergyRecoveryDueHydrationPerSecond = 1f;
+
+	private float m_DirtinessIncreasePerSecond = 0.1f;
 
 	public float m_CriticalLevel = 0.3f;
 
@@ -1190,5 +1554,27 @@ public class PlayerConditionModule : PlayerModule, ISaveLoad
 
 	private PlayerAudioModule m_AudioModule;
 
+	private float m_DirtAddChoppingPlants = 0.01f;
+
+	private float m_DirtAddPickickgUpHeavyObject = 0.01f;
+
+	private float m_DirtAddSleepingOnGround = 0.01f;
+
+	private float m_DirtAddUsingMud = 0.01f;
+
+	private float m_DirtAddCombat = 0.01f;
+
+	private float m_DirtAddLossConsciousness = 0.01f;
+
+	private float m_DirtAddTakeAnimalDroppings = 0.01f;
+
+	private float m_DirtAddPlow = 0.01f;
+
+	private float m_LastOxygen = 100f;
+
 	private ParasiteSickness m_ParasiteSickness;
+
+	private bool m_BlockGettingDirty;
+
+	public delegate void OnStaminaDecreasedDel(StaminaDecreaseReason reason, float stamina_val);
 }

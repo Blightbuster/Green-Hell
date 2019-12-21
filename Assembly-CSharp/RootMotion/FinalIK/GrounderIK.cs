@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder IK")]
 	[HelpURL("http://www.root-motion.com/finalikdox/html/page11.html")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Grounder/Grounder IK")]
 	public class GrounderIK : Grounder
 	{
 		[ContextMenu("User Manual")]
@@ -93,8 +93,7 @@ namespace RootMotion.FinalIK
 					{
 						vector = Vector3.Slerp(Vector3.up, vector, this.rootRotationWeight);
 					}
-					Quaternion from = Quaternion.FromToRotation(base.transform.up, Vector3.up) * this.characterRoot.rotation;
-					Quaternion b = Quaternion.RotateTowards(from, Quaternion.FromToRotation(base.transform.up, vector) * this.characterRoot.rotation, this.maxRootRotationAngle);
+					Quaternion b = Quaternion.RotateTowards(Quaternion.FromToRotation(base.transform.up, Vector3.up) * this.characterRoot.rotation, Quaternion.FromToRotation(base.transform.up, vector) * this.characterRoot.rotation, this.maxRootRotationAngle);
 					this.characterRoot.rotation = Quaternion.Lerp(this.characterRoot.rotation, b, Time.deltaTime * this.rootRotationSpeed);
 				}
 				return;
@@ -239,8 +238,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The root Transform of the character, with the rigidbody and the collider.")]
 		public Transform characterRoot;
 
-		[Range(0f, 1f)]
 		[Tooltip("The weight of rotating the character root to the ground normal (range: 0 - 1).")]
+		[Range(0f, 1f)]
 		public float rootRotationWeight;
 
 		[Tooltip("The speed of rotating the character root to the ground normal (range: 0 - inf).")]

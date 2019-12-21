@@ -174,24 +174,18 @@ namespace Pathfinding
 		public IntRect GetTouchingTiles(Bounds bounds)
 		{
 			bounds = this.transform.InverseTransform(bounds);
-			IntRect intRect = new IntRect(Mathf.FloorToInt(bounds.min.x / this.TileWorldSizeX), Mathf.FloorToInt(bounds.min.z / this.TileWorldSizeZ), Mathf.FloorToInt(bounds.max.x / this.TileWorldSizeX), Mathf.FloorToInt(bounds.max.z / this.TileWorldSizeZ));
-			intRect = IntRect.Intersection(intRect, new IntRect(0, 0, this.tileXCount - 1, this.tileZCount - 1));
-			return intRect;
+			return IntRect.Intersection(new IntRect(Mathf.FloorToInt(bounds.min.x / this.TileWorldSizeX), Mathf.FloorToInt(bounds.min.z / this.TileWorldSizeZ), Mathf.FloorToInt(bounds.max.x / this.TileWorldSizeX), Mathf.FloorToInt(bounds.max.z / this.TileWorldSizeZ)), new IntRect(0, 0, this.tileXCount - 1, this.tileZCount - 1));
 		}
 
 		public IntRect GetTouchingTilesInGraphSpace(Rect rect)
 		{
-			IntRect intRect = new IntRect(Mathf.FloorToInt(rect.xMin / this.TileWorldSizeX), Mathf.FloorToInt(rect.yMin / this.TileWorldSizeZ), Mathf.FloorToInt(rect.xMax / this.TileWorldSizeX), Mathf.FloorToInt(rect.yMax / this.TileWorldSizeZ));
-			intRect = IntRect.Intersection(intRect, new IntRect(0, 0, this.tileXCount - 1, this.tileZCount - 1));
-			return intRect;
+			return IntRect.Intersection(new IntRect(Mathf.FloorToInt(rect.xMin / this.TileWorldSizeX), Mathf.FloorToInt(rect.yMin / this.TileWorldSizeZ), Mathf.FloorToInt(rect.xMax / this.TileWorldSizeX), Mathf.FloorToInt(rect.yMax / this.TileWorldSizeZ)), new IntRect(0, 0, this.tileXCount - 1, this.tileZCount - 1));
 		}
 
 		public IntRect GetTouchingTilesRound(Bounds bounds)
 		{
 			bounds = this.transform.InverseTransform(bounds);
-			IntRect intRect = new IntRect(Mathf.RoundToInt(bounds.min.x / this.TileWorldSizeX), Mathf.RoundToInt(bounds.min.z / this.TileWorldSizeZ), Mathf.RoundToInt(bounds.max.x / this.TileWorldSizeX) - 1, Mathf.RoundToInt(bounds.max.z / this.TileWorldSizeZ) - 1);
-			intRect = IntRect.Intersection(intRect, new IntRect(0, 0, this.tileXCount - 1, this.tileZCount - 1));
-			return intRect;
+			return IntRect.Intersection(new IntRect(Mathf.RoundToInt(bounds.min.x / this.TileWorldSizeX), Mathf.RoundToInt(bounds.min.z / this.TileWorldSizeZ), Mathf.RoundToInt(bounds.max.x / this.TileWorldSizeX) - 1, Mathf.RoundToInt(bounds.max.z / this.TileWorldSizeZ) - 1), new IntRect(0, 0, this.tileXCount - 1, this.tileZCount - 1));
 		}
 
 		protected void ConnectTileWithNeighbours(NavmeshTile tile, bool onlyUnflagged = false)
@@ -208,15 +202,12 @@ namespace Pathfinding
 					for (int j = -1; j <= 1; j++)
 					{
 						int num2 = tile.x + j;
-						if (num2 >= 0 && num2 < this.tileXCount)
+						if (num2 >= 0 && num2 < this.tileXCount && j == 0 != (i == 0))
 						{
-							if (j == 0 != (i == 0))
+							NavmeshTile navmeshTile = this.tiles[num2 + num * this.tileXCount];
+							if (!onlyUnflagged || !navmeshTile.flag)
 							{
-								NavmeshTile navmeshTile = this.tiles[num2 + num * this.tileXCount];
-								if (!onlyUnflagged || !navmeshTile.flag)
-								{
-									this.ConnectTiles(navmeshTile, tile);
-								}
+								this.ConnectTiles(navmeshTile, tile);
 							}
 						}
 					}
@@ -279,15 +270,10 @@ namespace Pathfinding
 					for (int j = 0; j < triangleMeshNode.connections.Length; j++)
 					{
 						TriangleMeshNode triangleMeshNode2 = triangleMeshNode.connections[j].node as TriangleMeshNode;
-						if (triangleMeshNode2 != null)
+						if (triangleMeshNode2 != null && (triangleMeshNode2.GetVertexIndex(0) >> 12 & 524287) == num)
 						{
-							int num2 = triangleMeshNode2.GetVertexIndex(0);
-							num2 = (num2 >> 12 & 524287);
-							if (num2 == num)
-							{
-								triangleMeshNode.RemoveConnection(triangleMeshNode.connections[j].node);
-								j--;
-							}
+							triangleMeshNode.RemoveConnection(triangleMeshNode.connections[j].node);
+							j--;
 						}
 					}
 				}
@@ -296,7 +282,7 @@ namespace Pathfinding
 
 		public override NNInfoInternal GetNearest(Vector3 position, NNConstraint constraint, GraphNode hint)
 		{
-			return this.GetNearestForce(position, (constraint == null || !constraint.distanceXZ) ? null : NavmeshBase.NNConstraintDistanceXZ);
+			return this.GetNearestForce(position, (constraint != null && constraint.distanceXZ) ? NavmeshBase.NNConstraintDistanceXZ : null);
 		}
 
 		public override NNInfoInternal GetNearestForce(Vector3 position, NNConstraint constraint)
@@ -312,23 +298,20 @@ namespace Pathfinding
 			NNInfoInternal nninfoInternal = default(NNInfoInternal);
 			float positiveInfinity = float.PositiveInfinity;
 			bool flag = this.nearestSearchOnlyXZ || (constraint != null && constraint.distanceXZ);
-			for (int i = 0; i < num; i++)
+			int num2 = 0;
+			while (num2 < num && positiveInfinity >= (float)(num2 - 2) * Math.Max(this.TileWorldSizeX, this.TileWorldSizeX))
 			{
-				if (positiveInfinity < (float)(i - 2) * Math.Max(this.TileWorldSizeX, this.TileWorldSizeX))
+				int num3 = Math.Min(num2 + tileCoordinates.y + 1, this.tileZCount);
+				for (int i = Math.Max(-num2 + tileCoordinates.y, 0); i < num3; i++)
 				{
-					break;
-				}
-				int num2 = Math.Min(i + tileCoordinates.y + 1, this.tileZCount);
-				for (int j = Math.Max(-i + tileCoordinates.y, 0); j < num2; j++)
-				{
-					int num3 = Math.Abs(i - Math.Abs(j - tileCoordinates.y));
-					int num4 = num3;
+					int num4 = Math.Abs(num2 - Math.Abs(i - tileCoordinates.y));
+					int num5 = num4;
 					do
 					{
-						int num5 = -num4 + tileCoordinates.x;
-						if (num5 >= 0 && num5 < this.tileXCount)
+						int num6 = -num5 + tileCoordinates.x;
+						if (num6 >= 0 && num6 < this.tileXCount)
 						{
-							NavmeshTile navmeshTile = this.tiles[num5 + j * this.tileXCount];
+							NavmeshTile navmeshTile = this.tiles[num6 + i * this.tileXCount];
 							if (navmeshTile != null)
 							{
 								if (flag)
@@ -341,10 +324,11 @@ namespace Pathfinding
 								}
 							}
 						}
-						num4 = -num4;
+						num5 = -num5;
 					}
-					while (num4 != num3);
+					while (num5 != num4);
 				}
+				num2++;
 			}
 			nninfoInternal.node = nninfoInternal.constrainedNode;
 			nninfoInternal.constrainedNode = null;
@@ -515,14 +499,11 @@ namespace Pathfinding
 									{
 										int num11 = Math.Min(vertexInGraphSpace3[i2], vertexInGraphSpace4[i2]);
 										int num12 = Math.Max(vertexInGraphSpace3[i2], vertexInGraphSpace4[i2]);
-										if (num11 != num12)
+										if (num11 != num12 && num10 > num11 && num9 < num12 && ((vertexInGraphSpace == vertexInGraphSpace3 && vertexInGraphSpace2 == vertexInGraphSpace4) || (vertexInGraphSpace == vertexInGraphSpace4 && vertexInGraphSpace2 == vertexInGraphSpace3) || VectorMath.SqrDistanceSegmentSegment((Vector3)vertexInGraphSpace, (Vector3)vertexInGraphSpace2, (Vector3)vertexInGraphSpace3, (Vector3)vertexInGraphSpace4) < this.MaxTileConnectionEdgeDistance * this.MaxTileConnectionEdgeDistance))
 										{
-											if (num10 > num11 && num9 < num12 && ((vertexInGraphSpace == vertexInGraphSpace3 && vertexInGraphSpace2 == vertexInGraphSpace4) || (vertexInGraphSpace == vertexInGraphSpace4 && vertexInGraphSpace2 == vertexInGraphSpace3) || VectorMath.SqrDistanceSegmentSegment((Vector3)vertexInGraphSpace, (Vector3)vertexInGraphSpace2, (Vector3)vertexInGraphSpace3, (Vector3)vertexInGraphSpace4) < this.MaxTileConnectionEdgeDistance * this.MaxTileConnectionEdgeDistance))
-											{
-												uint costMagnitude = (uint)(triangleMeshNode.position - triangleMeshNode2.position).costMagnitude;
-												triangleMeshNode.AddConnection(triangleMeshNode2, costMagnitude);
-												triangleMeshNode2.AddConnection(triangleMeshNode, costMagnitude);
-											}
+											uint costMagnitude = (uint)(triangleMeshNode.position - triangleMeshNode2.position).costMagnitude;
+											triangleMeshNode.AddConnection(triangleMeshNode2, costMagnitude);
+											triangleMeshNode2.AddConnection(triangleMeshNode, costMagnitude);
 										}
 									}
 								}
@@ -846,28 +827,19 @@ namespace Pathfinding
 						{
 							Vector3 vector = list[0];
 							Vector3 vector2 = list2[0];
-							if (VectorMath.RightXZ(vector, vector2, hit.origin) || !VectorMath.RightXZ(vector, vector2, tmp_end))
+							float num2;
+							float num3;
+							if ((VectorMath.RightXZ(vector, vector2, hit.origin) || !VectorMath.RightXZ(vector, vector2, tmp_end)) && VectorMath.LineIntersectionFactorXZ(vector, vector2, hit.origin, tmp_end, out num2, out num3) && num3 >= 0f && num2 >= 0f && num2 <= 1f)
 							{
-								float num2;
-								float num3;
-								if (VectorMath.LineIntersectionFactorXZ(vector, vector2, hit.origin, tmp_end, out num2, out num3))
-								{
-									if (num3 >= 0f)
-									{
-										if (num2 >= 0f && num2 <= 1f)
-										{
-											triangleMeshNode2 = (triangleMeshNode.connections[i].node as TriangleMeshNode);
-											break;
-										}
-									}
-								}
+								triangleMeshNode2 = (triangleMeshNode.connections[i].node as TriangleMeshNode);
+								break;
 							}
 						}
 					}
 				}
 				if (triangleMeshNode2 == null)
 				{
-					goto Block_18;
+					goto Block_17;
 				}
 				triangleMeshNode = triangleMeshNode2;
 			}
@@ -879,33 +851,24 @@ namespace Pathfinding
 			ListPool<Vector3>.Release(list);
 			ListPool<Vector3>.Release(list2);
 			return false;
-			Block_18:
+			Block_17:
 			int vertexCount = triangleMeshNode.GetVertexCount();
 			for (int j = 0; j < vertexCount; j++)
 			{
 				Vector3 vector3 = (Vector3)triangleMeshNode.GetVertex(j);
 				Vector3 vector4 = (Vector3)triangleMeshNode.GetVertex((j + 1) % vertexCount);
-				if (VectorMath.RightXZ(vector3, vector4, hit.origin) || !VectorMath.RightXZ(vector3, vector4, tmp_end))
+				float num4;
+				float num5;
+				if ((VectorMath.RightXZ(vector3, vector4, hit.origin) || !VectorMath.RightXZ(vector3, vector4, tmp_end)) && VectorMath.LineIntersectionFactorXZ(vector3, vector4, hit.origin, tmp_end, out num4, out num5) && num5 >= 0f && num4 >= 0f && num4 <= 1f)
 				{
-					float num4;
-					float num5;
-					if (VectorMath.LineIntersectionFactorXZ(vector3, vector4, hit.origin, tmp_end, out num4, out num5))
-					{
-						if (num5 >= 0f)
-						{
-							if (num4 >= 0f && num4 <= 1f)
-							{
-								Vector3 point = vector3 + (vector4 - vector3) * num4;
-								hit.point = point;
-								hit.node = triangleMeshNode;
-								hit.tangent = vector4 - vector3;
-								hit.tangentOrigin = vector3;
-								ListPool<Vector3>.Release(list);
-								ListPool<Vector3>.Release(list2);
-								return true;
-							}
-						}
-					}
+					Vector3 point = vector3 + (vector4 - vector3) * num4;
+					hit.point = point;
+					hit.node = triangleMeshNode;
+					hit.tangent = vector4 - vector3;
+					hit.tangentOrigin = vector3;
+					ListPool<Vector3>.Release(list);
+					ListPool<Vector3>.Release(list2);
+					return true;
 				}
 			}
 			Debug.LogWarning("Linecast failing because point not inside node, and line does not hit any edges of it");
@@ -933,9 +896,9 @@ namespace Pathfinding
 					if (this.tiles[i] != null)
 					{
 						RetainedGizmos.Hasher hasher = new RetainedGizmos.Hasher(this.active);
-						hasher.AddHash((!this.showMeshOutline) ? 0 : 1);
-						hasher.AddHash((!this.showMeshSurface) ? 0 : 1);
-						hasher.AddHash((!this.showNodeConnections) ? 0 : 1);
+						hasher.AddHash(this.showMeshOutline ? 1 : 0);
+						hasher.AddHash(this.showMeshSurface ? 1 : 0);
+						hasher.AddHash(this.showNodeConnections ? 1 : 0);
 						TriangleMeshNode[] nodes = this.tiles[i].nodes;
 						for (int j = 0; j < nodes.Length; j++)
 						{

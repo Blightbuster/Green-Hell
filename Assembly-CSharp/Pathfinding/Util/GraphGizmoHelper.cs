@@ -6,14 +6,14 @@ namespace Pathfinding.Util
 {
 	public class GraphGizmoHelper : IAstarPooledObject, IDisposable
 	{
+		public RetainedGizmos.Hasher hasher { get; private set; }
+
+		public RetainedGizmos.Builder builder { get; private set; }
+
 		public GraphGizmoHelper()
 		{
 			this.drawConnection = new Action<GraphNode>(this.DrawConnection);
 		}
-
-		public RetainedGizmos.Hasher hasher { get; private set; }
-
-		public RetainedGizmos.Builder builder { get; private set; }
 
 		public void Init(AstarPath active, RetainedGizmos.Hasher hasher, RetainedGizmos gizmos)
 		{
@@ -40,13 +40,10 @@ namespace Pathfinding.Util
 		{
 			if (this.showSearchTree)
 			{
-				if (GraphGizmoHelper.InSearchTree(node, this.debugData, this.debugPathID))
+				if (GraphGizmoHelper.InSearchTree(node, this.debugData, this.debugPathID) && this.debugData.GetPathNode(node).parent != null)
 				{
-					PathNode pathNode = this.debugData.GetPathNode(node);
-					if (pathNode.parent != null)
-					{
-						this.builder.DrawLine((Vector3)node.position, (Vector3)this.debugData.GetPathNode(node).parent.node.position, this.NodeColor(node));
-					}
+					this.builder.DrawLine((Vector3)node.position, (Vector3)this.debugData.GetPathNode(node).parent.node.position, this.NodeColor(node));
+					return;
 				}
 			}
 			else
@@ -71,49 +68,38 @@ namespace Pathfinding.Util
 			Color result;
 			if (node.Walkable)
 			{
-				GraphDebugMode graphDebugMode = this.debugMode;
-				switch (graphDebugMode)
+				switch (this.debugMode)
 				{
+				case GraphDebugMode.Areas:
+					return AstarColor.GetAreaColor(node.Area);
 				case GraphDebugMode.Penalty:
-					result = Color.Lerp(AstarColor.ConnectionLowLerp, AstarColor.ConnectionHighLerp, (node.Penalty - this.debugFloor) / (this.debugRoof - this.debugFloor));
-					break;
+					return Color.Lerp(AstarColor.ConnectionLowLerp, AstarColor.ConnectionHighLerp, (node.Penalty - this.debugFloor) / (this.debugRoof - this.debugFloor));
 				case GraphDebugMode.Connections:
-					result = AstarColor.NodeConnection;
-					break;
+					return AstarColor.NodeConnection;
 				case GraphDebugMode.Tags:
-					result = AstarColor.GetAreaColor(node.Tag);
-					break;
-				default:
-					if (graphDebugMode != GraphDebugMode.Areas)
+					return AstarColor.GetAreaColor(node.Tag);
+				}
+				if (this.debugData == null)
+				{
+					result = AstarColor.NodeConnection;
+				}
+				else
+				{
+					PathNode pathNode = this.debugData.GetPathNode(node);
+					float num;
+					if (this.debugMode == GraphDebugMode.G)
 					{
-						if (this.debugData == null)
-						{
-							result = AstarColor.NodeConnection;
-						}
-						else
-						{
-							PathNode pathNode = this.debugData.GetPathNode(node);
-							float num;
-							if (this.debugMode == GraphDebugMode.G)
-							{
-								num = pathNode.G;
-							}
-							else if (this.debugMode == GraphDebugMode.H)
-							{
-								num = pathNode.H;
-							}
-							else
-							{
-								num = pathNode.F;
-							}
-							result = Color.Lerp(AstarColor.ConnectionLowLerp, AstarColor.ConnectionHighLerp, (num - this.debugFloor) / (this.debugRoof - this.debugFloor));
-						}
+						num = pathNode.G;
+					}
+					else if (this.debugMode == GraphDebugMode.H)
+					{
+						num = pathNode.H;
 					}
 					else
 					{
-						result = AstarColor.GetAreaColor(node.Area);
+						num = pathNode.F;
 					}
-					break;
+					result = Color.Lerp(AstarColor.ConnectionLowLerp, AstarColor.ConnectionHighLerp, (num - this.debugFloor) / (this.debugRoof - this.debugFloor));
 				}
 			}
 			else

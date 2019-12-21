@@ -7,7 +7,7 @@ public class PlayerTeleport : MonoBehaviour
 	{
 		if (this.player != null)
 		{
-			this.player.position = base.transform.position + ((!(this.worldMover == null)) ? this.worldMover.currentMove : Vector3.zero);
+			this.player.position = base.transform.position + ((this.worldMover == null) ? Vector3.zero : this.worldMover.currentMove);
 			this.player.rotation = base.transform.rotation;
 			foreach (Streamer streamer in this.streamers)
 			{
@@ -21,6 +21,7 @@ public class PlayerTeleport : MonoBehaviour
 			if (this.playerMover != null)
 			{
 				this.playerMover.MovePlayer();
+				return;
 			}
 		}
 		else if (this.streamers[0] != null && this.streamers[0].player != null)

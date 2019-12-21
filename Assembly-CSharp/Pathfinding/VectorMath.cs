@@ -63,13 +63,12 @@ namespace Pathfinding
 		{
 			lineStart.y = point.y;
 			lineEnd.y = point.y;
-			Vector3 vector = lineEnd - lineStart;
-			Vector3 a = vector;
+			Vector3 a = lineEnd - lineStart;
 			a.y = 0f;
 			float magnitude = a.magnitude;
-			Vector3 vector2 = (magnitude <= float.Epsilon) ? Vector3.zero : (a / magnitude);
-			float value = Vector3.Dot(point - lineStart, vector2);
-			return lineStart + Mathf.Clamp(value, 0f, a.magnitude) * vector2;
+			Vector3 vector = (magnitude > float.Epsilon) ? (a / magnitude) : Vector3.zero;
+			float value = Vector3.Dot(point - lineStart, vector);
+			return lineStart + Mathf.Clamp(value, 0f, a.magnitude) * vector;
 		}
 
 		public static float SqrDistancePointSegmentApproximate(int x, int z, int px, int pz, int qx, int qz)
@@ -124,8 +123,7 @@ namespace Pathfinding
 
 		public static float SqrDistancePointSegment(Vector3 a, Vector3 b, Vector3 p)
 		{
-			Vector3 a2 = VectorMath.ClosestPointOnSegment(a, b, p);
-			return (a2 - p).sqrMagnitude;
+			return (VectorMath.ClosestPointOnSegment(a, b, p) - p).sqrMagnitude;
 		}
 
 		public static float SqrDistanceSegmentSegment(Vector3 s1, Vector3 e1, Vector3 s2, Vector3 e2)
@@ -138,71 +136,70 @@ namespace Pathfinding
 			float num3 = Vector3.Dot(vector2, vector2);
 			float num4 = Vector3.Dot(vector, vector3);
 			float num5 = Vector3.Dot(vector2, vector3);
-			float num6 = num * num3 - num2 * num2;
-			float num7 = num6;
-			float num8 = num6;
+			float num7;
+			float num6;
+			float num8;
 			float num9;
-			float num10;
-			if (num6 < 1E-06f)
+			if ((num6 = (num7 = num * num3 - num2 * num2)) < 1E-06f)
 			{
-				num9 = 0f;
+				num8 = 0f;
 				num7 = 1f;
-				num10 = num5;
-				num8 = num3;
+				num9 = num5;
+				num6 = num3;
 			}
 			else
 			{
-				num9 = num2 * num5 - num3 * num4;
-				num10 = num * num5 - num2 * num4;
-				if (num9 < 0f)
+				num8 = num2 * num5 - num3 * num4;
+				num9 = num * num5 - num2 * num4;
+				if (num8 < 0f)
 				{
-					num9 = 0f;
-					num10 = num5;
-					num8 = num3;
+					num8 = 0f;
+					num9 = num5;
+					num6 = num3;
 				}
-				else if (num9 > num7)
+				else if (num8 > num7)
 				{
-					num9 = num7;
-					num10 = num5 + num2;
-					num8 = num3;
+					num8 = num7;
+					num9 = num5 + num2;
+					num6 = num3;
 				}
 			}
-			if (num10 < 0f)
+			if (num9 < 0f)
 			{
-				num10 = 0f;
+				num9 = 0f;
 				if (-num4 < 0f)
 				{
-					num9 = 0f;
+					num8 = 0f;
 				}
 				else if (-num4 > num)
 				{
-					num9 = num7;
+					num8 = num7;
 				}
 				else
 				{
-					num9 = -num4;
+					num8 = -num4;
 					num7 = num;
 				}
 			}
-			else if (num10 > num8)
+			else if (num9 > num6)
 			{
-				num10 = num8;
+				num9 = num6;
 				if (-num4 + num2 < 0f)
 				{
-					num9 = 0f;
+					num8 = 0f;
 				}
 				else if (-num4 + num2 > num)
 				{
-					num9 = num7;
+					num8 = num7;
 				}
 				else
 				{
-					num9 = -num4 + num2;
+					num8 = -num4 + num2;
 					num7 = num;
 				}
 			}
-			float d = (Math.Abs(num9) >= 1E-06f) ? (num9 / num7) : 0f;
-			float d2 = (Math.Abs(num10) >= 1E-06f) ? (num10 / num8) : 0f;
+			float d = (Math.Abs(num8) < 1E-06f) ? 0f : (num8 / num7);
+			float d2 = (Math.Abs(num9) < 1E-06f) ? 0f : (num9 / num6);
 			return (vector3 + d * vector - d2 * vector2).sqrMagnitude;
 		}
 
@@ -333,8 +330,7 @@ namespace Pathfinding
 			{
 				return start1;
 			}
-			float num2 = dir2.x * (start1.z - start2.z) - dir2.z * (start1.x - start2.x);
-			float d = num2 / num;
+			float d = (dir2.x * (start1.z - start2.z) - dir2.z * (start1.x - start2.x)) / num;
 			return start1 + dir1 * d;
 		}
 
@@ -346,8 +342,7 @@ namespace Pathfinding
 				intersects = false;
 				return start1;
 			}
-			float num2 = dir2.x * (start1.z - start2.z) - dir2.z * (start1.x - start2.x);
-			float d = num2 / num;
+			float d = (dir2.x * (start1.z - start2.z) - dir2.z * (start1.x - start2.x)) / num;
 			intersects = true;
 			return start1 + dir1 * d;
 		}
@@ -414,8 +409,7 @@ namespace Pathfinding
 				return float.NaN;
 			}
 			int num2 = int2.x * (start1.z - start2.z) - int2.z * (start1.x - start2.x);
-			int num3 = @int.x * (start1.z - start2.z) - @int.z * (start1.x - start2.x);
-			if ((float)num3 / (float)num < 0f)
+			if ((float)(@int.x * (start1.z - start2.z) - @int.z * (start1.x - start2.x)) / (float)num < 0f)
 			{
 				return float.NaN;
 			}
@@ -431,8 +425,7 @@ namespace Pathfinding
 			{
 				return -1f;
 			}
-			float num2 = vector2.x * (start1.z - start2.z) - vector2.z * (start1.x - start2.x);
-			return num2 / num;
+			return (vector2.x * (start1.z - start2.z) - vector2.z * (start1.x - start2.x)) / num;
 		}
 
 		public static Vector3 LineIntersectionPointXZ(Vector3 start1, Vector3 end1, Vector3 start2, Vector3 end2)
@@ -443,18 +436,17 @@ namespace Pathfinding
 
 		public static Vector3 LineIntersectionPointXZ(Vector3 start1, Vector3 end1, Vector3 start2, Vector3 end2, out bool intersects)
 		{
-			Vector3 a = end1 - start1;
-			Vector3 vector = end2 - start2;
-			float num = vector.z * a.x - vector.x * a.z;
+			Vector3 vector = end1 - start1;
+			Vector3 vector2 = end2 - start2;
+			float num = vector2.z * vector.x - vector2.x * vector.z;
 			if (num == 0f)
 			{
 				intersects = false;
 				return start1;
 			}
-			float num2 = vector.x * (start1.z - start2.z) - vector.z * (start1.x - start2.x);
-			float d = num2 / num;
+			float d = (vector2.x * (start1.z - start2.z) - vector2.z * (start1.x - start2.x)) / num;
 			intersects = true;
-			return start1 + a * d;
+			return start1 + vector * d;
 		}
 
 		public static Vector2 LineIntersectionPoint(Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2)
@@ -465,32 +457,31 @@ namespace Pathfinding
 
 		public static Vector2 LineIntersectionPoint(Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2, out bool intersects)
 		{
-			Vector2 a = end1 - start1;
-			Vector2 vector = end2 - start2;
-			float num = vector.y * a.x - vector.x * a.y;
+			Vector2 vector = end1 - start1;
+			Vector2 vector2 = end2 - start2;
+			float num = vector2.y * vector.x - vector2.x * vector.y;
 			if (num == 0f)
 			{
 				intersects = false;
 				return start1;
 			}
-			float num2 = vector.x * (start1.y - start2.y) - vector.y * (start1.x - start2.x);
-			float d = num2 / num;
+			float d = (vector2.x * (start1.y - start2.y) - vector2.y * (start1.x - start2.x)) / num;
 			intersects = true;
-			return start1 + a * d;
+			return start1 + vector * d;
 		}
 
 		public static Vector3 SegmentIntersectionPointXZ(Vector3 start1, Vector3 end1, Vector3 start2, Vector3 end2, out bool intersects)
 		{
-			Vector3 a = end1 - start1;
-			Vector3 vector = end2 - start2;
-			float num = vector.z * a.x - vector.x * a.z;
+			Vector3 vector = end1 - start1;
+			Vector3 vector2 = end2 - start2;
+			float num = vector2.z * vector.x - vector2.x * vector.z;
 			if (num == 0f)
 			{
 				intersects = false;
 				return start1;
 			}
-			float num2 = vector.x * (start1.z - start2.z) - vector.z * (start1.x - start2.x);
-			float num3 = a.x * (start1.z - start2.z) - a.z * (start1.x - start2.x);
+			float num2 = vector2.x * (start1.z - start2.z) - vector2.z * (start1.x - start2.x);
+			float num3 = vector.x * (start1.z - start2.z) - vector.z * (start1.x - start2.x);
 			float num4 = num2 / num;
 			float num5 = num3 / num;
 			if (num4 < 0f || num4 > 1f || num5 < 0f || num5 > 1f)
@@ -499,18 +490,18 @@ namespace Pathfinding
 				return start1;
 			}
 			intersects = true;
-			return start1 + a * num4;
+			return start1 + vector * num4;
 		}
 
 		public static bool SegmentIntersectsBounds(Bounds bounds, Vector3 a, Vector3 b)
 		{
 			a -= bounds.center;
 			b -= bounds.center;
-			Vector3 b2 = (a + b) * 0.5f;
-			Vector3 vector = a - b2;
-			Vector3 vector2 = new Vector3(Math.Abs(vector.x), Math.Abs(vector.y), Math.Abs(vector.z));
+			Vector3 vector = (a + b) * 0.5f;
+			Vector3 vector2 = a - vector;
+			Vector3 vector3 = new Vector3(Math.Abs(vector2.x), Math.Abs(vector2.y), Math.Abs(vector2.z));
 			Vector3 extents = bounds.extents;
-			return Math.Abs(b2.x) <= extents.x + vector2.x && Math.Abs(b2.y) <= extents.y + vector2.y && Math.Abs(b2.z) <= extents.z + vector2.z && Math.Abs(b2.y * vector.z - b2.z * vector.y) <= extents.y * vector2.z + extents.z * vector2.y && Math.Abs(b2.x * vector.z - b2.z * vector.x) <= extents.x * vector2.z + extents.z * vector2.x && Math.Abs(b2.x * vector.y - b2.y * vector.x) <= extents.x * vector2.y + extents.y * vector2.x;
+			return Math.Abs(vector.x) <= extents.x + vector3.x && Math.Abs(vector.y) <= extents.y + vector3.y && Math.Abs(vector.z) <= extents.z + vector3.z && Math.Abs(vector.y * vector2.z - vector.z * vector2.y) <= extents.y * vector3.z + extents.z * vector3.y && Math.Abs(vector.x * vector2.z - vector.z * vector2.x) <= extents.x * vector3.z + extents.z * vector3.x && Math.Abs(vector.x * vector2.y - vector.y * vector2.x) <= extents.x * vector3.y + extents.y * vector3.x;
 		}
 
 		public static float LineCircleIntersectionFactor(Vector3 circleCenter, Vector3 linePoint1, Vector3 linePoint2, float radius)
@@ -525,7 +516,11 @@ namespace Pathfinding
 				num3 = 0f;
 			}
 			float num4 = -num2 + Mathf.Sqrt(num3);
-			return (num <= 1E-05f) ? 1f : (num4 / num);
+			if (num <= 1E-05f)
+			{
+				return 1f;
+			}
+			return num4 / num;
 		}
 
 		public static bool ReversesFaceOrientations(Matrix4x4 matrix)
@@ -533,16 +528,14 @@ namespace Pathfinding
 			Vector3 lhs = matrix.MultiplyVector(new Vector3(1f, 0f, 0f));
 			Vector3 rhs = matrix.MultiplyVector(new Vector3(0f, 1f, 0f));
 			Vector3 rhs2 = matrix.MultiplyVector(new Vector3(0f, 0f, 1f));
-			float num = Vector3.Dot(Vector3.Cross(lhs, rhs), rhs2);
-			return num < 0f;
+			return Vector3.Dot(Vector3.Cross(lhs, rhs), rhs2) < 0f;
 		}
 
 		public static bool ReversesFaceOrientationsXZ(Matrix4x4 matrix)
 		{
 			Vector3 vector = matrix.MultiplyVector(new Vector3(1f, 0f, 0f));
 			Vector3 vector2 = matrix.MultiplyVector(new Vector3(0f, 0f, 1f));
-			float num = vector.x * vector2.z - vector2.x * vector.z;
-			return num < 0f;
+			return vector.x * vector2.z - vector2.x * vector.z < 0f;
 		}
 
 		public static Vector3 Normalize(Vector3 v, out float magnitude)

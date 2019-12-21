@@ -43,11 +43,11 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (this.gridFlags & 256) != 0;
+				return (this.gridFlags & 256) > 0;
 			}
 			set
 			{
-				this.gridFlags = (ushort)(((int)this.gridFlags & -257) | ((!value) ? 0 : 256));
+				this.gridFlags = (ushort)(((int)this.gridFlags & -257) | (value ? 256 : 0));
 			}
 		}
 
@@ -55,11 +55,11 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (this.gridFlags & 512) != 0;
+				return (this.gridFlags & 512) > 0;
 			}
 			set
 			{
-				this.gridFlags = (ushort)(((int)this.gridFlags & -513) | ((!value) ? 0 : 512));
+				this.gridFlags = (ushort)(((int)this.gridFlags & -513) | (value ? 512 : 0));
 			}
 		}
 
@@ -231,7 +231,7 @@ namespace Pathfinding
 					}
 				}
 			}
-			int num = (this.connections == null) ? 0 : this.connections.Length;
+			int num = (this.connections != null) ? this.connections.Length : 0;
 			Connection[] array = new Connection[num + 1];
 			for (int j = 0; j < num; j++)
 			{
@@ -276,15 +276,13 @@ namespace Pathfinding
 			if (this.connections == null)
 			{
 				ctx.writer.Write(-1);
+				return;
 			}
-			else
+			ctx.writer.Write(this.connections.Length);
+			for (int i = 0; i < this.connections.Length; i++)
 			{
-				ctx.writer.Write(this.connections.Length);
-				for (int i = 0; i < this.connections.Length; i++)
-				{
-					ctx.SerializeNodeReference(this.connections[i].node);
-					ctx.writer.Write(this.connections[i].cost);
-				}
+				ctx.SerializeNodeReference(this.connections[i].node);
+				ctx.writer.Write(this.connections[i].cost);
 			}
 		}
 
@@ -298,18 +296,16 @@ namespace Pathfinding
 			if (num == -1)
 			{
 				this.connections = null;
+				return;
 			}
-			else
+			this.connections = new Connection[num];
+			for (int i = 0; i < num; i++)
 			{
-				this.connections = new Connection[num];
-				for (int i = 0; i < num; i++)
+				this.connections[i] = new Connection
 				{
-					this.connections[i] = new Connection
-					{
-						node = ctx.DeserializeNodeReference(),
-						cost = ctx.reader.ReadUInt32()
-					};
-				}
+					node = ctx.DeserializeNodeReference(),
+					cost = ctx.reader.ReadUInt32()
+				};
 			}
 		}
 

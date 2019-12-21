@@ -10,10 +10,9 @@ namespace AIs
 		{
 			base.Initialize(ai, goal);
 			string text = string.Empty;
-			string str = (this.m_Type == HitReaction.Type.None) ? string.Empty : this.m_Type.ToString();
 			for (int i = 0; i < 999; i++)
 			{
-				text = str + "HitReaction_" + i.ToString();
+				text = "HitReaction_" + i.ToString();
 				if (!this.m_AI.m_AnimationModule.ContainsState(text))
 				{
 					break;
@@ -29,14 +28,14 @@ namespace AIs
 		public override void Start()
 		{
 			base.Start();
-			string str = (this.m_Type == HitReaction.Type.None) ? string.Empty : this.m_Type.ToString();
+			string str = (this.m_Type != HitReaction.Type.None) ? this.m_Type.ToString() : string.Empty;
 			this.m_Animation = str + this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)];
 		}
 
 		public void SetType(HitReaction.Type type)
 		{
 			this.m_Type = type;
-			string str = (this.m_Type == HitReaction.Type.None) ? string.Empty : this.m_Type.ToString();
+			string str = (this.m_Type != HitReaction.Type.None) ? this.m_Type.ToString() : string.Empty;
 			this.m_Animation = str + this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)];
 		}
 

@@ -18,7 +18,10 @@ public class LiquidSlot : ItemSlot
 	protected override void OnInsertItem(Item item)
 	{
 		base.OnInsertItem(item);
-		this.m_Container.Fill((LiquidContainer)item);
+		if (this.m_Container)
+		{
+			this.m_Container.Fill((LiquidContainer)item);
+		}
 		Inventory3DManager.Get().OnLiquidTransfer();
 		base.RemoveItem();
 	}

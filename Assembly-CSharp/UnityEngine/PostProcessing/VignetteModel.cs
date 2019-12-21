@@ -67,8 +67,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Amount of vignetting on screen.")]
 			public float intensity;
 
-			[Tooltip("Smoothness of the vignette borders.")]
 			[Range(0.01f, 1f)]
+			[Tooltip("Smoothness of the vignette borders.")]
 			public float smoothness;
 
 			[Range(0f, 1f)]
@@ -78,8 +78,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("A black and white mask to use as a vignette.")]
 			public Texture mask;
 
-			[Tooltip("Mask opacity.")]
 			[Range(0f, 1f)]
+			[Tooltip("Mask opacity.")]
 			public float opacity;
 
 			[Tooltip("Should the vignette be perfectly round or be dependent on the current aspect ratio?")]

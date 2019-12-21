@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class IKConstraintBend
 	{
-		public IKConstraintBend()
-		{
-		}
-
-		public IKConstraintBend(Transform bone1, Transform bone2, Transform bone3)
-		{
-			this.SetBones(bone1, bone2, bone3);
-		}
-
 		public bool IsValid(IKSolverFullBody solver, Warning.Logger logger)
 		{
 			if (this.bone1 == null || this.bone2 == null || this.bone3 == null)
@@ -53,6 +44,15 @@ namespace RootMotion.FinalIK
 		}
 
 		public bool initiated { get; private set; }
+
+		public IKConstraintBend()
+		{
+		}
+
+		public IKConstraintBend(Transform bone1, Transform bone2, Transform bone3)
+		{
+			this.SetBones(bone1, bone2, bone3);
+		}
 
 		public void SetBones(Transform bone1, Transform bone2, Transform bone3)
 		{
@@ -141,8 +141,7 @@ namespace RootMotion.FinalIK
 				return this.direction.normalized;
 			}
 			Vector3 vector = solver.GetNode(this.chainIndex3, this.nodeIndex3).solverPosition - solver.GetNode(this.chainIndex1, this.nodeIndex1).solverPosition;
-			Quaternion rotation = Quaternion.FromToRotation(this.bone3.position - this.bone1.position, vector);
-			Vector3 vector2 = rotation * (this.bone2.position - this.bone1.position);
+			Vector3 vector2 = Quaternion.FromToRotation(this.bone3.position - this.bone1.position, vector) * (this.bone2.position - this.bone1.position);
 			if (solver.GetNode(this.chainIndex3, this.nodeIndex3).effectorRotationWeight > 0f)
 			{
 				Vector3 b = -Vector3.Cross(vector, solver.GetNode(this.chainIndex3, this.nodeIndex3).solverRotation * this.defaultChildDirection);
@@ -150,8 +149,7 @@ namespace RootMotion.FinalIK
 			}
 			if (this.rotationOffset != Quaternion.identity)
 			{
-				Quaternion lhs2 = Quaternion.FromToRotation(this.rotationOffset * vector, vector);
-				vector2 = lhs2 * this.rotationOffset * vector2;
+				vector2 = Quaternion.FromToRotation(this.rotationOffset * vector, vector) * this.rotationOffset * vector2;
 			}
 			if (num <= 0f)
 			{

@@ -11,14 +11,15 @@ public class SceneSplitManager : MonoBehaviour
 	private void AddToStreamer()
 	{
 		GameObject[] array = GameObject.FindGameObjectsWithTag(Streamer.STREAMERTAG);
-		foreach (GameObject gameObject in array)
+		for (int i = 0; i < array.Length; i++)
 		{
-			Streamer component = gameObject.GetComponent<Streamer>();
+			Streamer component = array[i].GetComponent<Streamer>();
 			if (component != null)
 			{
-				foreach (string text in component.sceneCollection.names)
+				string[] names = component.sceneCollection.names;
+				for (int j = 0; j < names.Length; j++)
 				{
-					if (text.Replace(".unity", string.Empty) == this.sceneName)
+					if (names[j].Replace(".unity", "") == this.sceneName)
 					{
 						component.AddSceneGO(this.sceneName, base.gameObject);
 						return;

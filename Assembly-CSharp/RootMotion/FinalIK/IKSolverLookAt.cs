@@ -112,13 +112,15 @@ namespace RootMotion.FinalIK
 				message = "IKSolverLookAt eyes setup is invalid. Can't initiate solver.";
 				return false;
 			}
-			Transform transform = IKSolver.ContainsDuplicateBone(this.spine);
+			IKSolver.Bone[] bones = this.spine;
+			Transform transform = IKSolver.ContainsDuplicateBone(bones);
 			if (transform != null)
 			{
 				message = transform.name + " is represented multiple times in a single IK chain. Can't initiate solver.";
 				return false;
 			}
-			Transform transform2 = IKSolver.ContainsDuplicateBone(this.eyes);
+			bones = this.eyes;
+			Transform transform2 = IKSolver.ContainsDuplicateBone(bones);
 			if (transform2 != null)
 			{
 				message = transform2.name + " is represented multiple times in a single IK chain. Can't initiate solver.";
@@ -129,7 +131,7 @@ namespace RootMotion.FinalIK
 
 		public override IKSolver.Point[] GetPoints()
 		{
-			IKSolver.Point[] array = new IKSolver.Point[this.spine.Length + this.eyes.Length + ((!(this.head.transform != null)) ? 0 : 1)];
+			IKSolver.Point[] array = new IKSolver.Point[this.spine.Length + this.eyes.Length + ((this.head.transform != null) ? 1 : 0)];
 			for (int i = 0; i < this.spine.Length; i++)
 			{
 				array[i] = this.spine[i];
@@ -183,7 +185,7 @@ namespace RootMotion.FinalIK
 		{
 			if (this.firstInitiation || !Application.isPlaying)
 			{
-				if (this.spine.Length > 0)
+				if (this.spine.Length != 0)
 				{
 					this.IKPosition = this.spine[this.spine.Length - 1].transform.position + this.root.forward * 3f;
 				}
@@ -191,22 +193,24 @@ namespace RootMotion.FinalIK
 				{
 					this.IKPosition = this.head.transform.position + this.root.forward * 3f;
 				}
-				else if (this.eyes.Length > 0 && this.eyes[0].transform != null)
+				else if (this.eyes.Length != 0 && this.eyes[0].transform != null)
 				{
 					this.IKPosition = this.eyes[0].transform.position + this.root.forward * 3f;
 				}
 			}
-			foreach (IKSolverLookAt.LookAtBone lookAtBone in this.spine)
+			IKSolverLookAt.LookAtBone[] array = this.spine;
+			for (int i = 0; i < array.Length; i++)
 			{
-				lookAtBone.Initiate(this.root);
+				array[i].Initiate(this.root);
 			}
 			if (this.head != null)
 			{
 				this.head.Initiate(this.root);
 			}
-			foreach (IKSolverLookAt.LookAtBone lookAtBone2 in this.eyes)
+			array = this.eyes;
+			for (int i = 0; i < array.Length; i++)
 			{
-				lookAtBone2.Initiate(this.root);
+				array[i].Initiate(this.root);
 			}
 			if (this.spineForwards == null || this.spineForwards.Length != this.spine.Length)
 			{
@@ -313,7 +317,7 @@ namespace RootMotion.FinalIK
 			{
 				return;
 			}
-			Vector3 vector = (this.spine.Length <= 0 || !(this.spine[this.spine.Length - 1].transform != null)) ? this.head.forward : this.spine[this.spine.Length - 1].forward;
+			Vector3 vector = (this.spine.Length != 0 && this.spine[this.spine.Length - 1].transform != null) ? this.spine[this.spine.Length - 1].forward : this.head.forward;
 			Vector3 normalized = Vector3.Lerp(vector, (this.IKPosition - this.head.transform.position).normalized, this.headWeight * this.IKPositionWeight).normalized;
 			this.GetForwards(ref this.headForwards, vector, normalized, 1, this.clampWeightHead);
 			this.head.LookAt(this.headForwards[0], this.headWeight * this.IKPositionWeight);
@@ -362,7 +366,7 @@ namespace RootMotion.FinalIK
 			}
 			for (int i = 0; i < this.eyes.Length; i++)
 			{
-				Vector3 baseForward = (!(this.head.transform != null)) ? this.eyes[i].forward : this.head.forward;
+				Vector3 baseForward = (this.head.transform != null) ? this.head.forward : this.eyes[i].forward;
 				this.GetForwards(ref this.eyeForward, baseForward, (this.IKPosition - this.eyes[i].transform.position).normalized, 1, this.clampWeightEyes);
 				this.eyes[i].LookAt(this.eyeForward[0], this.eyesWeight * this.IKPositionWeight);
 			}
@@ -380,12 +384,11 @@ namespace RootMotion.FinalIK
 			}
 			float num = Vector3.Angle(baseForward, targetForward);
 			float num2 = 1f - num / 180f;
-			float num3 = (clamp <= 0f) ? 1f : Mathf.Clamp(1f - (clamp - num2) / (1f - num2), 0f, 1f);
-			float num4 = (clamp <= 0f) ? 1f : Mathf.Clamp(num2 / clamp, 0f, 1f);
+			float num3 = (clamp > 0f) ? Mathf.Clamp(1f - (clamp - num2) / (1f - num2), 0f, 1f) : 1f;
+			float num4 = (clamp > 0f) ? Mathf.Clamp(num2 / clamp, 0f, 1f) : 1f;
 			for (int j = 0; j < this.clampSmoothing; j++)
 			{
-				float f = num4 * 3.14159274f * 0.5f;
-				num4 = Mathf.Sin(f);
+				num4 = Mathf.Sin(num4 * 3.14159274f * 0.5f);
 			}
 			if (forwards.Length == 1)
 			{

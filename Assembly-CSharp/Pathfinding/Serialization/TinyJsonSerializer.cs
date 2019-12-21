@@ -12,6 +12,14 @@ namespace Pathfinding.Serialization
 {
 	public class TinyJsonSerializer
 	{
+		public static void Serialize(object obj, StringBuilder output)
+		{
+			new TinyJsonSerializer
+			{
+				output = output
+			}.Serialize(obj);
+		}
+
 		private TinyJsonSerializer()
 		{
 			this.serializers[typeof(float)] = delegate(object v)
@@ -20,29 +28,35 @@ namespace Pathfinding.Serialization
 			};
 			this.serializers[typeof(bool)] = delegate(object v)
 			{
-				this.output.Append((!(bool)v) ? "false" : "true");
+				this.output.Append(((bool)v) ? "true" : "false");
 			};
-			Dictionary<Type, Action<object>> dictionary = this.serializers;
-			Type typeFromHandle = typeof(Version);
-			Action<object> action = delegate(object v)
+			this.serializers[typeof(Version)] = (this.serializers[typeof(uint)] = (this.serializers[typeof(int)] = delegate(object v)
 			{
 				this.output.Append(v.ToString());
-			};
-			this.serializers[typeof(int)] = action;
-			action = action;
-			this.serializers[typeof(uint)] = action;
-			dictionary[typeFromHandle] = action;
+			}));
 			this.serializers[typeof(string)] = delegate(object v)
 			{
 				this.output.AppendFormat("\"{0}\"", v.ToString().Replace("\"", "\\\""));
 			};
 			this.serializers[typeof(Vector2)] = delegate(object v)
 			{
-				this.output.AppendFormat("{{ \"x\": {0}, \"y\": {1} }}", ((Vector2)v).x.ToString("R", TinyJsonSerializer.invariantCulture), ((Vector2)v).y.ToString("R", TinyJsonSerializer.invariantCulture));
+				StringBuilder stringBuilder = this.output;
+				string format = "{{ \"x\": {0}, \"y\": {1} }}";
+				Vector2 vector = (Vector2)v;
+				object arg = vector.x.ToString("R", TinyJsonSerializer.invariantCulture);
+				vector = (Vector2)v;
+				stringBuilder.AppendFormat(format, arg, vector.y.ToString("R", TinyJsonSerializer.invariantCulture));
 			};
 			this.serializers[typeof(Vector3)] = delegate(object v)
 			{
-				this.output.AppendFormat("{{ \"x\": {0}, \"y\": {1}, \"z\": {2} }}", ((Vector3)v).x.ToString("R", TinyJsonSerializer.invariantCulture), ((Vector3)v).y.ToString("R", TinyJsonSerializer.invariantCulture), ((Vector3)v).z.ToString("R", TinyJsonSerializer.invariantCulture));
+				StringBuilder stringBuilder = this.output;
+				string format = "{{ \"x\": {0}, \"y\": {1}, \"z\": {2} }}";
+				Vector3 vector = (Vector3)v;
+				object arg = vector.x.ToString("R", TinyJsonSerializer.invariantCulture);
+				vector = (Vector3)v;
+				object arg2 = vector.y.ToString("R", TinyJsonSerializer.invariantCulture);
+				vector = (Vector3)v;
+				stringBuilder.AppendFormat(format, arg, arg2, vector.z.ToString("R", TinyJsonSerializer.invariantCulture));
 			};
 			this.serializers[typeof(Pathfinding.Util.Guid)] = delegate(object v)
 			{
@@ -52,14 +66,6 @@ namespace Pathfinding.Serialization
 			{
 				this.output.AppendFormat("{{ \"value\": {0} }}", ((LayerMask)v).ToString());
 			};
-		}
-
-		public static void Serialize(object obj, StringBuilder output)
-		{
-			new TinyJsonSerializer
-			{
-				output = output
-			}.Serialize(obj);
 		}
 
 		private void Serialize(object obj)
@@ -74,12 +80,14 @@ namespace Pathfinding.Serialization
 			if (this.serializers.ContainsKey(type))
 			{
 				this.serializers[type](obj);
+				return;
 			}
-			else if (typeInfo.IsEnum)
+			if (typeInfo.IsEnum)
 			{
-				this.output.Append('"' + obj.ToString() + '"');
+				this.output.Append("\"" + obj.ToString() + "\"");
+				return;
 			}
-			else if (obj is IList)
+			if (obj is IList)
 			{
 				this.output.Append("[");
 				IList list = obj as IList;
@@ -92,32 +100,31 @@ namespace Pathfinding.Serialization
 					this.Serialize(list[i]);
 				}
 				this.output.Append("]");
+				return;
 			}
-			else if (obj is UnityEngine.Object)
+			if (obj is UnityEngine.Object)
 			{
 				this.SerializeUnityObject(obj as UnityEngine.Object);
+				return;
 			}
-			else
+			bool flag = typeInfo.GetCustomAttributes(typeof(JsonOptInAttribute), true).Length != 0;
+			this.output.Append("{");
+			FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			bool flag2 = false;
+			foreach (FieldInfo fieldInfo in fields)
 			{
-				bool flag = typeInfo.GetCustomAttributes(typeof(JsonOptInAttribute), true).Length > 0;
-				this.output.Append("{");
-				FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				bool flag2 = false;
-				foreach (FieldInfo fieldInfo in fields)
+				if ((!flag && fieldInfo.IsPublic) || fieldInfo.GetCustomAttributes(typeof(JsonMemberAttribute), true).Length != 0)
 				{
-					if ((!flag && fieldInfo.IsPublic) || fieldInfo.GetCustomAttributes(typeof(JsonMemberAttribute), true).Length > 0)
+					if (flag2)
 					{
-						if (flag2)
-						{
-							this.output.Append(", ");
-						}
-						flag2 = true;
-						this.output.AppendFormat("\"{0}\": ", fieldInfo.Name);
-						this.Serialize(fieldInfo.GetValue(obj));
+						this.output.Append(", ");
 					}
+					flag2 = true;
+					this.output.AppendFormat("\"{0}\": ", fieldInfo.Name);
+					this.Serialize(fieldInfo.GetValue(obj));
 				}
-				this.output.Append("}");
 			}
+			this.output.Append("}");
 		}
 
 		private void QuotedField(string name, string contents)

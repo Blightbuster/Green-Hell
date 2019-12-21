@@ -36,8 +36,7 @@ namespace AmplifyMotion
 				}));
 				return;
 			}
-			SkinnedMeshRenderer component = this.m_cloth.gameObject.GetComponent<SkinnedMeshRenderer>();
-			Mesh sharedMesh = component.sharedMesh;
+			Mesh sharedMesh = this.m_cloth.gameObject.GetComponent<SkinnedMeshRenderer>().sharedMesh;
 			if (sharedMesh == null || sharedMesh.vertices == null || sharedMesh.triangles == null)
 			{
 				this.IssueError("[AmplifyMotion] Invalid Mesh on Cloth-enabled object " + this.m_obj.name);
@@ -122,7 +121,7 @@ namespace AmplifyMotion
 			if (this.m_initialized && !this.m_error && this.m_renderer.isVisible)
 			{
 				bool flag = (this.m_owner.Instance.CullingMask & 1 << this.m_obj.gameObject.layer) != 0;
-				int num = (!flag) ? 255 : this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject);
+				int num = flag ? this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject) : 255;
 				Vector3[] vertices = this.m_cloth.vertices;
 				for (int i = 0; i < this.m_targetVertexCount; i++)
 				{
@@ -145,12 +144,12 @@ namespace AmplifyMotion
 				}
 				renderCB.SetGlobalMatrix("_AM_MATRIX_PREV_MVP", value);
 				renderCB.SetGlobalFloat("_AM_OBJECT_ID", (float)num * 0.003921569f);
-				renderCB.SetGlobalFloat("_AM_MOTION_SCALE", (!flag) ? 0f : scale);
-				int num2 = (quality != Quality.Mobile) ? 2 : 0;
+				renderCB.SetGlobalFloat("_AM_MOTION_SCALE", flag ? scale : 0f);
+				int num2 = (quality == Quality.Mobile) ? 0 : 2;
 				for (int j = 0; j < this.m_sharedMaterials.Length; j++)
 				{
 					MotionState.MaterialDesc materialDesc = this.m_sharedMaterials[j];
-					int shaderPass = num2 + ((!materialDesc.coverage) ? 0 : 1);
+					int shaderPass = num2 + (materialDesc.coverage ? 1 : 0);
 					if (materialDesc.coverage)
 					{
 						Texture mainTexture = materialDesc.material.mainTexture;

@@ -1,13 +1,56 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using Enums;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CJTools
 {
 	public static class General
 	{
+		public static bool IsNumber(this object value)
+		{
+			return value is sbyte || value is byte || value is short || value is ushort || value is int || value is uint || value is long || value is ulong || value is float || value is double || value is decimal;
+		}
+
+		public static string StrikeThrough(string s)
+		{
+			string text = "";
+			for (int i = 0; i < s.Length; i++)
+			{
+				text = text + s[i].ToString() + "̶";
+			}
+			return text;
+		}
+
+		public static GameObject FindObject(string name)
+		{
+			for (int i = 0; i < SceneManager.sceneCount; i++)
+			{
+				Scene sceneAt = SceneManager.GetSceneAt(i);
+				if (sceneAt.isLoaded)
+				{
+					GameObject[] rootGameObjects = sceneAt.GetRootGameObjects();
+					for (int j = 0; j < rootGameObjects.Length; j++)
+					{
+						if (rootGameObjects[j].name == name)
+						{
+							return rootGameObjects[j];
+						}
+						Transform[] componentsInChildren = rootGameObjects[j].GetComponentsInChildren<Transform>(true);
+						for (int k = 0; k < componentsInChildren.Length; k++)
+						{
+							if (componentsInChildren[k].name == name)
+							{
+								return componentsInChildren[k].gameObject;
+							}
+						}
+					}
+				}
+			}
+			return null;
+		}
+
 		public static float LinearToDecibel(float linear)
 		{
 			float result;
@@ -27,6 +70,20 @@ namespace CJTools
 			return Mathf.Pow(10f, dB / 20f);
 		}
 
+		public static T GetComponentUpRecursive<T>(GameObject go)
+		{
+			T t = go.GetComponent<T>();
+			if (t != null && !t.Equals(null))
+			{
+				return t;
+			}
+			if (go.transform.parent != null)
+			{
+				t = General.GetComponentUpRecursive<T>(go.transform.parent.gameObject);
+			}
+			return t;
+		}
+
 		public static T GetComponentDeepChild<T>(GameObject go)
 		{
 			T component = go.GetComponent<T>();
@@ -37,20 +94,9 @@ namespace CJTools
 			return go.GetComponentInChildren<T>();
 		}
 
-		public static List<T> GetComponentsDeepChild<T>(GameObject go)
+		public static T[] GetComponentsDeepChild<T>(GameObject go)
 		{
-			List<T> list = new List<T>();
-			T component = go.GetComponent<T>();
-			if (component != null && !component.Equals(null))
-			{
-				list.Add(component);
-			}
-			T[] componentsInChildren = go.GetComponentsInChildren<T>(true);
-			for (int i = 0; i < componentsInChildren.Length; i++)
-			{
-				list.Add(componentsInChildren[i]);
-			}
-			return list;
+			return go.GetComponentsInChildren<T>(true);
 		}
 
 		public static Transform FindDeepChild(this Transform parent, string name)
@@ -60,26 +106,34 @@ namespace CJTools
 			{
 				return transform;
 			}
-			IEnumerator enumerator = parent.GetEnumerator();
-			try
+			for (int i = 0; i < parent.childCount; i++)
 			{
-				while (enumerator.MoveNext())
+				transform = parent.GetChild(i).FindDeepChild(name);
+				if (transform != null)
 				{
-					object obj = enumerator.Current;
-					Transform parent2 = (Transform)obj;
-					transform = parent2.FindDeepChild(name);
-					if (transform != null)
-					{
-						return transform;
-					}
+					return transform;
 				}
 			}
-			finally
+			return null;
+		}
+
+		public static Transform FindDeepChild(this Transform parent, int name_hash)
+		{
+			for (int i = 0; i < parent.childCount; i++)
 			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
+				Transform child = parent.GetChild(i);
+				if (child.name.GetHashCode() == name_hash)
 				{
-					disposable.Dispose();
+					return child;
+				}
+			}
+			for (int j = 0; j < parent.childCount; j++)
+			{
+				Transform transform = parent.GetChild(j);
+				transform = transform.FindDeepChild(name_hash);
+				if (transform != null)
+				{
+					return transform;
 				}
 			}
 			return null;
@@ -105,7 +159,7 @@ namespace CJTools
 
 		public static T[] GetAtPath<T>(string path)
 		{
-			ArrayList arrayList = new ArrayList();
+			new ArrayList();
 			return null;
 		}
 
@@ -117,6 +171,16 @@ namespace CJTools
 		public static bool IsItemRawMeat(ItemID item)
 		{
 			return item == ItemID.Fat_Meat_Raw || item == ItemID.Fish_Meat_Raw || item == ItemID.Lean_Meat_Raw || item == ItemID.Meat_Raw || item == ItemID.Prawn_Meat_Raw || item == ItemID.Larva;
+		}
+
+		public static bool IsFloorConstruction(ItemID item)
+		{
+			return item == ItemID.building_bamboo_frame_floor || item == ItemID.building_frame_floor;
+		}
+
+		public static bool IsRoofConstruction(ItemID item)
+		{
+			return item == ItemID.building_roof || item == ItemID.building_banana_leaf_roof;
 		}
 	}
 }

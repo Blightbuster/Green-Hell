@@ -20,7 +20,16 @@ public class ConstructionSlot : MonoBehaviour
 	public void SetConstruction(Construction construction)
 	{
 		this.m_Construction = construction;
+		foreach (ConstructionSlot constructionSlot in this.m_ConnectedSlots)
+		{
+			constructionSlot.m_Construction = construction;
+		}
 		this.ConnectConstructions(this.m_ParentConstruction, construction);
+		if (!Replicator.IsAnyObjectBeingDeserialized())
+		{
+			this.m_ParentConstruction.ReplRequestOwnership(false);
+			this.m_ParentConstruction.ReplSetDirty();
+		}
 	}
 
 	private void ConnectConstructions(Construction construction1, Construction construction2)
@@ -66,4 +75,8 @@ public class ConstructionSlot : MonoBehaviour
 
 	[HideInInspector]
 	public Construction m_Construction;
+
+	public List<ConstructionSlot> m_ConnectedSlots = new List<ConstructionSlot>();
+
+	public bool m_UpperLevelSlot;
 }

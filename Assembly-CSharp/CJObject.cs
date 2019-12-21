@@ -4,7 +4,7 @@ using CJTools;
 using Enums;
 using UnityEngine;
 
-public class CJObject : MonoBehaviour
+public class CJObject : MonoBehaviour, IRelevanceCalculator
 {
 	protected virtual void Awake()
 	{
@@ -79,7 +79,22 @@ public class CJObject : MonoBehaviour
 		return false;
 	}
 
+	public virtual bool IsHumanAI()
+	{
+		return false;
+	}
+
+	public virtual bool IsFish()
+	{
+		return false;
+	}
+
 	public virtual bool IsPlayer()
+	{
+		return false;
+	}
+
+	public virtual bool IsShower()
 	{
 		return false;
 	}
@@ -100,7 +115,7 @@ public class CJObject : MonoBehaviour
 
 	public virtual string GetTriggerInfoLocalized()
 	{
-		return GreenHellGame.Instance.GetLocalization().Get(this.GetName());
+		return GreenHellGame.Instance.GetLocalization().Get(this.GetName(), true);
 	}
 
 	public virtual bool CanReceiveDamageOfType(DamageType damage_type)
@@ -120,9 +135,7 @@ public class CJObject : MonoBehaviour
 			return;
 		}
 		this.m_HallucinationDisappearing = true;
-		GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>((!this.IsAI()) ? CJObject.s_DisappearItemFXPrefab : CJObject.s_DisappearAIFXPrefab, base.transform.position, base.transform.rotation);
-		DisappearEffect component = gameObject.GetComponent<DisappearEffect>();
-		component.Initialize(base.transform);
+		UnityEngine.Object.Instantiate<GameObject>(this.IsAI() ? CJObject.s_DisappearAIFXPrefab : CJObject.s_DisappearItemFXPrefab, base.transform.position, base.transform.rotation).GetComponent<DisappearEffect>().Initialize(base.transform);
 		PlayerSanityModule.Get().OnObjectDisappear(this, play_disappear_chatter);
 	}
 
@@ -151,6 +164,30 @@ public class CJObject : MonoBehaviour
 		}
 	}
 
+	public bool IsSceneObject()
+	{
+		return this.m_SceneObject;
+	}
+
+	public void SetSceneObject(bool set = true)
+	{
+		this.m_SceneObject = set;
+	}
+
+	public virtual bool CanBeRemovedByRelevance(bool on_owner)
+	{
+		return !this.m_SceneObject;
+	}
+
+	public virtual float CalculateRelevance(IPeerWorldRepresentation peer, bool is_owner)
+	{
+		if (this.m_Hallucination && !peer.IsLocalPeer())
+		{
+			return 0f;
+		}
+		return -1f;
+	}
+
 	[HideInInspector]
 	public bool m_Hallucination;
 
@@ -170,4 +207,7 @@ public class CJObject : MonoBehaviour
 	private float m_StartHitShakeTime;
 
 	private Vector3 m_StartHitShakePosition = Vector3.zero;
+
+	[SerializeField]
+	public bool m_SceneObject;
 }

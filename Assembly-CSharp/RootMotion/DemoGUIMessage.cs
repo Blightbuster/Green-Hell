@@ -8,7 +8,7 @@ namespace RootMotion
 		private void OnGUI()
 		{
 			GUI.color = this.color;
-			GUILayout.Label(this.text, new GUILayoutOption[0]);
+			GUILayout.Label(this.text, Array.Empty<GUILayoutOption>());
 			GUI.color = Color.white;
 		}
 

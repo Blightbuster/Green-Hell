@@ -14,17 +14,15 @@ namespace AIs
 			{
 				text = "Hunter" + text;
 			}
-			for (int i = 0; i < 999; i++)
+			int num = 0;
+			while (num < 999 && this.m_AI.m_AnimationModule.ContainsState(text + num.ToString()))
 			{
-				if (!this.m_AI.m_AnimationModule.ContainsState(text + i.ToString()))
-				{
-					break;
-				}
-				this.m_Anims.Add(text + i.ToString());
+				this.m_Anims.Add(text + num.ToString());
+				num++;
 			}
 			if (this.m_Anims.Count == 0)
 			{
-				this.m_Anims.Add((!this.m_AI.IsHunter()) ? "PostAttack" : "HunterPostAttack");
+				this.m_Anims.Add(this.m_AI.IsHunter() ? "HunterPostAttack" : "PostAttack");
 			}
 			this.m_Animation = this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)];
 		}

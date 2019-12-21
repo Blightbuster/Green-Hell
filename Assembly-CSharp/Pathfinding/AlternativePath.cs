@@ -72,8 +72,7 @@ namespace Pathfinding
 			}
 			if (nodes != null)
 			{
-				int num = this.rnd.Next(this.randomStep);
-				for (int i = num; i < nodes.Count; i += this.rnd.Next(1, this.randomStep))
+				for (int i = this.rnd.Next(this.randomStep); i < nodes.Count; i += this.rnd.Next(1, this.randomStep))
 				{
 					nodes[i].Penalty = (uint)((ulong)nodes[i].Penalty + (ulong)((long)this.penalty));
 					this.prevNodes.Add(nodes[i]);

@@ -24,7 +24,7 @@ namespace AIs
 			float num = this.m_AI.transform.forward.GetNormalized2D().AngleSigned(normalized2D, Vector3.up);
 			if (Mathf.Abs(num) > 45f)
 			{
-				this.m_AI.transform.Rotate(Vector3.up, (num <= 0f) ? (num + 45f) : (num - 45f));
+				this.m_AI.transform.Rotate(Vector3.up, (num > 0f) ? (num - 45f) : (num + 45f));
 			}
 		}
 

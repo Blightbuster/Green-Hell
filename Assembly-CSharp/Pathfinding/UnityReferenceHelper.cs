@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_unity_reference_helper.php")]
 	[ExecuteInEditMode]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_unity_reference_helper.php")]
 	public class UnityReferenceHelper : MonoBehaviour
 	{
 		public string GetGUID()
@@ -24,23 +24,21 @@ namespace Pathfinding
 			{
 				this.guid = Pathfinding.Util.Guid.NewGuid().ToString();
 				Debug.Log("Created new GUID - " + this.guid);
+				return;
 			}
-			else
+			foreach (UnityReferenceHelper unityReferenceHelper in UnityEngine.Object.FindObjectsOfType(typeof(UnityReferenceHelper)) as UnityReferenceHelper[])
 			{
-				foreach (UnityReferenceHelper unityReferenceHelper in UnityEngine.Object.FindObjectsOfType(typeof(UnityReferenceHelper)) as UnityReferenceHelper[])
+				if (unityReferenceHelper != this && this.guid == unityReferenceHelper.guid)
 				{
-					if (unityReferenceHelper != this && this.guid == unityReferenceHelper.guid)
-					{
-						this.guid = Pathfinding.Util.Guid.NewGuid().ToString();
-						Debug.Log("Created new GUID - " + this.guid);
-						return;
-					}
+					this.guid = Pathfinding.Util.Guid.NewGuid().ToString();
+					Debug.Log("Created new GUID - " + this.guid);
+					return;
 				}
 			}
 		}
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private string guid;
 	}
 }

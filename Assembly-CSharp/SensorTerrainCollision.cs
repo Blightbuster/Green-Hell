@@ -22,7 +22,7 @@ public class SensorTerrainCollision : SensorBase
 		base.OnEnter();
 		for (int i = 0; i < this.m_TerrainColliders.Count; i++)
 		{
-			Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), this.m_TerrainColliders[i], this.m_DisableOnEnter);
+			Physics.IgnoreCollision(Player.Get().m_Collider, this.m_TerrainColliders[i], this.m_DisableOnEnter);
 		}
 	}
 
@@ -31,7 +31,7 @@ public class SensorTerrainCollision : SensorBase
 		base.OnExit();
 		for (int i = 0; i < this.m_TerrainColliders.Count; i++)
 		{
-			Physics.IgnoreCollision(Player.Get().GetComponent<Collider>(), this.m_TerrainColliders[i], !this.m_DisableOnEnter);
+			Physics.IgnoreCollision(Player.Get().m_Collider, this.m_TerrainColliders[i], !this.m_DisableOnEnter);
 		}
 	}
 

@@ -14,9 +14,11 @@ public class HUDMessage
 
 	public Image m_IconComponent;
 
+	public GameObject m_Group;
+
 	public Vector3 m_TargetTextPos = Vector3.zero;
 
-	public Vector3 m_TargetBGPos = Vector3.zero;
+	public Vector3 m_TargetGroupPos = Vector3.zero;
 
 	public Vector3 m_TargetIconPos = Vector3.zero;
 }

@@ -6,9 +6,9 @@ namespace AIs
 {
 	public class HumanLookModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_HumanAI = (HumanAI)this.m_AI;
 			DebugUtils.Assert(this.m_HumanAI, true);
 			this.m_Head = base.transform.FindDeepChild("head");
@@ -31,8 +31,7 @@ namespace AIs
 
 		private void UpdateLookAtPlayer()
 		{
-			Vector3 position = Camera.main.transform.position;
-			Quaternion rotation = Quaternion.LookRotation((position - this.m_Head.position).normalized, Vector2.up);
+			Quaternion rotation = Quaternion.LookRotation((CameraManager.Get().m_MainCamera.transform.position - this.m_Head.position).normalized, Vector2.up);
 			this.m_Head.rotation = rotation;
 			this.m_Head.Rotate(this.m_Euler);
 		}

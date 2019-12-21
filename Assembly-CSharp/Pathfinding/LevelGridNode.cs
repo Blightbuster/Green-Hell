@@ -277,11 +277,9 @@ namespace Pathfinding
 			if (ctx.meta.version < LevelGridNode.V3_9_0)
 			{
 				this.gridConnections = ((ulong)ctx.reader.ReadUInt32() | 18446744069414584320UL);
+				return;
 			}
-			else
-			{
-				this.gridConnections = ctx.reader.ReadUInt64();
-			}
+			this.gridConnections = ctx.reader.ReadUInt64();
 		}
 
 		private static LayerGridGraph[] _gridGraphs = new LayerGridGraph[0];

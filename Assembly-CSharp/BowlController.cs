@@ -14,7 +14,7 @@ public class BowlController : PlayerController
 	{
 		base.Awake();
 		BowlController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Bowl;
+		base.m_ControllerType = PlayerControllerType.Bowl;
 	}
 
 	protected override void OnEnable()
@@ -42,26 +42,24 @@ public class BowlController : PlayerController
 		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if (action != InputsManager.InputAction.Drop)
-		{
-			if (action != InputsManager.InputAction.BowlSpil)
-			{
-				if (action == InputsManager.InputAction.BowlDrink)
-				{
-					this.Drink();
-				}
-			}
-			else
-			{
-				this.Spill(-1f);
-			}
-		}
-		else
+		InputsManager.InputAction action = action_data.m_Action;
+		if (action == InputsManager.InputAction.Drop)
 		{
 			this.m_Player.DropItem(this.m_Bowl);
+			return;
 		}
+		if (action == InputsManager.InputAction.BowlSpil)
+		{
+			this.Spill(-1f);
+			return;
+		}
+		if (action != InputsManager.InputAction.BowlDrink)
+		{
+			return;
+		}
+		this.Drink();
 	}
 
 	private void Drink()
@@ -88,8 +86,8 @@ public class BowlController : PlayerController
 		actions.Add(0);
 		if (this.m_Bowl.m_LCInfo.m_Amount > 0f)
 		{
-			actions.Add(18);
-			actions.Add(17);
+			actions.Add(20);
+			actions.Add(19);
 		}
 	}
 

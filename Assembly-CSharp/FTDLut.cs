@@ -5,12 +5,7 @@ public class FTDLut
 {
 	public bool Validate2DLut(Texture2D texture)
 	{
-		if (!texture)
-		{
-			return false;
-		}
-		int height = texture.height;
-		return height == Mathf.FloorToInt(Mathf.Sqrt((float)texture.width));
+		return texture && texture.height == Mathf.FloorToInt(Mathf.Sqrt((float)texture.width));
 	}
 
 	public Texture3D Allocate3DLut(Texture2D source)

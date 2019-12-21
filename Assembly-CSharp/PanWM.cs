@@ -32,7 +32,7 @@ public class PanWM : MonoBehaviour
 
 	private Vector2 shake = new Vector2(5f, 3f);
 
-	public static float shake_value;
+	public static float shake_value = 0f;
 
 	public static float shake_speed = 10f;
 

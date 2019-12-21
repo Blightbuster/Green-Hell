@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class BSPlayerTrigger : MonoBehaviour
 {
-	public void SetBalanceSystem(BalanceSystem system)
+	public void SetBalanceSystem(BalanceSystem20 system)
 	{
 		this.m_BalanceSystem = system;
 	}
@@ -18,5 +18,5 @@ public class BSPlayerTrigger : MonoBehaviour
 		this.m_BalanceSystem.OnObjectTriggerExit(other.gameObject);
 	}
 
-	private BalanceSystem m_BalanceSystem;
+	private BalanceSystem20 m_BalanceSystem;
 }

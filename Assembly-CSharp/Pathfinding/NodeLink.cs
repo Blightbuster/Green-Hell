@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link.php")]
 	[AddComponentMenu("Pathfinding/Link")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link.php")]
 	public class NodeLink : GraphModifier
 	{
 		public Transform Start
@@ -29,15 +29,13 @@ namespace Pathfinding
 			if (AstarPath.active.isScanning)
 			{
 				this.InternalOnPostScan();
+				return;
 			}
-			else
+			AstarPath.active.AddWorkItem(new AstarWorkItem(delegate(bool force)
 			{
-				AstarPath.active.AddWorkItem(new AstarWorkItem(delegate(bool force)
-				{
-					this.InternalOnPostScan();
-					return true;
-				}));
-			}
+				this.InternalOnPostScan();
+				return true;
+			}));
 		}
 
 		public void InternalOnPostScan()
@@ -75,6 +73,7 @@ namespace Pathfinding
 				if (!this.oneWay)
 				{
 					node2.RemoveConnection(node);
+					return;
 				}
 			}
 			else
@@ -94,7 +93,7 @@ namespace Pathfinding
 			{
 				return;
 			}
-			Draw.Gizmos.Bezier(this.Start.position, this.End.position, (!this.deleteConnection) ? Color.green : Color.red);
+			Draw.Gizmos.Bezier(this.Start.position, this.End.position, this.deleteConnection ? Color.red : Color.green);
 		}
 
 		public Transform end;

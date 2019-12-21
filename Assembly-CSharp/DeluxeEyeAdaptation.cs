@@ -78,12 +78,14 @@ public class DeluxeEyeAdaptation : MonoBehaviour
 		if (this.m_BrightnessMaterial == null && this.m_BrightnessShader != null && this.m_BrightnessShader.isSupported)
 		{
 			this.m_BrightnessMaterial = this.CreateMaterial(this.m_BrightnessShader);
+			return;
 		}
-		else if (this.m_BrightnessShader == null)
+		if (this.m_BrightnessShader == null)
 		{
 			Debug.LogError("Cant find brightness shader");
+			return;
 		}
-		else if (!this.m_BrightnessShader.isSupported)
+		if (!this.m_BrightnessShader.isSupported)
 		{
 			Debug.LogError("Brightness shader unsupported");
 		}
@@ -120,7 +122,7 @@ public class DeluxeEyeAdaptation : MonoBehaviour
 		{
 			this.m_Logic = new DeluxeEyeAdaptationLogic();
 		}
-		DeluxeTonemapper component = base.GetComponent<DeluxeTonemapper>();
+		base.GetComponent<DeluxeTonemapper>();
 		RenderTexture temporary = RenderTexture.GetTemporary(source.width / 2, source.height / 2, 0, source.format);
 		RenderTexture temporary2 = RenderTexture.GetTemporary(temporary.width / 2, temporary.height / 2, 0, source.format);
 		if (this.m_BrightnessMaterial == null)
@@ -168,8 +170,8 @@ public class DeluxeEyeAdaptation : MonoBehaviour
 		this.m_BrightnessMaterial.SetTexture("_ColorTex", source);
 		if (this.RenderDebugInfos)
 		{
-			this.m_BrightnessMaterial.SetFloat("_VisualizeExposure", (!this.m_ShowExposure) ? 0f : 1f);
-			this.m_BrightnessMaterial.SetFloat("_VisualizeHistogram", (!this.m_ShowHistogram) ? 0f : 1f);
+			this.m_BrightnessMaterial.SetFloat("_VisualizeExposure", this.m_ShowExposure ? 1f : 0f);
+			this.m_BrightnessMaterial.SetFloat("_VisualizeHistogram", this.m_ShowHistogram ? 1f : 0f);
 			this.m_BrightnessMaterial.SetVector("_MinMaxSpeedDt", this.m_Logic.MinMaxSpeedDT);
 			this.m_BrightnessMaterial.SetTexture("_Histogram", this.m_Logic.m_HistogramList[0]);
 			this.m_BrightnessMaterial.SetTexture("_ColorTex", source);

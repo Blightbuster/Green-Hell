@@ -35,28 +35,52 @@ public class MSManager : MonoBehaviour
 		}
 	}
 
-	public MSMultiSample PlayMultiSample(string ms_name, float fade_in)
+	public MSMultiSample PlayMultiSample(Component requester, string ms_name, float fade_in, bool change_rainforest_ambient_volume = false, float rainforest_ambient_volume = 1f)
 	{
 		MSMultiSample msmultiSample = this.FindMultisample(ms_name);
 		if (msmultiSample != null)
 		{
-			msmultiSample.Play(fade_in);
+			msmultiSample.m_ChangeRainforestAmbientVolume = change_rainforest_ambient_volume;
+			msmultiSample.m_RainforestAmbientVolume = rainforest_ambient_volume;
+			msmultiSample.Play(requester, fade_in);
 			return msmultiSample;
 		}
 		return null;
 	}
 
-	public void StopMultiSample(MSMultiSample multisample, float fade_out)
+	public MSMultiSample PlayMultiSample(Component requester, string ms_name, float fade_in)
 	{
-		multisample.Stop(fade_out);
+		MSMultiSample msmultiSample = this.FindMultisample(ms_name);
+		if (msmultiSample != null)
+		{
+			msmultiSample.Play(requester, fade_in);
+			return msmultiSample;
+		}
+		return null;
 	}
 
-	private MSMultiSample FindMultisample(string name)
+	public void StopAllMultiSamples()
+	{
+		for (int i = 0; i < this.m_MultiSamples.Count; i++)
+		{
+			this.m_MultiSamples[i].ForceStop();
+		}
+	}
+
+	public void StopMultiSample(Component requester, MSMultiSample multisample, float fade_out)
+	{
+		if (multisample != null)
+		{
+			multisample.Stop(requester, fade_out);
+		}
+	}
+
+	public MSMultiSample FindMultisample(string name)
 	{
 		for (int i = 0; i < this.m_MultiSamples.Count; i++)
 		{
 			MSMultiSample msmultiSample = this.m_MultiSamples[i];
-			if (msmultiSample.m_Name == name)
+			if (msmultiSample.m_Name.GetHashCode() == name.GetHashCode() && msmultiSample.m_Name == name)
 			{
 				return msmultiSample;
 			}

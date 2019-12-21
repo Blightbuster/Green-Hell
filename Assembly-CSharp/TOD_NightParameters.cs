@@ -137,7 +137,7 @@ public class TOD_NightParameters
 	[Range(0f, 1f)]
 	public float AmbientMultiplier = 1f;
 
-	[Range(0f, 1f)]
 	[Tooltip("Brightness multiplier of the reflection probe.")]
+	[Range(0f, 1f)]
 	public float ReflectionMultiplier = 1f;
 }

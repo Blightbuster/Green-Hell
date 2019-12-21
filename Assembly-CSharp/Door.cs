@@ -17,7 +17,7 @@ public class Door : Trigger
 			this.m_RequiredItemID1 = (ItemID)Enum.Parse(typeof(ItemID), this.m_RequiredItemInfoName1);
 		}
 		Transform transform = base.transform.Find("Hinge");
-		this.m_Hinge = ((!transform) ? null : transform.gameObject);
+		this.m_Hinge = (transform ? transform.gameObject : null);
 	}
 
 	public override void GetActions(List<TriggerAction.TYPE> actions)
@@ -27,17 +27,16 @@ public class Door : Trigger
 			return;
 		}
 		Door.DoorState doorState = this.m_DoorState;
-		if (doorState != Door.DoorState.Closed)
-		{
-			if (doorState == Door.DoorState.Open)
-			{
-				actions.Add(TriggerAction.TYPE.Close);
-			}
-		}
-		else
+		if (doorState == Door.DoorState.Closed)
 		{
 			actions.Add(TriggerAction.TYPE.Open);
+			return;
 		}
+		if (doorState != Door.DoorState.Open)
+		{
+			return;
+		}
+		actions.Add(TriggerAction.TYPE.Close);
 	}
 
 	public override void OnExecute(TriggerAction.TYPE action)
@@ -46,8 +45,9 @@ public class Door : Trigger
 		if (action == TriggerAction.TYPE.Open)
 		{
 			this.SetState(Door.DoorState.Opening);
+			return;
 		}
-		else if (action == TriggerAction.TYPE.Close)
+		if (action == TriggerAction.TYPE.Close)
 		{
 			this.SetState(Door.DoorState.Closing);
 		}
@@ -60,7 +60,11 @@ public class Door : Trigger
 
 	public override string GetName()
 	{
-		return (this.m_DoorState != Door.DoorState.Locked) ? "HUD_Door" : "HUD_DoorLocked";
+		if (this.m_DoorState != Door.DoorState.Locked)
+		{
+			return "HUD_Door";
+		}
+		return "HUD_DoorLocked";
 	}
 
 	protected override void Update()
@@ -81,6 +85,7 @@ public class Door : Trigger
 			if ((InventoryBackpack.Get().Contains(this.m_RequiredItemID0) || this.m_RequiredItemID0 == ItemID.None) && (InventoryBackpack.Get().Contains(this.m_RequiredItemID1) || this.m_RequiredItemID1 == ItemID.None))
 			{
 				this.SetState(Door.DoorState.Closed);
+				return;
 			}
 		}
 		else if (this.m_DoorState == Door.DoorState.Closed && ((!InventoryBackpack.Get().Contains(this.m_RequiredItemID0) && this.m_RequiredItemID0 != ItemID.None) || (!InventoryBackpack.Get().Contains(this.m_RequiredItemID1) && this.m_RequiredItemID1 != ItemID.None)))
@@ -92,18 +97,19 @@ public class Door : Trigger
 	private void UpdateState()
 	{
 		Door.DoorState doorState = this.m_DoorState;
-		if (doorState != Door.DoorState.Opening)
+		if (doorState != Door.DoorState.Closing)
 		{
-			if (doorState == Door.DoorState.Closing)
+			if (doorState == Door.DoorState.Opening)
 			{
-				base.transform.RotateAround((!this.m_Hinge) ? base.transform.position : this.m_Hinge.transform.position, Vector3.up, -90f);
-				this.SetState(Door.DoorState.Closed);
+				base.transform.RotateAround(this.m_Hinge ? this.m_Hinge.transform.position : base.transform.position, Vector3.up, 90f);
+				this.SetState(Door.DoorState.Open);
+				return;
 			}
 		}
 		else
 		{
-			base.transform.RotateAround((!this.m_Hinge) ? base.transform.position : this.m_Hinge.transform.position, Vector3.up, 90f);
-			this.SetState(Door.DoorState.Open);
+			base.transform.RotateAround(this.m_Hinge ? this.m_Hinge.transform.position : base.transform.position, Vector3.up, -90f);
+			this.SetState(Door.DoorState.Closed);
 		}
 	}
 

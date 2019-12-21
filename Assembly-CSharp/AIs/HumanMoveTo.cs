@@ -10,7 +10,7 @@ namespace AIs
 		public override void Start()
 		{
 			base.Start();
-			this.m_State = ((this.m_AI.m_GoalsModule.m_PreviousAction != null && this.m_AI.m_GoalsModule.m_PreviousAction.GetType() == typeof(HumanMoveTo)) ? HumanMoveTo.State.Move : HumanMoveTo.State.Start);
+			this.m_State = ((this.m_AI.m_GoalsModule.m_PreviousAction == null || this.m_AI.m_GoalsModule.m_PreviousAction.GetType() != typeof(HumanMoveTo)) ? HumanMoveTo.State.Start : HumanMoveTo.State.Move);
 			this.SetupAnims();
 		}
 
@@ -48,11 +48,11 @@ namespace AIs
 			}
 			else if (num2 <= 135f)
 			{
-				this.m_StartAnimName = ((num < 0f) ? ("Start" + text + "Left_90") : ("Start" + text + "Right_90"));
+				this.m_StartAnimName = ((num >= 0f) ? ("Start" + text + "Right_90") : ("Start" + text + "Left_90"));
 			}
 			else
 			{
-				this.m_StartAnimName = ((num < 0f) ? ("Start" + text + "Left_180") : ("Start" + text + "Right_180"));
+				this.m_StartAnimName = ((num >= 0f) ? ("Start" + text + "Right_180") : ("Start" + text + "Left_180"));
 			}
 			this.m_MoveAnimName = text;
 			this.m_StopAnimName = "Stop" + text;
@@ -74,11 +74,9 @@ namespace AIs
 			if (id == AnimEventID.StopMoveEnd)
 			{
 				this.m_State = HumanMoveTo.State.Finish;
+				return;
 			}
-			else
-			{
-				base.OnAnimEvent(id);
-			}
+			base.OnAnimEvent(id);
 		}
 
 		private void UpdateMoveState()
@@ -89,7 +87,7 @@ namespace AIs
 			}
 			if (this.m_AI.m_PathModule.m_Agent.remainingDistance <= this.m_AI.GetPathPassDistance())
 			{
-				this.m_State = ((!this.m_PerformStop) ? HumanMoveTo.State.Finish : HumanMoveTo.State.Stop);
+				this.m_State = (this.m_PerformStop ? HumanMoveTo.State.Stop : HumanMoveTo.State.Finish);
 			}
 		}
 
@@ -104,20 +102,17 @@ namespace AIs
 
 		public override string GetAnimName()
 		{
-			HumanMoveTo.State state = this.m_State;
-			if (state == HumanMoveTo.State.Start)
+			switch (this.m_State)
 			{
+			case HumanMoveTo.State.Start:
 				return this.m_StartAnimName;
-			}
-			if (state == HumanMoveTo.State.Move)
-			{
+			case HumanMoveTo.State.Move:
 				return this.m_MoveAnimName;
-			}
-			if (state != HumanMoveTo.State.Stop)
-			{
+			case HumanMoveTo.State.Stop:
+				return this.m_StopAnimName;
+			default:
 				return string.Empty;
 			}
-			return this.m_StopAnimName;
 		}
 
 		protected override bool ShouldFinish()

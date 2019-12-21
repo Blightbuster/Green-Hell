@@ -5,10 +5,22 @@ using UnityEngine;
 
 public class WaterFilter : Construction, IItemSlotParent, IProcessor
 {
+	protected override void Awake()
+	{
+		base.Awake();
+		base.RegisterConstantUpdateItem();
+	}
+
 	protected override void Start()
 	{
 		base.Start();
 		HUDProcess.Get().RegisterProcess(this, this.GetIconName(), this, true);
+	}
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+		base.UnregisterConstantUpdateItem();
 	}
 
 	public bool CanInsertItem(Item item)
@@ -20,16 +32,18 @@ public class WaterFilter : Construction, IItemSlotParent, IProcessor
 	{
 		if (this.m_TargetContainerSlot == slot)
 		{
+			((LiquidContainer)slot.m_Item).Spill(-1f);
 			this.m_TargetContainerInfo = (LiquidContainerInfo)slot.m_Item.m_Info;
 			this.m_TargetContainerInfo.m_LiquidType = LiquidType.Water;
 			HUDProcess.Get().RegisterProcess(slot.m_Item, slot.m_Item.GetIconName(), this, false);
+			return;
 		}
-		else if (slot.m_Item.m_Info.IsLiquidContainer())
+		if (slot.m_Item.m_Info.IsLiquidContainer())
 		{
 			Item item = slot.m_Item;
 			this.Fill((LiquidContainerInfo)item.m_Info);
 			slot.RemoveItem();
-			if (InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true) != InventoryBackpack.InsertResult.Ok)
+			if (InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true) != InsertResult.Ok)
 			{
 				DebugUtils.Assert("Tomuś, do something with this situation!", true, DebugUtils.AssertType.Info);
 			}
@@ -62,26 +76,32 @@ public class WaterFilter : Construction, IItemSlotParent, IProcessor
 		}
 	}
 
-	protected override void Update()
+	public override void ConstantUpdate()
 	{
-		base.Update();
-		this.UpdateProcessing();
+		base.ConstantUpdate();
+		float delta_time = Time.deltaTime;
+		if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
+		{
+			delta_time = Player.GetSleepTimeFactor();
+		}
+		this.UpdateProcessing(delta_time);
 		this.UpdateParticles();
 	}
 
-	private void UpdateProcessing()
+	private void UpdateProcessing(float delta_time)
 	{
 		if (this.m_Amount == 0f)
 		{
 			return;
 		}
-		float num = MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta * this.m_AmountPerHour;
+		float num = delta_time * this.m_AmountPerSec;
 		float amount = this.m_Amount;
 		this.m_Amount -= num;
 		float num2 = amount - this.m_Amount;
 		this.m_Amount = Mathf.Clamp(this.m_Amount, 0f, this.m_Capacity);
 		if (this.m_TargetContainerInfo != null)
 		{
+			this.m_TargetContainerInfo.m_LiquidType = LiquidType.Water;
 			this.m_TargetContainerInfo.m_Amount = Mathf.Clamp(this.m_TargetContainerInfo.m_Amount + num2, 0f, this.m_TargetContainerInfo.m_Capacity);
 		}
 	}
@@ -138,8 +158,9 @@ public class WaterFilter : Construction, IItemSlotParent, IProcessor
 		result = result + "Amount = " + this.m_Amount.ToString() + "\n";
 	}
 
-	public float GetProcessProgress(Item item)
+	public float GetProcessProgress(Trigger trigger)
 	{
+		Item item = (Item)trigger;
 		if (item == this)
 		{
 			return this.m_Amount / this.m_Capacity;
@@ -156,11 +177,23 @@ public class WaterFilter : Construction, IItemSlotParent, IProcessor
 		return this.m_IconDummy.position;
 	}
 
+	public override void Save(int index)
+	{
+		base.Save(index);
+		SaveGame.SaveVal("WTAmount" + index, this.m_Amount);
+	}
+
+	public override void Load(int index)
+	{
+		base.Load(index);
+		this.m_Amount = SaveGame.LoadFVal("WTAmount" + index);
+	}
+
 	public ItemSlot m_TargetContainerSlot;
 
 	private LiquidContainerInfo m_TargetContainerInfo;
 
-	private float m_AmountPerHour = 10f;
+	public float m_AmountPerSec;
 
 	private float m_Amount;
 

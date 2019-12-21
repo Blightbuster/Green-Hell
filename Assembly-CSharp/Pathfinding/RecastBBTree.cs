@@ -22,6 +22,7 @@ namespace Pathfinding
 				if (RecastBBTree.RectIntersectsRect(box.rect, bounds))
 				{
 					boxes.Add(box.mesh);
+					return;
 				}
 			}
 			else
@@ -116,7 +117,7 @@ namespace Pathfinding
 				}
 				else
 				{
-					recastBBTreeBox2 = ((RecastBBTree.RectArea(recastBBTreeBox2.c1.rect) >= RecastBBTree.RectArea(recastBBTreeBox2.c2.rect)) ? recastBBTreeBox2.c2 : recastBBTreeBox2.c1);
+					recastBBTreeBox2 = ((RecastBBTree.RectArea(recastBBTreeBox2.c1.rect) < RecastBBTree.RectArea(recastBBTreeBox2.c2.rect)) ? recastBBTreeBox2.c1 : recastBBTreeBox2.c2);
 				}
 			}
 			recastBBTreeBox2.c1 = recastBBTreeBox;

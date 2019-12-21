@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[ExecuteInEditMode]
-[DisallowMultipleComponent]
 [AddComponentMenu("Relief Terrain/Helpers/Deferred Params")]
 [RequireComponent(typeof(Camera))]
+[DisallowMultipleComponent]
+[ExecuteInEditMode]
 public class RTP_DeferredParams : MonoBehaviour
 {
 	public void OnEnable()
@@ -42,15 +42,11 @@ public class RTP_DeferredParams : MonoBehaviour
 	private bool NotifyDecals()
 	{
 		Type type = Type.GetType("UBERDecalSystem.DecalManager");
-		if (type != null)
+		if (type != null && (UnityEngine.Object.FindObjectOfType(type) != null && UnityEngine.Object.FindObjectOfType(type) is MonoBehaviour && (UnityEngine.Object.FindObjectOfType(type) as MonoBehaviour).enabled))
 		{
-			bool flag = UnityEngine.Object.FindObjectOfType(type) != null && UnityEngine.Object.FindObjectOfType(type) is MonoBehaviour && (UnityEngine.Object.FindObjectOfType(type) as MonoBehaviour).enabled;
-			if (flag)
-			{
-				(UnityEngine.Object.FindObjectOfType(type) as MonoBehaviour).Invoke("OnDisable", 0f);
-				(UnityEngine.Object.FindObjectOfType(type) as MonoBehaviour).Invoke("OnEnable", 0f);
-				return true;
-			}
+			(UnityEngine.Object.FindObjectOfType(type) as MonoBehaviour).Invoke("OnDisable", 0f);
+			(UnityEngine.Object.FindObjectOfType(type) as MonoBehaviour).Invoke("OnEnable", 0f);
+			return true;
 		}
 		return false;
 	}
@@ -92,9 +88,10 @@ public class RTP_DeferredParams : MonoBehaviour
 		{
 			CommandBuffer[] commandBuffers = cam.GetCommandBuffers(CameraEvent.BeforeReflections);
 			bool flag = false;
-			foreach (CommandBuffer commandBuffer in commandBuffers)
+			CommandBuffer[] array = commandBuffers;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (commandBuffer.name == this.combufPreLight.name)
+				if (array[i].name == this.combufPreLight.name)
 				{
 					flag = true;
 					break;

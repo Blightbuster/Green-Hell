@@ -15,20 +15,7 @@ namespace AIs
 		public override bool ShouldPerform()
 		{
 			Being enemy = this.m_AI.m_EnemyModule.m_Enemy;
-			if (!enemy)
-			{
-				return false;
-			}
-			if (enemy.IsDead())
-			{
-				return false;
-			}
-			if (this.m_Active)
-			{
-				return true;
-			}
-			float num = enemy.transform.position.Distance(this.m_AI.transform.position);
-			return num <= this.m_AI.m_Params.m_AttackRange;
+			return enemy && !enemy.IsDead() && (this.m_Active || enemy.transform.position.Distance(this.m_AI.transform.position) <= this.m_AI.m_Params.m_AttackRange);
 		}
 
 		protected override void Prepare()
@@ -38,8 +25,7 @@ namespace AIs
 			{
 				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-				float num = Vector3.Angle(normalized2D, normalized2D2);
-				if (num > 75f)
+				if (Vector3.Angle(normalized2D, normalized2D2) > 75f)
 				{
 					this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, true);
 					base.StartAction(this.m_RotateTo);
@@ -68,8 +54,7 @@ namespace AIs
 			{
 				return;
 			}
-			float num = this.m_AI.m_EnemyModule.m_Enemy.transform.position.Distance(this.m_AI.transform.position);
-			if (num > this.m_AI.m_Params.m_AttackRange)
+			if (this.m_AI.m_EnemyModule.m_Enemy.transform.position.Distance(this.m_AI.transform.position) > this.m_AI.m_Params.m_AttackRange)
 			{
 				Vector3 normalized2 = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).normalized;
 				Vector3 position2 = this.m_AI.transform.position + normalized2 * Time.deltaTime * 5f;

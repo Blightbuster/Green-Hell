@@ -9,8 +9,7 @@ public class TribeRunawayChallenge : Challenge
 	{
 		for (int i = 0; i < parent.transform.childCount; i++)
 		{
-			GameObject gameObject = parent.transform.GetChild(i).gameObject;
-			HumanAIGroup component = gameObject.GetComponent<HumanAIGroup>();
+			HumanAIGroup component = parent.transform.GetChild(i).gameObject.GetComponent<HumanAIGroup>();
 			if (component)
 			{
 				component.m_ChallengeGroup = true;
@@ -44,16 +43,14 @@ public class TribeRunawayChallenge : Challenge
 
 	public override string GetLocalizedInfo()
 	{
-		Localization localization = GreenHellGame.Instance.GetLocalization();
-		string text = localization.Get("HUDTribeRunawayChallenge_Tribe");
+		string text = GreenHellGame.Instance.GetLocalization().Get("HUDTribeRunawayChallenge_Tribe", true);
 		text += " ";
 		int num = 0;
 		int num2 = 0;
 		Player.Get().GetGPSCoordinates(this.m_Tribe.transform.position, out num, out num2);
-		string text2 = text;
 		text = string.Concat(new string[]
 		{
-			text2,
+			text,
 			num.ToString(),
 			"'W ",
 			num2.ToString(),

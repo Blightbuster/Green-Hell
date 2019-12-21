@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class HUDBase : MonoBehaviour
 {
 	protected virtual void Start()
 	{
+		this.SetupController();
 	}
 
 	protected virtual void OnEnable()
@@ -27,6 +29,16 @@ public class HUDBase : MonoBehaviour
 	{
 	}
 
+	public virtual void ScenarioBlock()
+	{
+		this.m_ScenarioBlocked = true;
+	}
+
+	public virtual void ScenarioUnblock()
+	{
+		this.m_ScenarioBlocked = false;
+	}
+
 	public void Show(bool show)
 	{
 		if (base.enabled == show)
@@ -41,11 +53,10 @@ public class HUDBase : MonoBehaviour
 		if (show)
 		{
 			this.OnShow();
+			this.SetupController();
+			return;
 		}
-		else
-		{
-			this.OnHide();
-		}
+		this.OnHide();
 	}
 
 	protected virtual void OnShow()
@@ -76,7 +87,7 @@ public class HUDBase : MonoBehaviour
 
 	public void UpdateVisibility()
 	{
-		bool flag = this.ShouldShow();
+		bool flag = this.ShouldShow() && !this.m_ScenarioBlocked;
 		if (base.enabled != flag)
 		{
 			this.Show(flag);
@@ -98,13 +109,12 @@ public class HUDBase : MonoBehaviour
 		{
 			this.SetupGroups();
 		}
-		return (this.m_Group & group) != HUDManager.HUDGroup.None;
+		return (this.m_Group & group) > HUDManager.HUDGroup.None;
 	}
 
 	protected GameObject AddElement(string name)
 	{
-		GameObject prefab = GreenHellGame.Instance.GetPrefab(name);
-		return UnityEngine.Object.Instantiate<GameObject>(prefab, base.transform.position, base.transform.rotation);
+		return UnityEngine.Object.Instantiate<GameObject>(GreenHellGame.Instance.GetPrefab(name), base.transform.position, base.transform.rotation);
 	}
 
 	protected void RemoveElement(GameObject obj)
@@ -121,5 +131,25 @@ public class HUDBase : MonoBehaviour
 		}
 	}
 
+	public virtual void SetupController()
+	{
+		bool flag = GreenHellGame.IsPadControllerActive();
+		foreach (GameObject gameObject in this.m_PadDisableElements)
+		{
+			gameObject.SetActive(!flag && base.enabled);
+		}
+		foreach (GameObject gameObject2 in this.m_PadEnableElements)
+		{
+			gameObject2.SetActive(flag && base.enabled);
+		}
+	}
+
 	private HUDManager.HUDGroup m_Group;
+
+	[HideInInspector]
+	public bool m_ScenarioBlocked;
+
+	public List<GameObject> m_PadEnableElements = new List<GameObject>();
+
+	public List<GameObject> m_PadDisableElements = new List<GameObject>();
 }

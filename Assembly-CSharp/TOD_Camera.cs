@@ -1,16 +1,16 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Time of Day/Camera Main Script")]
-[RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
+[RequireComponent(typeof(Camera))]
+[AddComponentMenu("Time of Day/Camera Main Script")]
 public class TOD_Camera : MonoBehaviour
 {
 	public bool HDR
 	{
 		get
 		{
-			return this.cameraComponent && this.cameraComponent.hdr;
+			return this.cameraComponent && this.cameraComponent.allowHDR;
 		}
 	}
 

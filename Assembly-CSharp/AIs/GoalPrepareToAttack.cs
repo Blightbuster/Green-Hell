@@ -13,8 +13,7 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			Being enemy = this.m_AI.m_EnemyModule.m_Enemy;
-			return enemy;
+			return this.m_AI.m_EnemyModule.m_Enemy;
 		}
 
 		protected override void Prepare()

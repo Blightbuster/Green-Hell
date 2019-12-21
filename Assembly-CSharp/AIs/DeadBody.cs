@@ -35,6 +35,11 @@ namespace AIs
 			}
 		}
 
+		public override bool CanTrigger()
+		{
+			return (this.m_Trap || PlayerStateModule.Get().m_State != PlayerStateModule.State.Combat) && !ReplicatedPlayerTriggerHelper.IsTriggerExecutedByOtherPlayer(this) && base.CanTrigger();
+		}
+
 		public override void GetActions(List<TriggerAction.TYPE> actions)
 		{
 			if (HeavyObjectController.Get().IsActive())
@@ -49,8 +54,9 @@ namespace AIs
 			if (this.m_Trap && this.m_Trap.m_Info.m_ID == ItemID.Snare_Trap)
 			{
 				actions.Add(TriggerAction.TYPE.RemoveFromSnareTrap);
+				return;
 			}
-			else if (!GreenHellGame.ROADSHOW_DEMO && (!this.RequiresToolToHarvest() || Player.Get().HasBlade()))
+			if (!GreenHellGame.ROADSHOW_DEMO && (!this.RequiresToolToHarvest() || Player.Get().HasBlade()) && !SwimController.Get().IsActive() && !this.m_AI.m_Hallucination)
 			{
 				actions.Add(TriggerAction.TYPE.Harvest);
 			}
@@ -66,9 +72,9 @@ namespace AIs
 				item.transform.position = base.transform.position;
 				if (this.m_AIID == AI.AIID.PoisonDartFrog)
 				{
-					List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
+					Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
 					Material material = null;
-					for (int i = 0; i < componentsDeepChild.Count; i++)
+					for (int i = 0; i < componentsDeepChild.Length; i++)
 					{
 						material = componentsDeepChild[i].material;
 					}
@@ -76,14 +82,16 @@ namespace AIs
 				}
 				item.Take();
 				UnityEngine.Object.Destroy(base.gameObject);
+				return;
 			}
-			else if (action == TriggerAction.TYPE.Harvest)
+			if (action == TriggerAction.TYPE.Harvest)
 			{
 				Player.Get().HideWeapon();
 				HarvestingAnimalController.Get().SetBody(this);
 				Player.Get().StartController(PlayerControllerType.HarvestingAnimal);
+				return;
 			}
-			else if (action == TriggerAction.TYPE.RemoveFromSnareTrap && this.m_AI)
+			if (action == TriggerAction.TYPE.RemoveFromSnareTrap && this.m_AI)
 			{
 				this.m_AI.StartRagdoll();
 				UnityEngine.Object.Destroy(this.m_AI.GetComponent<AI>());
@@ -92,8 +100,21 @@ namespace AIs
 			}
 		}
 
+		public void RemoveFromSnareTrap()
+		{
+			if (!this.m_AI)
+			{
+				return;
+			}
+			this.m_AI.StartRagdoll();
+			UnityEngine.Object.Destroy(this.m_AI.GetComponent<AI>());
+			UnityEngine.Object.Destroy(this.m_AI.GetComponent<Animator>());
+			this.m_Trap = null;
+		}
+
 		public void Harvest()
 		{
+			base.gameObject.ReplRequestOwnership(false);
 			AIParams aiparams = AIManager.Get().m_AIParamsMap[(int)this.m_AIID];
 			foreach (GameObject gameObject in aiparams.m_HarvestingResult)
 			{
@@ -114,26 +135,32 @@ namespace AIs
 				}
 				for (int i = 0; i < Skill.Get<HarvestingAnimalsSkill>().GetItemsCountMul(); i++)
 				{
-					Item item = ItemsManager.Get().CreateItem(itemID, false, base.transform);
-					item.Take();
+					ItemsManager.Get().CreateItem(itemID, false, base.transform).Take();
 				}
 			}
 			if (this.m_AddHarvestingItem != ItemID.None)
 			{
-				Item item2 = ItemsManager.Get().CreateItem(this.m_AddHarvestingItem, false, base.transform);
-				item2.Take();
+				ItemsManager.Get().CreateItem(this.m_AddHarvestingItem, false, base.transform).Take();
 			}
 			Item[] componentsInChildren = base.transform.GetComponentsInChildren<Item>();
 			for (int j = 0; j < componentsInChildren.Length; j++)
 			{
 				componentsInChildren[j].transform.parent = null;
 				componentsInChildren[j].StaticPhxRequestRemove();
+				componentsInChildren[j].Take();
 			}
+			this.OnHarvest();
 			UnityEngine.Object.Destroy(base.gameObject);
 			if (!AI.IsHuman(this.m_AIID))
 			{
 				Skill.Get<HarvestingAnimalsSkill>().OnSkillAction();
 			}
+		}
+
+		private void OnHarvest()
+		{
+			AIParams aiparams = AIManager.Get().m_AIParamsMap[(int)this.m_AIID];
+			Player.Get().DirtAddOnHarvest(aiparams.m_DirtAddOnHarvest);
 		}
 
 		public void AddForceToRagdoll(Vector3 force)
@@ -147,6 +174,10 @@ namespace AIs
 		protected override void Update()
 		{
 			base.Update();
+			if (this.m_AIID == AI.AIID.SouthAmericanRattlesnake)
+			{
+				return;
+			}
 			if (this.m_RagdollBones != null && this.m_RagdollBones.Count > 0)
 			{
 				Bounds bounds = new Bounds(this.m_RagdollBones[0].transform.position, Vector3.zero);
@@ -156,14 +187,12 @@ namespace AIs
 				}
 				this.m_BoxCollider.size = bounds.size * 1.5f;
 				this.m_BoxCollider.center = base.transform.InverseTransformPoint(bounds.center);
+				return;
 			}
-			else
-			{
-				this.m_BoxCollider.center = Vector3.zero;
-				Vector3 vector = this.m_Renderer.sharedMesh.bounds.size;
-				vector = Vector3.Scale(vector, this.m_Renderer.gameObject.transform.localScale);
-				this.m_BoxCollider.size = vector;
-			}
+			this.m_BoxCollider.center = Vector3.zero;
+			Vector3 vector = this.m_Renderer.sharedMesh.bounds.size;
+			vector = Vector3.Scale(vector, this.m_Renderer.gameObject.transform.localScale);
+			this.m_BoxCollider.size = vector;
 		}
 
 		public override string GetName()
@@ -177,11 +206,15 @@ namespace AIs
 			{
 				return "HUD_cut_off_trap";
 			}
-			if (!this.m_CanTakeToInventory && !this.m_HasBody)
+			if (!this.m_CanTakeToInventory && !this.m_HasBody && !SwimController.Get().IsActive())
 			{
 				return "HUDTrigger_Harvest";
 			}
-			return (this.m_ItemInfo == null) ? string.Empty : this.m_ItemInfo.m_IconName;
+			if (this.m_ItemInfo == null)
+			{
+				return string.Empty;
+			}
+			return this.m_ItemInfo.m_IconName;
 		}
 
 		public void OnTakeDamage(DamageInfo info)
@@ -199,7 +232,11 @@ namespace AIs
 
 		public override string GetAdditionalInfoLocalized()
 		{
-			return GreenHellGame.Instance.GetLocalization().Get("HUDAddInfo_BladeRequired");
+			if (SwimController.Get().IsActive())
+			{
+				return string.Empty;
+			}
+			return GreenHellGame.Instance.GetLocalization().Get("HUDAddInfo_BladeRequired", true);
 		}
 
 		public override bool RequiresToolToHarvest()

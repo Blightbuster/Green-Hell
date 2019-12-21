@@ -12,7 +12,11 @@ public class AmplifyColorBase : MonoBehaviour
 	{
 		get
 		{
-			return (!(this.defaultLut == null)) ? this.defaultLut : this.CreateDefaultLut();
+			if (!(this.defaultLut == null))
+			{
+				return this.defaultLut;
+			}
+			return this.CreateDefaultLut();
 		}
 	}
 
@@ -28,7 +32,7 @@ public class AmplifyColorBase : MonoBehaviour
 	{
 		get
 		{
-			return Mathf.Clamp01((this.effectVolumesBlendAdjust >= 0.99f) ? 1f : ((this.volumesBlendAmount - this.effectVolumesBlendAdjust) / (1f - this.effectVolumesBlendAdjust)));
+			return Mathf.Clamp01((this.effectVolumesBlendAdjust < 0.99f) ? ((this.volumesBlendAmount - this.effectVolumesBlendAdjust) / (1f - this.effectVolumesBlendAdjust)) : 1f);
 		}
 	}
 
@@ -97,8 +101,7 @@ public class AmplifyColorBase : MonoBehaviour
 
 	private void OnEnable()
 	{
-		bool flag = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
-		if (flag)
+		if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
 		{
 			Debug.LogWarning("[AmplifyColor] Null graphics device detected. Skipping effect silently.");
 			this.silentError = true;
@@ -287,7 +290,7 @@ public class AmplifyColorBase : MonoBehaviour
 		{
 			this.Exposure = Mathf.Lerp(this.currentExposure, this.blendExposure, this.effectVolumesBlendAdjusted);
 		}
-		Transform transform = (!(this.TriggerVolumeProxy == null)) ? this.TriggerVolumeProxy : base.transform;
+		Transform transform = (this.TriggerVolumeProxy == null) ? base.transform : this.TriggerVolumeProxy;
 		if (this.actualTriggerProxy.transform.parent != transform)
 		{
 			this.actualTriggerProxy.Reference = transform;
@@ -307,8 +310,8 @@ public class AmplifyColorBase : MonoBehaviour
 		if (amplifyColorVolumeBase != this.currentVolumeLut)
 		{
 			this.currentVolumeLut = amplifyColorVolumeBase;
-			Texture texture = (!(amplifyColorVolumeBase == null)) ? amplifyColorVolumeBase.LutTexture : this.worldLUT;
-			float num2 = (!(amplifyColorVolumeBase == null)) ? amplifyColorVolumeBase.EnterBlendTime : this.ExitVolumeBlendTime;
+			Texture texture = (amplifyColorVolumeBase == null) ? this.worldLUT : amplifyColorVolumeBase.LutTexture;
+			float num2 = (amplifyColorVolumeBase == null) ? this.ExitVolumeBlendTime : amplifyColorVolumeBase.EnterBlendTime;
 			if (this.volumesBlending && !this.blendingFromMidBlend && texture == this.LutTexture)
 			{
 				this.LutTexture = this.volumesLutBlendTexture;
@@ -334,7 +337,7 @@ public class AmplifyColorBase : MonoBehaviour
 					{
 						this.materialBlendCache.SetTexture("_RgbTex", this.LutTexture);
 					}
-					this.materialBlendCache.SetTexture("_LerpRgbTex", (!(this.volumesLutBlendTexture != null)) ? this.defaultLut : this.volumesLutBlendTexture);
+					this.materialBlendCache.SetTexture("_LerpRgbTex", (this.volumesLutBlendTexture != null) ? this.volumesLutBlendTexture : this.defaultLut);
 					Graphics.Blit(this.midBlendLUT, this.midBlendLUT, this.materialBlendCache);
 					this.blendCacheLut.DiscardContents();
 					this.currentVolumeEffects = VolumeEffect.BlendValuesToVolumeEffect(this.EffectFlags, this.currentVolumeEffects, this.blendVolumeEffects, this.effectVolumesBlendAdjusted);
@@ -344,8 +347,8 @@ public class AmplifyColorBase : MonoBehaviour
 				}
 				this.VolumesBlendTo(texture, num2);
 			}
-			this.blendVolumeEffects = ((!(amplifyColorVolumeBase == null)) ? amplifyColorVolumeBase.EffectContainer.FindVolumeEffect(this) : this.worldVolumeEffects);
-			this.blendExposure = ((!(amplifyColorVolumeBase == null)) ? amplifyColorVolumeBase.Exposure : this.worldExposure);
+			this.blendVolumeEffects = ((amplifyColorVolumeBase == null) ? this.worldVolumeEffects : amplifyColorVolumeBase.EffectContainer.FindVolumeEffect(this));
+			this.blendExposure = ((amplifyColorVolumeBase == null) ? this.worldExposure : amplifyColorVolumeBase.Exposure);
 			if (this.blendVolumeEffects == null)
 			{
 				this.blendVolumeEffects = this.worldVolumeEffects;
@@ -539,15 +542,7 @@ public class AmplifyColorBase : MonoBehaviour
 		this.materialDepthMask = new Material(this.shaderDepthMask);
 		this.materialDepthMaskBlend = new Material(this.shaderDepthMaskBlend);
 		this.materialProcessOnly = new Material(this.shaderProcessOnly);
-		bool flag = true;
-		flag = (flag && this.CheckMaterialAndShader(this.materialBase, "BaseMaterial"));
-		flag = (flag && this.CheckMaterialAndShader(this.materialBlend, "BlendMaterial"));
-		flag = (flag && this.CheckMaterialAndShader(this.materialBlendCache, "BlendCacheMaterial"));
-		flag = (flag && this.CheckMaterialAndShader(this.materialMask, "MaskMaterial"));
-		flag = (flag && this.CheckMaterialAndShader(this.materialMaskBlend, "MaskBlendMaterial"));
-		flag = (flag && this.CheckMaterialAndShader(this.materialDepthMask, "DepthMaskMaterial"));
-		flag = (flag && this.CheckMaterialAndShader(this.materialDepthMaskBlend, "DepthMaskBlendMaterial"));
-		if (!flag || !this.CheckMaterialAndShader(this.materialProcessOnly, "ProcessOnlyMaterial"))
+		if (!true || !this.CheckMaterialAndShader(this.materialBase, "BaseMaterial") || !this.CheckMaterialAndShader(this.materialBlend, "BlendMaterial") || !this.CheckMaterialAndShader(this.materialBlendCache, "BlendCacheMaterial") || !this.CheckMaterialAndShader(this.materialMask, "MaskMaterial") || !this.CheckMaterialAndShader(this.materialMaskBlend, "MaskBlendMaterial") || !this.CheckMaterialAndShader(this.materialDepthMask, "DepthMaskMaterial") || !this.CheckMaterialAndShader(this.materialDepthMaskBlend, "DepthMaskBlendMaterial") || !this.CheckMaterialAndShader(this.materialProcessOnly, "ProcessOnlyMaterial"))
 		{
 			return false;
 		}
@@ -568,8 +563,9 @@ public class AmplifyColorBase : MonoBehaviour
 			this.materialDepthMask.EnableKeyword(keyword);
 			this.materialDepthMaskBlend.EnableKeyword(keyword);
 			this.materialProcessOnly.EnableKeyword(keyword);
+			return;
 		}
-		else if (!state && this.materialBase.IsKeywordEnabled(keyword))
+		if (!state && this.materialBase.IsKeywordEnabled(keyword))
 		{
 			this.materialBase.DisableKeyword(keyword);
 			this.materialBlend.DisableKeyword(keyword);
@@ -591,7 +587,7 @@ public class AmplifyColorBase : MonoBehaviour
 				(obj as RenderTexture).Release();
 			}
 			UnityEngine.Object.DestroyImmediate(obj);
-			obj = (T)((object)null);
+			obj = default(T);
 		}
 	}
 
@@ -636,17 +632,17 @@ public class AmplifyColorBase : MonoBehaviour
 		bool flag = this.QualityLevel == Quality.Mobile;
 		bool flag2 = this.colorSpace == ColorSpace.Linear;
 		bool allowHDR = this.ownerCamera.allowHDR;
-		int num = (!flag) ? 0 : 18;
+		int num = flag ? 18 : 0;
 		if (allowHDR)
 		{
 			num += 2;
-			num += ((!flag2) ? 0 : 8);
-			num += ((!this.ApplyDithering) ? 0 : 4);
+			num += (flag2 ? 8 : 0);
+			num += (this.ApplyDithering ? 4 : 0);
 			num = (int)(num + this.Tonemapper);
 		}
 		else
 		{
-			num += ((!flag2) ? 0 : 1);
+			num += (flag2 ? 1 : 0);
 		}
 		return num;
 	}
@@ -667,7 +663,7 @@ public class AmplifyColorBase : MonoBehaviour
 		bool flag = AmplifyColorBase.ValidateLutDimensions(this.LutTexture);
 		bool flag2 = AmplifyColorBase.ValidateLutDimensions(this.LutBlendTexture);
 		bool flag3 = this.LutTexture == null && this.LutBlendTexture == null && this.volumesLutBlendTexture == null;
-		Texture texture = (!(this.LutTexture == null)) ? this.LutTexture : this.defaultLut;
+		Texture texture = (this.LutTexture == null) ? this.defaultLut : this.LutTexture;
 		Texture lutBlendTexture = this.LutBlendTexture;
 		int pass = this.ComputeShaderPass();
 		bool flag4 = this.BlendAmount != 0f || this.blending;
@@ -687,7 +683,7 @@ public class AmplifyColorBase : MonoBehaviour
 			}
 			else
 			{
-				material = ((!(this.MaskTexture != null)) ? this.materialBlend : this.materialMaskBlend);
+				material = ((this.MaskTexture != null) ? this.materialMaskBlend : this.materialBlend);
 			}
 		}
 		else if (this.UseDepthMask)
@@ -696,7 +692,7 @@ public class AmplifyColorBase : MonoBehaviour
 		}
 		else
 		{
-			material = ((!(this.MaskTexture != null)) ? this.materialBase : this.materialMask);
+			material = ((this.MaskTexture != null) ? this.materialMask : this.materialBase);
 		}
 		material.SetFloat("_Exposure", this.Exposure);
 		material.SetFloat("_ShoulderStrength", 0.22f);
@@ -729,7 +725,7 @@ public class AmplifyColorBase : MonoBehaviour
 				{
 					this.materialBlendCache.SetTexture("_RgbTex", texture);
 				}
-				this.materialBlendCache.SetTexture("_LerpRgbTex", (!(this.volumesLutBlendTexture != null)) ? this.defaultLut : this.volumesLutBlendTexture);
+				this.materialBlendCache.SetTexture("_LerpRgbTex", (this.volumesLutBlendTexture != null) ? this.volumesLutBlendTexture : this.defaultLut);
 				Graphics.Blit(texture, this.blendCacheLut, this.materialBlendCache);
 			}
 			if (flag6)
@@ -746,7 +742,7 @@ public class AmplifyColorBase : MonoBehaviour
 				{
 					this.materialBlendCache.SetTexture("_RgbTex", texture);
 				}
-				this.materialBlendCache.SetTexture("_LerpRgbTex", (!(lutBlendTexture != null)) ? this.defaultLut : lutBlendTexture);
+				this.materialBlendCache.SetTexture("_LerpRgbTex", (lutBlendTexture != null) ? lutBlendTexture : this.defaultLut);
 				Graphics.Blit(texture, this.blendCacheLut, this.materialBlendCache);
 				if (renderTexture != null)
 				{
@@ -917,7 +913,7 @@ public class AmplifyColorBase : MonoBehaviour
 
 	[SerializeField]
 	[HideInInspector]
-	private string sharedInstanceID = string.Empty;
+	private string sharedInstanceID = "";
 
 	private bool silentError;
 }

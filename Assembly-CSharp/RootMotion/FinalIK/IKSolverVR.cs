@@ -114,21 +114,20 @@ namespace RootMotion.FinalIK
 
 		public void AddRotationOffset(IKSolverVR.RotationOffset rotationOffset, Quaternion value)
 		{
-			if (rotationOffset == IKSolverVR.RotationOffset.Pelvis)
+			switch (rotationOffset)
 			{
+			case IKSolverVR.RotationOffset.Pelvis:
 				this.spine.pelvisRotationOffset = value * this.spine.pelvisRotationOffset;
 				return;
-			}
-			if (rotationOffset == IKSolverVR.RotationOffset.Chest)
-			{
+			case IKSolverVR.RotationOffset.Chest:
 				this.spine.chestRotationOffset = value * this.spine.chestRotationOffset;
 				return;
-			}
-			if (rotationOffset != IKSolverVR.RotationOffset.Head)
-			{
+			case IKSolverVR.RotationOffset.Head:
+				this.spine.headRotationOffset = value * this.spine.headRotationOffset;
+				return;
+			default:
 				return;
 			}
-			this.spine.headRotationOffset = value * this.spine.headRotationOffset;
 		}
 
 		public void AddPlatformMotion(Vector3 deltaPosition, Quaternion deltaRotation, Vector3 platformPivot)
@@ -263,8 +262,7 @@ namespace RootMotion.FinalIK
 					index = i;
 				}
 			}
-			Vector3 lhs = Vector3.Cross(hand.position - forearm.position, hand.GetChild(index).position - hand.position);
-			Vector3 vector = Vector3.Cross(lhs, hand.position - forearm.position);
+			Vector3 vector = Vector3.Cross(Vector3.Cross(hand.position - forearm.position, hand.GetChild(index).position - hand.position), hand.position - forearm.position);
 			Vector3 vector2 = AxisTools.ToVector3(AxisTools.GetAxisToDirection(hand, vector));
 			if (Vector3.Dot(vector, hand.rotation * vector2) < 0f)
 			{
@@ -341,8 +339,8 @@ namespace RootMotion.FinalIK
 				this.rootBone.Read(positions[0], rotations[0]);
 			}
 			this.spine.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, 0, 1);
-			this.leftArm.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, (!hasChest) ? 2 : 3, 6);
-			this.rightArm.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, (!hasChest) ? 2 : 3, 10);
+			this.leftArm.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, hasChest ? 3 : 2, 6);
+			this.rightArm.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, hasChest ? 3 : 2, 10);
 			this.leftLeg.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, 1, 14);
 			this.rightLeg.Read(positions, rotations, hasChest, hasNeck, hasShoulders, hasToes, 1, 18);
 			for (int i = 0; i < rotations.Length; i++)
@@ -374,17 +372,20 @@ namespace RootMotion.FinalIK
 		private void Solve()
 		{
 			this.spine.PreSolve();
-			foreach (IKSolverVR.Arm arm in this.arms)
+			IKSolverVR.Arm[] array = this.arms;
+			for (int i = 0; i < array.Length; i++)
 			{
-				arm.PreSolve();
+				array[i].PreSolve();
 			}
-			foreach (IKSolverVR.Leg leg in this.legs)
+			IKSolverVR.Leg[] array2 = this.legs;
+			for (int i = 0; i < array2.Length; i++)
 			{
-				leg.PreSolve();
+				array2[i].PreSolve();
 			}
-			foreach (IKSolverVR.Arm arm2 in this.arms)
+			array = this.arms;
+			for (int i = 0; i < array.Length; i++)
 			{
-				arm2.ApplyOffsets();
+				array[i].ApplyOffsets();
 			}
 			this.spine.ApplyOffsets();
 			this.spine.Solve(this.rootBone, this.legs, this.arms);
@@ -427,63 +428,70 @@ namespace RootMotion.FinalIK
 				this.bodyOffset = Vector3.Lerp(this.bodyOffset, this.root.up * d3, Time.deltaTime * 3f);
 				this.bodyOffset = Vector3.Lerp(Vector3.zero, this.bodyOffset, this.locomotion.weight);
 			}
-			foreach (IKSolverVR.Leg leg2 in this.legs)
+			array2 = this.legs;
+			for (int i = 0; i < array2.Length; i++)
 			{
-				leg2.ApplyOffsets();
+				array2[i].ApplyOffsets();
 			}
 			if (!this.plantFeet)
 			{
 				this.spine.InverseTranslateToHead(this.legs, false, false, this.bodyOffset, 1f);
-				foreach (IKSolverVR.Leg leg3 in this.legs)
+				array2 = this.legs;
+				for (int i = 0; i < array2.Length; i++)
 				{
-					leg3.TranslateRoot(this.spine.pelvis.solverPosition, this.spine.pelvis.solverRotation);
+					array2[i].TranslateRoot(this.spine.pelvis.solverPosition, this.spine.pelvis.solverRotation);
 				}
-				foreach (IKSolverVR.Leg leg4 in this.legs)
+				array2 = this.legs;
+				for (int i = 0; i < array2.Length; i++)
 				{
-					leg4.Solve();
+					array2[i].Solve();
 				}
 			}
 			else
 			{
-				for (int num3 = 0; num3 < 2; num3++)
+				for (int j = 0; j < 2; j++)
 				{
-					this.spine.InverseTranslateToHead(this.legs, true, num3 == 0, this.bodyOffset, 1f);
-					foreach (IKSolverVR.Leg leg5 in this.legs)
+					this.spine.InverseTranslateToHead(this.legs, true, j == 0, this.bodyOffset, 1f);
+					array2 = this.legs;
+					for (int i = 0; i < array2.Length; i++)
 					{
-						leg5.TranslateRoot(this.spine.pelvis.solverPosition, this.spine.pelvis.solverRotation);
+						array2[i].TranslateRoot(this.spine.pelvis.solverPosition, this.spine.pelvis.solverRotation);
 					}
-					foreach (IKSolverVR.Leg leg6 in this.legs)
+					array2 = this.legs;
+					for (int i = 0; i < array2.Length; i++)
 					{
-						leg6.Solve();
+						array2[i].Solve();
 					}
 				}
 			}
-			for (int num6 = 0; num6 < this.arms.Length; num6++)
+			for (int k = 0; k < this.arms.Length; k++)
 			{
-				this.arms[num6].TranslateRoot(this.spine.chest.solverPosition, this.spine.chest.solverRotation);
-				this.arms[num6].Solve(num6 == 0);
+				this.arms[k].TranslateRoot(this.spine.chest.solverPosition, this.spine.chest.solverRotation);
+				this.arms[k].Solve(k == 0);
 			}
 			this.spine.ResetOffsets();
-			foreach (IKSolverVR.Leg leg7 in this.legs)
+			array2 = this.legs;
+			for (int i = 0; i < array2.Length; i++)
 			{
-				leg7.ResetOffsets();
+				array2[i].ResetOffsets();
 			}
-			foreach (IKSolverVR.Arm arm3 in this.arms)
+			array = this.arms;
+			for (int i = 0; i < array.Length; i++)
 			{
-				arm3.ResetOffsets();
+				array[i].ResetOffsets();
 			}
 			this.spine.pelvisPositionOffset += this.GetPelvisOffset();
 			this.spine.chestPositionOffset += this.spine.pelvisPositionOffset;
 			this.Write();
 			this.supportLegIndex = -1;
-			float num9 = float.PositiveInfinity;
-			for (int num10 = 0; num10 < this.legs.Length; num10++)
+			float num3 = float.PositiveInfinity;
+			for (int l = 0; l < this.legs.Length; l++)
 			{
-				float num11 = Vector3.SqrMagnitude(this.legs[num10].lastBone.solverPosition - this.legs[num10].bones[0].solverPosition);
-				if (num11 < num9)
+				float num4 = Vector3.SqrMagnitude(this.legs[l].lastBone.solverPosition - this.legs[l].bones[0].solverPosition);
+				if (num4 < num3)
 				{
-					this.supportLegIndex = num10;
-					num9 = num11;
+					this.supportLegIndex = l;
+					num3 = num4;
 				}
 			}
 		}
@@ -510,13 +518,15 @@ namespace RootMotion.FinalIK
 			this.solvedPositions[0] = this.rootBone.solverPosition;
 			this.solvedRotations[0] = this.rootBone.solverRotation;
 			this.spine.Write(ref this.solvedPositions, ref this.solvedRotations);
-			foreach (IKSolverVR.Leg leg in this.legs)
+			IKSolverVR.Leg[] array = this.legs;
+			for (int i = 0; i < array.Length; i++)
 			{
-				leg.Write(ref this.solvedPositions, ref this.solvedRotations);
+				array[i].Write(ref this.solvedPositions, ref this.solvedRotations);
 			}
-			foreach (IKSolverVR.Arm arm in this.arms)
+			IKSolverVR.Arm[] array2 = this.arms;
+			for (int i = 0; i < array2.Length; i++)
 			{
-				arm.Write(ref this.solvedPositions, ref this.solvedRotations);
+				array2[i].Write(ref this.solvedPositions, ref this.solvedRotations);
 			}
 		}
 
@@ -693,7 +703,7 @@ namespace RootMotion.FinalIK
 					this.IKRotation = quaternion;
 					this.rotation = this.IKRotation;
 					this.hasShoulder = hasShoulders;
-					this.bones = new IKSolverVR.VirtualBone[(!this.hasShoulder) ? 3 : 4];
+					this.bones = new IKSolverVR.VirtualBone[this.hasShoulder ? 4 : 3];
 					if (this.hasShoulder)
 					{
 						this.bones[0] = new IKSolverVR.VirtualBone(position, rotation);
@@ -716,13 +726,11 @@ namespace RootMotion.FinalIK
 					this.bones[1].Read(position2, rotation2);
 					this.bones[2].Read(position3, rotation3);
 					this.bones[3].Read(vector, quaternion);
+					return;
 				}
-				else
-				{
-					this.bones[0].Read(position2, rotation2);
-					this.bones[1].Read(position3, rotation3);
-					this.bones[2].Read(vector, quaternion);
-				}
+				this.bones[0].Read(position2, rotation2);
+				this.bones[1].Read(position3, rotation3);
+				this.bones[2].Read(vector, quaternion);
 			}
 
 			public override void PreSolve()
@@ -772,19 +780,18 @@ namespace RootMotion.FinalIK
 								num2 = -num2;
 							}
 							num2 = Mathf.Clamp(num2 * 2f * this.positionWeight, 0f, 180f);
-							this.shoulder.solverRotation = Quaternion.AngleAxis(num2, this.shoulder.solverRotation * ((!isLeft) ? (-this.shoulder.axis) : this.shoulder.axis)) * this.shoulder.solverRotation;
-							this.upperArm.solverRotation = Quaternion.AngleAxis(num2, this.upperArm.solverRotation * ((!isLeft) ? (-this.upperArm.axis) : this.upperArm.axis)) * this.upperArm.solverRotation;
+							this.shoulder.solverRotation = Quaternion.AngleAxis(num2, this.shoulder.solverRotation * (isLeft ? this.shoulder.axis : (-this.shoulder.axis))) * this.shoulder.solverRotation;
+							this.upperArm.solverRotation = Quaternion.AngleAxis(num2, this.upperArm.solverRotation * (isLeft ? this.upperArm.axis : (-this.upperArm.axis))) * this.upperArm.solverRotation;
 						}
 					}
 					else
 					{
 						Vector3 point = (this.position - this.shoulder.solverPosition).normalized;
-						float num3 = (!isLeft) ? -45f : 45f;
-						Quaternion lhs = Quaternion.AngleAxis(((!isLeft) ? 90f : -90f) + num3, this.chestUp);
-						Quaternion quaternion2 = lhs * this.chestRotation;
-						Vector3 lhs2 = Quaternion.Inverse(quaternion2) * point;
-						float num4 = Mathf.Atan2(lhs2.x, lhs2.z) * 57.29578f;
-						float num5 = Vector3.Dot(lhs2, Vector3.up);
+						float num3 = isLeft ? 45f : -45f;
+						Quaternion quaternion2 = Quaternion.AngleAxis((isLeft ? -90f : 90f) + num3, this.chestUp) * this.chestRotation;
+						Vector3 vector3 = Quaternion.Inverse(quaternion2) * point;
+						float num4 = Mathf.Atan2(vector3.x, vector3.z) * 57.29578f;
+						float num5 = Vector3.Dot(vector3, Vector3.up);
 						num5 = 1f - Mathf.Abs(num5);
 						num4 *= num5;
 						num4 -= num3;
@@ -792,16 +799,14 @@ namespace RootMotion.FinalIK
 						Vector3 fromDirection = this.shoulder.solverRotation * this.shoulder.axis;
 						Vector3 toDirection = quaternion2 * (Quaternion.AngleAxis(num4, Vector3.up) * Vector3.forward);
 						Quaternion rhs = Quaternion.FromToRotation(fromDirection, toDirection);
-						Quaternion lhs3 = Quaternion.AngleAxis((!isLeft) ? 90f : -90f, this.chestUp);
-						quaternion2 = lhs3 * this.chestRotation;
-						quaternion2 = Quaternion.AngleAxis((!isLeft) ? 30f : -30f, this.chestForward) * quaternion2;
-						point = this.position - (this.shoulder.solverPosition + this.chestRotation * ((!isLeft) ? Vector3.left : Vector3.right) * base.mag);
-						lhs2 = Quaternion.Inverse(quaternion2) * point;
-						float num6 = Mathf.Atan2(lhs2.y, lhs2.z) * 57.29578f;
+						quaternion2 = Quaternion.AngleAxis(isLeft ? -90f : 90f, this.chestUp) * this.chestRotation;
+						quaternion2 = Quaternion.AngleAxis(isLeft ? -30f : 30f, this.chestForward) * quaternion2;
+						point = this.position - (this.shoulder.solverPosition + this.chestRotation * (isLeft ? Vector3.right : Vector3.left) * base.mag);
+						vector3 = Quaternion.Inverse(quaternion2) * point;
+						float num6 = Mathf.Atan2(vector3.y, vector3.z) * 57.29578f;
 						num6 -= -30f;
 						num6 = this.DamperValue(num6, -15f, 75f, 1f);
-						Quaternion lhs4 = Quaternion.AngleAxis(-num6, quaternion2 * Vector3.right);
-						Quaternion quaternion3 = lhs4 * rhs;
+						Quaternion quaternion3 = Quaternion.AngleAxis(-num6, quaternion2 * Vector3.right) * rhs;
 						if (this.shoulderRotationWeight * this.positionWeight < 1f)
 						{
 							quaternion3 = Quaternion.Lerp(Quaternion.identity, quaternion3, this.shoulderRotationWeight * this.positionWeight);
@@ -809,8 +814,8 @@ namespace RootMotion.FinalIK
 						IKSolverVR.VirtualBone.RotateBy(this.bones, quaternion3);
 						IKSolverVR.VirtualBone.SolveTrigonometric(this.bones, 1, 2, 3, this.position, this.GetBendNormal(this.position - this.upperArm.solverPosition), this.positionWeight);
 						float angle = Mathf.Clamp(num6 * 2f * this.positionWeight, 0f, 180f);
-						this.shoulder.solverRotation = Quaternion.AngleAxis(angle, this.shoulder.solverRotation * ((!isLeft) ? (-this.shoulder.axis) : this.shoulder.axis)) * this.shoulder.solverRotation;
-						this.upperArm.solverRotation = Quaternion.AngleAxis(angle, this.upperArm.solverRotation * ((!isLeft) ? (-this.upperArm.axis) : this.upperArm.axis)) * this.upperArm.solverRotation;
+						this.shoulder.solverRotation = Quaternion.AngleAxis(angle, this.shoulder.solverRotation * (isLeft ? this.shoulder.axis : (-this.shoulder.axis))) * this.shoulder.solverRotation;
+						this.upperArm.solverRotation = Quaternion.AngleAxis(angle, this.upperArm.solverRotation * (isLeft ? this.upperArm.axis : (-this.upperArm.axis))) * this.upperArm.solverRotation;
 					}
 				}
 				else
@@ -818,13 +823,14 @@ namespace RootMotion.FinalIK
 					IKSolverVR.VirtualBone.SolveTrigonometric(this.bones, 1, 2, 3, this.position, this.GetBendNormal(this.position - this.upperArm.solverPosition), this.positionWeight);
 				}
 				Quaternion quaternion4 = this.upperArm.solverRotation * this.forearmRelToUpperArm;
-				Quaternion lhs5 = Quaternion.FromToRotation(quaternion4 * this.forearm.axis, this.hand.solverPosition - this.forearm.solverPosition);
-				base.RotateTo(this.forearm, lhs5 * quaternion4, this.positionWeight);
+				Quaternion lhs = Quaternion.FromToRotation(quaternion4 * this.forearm.axis, this.hand.solverPosition - this.forearm.solverPosition);
+				base.RotateTo(this.forearm, lhs * quaternion4, this.positionWeight);
 				if (this.rotationWeight >= 1f)
 				{
 					this.hand.solverRotation = this.rotation;
+					return;
 				}
-				else if (this.rotationWeight > 0f)
+				if (this.rotationWeight > 0f)
 				{
 					this.hand.solverRotation = Quaternion.Lerp(this.hand.solverRotation, this.rotation, this.rotationWeight);
 				}
@@ -857,9 +863,8 @@ namespace RootMotion.FinalIK
 					value = num2 + num3;
 				}
 				value -= min;
-				float t = Mathf.Clamp(value / num, 0f, 1f);
-				float t2 = Interp.Float(t, InterpolationMode.InOutQuintic);
-				return Mathf.Lerp(min, max, t2);
+				float t = Interp.Float(Mathf.Clamp(value / num, 0f, 1f), InterpolationMode.InOutQuintic);
+				return Mathf.Lerp(min, max, t);
 			}
 
 			private Vector3 GetBendNormal(Vector3 dir)
@@ -871,14 +876,12 @@ namespace RootMotion.FinalIK
 				if (this.bendGoalWeight < 1f)
 				{
 					Vector3 vector = this.bones[0].solverRotation * this.bones[0].axis;
-					Vector3 fromDirection = Vector3.down;
+					Vector3 down = Vector3.down;
 					Vector3 toDirection = Quaternion.Inverse(this.chestRotation) * dir.normalized + Vector3.forward;
-					Quaternion rotation = Quaternion.FromToRotation(fromDirection, toDirection);
-					Vector3 vector2 = rotation * Vector3.back;
-					fromDirection = Quaternion.Inverse(this.chestRotation) * vector;
+					Vector3 vector2 = Quaternion.FromToRotation(down, toDirection) * Vector3.back;
+					Vector3 fromDirection = Quaternion.Inverse(this.chestRotation) * vector;
 					toDirection = Quaternion.Inverse(this.chestRotation) * dir;
-					rotation = Quaternion.FromToRotation(fromDirection, toDirection);
-					vector2 = rotation * vector2;
+					vector2 = Quaternion.FromToRotation(fromDirection, toDirection) * vector2;
 					vector2 = this.chestRotation * vector2;
 					vector2 += vector;
 					vector2 -= this.rotation * this.wristToPalmAxis;
@@ -908,12 +911,12 @@ namespace RootMotion.FinalIK
 			[Tooltip("The elbow will be bent towards this Transform if 'Bend Goal Weight' > 0.")]
 			public Transform bendGoal;
 
-			[Range(0f, 1f)]
 			[Tooltip("Positional weight of the hand target.")]
+			[Range(0f, 1f)]
 			public float positionWeight = 1f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the hand target")]
+			[Range(0f, 1f)]
 			public float rotationWeight = 1f;
 
 			[Tooltip("Different techniques for shoulder bone rotation.")]
@@ -923,8 +926,8 @@ namespace RootMotion.FinalIK
 			[Range(0f, 1f)]
 			public float shoulderRotationWeight = 1f;
 
-			[Range(0f, 1f)]
 			[Tooltip("If greater than 0, will bend the elbow towards the 'Bend Goal' Transform.")]
+			[Range(0f, 1f)]
 			public float bendGoalWeight;
 
 			[Tooltip("Angular offset of the elbow bending direction.")]
@@ -1010,9 +1013,10 @@ namespace RootMotion.FinalIK
 			public void MovePosition(Vector3 position)
 			{
 				Vector3 b = position - this.bones[0].solverPosition;
-				foreach (IKSolverVR.VirtualBone virtualBone in this.bones)
+				IKSolverVR.VirtualBone[] array = this.bones;
+				for (int i = 0; i < array.Length; i++)
 				{
-					virtualBone.solverPosition += b;
+					array[i].solverPosition += b;
 				}
 			}
 
@@ -1032,9 +1036,10 @@ namespace RootMotion.FinalIK
 			{
 				Vector3 b = newRootPos - this.rootPosition;
 				this.rootPosition = newRootPos;
-				foreach (IKSolverVR.VirtualBone virtualBone in this.bones)
+				IKSolverVR.VirtualBone[] array = this.bones;
+				for (int i = 0; i < array.Length; i++)
 				{
-					virtualBone.solverPosition += b;
+					array[i].solverPosition += b;
 				}
 				Quaternion rotation = QuaTools.FromToRotation(this.rootRotation, newRootRot);
 				this.rootRotation = newRootRot;
@@ -1090,12 +1095,6 @@ namespace RootMotion.FinalIK
 		[Serializable]
 		public class Footstep
 		{
-			public Footstep(Quaternion rootRotation, Vector3 footPosition, Quaternion footRotation, Vector3 characterSpaceOffset)
-			{
-				this.characterSpaceOffset = characterSpaceOffset;
-				this.Reset(rootRotation, footPosition, footRotation);
-			}
-
 			public bool isStepping
 			{
 				get
@@ -1105,6 +1104,12 @@ namespace RootMotion.FinalIK
 			}
 
 			public float stepProgress { get; private set; }
+
+			public Footstep(Quaternion rootRotation, Vector3 footPosition, Quaternion footRotation, Vector3 characterSpaceOffset)
+			{
+				this.characterSpaceOffset = characterSpaceOffset;
+				this.Reset(rootRotation, footPosition, footRotation);
+			}
 
 			public void Reset(Quaternion rootRotation, Vector3 footPosition, Quaternion footRotation)
 			{
@@ -1152,7 +1157,7 @@ namespace RootMotion.FinalIK
 
 			public void Update(InterpolationMode interpolation, UnityEvent onStep)
 			{
-				float target = (!this.isSupportLeg) ? 0f : 1f;
+				float target = this.isSupportLeg ? 1f : 0f;
 				this.supportLegW = Mathf.SmoothDamp(this.supportLegW, target, ref this.supportLegWV, 0.2f);
 				if (!this.isStepping)
 				{
@@ -1259,7 +1264,7 @@ namespace RootMotion.FinalIK
 				if (!this.initiated)
 				{
 					this.hasToes = hasToes;
-					this.bones = new IKSolverVR.VirtualBone[(!hasToes) ? 3 : 4];
+					this.bones = new IKSolverVR.VirtualBone[hasToes ? 4 : 3];
 					if (hasToes)
 					{
 						this.bones[0] = new IKSolverVR.VirtualBone(position, rotation);
@@ -1285,13 +1290,11 @@ namespace RootMotion.FinalIK
 					this.bones[1].Read(position2, rotation2);
 					this.bones[2].Read(vector, quaternion);
 					this.bones[3].Read(vector2, quaternion2);
+					return;
 				}
-				else
-				{
-					this.bones[0].Read(position, rotation);
-					this.bones[1].Read(position2, rotation2);
-					this.bones[2].Read(vector, quaternion);
-				}
+				this.bones[0].Read(position, rotation);
+				this.bones[1].Read(position2, rotation2);
+				this.bones[2].Read(vector, quaternion);
 			}
 
 			public override void PreSolve()
@@ -1329,8 +1332,7 @@ namespace RootMotion.FinalIK
 				if (this.bendGoal != null && this.bendGoalWeight > 0f)
 				{
 					Vector3 point = Vector3.Cross(this.bendGoal.position - this.thigh.solverPosition, this.foot.solverPosition - this.thigh.solverPosition);
-					Quaternion rotation = Quaternion.LookRotation(this.bendNormal, this.thigh.solverPosition - this.foot.solverPosition);
-					Vector3 vector = Quaternion.Inverse(rotation) * point;
+					Vector3 vector = Quaternion.Inverse(Quaternion.LookRotation(this.bendNormal, this.thigh.solverPosition - this.foot.solverPosition)) * point;
 					num = Mathf.Atan2(vector.x, vector.z) * 57.29578f * this.bendGoalWeight;
 				}
 				float num2 = this.swivelOffset + num;
@@ -1408,20 +1410,20 @@ namespace RootMotion.FinalIK
 			[Tooltip("The knee will be bent towards this Transform if 'Bend Goal Weight' > 0.")]
 			public Transform bendGoal;
 
-			[Range(0f, 1f)]
 			[Tooltip("Positional weight of the toe/foot target.")]
+			[Range(0f, 1f)]
 			public float positionWeight;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the toe/foot target.")]
+			[Range(0f, 1f)]
 			public float rotationWeight;
 
-			[Range(0f, 1f)]
 			[Tooltip("If greater than 0, will bend the knee towards the 'Bend Goal' Transform.")]
+			[Range(0f, 1f)]
 			public float bendGoalWeight;
 
-			[Range(-180f, 180f)]
 			[Tooltip("Angular offset of the knee bending direction.")]
+			[Range(-180f, 180f)]
 			public float swivelOffset;
 
 			[HideInInspector]
@@ -1464,8 +1466,8 @@ namespace RootMotion.FinalIK
 
 			public void Initiate(Vector3[] positions, Quaternion[] rotations, bool hasToes)
 			{
-				this.leftFootIndex = ((!hasToes) ? 16 : 17);
-				this.rightFootIndex = ((!hasToes) ? 20 : 21);
+				this.leftFootIndex = (hasToes ? 17 : 16);
+				this.rightFootIndex = (hasToes ? 21 : 20);
 				this.footsteps = new IKSolverVR.Footstep[]
 				{
 					new IKSolverVR.Footstep(rotations[0], positions[this.leftFootIndex], rotations[this.leftFootIndex], this.footDistance * Vector3.left),
@@ -1530,10 +1532,9 @@ namespace RootMotion.FinalIK
 				Vector3 vector3 = spine.pelvis.solverPosition + spine.pelvis.solverRotation * rightLeg.thighRelativeToPelvis;
 				this.footsteps[0].characterSpaceOffset = this.footDistance * Vector3.left;
 				this.footsteps[1].characterSpaceOffset = this.footDistance * Vector3.right;
-				Vector3 vector4 = spine.faceDirection;
-				Vector3 b = V3Tools.ExtractVertical(vector4, vector, 1f);
-				vector4 -= b;
-				Quaternion quaternion = Quaternion.LookRotation(vector4, vector);
+				Vector3 faceDirection = spine.faceDirection;
+				Vector3 b = V3Tools.ExtractVertical(faceDirection, vector, 1f);
+				Quaternion quaternion = Quaternion.LookRotation(faceDirection - b, vector);
 				float num = 1f;
 				float num2 = 1f;
 				float num3 = 0.2f;
@@ -1545,15 +1546,14 @@ namespace RootMotion.FinalIK
 				this.centerOfMass += rightArm.position * num3;
 				this.centerOfMass /= d;
 				this.centerOfMass += rootBone.solverRotation * this.offset;
-				this.comVelocity = ((Time.deltaTime <= 0f) ? Vector3.zero : ((this.centerOfMass - this.lastComPosition) / Time.deltaTime));
+				this.comVelocity = ((Time.deltaTime > 0f) ? ((this.centerOfMass - this.lastComPosition) / Time.deltaTime) : Vector3.zero);
 				this.lastComPosition = this.centerOfMass;
 				this.comVelocity = Vector3.ClampMagnitude(this.comVelocity, this.maxVelocity) * this.velocityFactor;
-				Vector3 vector5 = this.centerOfMass + this.comVelocity;
+				Vector3 vector4 = this.centerOfMass + this.comVelocity;
 				Vector3 a = V3Tools.PointToPlane(spine.pelvis.solverPosition, rootBone.solverPosition, vector);
-				Vector3 a2 = V3Tools.PointToPlane(vector5, rootBone.solverPosition, vector);
+				Vector3 a2 = V3Tools.PointToPlane(vector4, rootBone.solverPosition, vector);
 				Vector3 b2 = Vector3.Lerp(this.footsteps[0].position, this.footsteps[1].position, 0.5f);
-				Vector3 from = vector5 - b2;
-				float num4 = Vector3.Angle(from, rootBone.solverRotation * Vector3.up) * this.comAngleMlp;
+				float num4 = Vector3.Angle(vector4 - b2, rootBone.solverRotation * Vector3.up) * this.comAngleMlp;
 				for (int i = 0; i < this.footsteps.Length; i++)
 				{
 					this.footsteps[i].isSupportLeg = (supportLegIndex == i);
@@ -1562,10 +1562,10 @@ namespace RootMotion.FinalIK
 				{
 					if (this.footsteps[j].isStepping)
 					{
-						Vector3 vector6 = a2 + rootBone.solverRotation * this.footsteps[j].characterSpaceOffset;
-						if (!this.StepBlocked(this.footsteps[j].stepFrom, vector6, rootBone.solverPosition))
+						Vector3 vector5 = a2 + rootBone.solverRotation * this.footsteps[j].characterSpaceOffset;
+						if (!this.StepBlocked(this.footsteps[j].stepFrom, vector5, rootBone.solverPosition))
 						{
-							this.footsteps[j].UpdateStepping(vector6, quaternion, 10f);
+							this.footsteps[j].UpdateStepping(vector5, quaternion, 10f);
 						}
 					}
 					else
@@ -1581,14 +1581,14 @@ namespace RootMotion.FinalIK
 					{
 						if (!this.footsteps[k].isStepping)
 						{
-							Vector3 vector7 = a2 + rootBone.solverRotation * this.footsteps[k].characterSpaceOffset;
-							float num7 = (k != 0) ? rightLeg.mag : leftLeg.mag;
-							Vector3 b3 = (k != 0) ? vector3 : vector2;
+							Vector3 vector6 = a2 + rootBone.solverRotation * this.footsteps[k].characterSpaceOffset;
+							float num7 = (k == 0) ? leftLeg.mag : rightLeg.mag;
+							Vector3 b3 = (k == 0) ? vector2 : vector3;
 							float num8 = Vector3.Distance(this.footsteps[k].position, b3);
 							bool flag = false;
 							if (num8 >= num7 * this.maxLegStretch)
 							{
-								vector7 = a + rootBone.solverRotation * this.footsteps[k].characterSpaceOffset;
+								vector6 = a + rootBone.solverRotation * this.footsteps[k].characterSpaceOffset;
 								flag = true;
 							}
 							bool flag2 = false;
@@ -1596,9 +1596,9 @@ namespace RootMotion.FinalIK
 							{
 								if (l != k && !flag)
 								{
-									if (Vector3.Distance(this.footsteps[k].position, this.footsteps[l].position) >= 0.25f || (this.footsteps[k].position - vector7).sqrMagnitude >= (this.footsteps[l].position - vector7).sqrMagnitude)
+									if (Vector3.Distance(this.footsteps[k].position, this.footsteps[l].position) >= 0.25f || (this.footsteps[k].position - vector6).sqrMagnitude >= (this.footsteps[l].position - vector6).sqrMagnitude)
 									{
-										flag2 = IKSolverVR.Locomotion.GetLineSphereCollision(this.footsteps[k].position, vector7, this.footsteps[l].position, 0.25f);
+										flag2 = IKSolverVR.Locomotion.GetLineSphereCollision(this.footsteps[k].position, vector6, this.footsteps[l].position, 0.25f);
 									}
 									if (flag2)
 									{
@@ -1609,7 +1609,7 @@ namespace RootMotion.FinalIK
 							float num9 = Quaternion.Angle(quaternion, this.footsteps[k].stepToRootRot);
 							if (!flag2 || num9 > this.angleThreshold)
 							{
-								float num10 = Vector3.Distance(this.footsteps[k].position, vector7);
+								float num10 = Vector3.Distance(this.footsteps[k].position, vector6);
 								float num11 = Mathf.Lerp(this.stepThreshold, this.stepThreshold * 0.1f, num4 * 0.015f);
 								if (flag)
 								{
@@ -1619,7 +1619,7 @@ namespace RootMotion.FinalIK
 								{
 									num11 *= 0.9f;
 								}
-								if (!this.StepBlocked(this.footsteps[k].position, vector7, rootBone.solverPosition) && (num10 > num11 || num9 > this.angleThreshold))
+								if (!this.StepBlocked(this.footsteps[k].position, vector6, rootBone.solverPosition) && (num10 > num11 || num9 > this.angleThreshold))
 								{
 									float num12 = 0f;
 									num12 -= num10;
@@ -1719,14 +1719,12 @@ namespace RootMotion.FinalIK
 			{
 				Vector3 forward = lineEnd - lineStart;
 				Vector3 vector = sphereCenter - lineStart;
-				float magnitude = vector.magnitude;
-				float num = magnitude - sphereRadius;
+				float num = vector.magnitude - sphereRadius;
 				if (num > forward.magnitude)
 				{
 					return false;
 				}
-				Quaternion rotation = Quaternion.LookRotation(forward, vector);
-				Vector3 vector2 = Quaternion.Inverse(rotation) * vector;
+				Vector3 vector2 = Quaternion.Inverse(Quaternion.LookRotation(forward, vector)) * vector;
 				if (vector2.z < 0f)
 				{
 					return num < 0f;
@@ -1734,8 +1732,8 @@ namespace RootMotion.FinalIK
 				return vector2.y - sphereRadius < 0f;
 			}
 
-			[Range(0f, 1f)]
 			[Tooltip("Used for blending in/out of procedural locomotion.")]
+			[Range(0f, 1f)]
 			public float weight = 1f;
 
 			[Tooltip("Tries to maintain this distance between the legs.")]
@@ -1895,7 +1893,7 @@ namespace RootMotion.FinalIK
 						num++;
 					}
 					this.bones = new IKSolverVR.VirtualBone[num];
-					this.chestIndex = ((!hasChest) ? 1 : 2);
+					this.chestIndex = (hasChest ? 2 : 1);
 					this.neckIndex = 1;
 					if (hasChest)
 					{
@@ -1987,8 +1985,7 @@ namespace RootMotion.FinalIK
 					Vector3 vector2 = this.headPosition - this.rootPosition;
 					Vector3 b = V3Tools.ExtractHorizontal(vector2, vector, 1f);
 					Vector3 vector3 = vector2 - b;
-					float num = Vector3.Dot(vector3, vector);
-					if (num > 0f)
+					if (Vector3.Dot(vector3, vector) > 0f)
 					{
 						if (vector3.magnitude < this.minHeadHeight)
 						{
@@ -2054,9 +2051,10 @@ namespace RootMotion.FinalIK
 				{
 					Quaternion solverRotation = this.head.solverRotation;
 					Vector3 b = (this.IKPositionPelvis + this.pelvisPositionOffset - this.pelvis.solverPosition) * this.pelvisPositionWeight;
-					foreach (IKSolverVR.VirtualBone virtualBone in this.bones)
+					IKSolverVR.VirtualBone[] bones = this.bones;
+					for (int i = 0; i < bones.Length; i++)
 					{
-						virtualBone.solverPosition += b;
+						bones[i].solverPosition += b;
 					}
 					Vector3 bendNormal = this.anchorRotation * Vector3.right;
 					if (this.hasChest && this.hasNeck)
@@ -2133,7 +2131,7 @@ namespace RootMotion.FinalIK
 			public void InverseTranslateToHead(IKSolverVR.Leg[] legs, bool limited, bool useCurrentLegMag, Vector3 offset, float w)
 			{
 				Vector3 vector = this.pelvis.solverPosition + (this.headPosition + offset - this.head.solverPosition) * w * (1f - this.pelvisPositionWeight);
-				base.MovePosition((!limited) ? vector : this.LimitPelvisPosition(legs, vector, useCurrentLegMag, 2));
+				base.MovePosition(limited ? this.LimitPelvisPosition(legs, vector, useCurrentLegMag, 2) : vector);
 			}
 
 			private void TranslatePelvis(IKSolverVR.Leg[] legs, Vector3 deltaPosition, Quaternion deltaRotation)
@@ -2167,7 +2165,7 @@ namespace RootMotion.FinalIK
 						Vector3 b = pelvisPosition - this.pelvis.solverPosition;
 						Vector3 vector = leg2.thigh.solverPosition + b;
 						Vector3 vector2 = vector - leg2.position;
-						float maxLength = (!useCurrentLegMag) ? leg2.mag : leg2.currentMag;
+						float maxLength = useCurrentLegMag ? leg2.currentMag : leg2.mag;
 						Vector3 a = leg2.position + Vector3.ClampMagnitude(vector2, maxLength);
 						pelvisPosition += a - vector;
 					}
@@ -2192,7 +2190,7 @@ namespace RootMotion.FinalIK
 				}
 				Quaternion quaternion = QuaTools.FromToRotation(bones[lastIndex].solverRotation, targetRotation);
 				quaternion = QuaTools.ClampRotation(quaternion, clampWeight, 2);
-				float num2 = (!uniformWeight) ? 0f : (1f / (float)num);
+				float num2 = uniformWeight ? (1f / (float)num) : 0f;
 				for (int i = firstIndex; i < lastIndex + 1; i++)
 				{
 					if (!uniformWeight)
@@ -2220,7 +2218,7 @@ namespace RootMotion.FinalIK
 				}
 				Quaternion quaternion = QuaTools.FromToRotation(bones[lastIndex].solverRotation, targetRotation);
 				quaternion = QuaTools.ClampRotation(quaternion, clampWeight, 2);
-				float num2 = (!uniformWeight) ? 0f : (1f / (float)num);
+				float num2 = uniformWeight ? (1f / (float)num) : 0f;
 				for (int i = firstIndex; i < lastIndex + 1; i++)
 				{
 					if (!uniformWeight)
@@ -2237,20 +2235,20 @@ namespace RootMotion.FinalIK
 			[Tooltip("The pelvis target, useful with seated rigs.")]
 			public Transform pelvisTarget;
 
-			[Range(0f, 1f)]
 			[Tooltip("Positional weight of the head target.")]
+			[Range(0f, 1f)]
 			public float positionWeight = 1f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the head target.")]
+			[Range(0f, 1f)]
 			public float rotationWeight = 1f;
 
 			[Tooltip("Positional weight of the pelvis target.")]
 			[Range(0f, 1f)]
 			public float pelvisPositionWeight;
 
-			[Range(0f, 1f)]
 			[Tooltip("Rotational weight of the pelvis target.")]
+			[Range(0f, 1f)]
 			public float pelvisRotationWeight;
 
 			[Tooltip("If 'Chest Goal Weight' is greater than 0, the chest will be turned towards this Transform.")]
@@ -2263,8 +2261,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Minimum height of the head from the root of the character.")]
 			public float minHeadHeight = 0.8f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Determines how much the body will follow the position of the head.")]
+			[Range(0f, 1f)]
 			public float bodyPosStiffness = 0.55f;
 
 			[Tooltip("Determines how much the body will follow the rotation of the head.")]
@@ -2276,8 +2274,8 @@ namespace RootMotion.FinalIK
 			[Range(0f, 1f)]
 			public float neckStiffness = 0.2f;
 
-			[Range(0f, 1f)]
 			[Tooltip("Clamps chest rotation.")]
+			[Range(0f, 1f)]
 			public float chestClampWeight = 0.5f;
 
 			[Tooltip("Clamps head rotation.")]

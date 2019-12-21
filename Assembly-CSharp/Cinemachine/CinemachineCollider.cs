@@ -41,8 +41,7 @@ namespace Cinemachine
 			get
 			{
 				List<List<Vector3>> list = new List<List<Vector3>>();
-				List<CinemachineCollider.VcamExtraState> allExtraStates = base.GetAllExtraStates<CinemachineCollider.VcamExtraState>();
-				foreach (CinemachineCollider.VcamExtraState vcamExtraState in allExtraStates)
+				foreach (CinemachineCollider.VcamExtraState vcamExtraState in base.GetAllExtraStates<CinemachineCollider.VcamExtraState>())
 				{
 					if (vcamExtraState.debugResolutionPath != null)
 					{
@@ -257,13 +256,13 @@ namespace Cinemachine
 						Type type = this.m_CornerBuffer[i].collider.GetType();
 						if (type == typeof(BoxCollider) || type == typeof(SphereCollider) || type == typeof(CapsuleCollider))
 						{
-							Vector3 a = this.m_CornerBuffer[i].collider.ClosestPoint(pos);
-							Vector3 direction = a - pos;
+							Vector3 direction = this.m_CornerBuffer[i].collider.ClosestPoint(pos) - pos;
 							if (direction.magnitude > 1E-05f && this.m_CornerBuffer[i].collider.Raycast(new Ray(pos, direction), out this.m_CornerBuffer[i], num))
 							{
 								if (!(this.m_CornerBuffer[i].normal - obstacle.normal).AlmostZero())
 								{
 									normal = this.m_CornerBuffer[i].normal;
+									break;
 								}
 								break;
 							}
@@ -327,59 +326,39 @@ namespace Cinemachine
 
 		private float ClampRayToBounds(Ray ray, float distance, Bounds bounds)
 		{
+			float num;
 			if (Vector3.Dot(ray.direction, Vector3.up) > 0f)
 			{
-				Plane plane = new Plane(Vector3.down, bounds.max);
-				float num;
-				if (plane.Raycast(ray, out num) && num > 0.0001f)
+				if (new Plane(Vector3.down, bounds.max).Raycast(ray, out num) && num > 0.0001f)
 				{
 					distance = Mathf.Min(distance, num);
 				}
 			}
-			else if (Vector3.Dot(ray.direction, Vector3.down) > 0f)
+			else if (Vector3.Dot(ray.direction, Vector3.down) > 0f && new Plane(Vector3.up, bounds.min).Raycast(ray, out num) && num > 0.0001f)
 			{
-				Plane plane2 = new Plane(Vector3.up, bounds.min);
-				float num;
-				if (plane2.Raycast(ray, out num) && num > 0.0001f)
-				{
-					distance = Mathf.Min(distance, num);
-				}
+				distance = Mathf.Min(distance, num);
 			}
 			if (Vector3.Dot(ray.direction, Vector3.right) > 0f)
 			{
-				Plane plane3 = new Plane(Vector3.left, bounds.max);
-				float num;
-				if (plane3.Raycast(ray, out num) && num > 0.0001f)
+				if (new Plane(Vector3.left, bounds.max).Raycast(ray, out num) && num > 0.0001f)
 				{
 					distance = Mathf.Min(distance, num);
 				}
 			}
-			else if (Vector3.Dot(ray.direction, Vector3.left) > 0f)
+			else if (Vector3.Dot(ray.direction, Vector3.left) > 0f && new Plane(Vector3.right, bounds.min).Raycast(ray, out num) && num > 0.0001f)
 			{
-				Plane plane4 = new Plane(Vector3.right, bounds.min);
-				float num;
-				if (plane4.Raycast(ray, out num) && num > 0.0001f)
-				{
-					distance = Mathf.Min(distance, num);
-				}
+				distance = Mathf.Min(distance, num);
 			}
 			if (Vector3.Dot(ray.direction, Vector3.forward) > 0f)
 			{
-				Plane plane5 = new Plane(Vector3.back, bounds.max);
-				float num;
-				if (plane5.Raycast(ray, out num) && num > 0.0001f)
+				if (new Plane(Vector3.back, bounds.max).Raycast(ray, out num) && num > 0.0001f)
 				{
 					distance = Mathf.Min(distance, num);
 				}
 			}
-			else if (Vector3.Dot(ray.direction, Vector3.back) > 0f)
+			else if (Vector3.Dot(ray.direction, Vector3.back) > 0f && new Plane(Vector3.forward, bounds.min).Raycast(ray, out num) && num > 0.0001f)
 			{
-				Plane plane6 = new Plane(Vector3.forward, bounds.min);
-				float num;
-				if (plane6.Raycast(ray, out num) && num > 0.0001f)
-				{
-					distance = Mathf.Min(distance, num);
-				}
+				distance = Mathf.Min(distance, num);
 			}
 			return distance;
 		}
@@ -402,14 +381,11 @@ namespace Cinemachine
 				for (int i = 0; i < num; i++)
 				{
 					Collider collider = this.mColliderBuffer[i];
-					if (this.m_IgnoreTag.Length <= 0 || !collider.CompareTag(this.m_IgnoreTag))
+					Vector3 a;
+					float d;
+					if ((this.m_IgnoreTag.Length <= 0 || !collider.CompareTag(this.m_IgnoreTag)) && Physics.ComputePenetration(this.mCameraCollider, cameraPos, Quaternion.identity, collider, collider.transform.position, collider.transform.rotation, out a, out d))
 					{
-						Vector3 a;
-						float d;
-						if (Physics.ComputePenetration(this.mCameraCollider, cameraPos, Quaternion.identity, collider, collider.transform.position, collider.transform.rotation, out a, out d))
-						{
-							vector += a * d;
-						}
+						vector += a * d;
 					}
 				}
 			}
@@ -448,8 +424,8 @@ namespace Cinemachine
 			return false;
 		}
 
-		[Tooltip("The Unity layer mask against which the collider will raycast")]
 		[Header("Obstacle Detection")]
+		[Tooltip("The Unity layer mask against which the collider will raycast")]
 		public LayerMask m_CollideAgainst = 1;
 
 		[TagField]
@@ -459,13 +435,13 @@ namespace Cinemachine
 		[Tooltip("Obstacles closer to the target than this will be ignored")]
 		public float m_MinimumDistanceFromTarget = 0.1f;
 
-		[Tooltip("When enabled, will attempt to resolve situations where the line of sight to the target is blocked by an obstacle")]
 		[Space]
+		[Tooltip("When enabled, will attempt to resolve situations where the line of sight to the target is blocked by an obstacle")]
 		[FormerlySerializedAs("m_PreserveLineOfSight")]
 		public bool m_AvoidObstacles = true;
 
-		[FormerlySerializedAs("m_LineOfSightFeelerDistance")]
 		[Tooltip("The maximum raycast distance when checking if the line of sight to this camera's target is clear.  If the setting is 0 or less, the current actual distance to target will be used.")]
+		[FormerlySerializedAs("m_LineOfSightFeelerDistance")]
 		public float m_DistanceLimit;
 
 		[Tooltip("Camera will try to maintain this distance from any obstacle.  Try to keep this value small.  Increase it if you are seeing inside obstacles due to a large FOV on the camera.")]
@@ -478,13 +454,13 @@ namespace Cinemachine
 		[Tooltip("Upper limit on how many obstacle hits to process.  Higher numbers may impact performance.  In most environments, 4 is enough.")]
 		public int m_MaximumEffort = 4;
 
-		[Tooltip("The gradualness of collision resolution.  Higher numbers will move the camera more gradually away from obstructions.")]
 		[Range(0f, 10f)]
+		[Tooltip("The gradualness of collision resolution.  Higher numbers will move the camera more gradually away from obstructions.")]
 		[FormerlySerializedAs("m_Smoothing")]
 		public float m_Damping;
 
-		[Tooltip("If greater than zero, a higher score will be given to shots when the target is closer to this distance.  Set this to zero to disable this feature.")]
 		[Header("Shot Evaluation")]
+		[Tooltip("If greater than zero, a higher score will be given to shots when the target is closer to this distance.  Set this to zero to disable this feature.")]
 		public float m_OptimalTargetDistance;
 
 		private const float PrecisionSlush = 0.001f;

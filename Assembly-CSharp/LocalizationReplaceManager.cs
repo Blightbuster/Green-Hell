@@ -18,9 +18,10 @@ public class LocalizationReplaceManager : MonoBehaviour
 		for (int i = 0; i < list.Count; i++)
 		{
 			Text text = list[i];
+			Scene scene2 = text.gameObject.scene;
 			if (text.text.StartsWith("&") & text.text.EndsWith("&"))
 			{
-				text.text = GreenHellGame.Instance.GetLocalization().Get(text.text.Trim(this.m_Trim));
+				text.text = GreenHellGame.Instance.GetLocalization().Get(text.text.Trim(this.m_Trim), true);
 			}
 		}
 	}

@@ -94,7 +94,7 @@ public class CutscenePlayerFPPController : CutscenePlayerController
 			}
 			else if (vector.magnitude > 0.5f)
 			{
-				num = ((vector.y < 0f) ? this.m_BackwardWalkSpeed : this.m_WalkSpeed);
+				num = ((vector.y >= 0f) ? this.m_WalkSpeed : this.m_BackwardWalkSpeed);
 				this.m_CurrentMoveSpeed = MoveSpeed.Walk;
 			}
 		}
@@ -111,10 +111,6 @@ public class CutscenePlayerFPPController : CutscenePlayerController
 		vector2 *= num;
 		vector2.y = y;
 		this.m_CurentMoveSpeed = num;
-		if (InventoryBackpack.Get().IsCriticalOverload())
-		{
-			vector2 *= this.m_OverloadSpeedMul;
-		}
 		if ((this.m_CollisionFlags & CollisionFlags.Below) != CollisionFlags.None)
 		{
 			this.m_WantedSpeed = this.m_CharacterController.transform.TransformVector(vector2);
@@ -158,12 +154,10 @@ public class CutscenePlayerFPPController : CutscenePlayerController
 		{
 			this.m_Animator.SetBool(this.m_BDuck, true);
 			this.m_Duck = true;
+			return;
 		}
-		else
-		{
-			this.m_Animator.SetBool(this.m_BDuck, false);
-			this.m_Duck = false;
-		}
+		this.m_Animator.SetBool(this.m_BDuck, false);
+		this.m_Duck = false;
 	}
 
 	private void UpdateBodyRotation()
@@ -202,8 +196,9 @@ public class CutscenePlayerFPPController : CutscenePlayerController
 		{
 			this.m_Inputs.m_Sprint = !this.m_Inputs.m_Sprint;
 		}
-		this.m_Inputs.m_MouseX = CrossPlatformInputManager.GetAxis("Mouse X") * this.m_LookSensitivityX;
-		this.m_Inputs.m_MouseY = CrossPlatformInputManager.GetAxis("Mouse Y") * this.m_LookSensitivityY;
+		Vector2 lookInput = InputHelpers.GetLookInput(this.m_LookSensitivityX, this.m_LookSensitivityY, 150f);
+		this.m_Inputs.m_MouseX = lookInput.x;
+		this.m_Inputs.m_MouseY = lookInput.y;
 	}
 
 	public bool IsWalking()

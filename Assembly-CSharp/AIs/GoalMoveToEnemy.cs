@@ -28,8 +28,7 @@ namespace AIs
 			{
 				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-				float num = Vector3.Angle(normalized2D, normalized2D2);
-				if (num > RotateTo.MAX_ANGLE)
+				if (Vector3.Angle(normalized2D, normalized2D2) > RotateTo.MAX_ANGLE)
 				{
 					this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, true);
 					base.AddToPlan(this.m_RotateTo);
@@ -45,7 +44,7 @@ namespace AIs
 				base.Deactivate();
 				return;
 			}
-			this.m_LastEnemyPos = Player.Get().transform.position;
+			this.m_LastEnemyPos = this.m_AI.m_EnemyModule.m_Enemy.transform.position;
 		}
 
 		public override AIMoveStyle GetWantedMoveStyle()
@@ -78,7 +77,7 @@ namespace AIs
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
-			if (this.m_LastEnemyPos.Distance(Player.Get().transform.position) >= 1f)
+			if (this.m_LastEnemyPos.Distance(this.m_AI.m_EnemyModule.m_Enemy.transform.position) >= 1f)
 			{
 				this.SetupPath();
 			}

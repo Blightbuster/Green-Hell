@@ -9,11 +9,9 @@ public class PostProcessExample : MonoBehaviour
 		if (this.PostProcessMat == null)
 		{
 			base.enabled = false;
+			return;
 		}
-		else
-		{
-			this.PostProcessMat.mainTexture = this.PostProcessMat.mainTexture;
-		}
+		this.PostProcessMat.mainTexture = this.PostProcessMat.mainTexture;
 	}
 
 	private void OnRenderImage(RenderTexture src, RenderTexture dest)

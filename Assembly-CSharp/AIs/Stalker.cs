@@ -37,44 +37,38 @@ namespace AIs
 
 		private void UpdateState()
 		{
-			Stalker.State state = this.m_State;
-			if (state != Stalker.State.MoveAround)
+			switch (this.m_State)
 			{
-				if (state != Stalker.State.RunAway)
+			case Stalker.State.MoveAround:
+				if (StalkerManager.Get().CanAttack())
 				{
-					if (state != Stalker.State.Attack)
-					{
-					}
+					this.m_State = Stalker.State.Attack;
+					StalkerManager.Get().OnStalkerStartAttack();
+					return;
 				}
-				else
-				{
-					float num = Vector3.Distance(Player.Get().transform.position, base.transform.position);
-					if (num > StalkerManager.Get().m_MoveAwayRange && !this.m_PlayerApproaching)
-					{
-						this.m_State = Stalker.State.MoveAround;
-					}
-				}
-			}
-			else if (StalkerManager.Get().CanAttack())
-			{
-				this.m_State = Stalker.State.Attack;
-				StalkerManager.Get().OnStalkerStartAttack();
-			}
-			else
-			{
-				float num2 = Vector3.Distance(Player.Get().transform.position, base.transform.position);
-				if (num2 < StalkerManager.Get().m_MoveAroundMinRange)
+				if (Vector3.Distance(Player.Get().transform.position, base.transform.position) < StalkerManager.Get().m_MoveAroundMinRange)
 				{
 					this.m_State = Stalker.State.RunAway;
 				}
 				PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.Stalker);
+				return;
+			case Stalker.State.RunAway:
+				if (Vector3.Distance(Player.Get().transform.position, base.transform.position) > StalkerManager.Get().m_MoveAwayRange && !this.m_PlayerApproaching)
+				{
+					this.m_State = Stalker.State.MoveAround;
+				}
+				break;
+			case Stalker.State.Attack:
+				break;
+			default:
+				return;
 			}
 		}
 
 		public override bool TakeDamage(DamageInfo info)
 		{
 			base.TakeDamage(info);
-			ParticlesManager.Get().Spawn("Blood_Effect_Big", base.transform.position, Quaternion.identity, null);
+			ParticlesManager.Get().Spawn("Blood_Effect_Big", base.transform.position, Quaternion.identity, Vector3.zero, null, -1f, false);
 			UnityEngine.Object.Destroy(base.gameObject, 0.2f);
 			return true;
 		}

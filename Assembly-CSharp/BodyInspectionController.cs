@@ -17,7 +17,7 @@ public class BodyInspectionController : PlayerController
 	{
 		base.Awake();
 		BodyInspectionController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.BodyInspection;
+		base.m_ControllerType = PlayerControllerType.BodyInspection;
 		this.SetWoundSlots();
 		this.InitializeMaggotsVertices();
 		this.InitializeAntsVertices();
@@ -38,7 +38,7 @@ public class BodyInspectionController : PlayerController
 		this.m_ArmBandagingSound.Add(item);
 	}
 
-	protected new virtual void Start()
+	protected override void Start()
 	{
 		base.Start();
 		this.m_LeftLegRotationBones.Clear();
@@ -71,16 +71,15 @@ public class BodyInspectionController : PlayerController
 		this.m_AnimatorX = -1f;
 		this.m_AnimatorY = 1f;
 		EventsManager.OnEvent(Enums.Event.EnterInspection, 1);
-		CursorManager.Get().ShowCursor(true);
+		CursorManager.Get().ShowCursor(true, true);
 		this.m_DelayAnimatorReset = false;
 		this.m_LeaveAfterBandage = false;
 		this.m_SpineAddLayerBlendWeightToRestore = this.m_Animator.GetLayerWeight(4);
 		this.m_Animator.SetLayerWeight(4, 1f);
 		Watch.Get().gameObject.SetActive(true);
-		HintsManager.Get().ShowHint("Inspection", 10f);
-		if (Inventory3DManager.Get().gameObject.activeSelf)
+		if (PlayerInjuryModule.Get().IsAnyWound())
 		{
-			HintsManager.Get().ShowHint("Inspection_Backpack", 10f);
+			HintsManager.Get().ShowHint("Inspection", 0f);
 		}
 		this.m_ControllerEnabled = true;
 	}
@@ -88,6 +87,7 @@ public class BodyInspectionController : PlayerController
 	protected override void OnDisable()
 	{
 		base.OnDisable();
+		HintsManager.Get().HideHint("Inspection");
 		this.m_Player.UnblockMoves();
 		this.m_Player.UnblockRotation();
 		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
@@ -102,7 +102,7 @@ public class BodyInspectionController : PlayerController
 				this.m_Animator.SetBool(this.m_BBodyInspection, false);
 			}
 		}
-		CursorManager.Get().ShowCursor(false);
+		CursorManager.Get().ShowCursor(false, false);
 		this.m_ActiveSlot = null;
 		if (Camera.main && Camera.main.gameObject.activeSelf)
 		{
@@ -232,6 +232,7 @@ public class BodyInspectionController : PlayerController
 		this.UpdateBodyRotation();
 		this.UpdateSelectedWound();
 		this.UpdateDeleech();
+		this.UpdateDeArmor();
 		this.UpdateFOV();
 		this.UpdateCursor();
 	}
@@ -255,16 +256,19 @@ public class BodyInspectionController : PlayerController
 			if (this.m_AnimatorX < -0.98f && this.m_AnimatorY > 0.98f)
 			{
 				this.SetState(BIState.RotateLeftArm);
+				return;
 			}
-			else if (this.m_AnimatorX > 0.98f && this.m_AnimatorY > 0.98f)
+			if (this.m_AnimatorX > 0.98f && this.m_AnimatorY > 0.98f)
 			{
 				this.SetState(BIState.RotateRightArm);
+				return;
 			}
-			else if (this.m_AnimatorX < -0.98f && this.m_AnimatorY < -0.98f)
+			if (this.m_AnimatorX < -0.98f && this.m_AnimatorY < -0.98f)
 			{
 				this.SetState(BIState.RotateLeftLeg);
+				return;
 			}
-			else if (this.m_AnimatorX > 0.98f && this.m_AnimatorY < -0.98f)
+			if (this.m_AnimatorX > 0.98f && this.m_AnimatorY < -0.98f)
 			{
 				this.SetState(BIState.RotateRightLeg);
 			}
@@ -273,26 +277,19 @@ public class BodyInspectionController : PlayerController
 
 	public bool ScenarioLookingAt(string limb)
 	{
-		if (limb != null)
+		if (limb == "LLeg")
 		{
-			if (limb == "LLeg")
-			{
-				return this.m_State == BIState.RotateLeftLeg;
-			}
-			if (limb == "RLeg")
-			{
-				return this.m_State == BIState.RotateRightLeg;
-			}
-			if (limb == "LHand")
-			{
-				return this.m_State == BIState.RotateLeftArm;
-			}
-			if (limb == "RHand")
-			{
-				return this.m_State == BIState.RotateRightArm;
-			}
+			return this.m_State == BIState.RotateLeftLeg;
 		}
-		return false;
+		if (limb == "RLeg")
+		{
+			return this.m_State == BIState.RotateRightLeg;
+		}
+		if (!(limb == "LHand"))
+		{
+			return limb == "RHand" && this.m_State == BIState.RotateRightArm;
+		}
+		return this.m_State == BIState.RotateLeftArm;
 	}
 
 	public bool ScenarioIsLookingAtInjury(string injury_type)
@@ -405,8 +402,8 @@ public class BodyInspectionController : PlayerController
 		float num2 = 0f;
 		if (this.m_State < BIState.Leaving)
 		{
-			num = ((this.m_Inputs.m_ChooseLimbX < 0f) ? -1f : 1f);
-			num2 = ((this.m_Inputs.m_ChooseLimbY < 0f) ? -1f : 1f);
+			num = ((this.m_Inputs.m_ChooseLimbX >= 0f) ? 1f : -1f);
+			num2 = ((this.m_Inputs.m_ChooseLimbY >= 0f) ? 1f : -1f);
 		}
 		else if (this.m_State == BIState.Leaving)
 		{
@@ -448,21 +445,24 @@ public class BodyInspectionController : PlayerController
 
 	private void UpdateInput()
 	{
-		this.m_Inputs.m_SelectItem = InputsManager.Get().IsActionActive(InputsManager.InputAction.BISelectItem);
-		this.m_Inputs.m_RotateLimb = InputsManager.Get().IsActionActive(InputsManager.InputAction.BIRotateLimb);
+		this.m_Inputs.m_SelectItemPrev = this.m_Inputs.m_SelectItem;
+		this.m_Inputs.m_SelectItem = (InputsManager.Get().IsActionActive(InputsManager.InputAction.BISelectItem) || Input.GetKey(InputHelpers.PadButton.Button_X.KeyFromPad()));
+		this.m_Inputs.m_RotateLimb = (InputsManager.Get().IsActionActive(InputsManager.InputAction.BIRotateLimb) && !HUDItem.Get().enabled);
 		this.m_Inputs.m_SelectLimb = InputsManager.Get().IsActionActive(InputsManager.InputAction.BISelectLimb);
 		if (this.m_State != BIState.ChooseLimb)
 		{
 			if (this.m_State == BIState.RotateLeftArm || this.m_State == BIState.RotateRightArm || this.m_State == BIState.RotateLeftLeg || this.m_State == BIState.RotateRightLeg)
 			{
-				float num = 1f;
+				float num = GreenHellGame.IsPCControllerActive() ? 0.2f : 0.01f;
+				float num2 = 1f;
 				if (this.m_State == BIState.RotateLeftArm || this.m_State == BIState.RotateLeftLeg)
 				{
-					num = -1f;
+					num2 = -1f;
 				}
-				this.m_Inputs.m_LimbRotation += CrossPlatformInputManager.GetAxis("Mouse X") * this.m_MouseSensitivityX * 0.2f * num;
+				Vector2 lookInput = InputHelpers.GetLookInput(this.m_MouseSensitivityX, this.m_MouseSensitivityY, 150f);
+				this.m_Inputs.m_LimbRotation += lookInput.x * num * num2;
 				this.m_Inputs.m_LimbRotation = Mathf.Clamp(this.m_Inputs.m_LimbRotation, 0f, 0.999f);
-				this.m_Inputs.m_LeftArmMouseY += CrossPlatformInputManager.GetAxis("Mouse Y") * this.m_MouseSensitivityY;
+				this.m_Inputs.m_LeftArmMouseY += lookInput.y;
 				this.m_Inputs.m_LeftArmMouseY = Mathf.Clamp(this.m_Inputs.m_LeftArmMouseY, 0f, 1f);
 			}
 			else if (this.m_State == BIState.Leaving)
@@ -471,11 +471,15 @@ public class BodyInspectionController : PlayerController
 				this.ZeroChooseLimbWithBlend();
 			}
 		}
+		if (GreenHellGame.IsPadControllerActive() && !Inventory3DManager.Get().IsActive() && CrossPlatformInputManager.GetAxis("LeftTrigger") < 0.01f)
+		{
+			CursorManager.Get().UpdatePadCursor((CursorManager.Get().GetCursor() == CursorManager.TYPE.Hand_0) ? 0.1f : 1f);
+		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if (this.CanLeave() && (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && Time.time - Inventory3DManager.Get().m_DeactivationTime > 0.3f)
+		if (this.CanLeave() && (action_data.m_Action == InputsManager.InputAction.Quit || action_data.m_Action == InputsManager.InputAction.AdditionalQuit) && Time.time - Inventory3DManager.Get().m_DeactivationTime > 0.3f && (!GreenHellGame.IsPadControllerActive() || !HUDItem.Get().m_Active))
 		{
 			this.m_Animator.SetBool("Inventory", true);
 			this.SetState(BIState.Leaving);
@@ -504,12 +508,10 @@ public class BodyInspectionController : PlayerController
 		{
 			num2 = (1f - this.m_Inputs.m_ChooseLimbY) * num * Time.deltaTime;
 			this.m_Inputs.m_ChooseLimbY += num2;
+			return;
 		}
-		else
-		{
-			num2 = this.m_Inputs.m_ChooseLimbY * num * Time.deltaTime;
-			this.m_Inputs.m_ChooseLimbY -= num2;
-		}
+		num2 = this.m_Inputs.m_ChooseLimbY * num * Time.deltaTime;
+		this.m_Inputs.m_ChooseLimbY -= num2;
 	}
 
 	private void ZeroLimbRotationWithBlend()
@@ -525,7 +527,7 @@ public class BodyInspectionController : PlayerController
 		{
 			if (this.m_WoundSlots[i].IsInjuryOfType(InjuryType.Leech))
 			{
-				PlayerInjuryModule.Get().AddInjury(InjuryType.Leech, this.m_WoundSlots[i].m_InjuryPlace, this.m_WoundSlots[i], InjuryState.Open, 0, null);
+				PlayerInjuryModule.Get().AddInjury(InjuryType.Leech, this.m_WoundSlots[i].m_InjuryPlace, this.m_WoundSlots[i], InjuryState.Open, 0, null, null);
 			}
 		}
 	}
@@ -536,7 +538,7 @@ public class BodyInspectionController : PlayerController
 		{
 			if (this.m_WoundSlots[i].IsInjuryOfType(InjuryType.Worm))
 			{
-				PlayerInjuryModule.Get().AddInjury(InjuryType.Worm, this.m_WoundSlots[i].m_InjuryPlace, this.m_WoundSlots[i], InjuryState.Open, 0, null);
+				PlayerInjuryModule.Get().AddInjury(InjuryType.Worm, this.m_WoundSlots[i].m_InjuryPlace, this.m_WoundSlots[i], InjuryState.Open, 0, null, null);
 			}
 		}
 	}
@@ -553,7 +555,7 @@ public class BodyInspectionController : PlayerController
 					string name = string.Empty;
 					for (int j = 0; j < 42; j++)
 					{
-						name = "Wound" + ((j >= 10) ? j.ToString() : ("0" + j.ToString()));
+						name = "Wound" + ((j < 10) ? ("0" + j.ToString()) : j.ToString());
 						Transform transform = this.m_Player.gameObject.transform.FindDeepChild(name);
 						if (transform != null)
 						{
@@ -601,109 +603,42 @@ public class BodyInspectionController : PlayerController
 					{
 						if (i != 4 || k == 0)
 						{
-							string name2 = "Hand_L_Wound0" + k;
-							Transform transform2 = this.m_Player.gameObject.transform.FindDeepChild(name2);
-							if (transform2 != null)
-							{
-								BIWoundSlot biwoundSlot2 = transform2.gameObject.GetComponent<BIWoundSlot>();
-								if (biwoundSlot2 == null)
-								{
-									biwoundSlot2 = transform2.gameObject.AddComponent<BIWoundSlot>();
-									biwoundSlot2.m_Transform = transform2;
-								}
-								biwoundSlot2.m_InjuryPlace = InjuryPlace.LHand;
-								biwoundSlot2.m_InjuryType.Add((InjuryType)i);
-								if (!this.m_WoundSlots.Contains(biwoundSlot2))
-								{
-									this.m_WoundSlots.Add(biwoundSlot2);
-								}
-								if (i == 4 && k == 0 && biwoundSlot2.m_AdditionalMeshes == null)
-								{
-									biwoundSlot2.m_AdditionalMeshes = new List<GameObject>();
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Hand_L_Wound01");
-									biwoundSlot2.m_AdditionalMeshes.Add(transform2.gameObject);
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Hand_L_Wound02");
-									biwoundSlot2.m_AdditionalMeshes.Add(transform2.gameObject);
-								}
-							}
-							name2 = "Hand_R_Wound0" + k;
-							transform2 = this.m_Player.gameObject.transform.FindDeepChild(name2);
-							if (transform2 != null)
-							{
-								BIWoundSlot biwoundSlot3 = transform2.gameObject.GetComponent<BIWoundSlot>();
-								if (biwoundSlot3 == null)
-								{
-									biwoundSlot3 = transform2.gameObject.AddComponent<BIWoundSlot>();
-									biwoundSlot3.m_Transform = transform2;
-								}
-								biwoundSlot3.m_InjuryPlace = InjuryPlace.RHand;
-								biwoundSlot3.m_InjuryType.Add((InjuryType)i);
-								if (!this.m_WoundSlots.Contains(biwoundSlot3))
-								{
-									this.m_WoundSlots.Add(biwoundSlot3);
-								}
-								if (i == 4 && k == 0 && biwoundSlot3.m_AdditionalMeshes == null)
-								{
-									biwoundSlot3.m_AdditionalMeshes = new List<GameObject>();
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Hand_R_Wound01");
-									biwoundSlot3.m_AdditionalMeshes.Add(transform2.gameObject);
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Hand_R_Wound02");
-									biwoundSlot3.m_AdditionalMeshes.Add(transform2.gameObject);
-								}
-							}
-							name2 = "Leg_L_Wound0" + k;
-							transform2 = this.m_Player.gameObject.transform.FindDeepChild(name2);
-							if (transform2 != null)
-							{
-								BIWoundSlot biwoundSlot4 = transform2.gameObject.GetComponent<BIWoundSlot>();
-								if (biwoundSlot4 == null)
-								{
-									biwoundSlot4 = transform2.gameObject.AddComponent<BIWoundSlot>();
-									biwoundSlot4.m_Transform = transform2;
-								}
-								biwoundSlot4.m_InjuryPlace = InjuryPlace.LLeg;
-								biwoundSlot4.m_InjuryType.Add((InjuryType)i);
-								if (!this.m_WoundSlots.Contains(biwoundSlot4))
-								{
-									this.m_WoundSlots.Add(biwoundSlot4);
-								}
-								if (i == 4 && k == 0 && biwoundSlot4.m_AdditionalMeshes == null)
-								{
-									biwoundSlot4.m_AdditionalMeshes = new List<GameObject>();
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Leg_L_Wound01");
-									biwoundSlot4.m_AdditionalMeshes.Add(transform2.gameObject);
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Leg_L_Wound02");
-									biwoundSlot4.m_AdditionalMeshes.Add(transform2.gameObject);
-								}
-							}
-							name2 = "Leg_R_Wound0" + k;
-							transform2 = this.m_Player.gameObject.transform.FindDeepChild(name2);
-							if (transform2 != null)
-							{
-								BIWoundSlot biwoundSlot5 = transform2.gameObject.GetComponent<BIWoundSlot>();
-								if (biwoundSlot5 == null)
-								{
-									biwoundSlot5 = transform2.gameObject.AddComponent<BIWoundSlot>();
-									biwoundSlot5.m_Transform = transform2;
-								}
-								biwoundSlot5.m_InjuryPlace = InjuryPlace.RLeg;
-								biwoundSlot5.m_InjuryType.Add((InjuryType)i);
-								if (!this.m_WoundSlots.Contains(biwoundSlot5))
-								{
-									this.m_WoundSlots.Add(biwoundSlot5);
-								}
-								if (i == 4 && k == 0 && biwoundSlot5.m_AdditionalMeshes == null)
-								{
-									biwoundSlot5.m_AdditionalMeshes = new List<GameObject>();
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Leg_R_Wound01");
-									biwoundSlot5.m_AdditionalMeshes.Add(transform2.gameObject);
-									transform2 = this.m_Player.gameObject.transform.FindDeepChild("Leg_R_Wound02");
-									biwoundSlot5.m_AdditionalMeshes.Add(transform2.gameObject);
-								}
-							}
+							this.SetWoundSlot("Hand_L_Wound0", k, InjuryPlace.LHand, (InjuryType)i);
+							this.SetWoundSlot("Hand_R_Wound0", k, InjuryPlace.RHand, (InjuryType)i);
+							this.SetWoundSlot("Leg_L_Wound0", k, InjuryPlace.LLeg, (InjuryType)i);
+							this.SetWoundSlot("Leg_R_Wound0", k, InjuryPlace.RLeg, (InjuryType)i);
 						}
 					}
 				}
+			}
+		}
+	}
+
+	private void SetWoundSlot(string bodypart_name, int bodypart_idx, InjuryPlace injury_place, InjuryType injury_type)
+	{
+		string name = bodypart_name + bodypart_idx.ToString();
+		Transform transform = this.m_Player.gameObject.transform.FindDeepChild(name);
+		if (transform != null)
+		{
+			BIWoundSlot biwoundSlot = transform.gameObject.GetComponent<BIWoundSlot>();
+			if (biwoundSlot == null)
+			{
+				biwoundSlot = transform.gameObject.AddComponent<BIWoundSlot>();
+				biwoundSlot.m_Transform = transform;
+			}
+			biwoundSlot.m_InjuryPlace = injury_place;
+			biwoundSlot.m_InjuryType.Add(injury_type);
+			if (!this.m_WoundSlots.Contains(biwoundSlot))
+			{
+				this.m_WoundSlots.Add(biwoundSlot);
+			}
+			if (injury_type == InjuryType.Rash && bodypart_idx == 0 && biwoundSlot.m_AdditionalMeshes == null)
+			{
+				biwoundSlot.m_AdditionalMeshes = new List<GameObject>();
+				transform = this.m_Player.gameObject.transform.FindDeepChild(bodypart_name + "1");
+				biwoundSlot.m_AdditionalMeshes.Add(transform.gameObject);
+				transform = this.m_Player.gameObject.transform.FindDeepChild(bodypart_name + "2");
+				biwoundSlot.m_AdditionalMeshes.Add(transform.gameObject);
 			}
 		}
 	}
@@ -1780,8 +1715,7 @@ public class BodyInspectionController : PlayerController
 			if (boneWeight.weight0 != 0f)
 			{
 				Matrix4x4 rhs = default(Matrix4x4);
-				Matrix4x4 lhs = component.transform.localToWorldMatrix.inverse;
-				lhs *= transform.localToWorldMatrix;
+				Matrix4x4 lhs = component.transform.localToWorldMatrix.inverse * transform.localToWorldMatrix;
 				rhs = component.sharedMesh.bindposes[boneWeight.boneIndex0].inverse;
 				Vector3 p = (lhs * rhs).inverse.MultiplyPoint3x4(vertices[indices[i]]);
 				Vector3 n = component.sharedMesh.bindposes[boneWeight.boneIndex0].MultiplyVector(normals[indices[i]]);
@@ -1792,8 +1726,7 @@ public class BodyInspectionController : PlayerController
 			if (boneWeight.weight1 != 0f)
 			{
 				Matrix4x4 rhs2 = default(Matrix4x4);
-				Matrix4x4 lhs2 = component.transform.localToWorldMatrix.inverse;
-				lhs2 *= transform.localToWorldMatrix;
+				Matrix4x4 lhs2 = component.transform.localToWorldMatrix.inverse * transform.localToWorldMatrix;
 				rhs2 = component.sharedMesh.bindposes[boneWeight.boneIndex1].inverse;
 				Vector3 p = (lhs2 * rhs2).inverse.MultiplyPoint3x4(vertices[indices[i]]);
 				Vector3 n = component.sharedMesh.bindposes[boneWeight.boneIndex0].MultiplyVector(normals[indices[i]]);
@@ -1804,8 +1737,7 @@ public class BodyInspectionController : PlayerController
 			if (boneWeight.weight2 != 0f)
 			{
 				Matrix4x4 rhs3 = default(Matrix4x4);
-				Matrix4x4 lhs3 = component.transform.localToWorldMatrix.inverse;
-				lhs3 *= transform.localToWorldMatrix;
+				Matrix4x4 lhs3 = component.transform.localToWorldMatrix.inverse * transform.localToWorldMatrix;
 				rhs3 = component.sharedMesh.bindposes[boneWeight.boneIndex2].inverse;
 				Vector3 p = (lhs3 * rhs3).inverse.MultiplyPoint3x4(vertices[indices[i]]);
 				Vector3 n = component.sharedMesh.bindposes[boneWeight.boneIndex0].MultiplyVector(normals[indices[i]]);
@@ -1816,8 +1748,7 @@ public class BodyInspectionController : PlayerController
 			if (boneWeight.weight3 != 0f)
 			{
 				Matrix4x4 rhs4 = default(Matrix4x4);
-				Matrix4x4 lhs4 = component.transform.localToWorldMatrix.inverse;
-				lhs4 *= transform.localToWorldMatrix;
+				Matrix4x4 lhs4 = component.transform.localToWorldMatrix.inverse * transform.localToWorldMatrix;
 				rhs4 = component.sharedMesh.bindposes[boneWeight.boneIndex3].inverse;
 				Vector3 p = (lhs4 * rhs4).inverse.MultiplyPoint3x4(vertices[indices[i]]);
 				Vector3 n = component.sharedMesh.bindposes[boneWeight.boneIndex0].MultiplyVector(normals[indices[i]]);
@@ -1994,19 +1925,25 @@ public class BodyInspectionController : PlayerController
 			case BIState.BandageLeftHandBegin:
 				this.SetState(BIState.BandageLeftHand);
 				this.m_Animator.SetBool(this.m_BBI_BandageLeftHand, true);
+				return;
+			case BIState.BandageLeftHand:
+			case BIState.BandageRightHand:
+			case BIState.BandageLeftLeg:
 				break;
 			case BIState.BandageRightHandBegin:
 				this.SetState(BIState.BandageRightHand);
 				this.m_Animator.SetBool(this.m_BBI_BandageRightHand, true);
-				break;
+				return;
 			case BIState.BandageLeftLegBegin:
 				this.SetState(BIState.BandageLeftLeg);
 				this.m_Animator.SetBool(this.m_BBI_BandageLeftLeg, true);
-				break;
+				return;
 			case BIState.BandageRightLegBegin:
 				this.SetState(BIState.BandageRightLeg);
 				this.m_Animator.SetBool(this.m_BBI_BandageRightLeg, true);
 				break;
+			default:
+				return;
 			}
 		}
 	}
@@ -2017,12 +1954,14 @@ public class BodyInspectionController : PlayerController
 		if (id == AnimEventID.BIShowBandage)
 		{
 			this.PlaceBandage();
+			return;
 		}
-		else if (id == AnimEventID.BIBandageEnd)
+		if (id == AnimEventID.BIBandageEnd)
 		{
 			this.EndBandage();
+			return;
 		}
-		else if (id == AnimEventID.BIHack)
+		if (id == AnimEventID.BIHack)
 		{
 			this.ApplyHack();
 		}
@@ -2092,48 +2031,46 @@ public class BodyInspectionController : PlayerController
 		case InjuryType.SmallWoundAbrassion:
 			for (int i = 0; i < this.m_ActiveSlot.m_AbrassionMaggotsVertices.Length; i++)
 			{
-				Item item = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity);
-				GameObject gameObject = item.gameObject;
+				GameObject gameObject = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity).gameObject;
 				gameObject.name = "Maggot in wound";
 				this.m_ActiveSlot.m_Maggots.Add(gameObject);
 			}
 			this.m_ActiveSlot.m_Injury.StartHealing();
-			break;
+			return;
 		case InjuryType.SmallWoundScratch:
 			for (int j = 0; j < this.m_ActiveSlot.m_ScratchMaggotsVertices.Length; j++)
 			{
-				Item item2 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity);
-				GameObject gameObject2 = item2.gameObject;
+				GameObject gameObject2 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity).gameObject;
 				gameObject2.name = "Maggot in wound";
 				this.m_ActiveSlot.m_Maggots.Add(gameObject2);
 			}
 			this.m_ActiveSlot.m_Injury.StartHealing();
-			break;
+			return;
 		case InjuryType.Laceration:
 			for (int k = 0; k < this.m_ActiveSlot.m_LacerationMaggotsVertices.Length; k++)
 			{
-				Item item3 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity);
-				GameObject gameObject3 = item3.gameObject;
+				GameObject gameObject3 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity).gameObject;
 				gameObject3.name = "Maggot in wound";
 				this.m_ActiveSlot.m_Maggots.Add(gameObject3);
 			}
 			this.m_ActiveSlot.m_Injury.StartHealing();
-			break;
+			return;
 		case InjuryType.LacerationCat:
 			for (int l = 0; l < this.m_ActiveSlot.m_LacerationCatMaggotsVertices.Length; l++)
 			{
-				Item item4 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity);
-				GameObject gameObject4 = item4.gameObject;
+				GameObject gameObject4 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity).gameObject;
 				gameObject4.name = "Maggot in wound";
 				this.m_ActiveSlot.m_Maggots.Add(gameObject4);
 			}
 			this.m_ActiveSlot.m_Injury.StartHealing();
+			return;
+		case InjuryType.Rash:
+		case InjuryType.Worm:
 			break;
 		case InjuryType.WormHole:
 			for (int m = 0; m < this.m_ActiveSlot.m_WormHoleMaggotsVertices.Length; m++)
 			{
-				Item item5 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity);
-				GameObject gameObject5 = item5.gameObject;
+				GameObject gameObject5 = ItemsManager.Get().CreateItem(ItemID.Maggot, false, Vector3.zero, Quaternion.identity).gameObject;
 				gameObject5.name = "Maggot in wound";
 				this.m_ActiveSlot.m_Maggots.Add(gameObject5);
 			}
@@ -2142,6 +2079,8 @@ public class BodyInspectionController : PlayerController
 				this.m_ActiveSlot.m_Injury.StartHealing();
 			}
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -2152,31 +2091,28 @@ public class BodyInspectionController : PlayerController
 			this.m_ActiveSlot.m_Ants = new List<GameObject>();
 		}
 		InjuryType type = this.m_ActiveSlot.m_Injury.m_Type;
-		if (type != InjuryType.Laceration)
+		if (type == InjuryType.Laceration)
 		{
-			if (type == InjuryType.LacerationCat)
+			for (int i = 0; i < this.m_ActiveSlot.m_LacerationAntsVertices.Length; i++)
 			{
-				for (int i = 0; i < this.m_ActiveSlot.m_LacerationCatAntsVertices.Length; i++)
-				{
-					Item item = ItemsManager.Get().CreateItem(ItemID.Ant_Head, false, Vector3.zero, Quaternion.identity);
-					GameObject gameObject = item.gameObject;
-					gameObject.name = "Ant in wound";
-					this.m_ActiveSlot.m_Ants.Add(gameObject);
-				}
-				this.m_ActiveSlot.m_Injury.StartHealing();
-			}
-		}
-		else
-		{
-			for (int j = 0; j < this.m_ActiveSlot.m_LacerationAntsVertices.Length; j++)
-			{
-				Item item2 = ItemsManager.Get().CreateItem(ItemID.Ant_Head, false, Vector3.zero, Quaternion.identity);
-				GameObject gameObject2 = item2.gameObject;
-				gameObject2.name = "Ant in wound";
-				this.m_ActiveSlot.m_Ants.Add(gameObject2);
+				GameObject gameObject = ItemsManager.Get().CreateItem(ItemID.Ant_Head, false, Vector3.zero, Quaternion.identity).gameObject;
+				gameObject.name = "Ant in wound";
+				this.m_ActiveSlot.m_Ants.Add(gameObject);
 			}
 			this.m_ActiveSlot.m_Injury.StartHealing();
+			return;
 		}
+		if (type != InjuryType.LacerationCat)
+		{
+			return;
+		}
+		for (int j = 0; j < this.m_ActiveSlot.m_LacerationCatAntsVertices.Length; j++)
+		{
+			GameObject gameObject2 = ItemsManager.Get().CreateItem(ItemID.Ant_Head, false, Vector3.zero, Quaternion.identity).gameObject;
+			gameObject2.name = "Ant in wound";
+			this.m_ActiveSlot.m_Ants.Add(gameObject2);
+		}
+		this.m_ActiveSlot.m_Injury.StartHealing();
 	}
 
 	private void UpdateFOV()
@@ -2186,28 +2122,41 @@ public class BodyInspectionController : PlayerController
 			float fieldOfView = Camera.main.fieldOfView + (this.m_StartFOV - Camera.main.fieldOfView) * Time.deltaTime * 6f;
 			Camera.main.fieldOfView = fieldOfView;
 			this.m_OutlineCamera.fieldOfView = fieldOfView;
+			return;
 		}
-		else
-		{
-			float fieldOfView2 = Camera.main.fieldOfView + (this.m_FOV - Camera.main.fieldOfView) * Time.deltaTime * 6f;
-			Camera.main.fieldOfView = fieldOfView2;
-			this.m_OutlineCamera.fieldOfView = fieldOfView2;
-		}
+		float fieldOfView2 = Camera.main.fieldOfView + (this.m_FOV - Camera.main.fieldOfView) * Time.deltaTime * 6f;
+		Camera.main.fieldOfView = fieldOfView2;
+		this.m_OutlineCamera.fieldOfView = fieldOfView2;
+	}
+
+	private bool CanDeleech(BIWoundSlot slot)
+	{
+		return !PlayerArmorModule.Get().IsArmorActive(EnumTools.ConvertInjuryPlaceToLimb(slot.m_InjuryPlace)) || !HUDBodyInspection.Get().m_ArmorEnabled;
+	}
+
+	public bool IsCursorOverLeech()
+	{
+		return this.m_CursorOverLeech;
 	}
 
 	private void UpdateCursor()
 	{
+		this.m_CursorOverLeech = false;
+		if (Inventory3DManager.Get().m_FocusedItem)
+		{
+			return;
+		}
 		Vector2 zero = Vector2.zero;
 		zero.x = Input.mousePosition.x / (float)Screen.width;
 		zero.y = Input.mousePosition.y / (float)Screen.height;
-		Ray ray = Camera.main.ViewportPointToRay(zero);
-		RaycastHit[] array = Physics.RaycastAll(ray, 5f);
-		for (int i = 0; i < array.Length; i++)
+		int num = Physics.RaycastNonAlloc(Camera.main.ViewportPointToRay(zero), this.m_RaycastResultsTmp, 5f);
+		for (int i = 0; i < num; i++)
 		{
 			for (int j = 0; j < this.m_WoundSlots.Count; j++)
 			{
-				if (array[i].collider.gameObject == this.m_WoundSlots[j].m_Wound && this.m_WoundSlots[j].m_Wound != null && this.m_WoundSlots[j].m_Injury.m_Type == InjuryType.Leech)
+				if (this.m_RaycastResultsTmp[i].collider.gameObject == this.m_WoundSlots[j].m_Wound && this.m_WoundSlots[j].m_Wound != null && this.m_WoundSlots[j].m_Injury.m_Type == InjuryType.Leech && this.CanDeleech(this.m_WoundSlots[j]))
 				{
+					this.m_CursorOverLeech = true;
 					CursorManager.Get().SetCursor(CursorManager.TYPE.Hand_0);
 					return;
 				}
@@ -2218,50 +2167,115 @@ public class BodyInspectionController : PlayerController
 			CursorManager.Get().SetCursor(CursorManager.TYPE.Hand_1);
 			return;
 		}
-		CursorManager.Get().SetCursor((!this.m_Inputs.m_RotateLimb) ? CursorManager.TYPE.Normal : CursorManager.TYPE.InspectionArrow);
+		CursorManager.Get().SetCursor(this.m_Inputs.m_RotateLimb ? CursorManager.TYPE.InspectionArrow : CursorManager.TYPE.Normal);
 	}
 
 	private void UpdateDeleech()
 	{
 		if (this.m_Inputs.m_SelectItem)
 		{
-			if (this.m_CarryingItemDeleech == null)
+			if (!(this.m_CarryingItemDeleech == null))
+			{
+				Camera mainCamera = CameraManager.Get().m_MainCamera;
+				Vector3 vector = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.nearClipPlane));
+				vector = mainCamera.transform.position + (vector - mainCamera.transform.position).normalized * this.m_DistFromScreen;
+				this.m_CarryingItemDeleech.transform.position = vector;
+				this.m_CarryingItemDeleech.GetComponent<Animator>().SetBool("Drink", false);
+				return;
+			}
+			if (!this.m_Inputs.m_SelectItemPrev)
 			{
 				Vector3 zero = Vector3.zero;
 				zero.x = Input.mousePosition.x / (float)Screen.width;
 				zero.y = Input.mousePosition.y / (float)Screen.height;
-				Ray ray = Camera.main.ViewportPointToRay(zero);
-				RaycastHit[] array = Physics.RaycastAll(ray, 5f);
-				for (int i = 0; i < array.Length; i++)
+				Camera mainCamera2 = CameraManager.Get().m_MainCamera;
+				int num = Physics.RaycastNonAlloc(mainCamera2.ViewportPointToRay(zero), this.m_RaycastResultsTmp, 5f);
+				for (int i = 0; i < num; i++)
 				{
 					for (int j = 0; j < this.m_WoundSlots.Count; j++)
 					{
-						if (array[i].collider.gameObject == this.m_WoundSlots[j].m_Wound && this.m_WoundSlots[j].m_Wound != null && this.m_WoundSlots[j].m_Injury.m_Type == InjuryType.Leech)
+						if (this.m_RaycastResultsTmp[i].collider.gameObject == this.m_WoundSlots[j].m_Wound && this.m_WoundSlots[j].m_Wound != null && this.m_WoundSlots[j].m_Wound.activeSelf && this.m_WoundSlots[j].m_Injury.m_Type == InjuryType.Leech && this.CanDeleech(this.m_WoundSlots[j]))
 						{
 							Item componentDeepChild = General.GetComponentDeepChild<Item>(this.m_WoundSlots[j].m_Wound);
 							componentDeepChild.gameObject.transform.parent = null;
 							this.m_WoundSlots[j].m_Injury.StartHealing();
 							this.m_CarryingItemDeleech = componentDeepChild;
-							this.m_DistFromScreen = (componentDeepChild.transform.position - Camera.main.transform.position).magnitude;
+							componentDeepChild.UpdatePhx();
+							this.m_DistFromScreen = (componentDeepChild.transform.position - mainCamera2.transform.position).magnitude;
 							this.m_WoundSlots[j].m_Wound = null;
 							PlayerAudioModule.Get().PlayLeechOutSound();
 							return;
 						}
 					}
 				}
-			}
-			else
-			{
-				Vector3 vector = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane));
-				vector = Camera.main.transform.position + (vector - Camera.main.transform.position).normalized * this.m_DistFromScreen;
-				this.m_CarryingItemDeleech.transform.position = vector;
-				Animator component = this.m_CarryingItemDeleech.GetComponent<Animator>();
-				component.SetBool("Drink", false);
+				return;
 			}
 		}
 		else if (this.m_CarryingItemDeleech != null)
 		{
+			this.m_CarryingItemDeleech.ItemsManagerRegister(true);
+			Item carryingItemDeleech = this.m_CarryingItemDeleech;
 			this.m_CarryingItemDeleech = null;
+			carryingItemDeleech.UpdatePhx();
+		}
+	}
+
+	private void UpdateDeArmor()
+	{
+		if (this.m_Inputs.m_SelectItem)
+		{
+			if (!(this.m_CarryingItemDamagedArmor == null))
+			{
+				Camera mainCamera = CameraManager.Get().m_MainCamera;
+				Vector3 vector = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.nearClipPlane));
+				vector = mainCamera.transform.position + (vector - mainCamera.transform.position).normalized * this.m_DistFromScreen;
+				this.m_CarryingItemDamagedArmor.transform.position = vector;
+				return;
+			}
+			if (!this.m_Inputs.m_SelectItemPrev && HUDBodyInspection.Get().m_ArmorEnabled)
+			{
+				Vector3 zero = Vector3.zero;
+				zero.x = Input.mousePosition.x / (float)Screen.width;
+				zero.y = Input.mousePosition.y / (float)Screen.height;
+				int num = Physics.RaycastNonAlloc(Camera.main.ViewportPointToRay(zero), this.m_RaycastResultsTmp, 5f);
+				for (int i = 0; i < num; i++)
+				{
+					Armor component = this.m_RaycastResultsTmp[i].collider.gameObject.GetComponent<Armor>();
+					if (component != null && component.m_Info.m_ID == ItemID.broken_armor && component.gameObject.activeSelf)
+					{
+						component.gameObject.transform.parent = null;
+						this.m_CarryingItemDamagedArmor = component;
+						this.m_DistFromScreen = (component.transform.position - Camera.main.transform.position).magnitude * 3f;
+						Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(component.gameObject);
+						Rigidbody component2 = component.GetComponent<Rigidbody>();
+						if (component2)
+						{
+							component2.isKinematic = true;
+							component2.useGravity = false;
+						}
+						int num2 = 0;
+						while (i < componentsDeepChild.Length)
+						{
+							componentsDeepChild[num2].enabled = true;
+							i++;
+						}
+						PlayerArmorModule.Get().ArmorCarryStarted(component);
+						return;
+					}
+				}
+				return;
+			}
+		}
+		else if (this.m_CarryingItemDamagedArmor != null)
+		{
+			Rigidbody component3 = this.m_CarryingItemDamagedArmor.GetComponent<Rigidbody>();
+			if (component3)
+			{
+				component3.isKinematic = false;
+				component3.useGravity = true;
+			}
+			this.m_CarryingItemDamagedArmor.ItemsManagerRegister(true);
+			this.m_CarryingItemDamagedArmor = null;
 		}
 	}
 
@@ -2270,6 +2284,7 @@ public class BodyInspectionController : PlayerController
 		slot.m_Injury.StartHealing();
 		UnityEngine.Object.Destroy(slot.m_Wound);
 		UnityEngine.Object.Destroy(item.gameObject);
+		PlayerSanityModule.Get().OnEvent(PlayerSanityModule.SanityEventType.Deworm, 1);
 	}
 
 	public void UpdateMaggots()
@@ -2328,9 +2343,12 @@ public class BodyInspectionController : PlayerController
 							vector3 += array2[j].transforms[k].localToWorldMatrix.MultiplyVector(vector4) * vertexWeight.weight;
 						}
 					}
-					biwoundSlot.m_Maggots[j].transform.position = vector;
-					biwoundSlot.m_Maggots[j].transform.rotation = Quaternion.LookRotation(vector3, vector2);
-					biwoundSlot.m_Maggots[j].transform.Rotate(Vector3.up, array2[j].rotation, Space.Self);
+					if (biwoundSlot.m_Maggots[j] != null)
+					{
+						biwoundSlot.m_Maggots[j].transform.position = vector;
+						biwoundSlot.m_Maggots[j].transform.rotation = Quaternion.LookRotation(vector3, vector2);
+						biwoundSlot.m_Maggots[j].transform.Rotate(Vector3.up, array2[j].rotation, Space.Self);
+					}
 				}
 			}
 		}
@@ -2383,8 +2401,7 @@ public class BodyInspectionController : PlayerController
 					}
 					else
 					{
-						Item item = ItemsManager.Get().CreateItem(ItemID.Ant_Head, false, Vector3.zero, Quaternion.identity);
-						GameObject gameObject = item.gameObject;
+						GameObject gameObject = ItemsManager.Get().CreateItem(ItemID.Ant_Head, false, Vector3.zero, Quaternion.identity).gameObject;
 						gameObject.name = "Ant in wound";
 						biwoundSlot.m_Ants[j] = gameObject;
 						biwoundSlot.m_Ants[j].transform.rotation = Quaternion.LookRotation(vector3, vector2);
@@ -2434,6 +2451,123 @@ public class BodyInspectionController : PlayerController
 	private void PlayBandagingSound()
 	{
 		this.m_AudioSource.PlayOneShot(this.m_ArmBandagingSound[UnityEngine.Random.Range(0, this.m_ArmBandagingSound.Count)]);
+	}
+
+	public void OnArmorAttached(Limb limb)
+	{
+		for (int i = 0; i < this.m_WoundSlots.Count; i++)
+		{
+			BIWoundSlot biwoundSlot = this.m_WoundSlots[i];
+			DebugUtils.Assert(biwoundSlot, true);
+			if (biwoundSlot.m_Injury != null)
+			{
+				if (biwoundSlot.m_Injury.m_Type == InjuryType.Leech)
+				{
+					if (biwoundSlot.m_Wound != null && EnumTools.Equal(biwoundSlot.m_InjuryPlace, limb))
+					{
+						biwoundSlot.m_Wound.SetActive(false);
+						biwoundSlot.m_Wound.GetComponent<Item>().ItemsManagerUnregister();
+					}
+				}
+				else if (biwoundSlot.m_Injury.m_Bandage != null && EnumTools.Equal(biwoundSlot.m_InjuryPlace, limb))
+				{
+					biwoundSlot.m_Injury.m_Bandage.SetActive(false);
+				}
+				if (EnumTools.Equal(biwoundSlot.m_InjuryPlace, limb))
+				{
+					if (biwoundSlot.m_Maggots != null)
+					{
+						for (int j = 0; j < biwoundSlot.m_Maggots.Count; j++)
+						{
+							biwoundSlot.m_Maggots[j].SetActive(false);
+						}
+					}
+					if (biwoundSlot.m_Ants != null)
+					{
+						for (int k = 0; k < biwoundSlot.m_Ants.Count; k++)
+						{
+							biwoundSlot.m_Ants[k].SetActive(false);
+						}
+					}
+					if (biwoundSlot.m_Wound != null)
+					{
+						biwoundSlot.m_Wound.SetActive(false);
+					}
+				}
+			}
+		}
+	}
+
+	public void OnArmorRemoved(Limb limb)
+	{
+		for (int i = 0; i < this.m_WoundSlots.Count; i++)
+		{
+			BIWoundSlot biwoundSlot = this.m_WoundSlots[i];
+			DebugUtils.Assert(biwoundSlot, true);
+			if (biwoundSlot.m_Injury != null)
+			{
+				if (biwoundSlot.m_Injury.m_Type == InjuryType.Leech)
+				{
+					if (biwoundSlot.m_Wound != null && EnumTools.Equal(biwoundSlot.m_InjuryPlace, limb))
+					{
+						biwoundSlot.m_Wound.SetActive(true);
+						biwoundSlot.m_Wound.GetComponent<Item>().ItemsManagerUnregister();
+					}
+				}
+				else if (biwoundSlot.m_Injury.m_Bandage != null && EnumTools.Equal(biwoundSlot.m_InjuryPlace, limb))
+				{
+					biwoundSlot.m_Injury.m_Bandage.SetActive(true);
+				}
+				if (EnumTools.Equal(biwoundSlot.m_InjuryPlace, limb))
+				{
+					if (biwoundSlot.m_Maggots != null)
+					{
+						for (int j = 0; j < biwoundSlot.m_Maggots.Count; j++)
+						{
+							biwoundSlot.m_Maggots[j].SetActive(true);
+						}
+					}
+					if (biwoundSlot.m_Ants != null)
+					{
+						for (int k = 0; k < biwoundSlot.m_Ants.Count; k++)
+						{
+							biwoundSlot.m_Ants[k].SetActive(true);
+						}
+					}
+					if (biwoundSlot.m_Wound != null && !biwoundSlot.m_Wound.GetComponent<Parasite>())
+					{
+						biwoundSlot.m_Wound.SetActive(true);
+					}
+				}
+			}
+		}
+	}
+
+	public void OnArmorMeshesEnabled()
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			if (PlayerArmorModule.Get().IsArmorActive((Limb)i))
+			{
+				this.OnArmorAttached((Limb)i);
+			}
+		}
+	}
+
+	public void OnArmorMeshesDisabled()
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			if (PlayerArmorModule.Get().IsArmorActive((Limb)i))
+			{
+				this.OnArmorRemoved((Limb)i);
+			}
+		}
+	}
+
+	public bool IsBandagingInProgress()
+	{
+		return this.IsActive() && (this.m_State == BIState.BandageLeftHandBegin || this.m_State == BIState.BandageLeftHand || this.m_State == BIState.BandageRightHand || this.m_State == BIState.BandageRightHandBegin || this.m_State == BIState.BandageRightLegBegin || this.m_State == BIState.BandageRightLeg || this.m_State == BIState.BandageLeftLegBegin || this.m_State == BIState.BandageLeftLeg || this.m_State == BIState.Leaving);
 	}
 
 	private int m_BBodyInspection = Animator.StringToHash("BodyInspection");
@@ -2501,11 +2635,17 @@ public class BodyInspectionController : PlayerController
 
 	private List<AudioClip> m_ArmBandagingSound = new List<AudioClip>();
 
+	private bool m_CursorOverLeech;
+
 	private bool m_ControllerEnabled;
+
+	private RaycastHit[] m_RaycastResultsTmp = new RaycastHit[20];
 
 	public Item m_CarryingItemDeleech;
 
 	private float m_DistFromScreen = 0.3f;
+
+	public Item m_CarryingItemDamagedArmor;
 
 	private bool m_HideAndShowLimb;
 

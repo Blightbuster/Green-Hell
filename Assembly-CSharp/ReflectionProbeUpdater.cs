@@ -7,6 +7,7 @@ public class ReflectionProbeUpdater : MonoBehaviour, ICaveSensorObservable
 	private void OnEnable()
 	{
 		CaveSensor.s_ICaveSensorObservables.Add(this);
+		this.StartCoroutineForProbe();
 	}
 
 	private void OnDisable()
@@ -14,8 +15,9 @@ public class ReflectionProbeUpdater : MonoBehaviour, ICaveSensorObservable
 		CaveSensor.s_ICaveSensorObservables.Remove(this);
 	}
 
-	private void Start()
+	private void StartCoroutineForProbe()
 	{
+		base.StopAllCoroutines();
 		this.m_ReflectionProbe = base.gameObject.GetComponent<ReflectionProbe>();
 		DebugUtils.Assert(this.m_ReflectionProbe, true);
 		if (this.m_ReflectionProbe != null)
@@ -24,6 +26,11 @@ public class ReflectionProbeUpdater : MonoBehaviour, ICaveSensorObservable
 			base.StartCoroutine(this.UpdateReflectionProbe(this.m_UpdateInterval));
 		}
 		this.m_DefaultIntensity = this.m_ReflectionProbe.intensity;
+	}
+
+	private void Start()
+	{
+		this.StartCoroutineForProbe();
 	}
 
 	public IEnumerator UpdateReflectionProbe(float delay)
@@ -39,6 +46,7 @@ public class ReflectionProbeUpdater : MonoBehaviour, ICaveSensorObservable
 		}
 		this.m_ReflectionProbe.RenderProbe();
 		base.StartCoroutine(this.UpdateReflectionProbe(this.m_UpdateInterval));
+		yield break;
 		yield break;
 	}
 

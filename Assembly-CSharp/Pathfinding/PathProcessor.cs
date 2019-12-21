@@ -8,6 +8,28 @@ namespace Pathfinding
 {
 	public class PathProcessor
 	{
+		public event Action<Path> OnPathPreSearch;
+
+		public event Action<Path> OnPathPostSearch;
+
+		public event Action OnQueueUnblocked;
+
+		public int NumThreads
+		{
+			get
+			{
+				return this.threadInfos.Length;
+			}
+		}
+
+		public bool IsUsingMultithreading
+		{
+			get
+			{
+				return this.threads != null;
+			}
+		}
+
 		internal PathProcessor(AstarPath astar, PathReturnQueue returnQueue, int processors, bool multithreaded)
 		{
 			this.astar = astar;
@@ -41,33 +63,9 @@ namespace Pathfinding
 					this.threads[j] = thread;
 					thread.Start();
 				}
+				return;
 			}
-			else
-			{
-				this.threadCoroutine = this.CalculatePaths(this.threadInfos[0]);
-			}
-		}
-
-		public event Action<Path> OnPathPreSearch;
-
-		public event Action<Path> OnPathPostSearch;
-
-		public event Action OnQueueUnblocked;
-
-		public int NumThreads
-		{
-			get
-			{
-				return this.threadInfos.Length;
-			}
-		}
-
-		public bool IsUsingMultithreading
-		{
-			get
-			{
-				return this.threads != null;
-			}
+			this.threadCoroutine = this.CalculatePaths(this.threadInfos[0]);
 		}
 
 		private int Lock(bool block)
@@ -173,7 +171,13 @@ namespace Pathfinding
 
 		public int GetNewNodeIndex()
 		{
-			return (this.nodeIndexPool.Count <= 0) ? this.nextNodeIndex++ : this.nodeIndexPool.Pop();
+			if (this.nodeIndexPool.Count <= 0)
+			{
+				int num = this.nextNodeIndex;
+				this.nextNodeIndex = num + 1;
+				return num;
+			}
+			return this.nodeIndexPool.Pop();
 		}
 
 		public void InitializeNode(GraphNode node)
@@ -320,13 +324,14 @@ namespace Pathfinding
 				maxTicks = (long)(this.astar.maxFrameTime * 10000f);
 				ip.PrepareBase(runData);
 				ip.AdvanceState(PathState.Processing);
-				Action<Path> tmpOnPathPreSearch = this.OnPathPreSearch;
-				if (tmpOnPathPreSearch != null)
+				Action<Path> onPathPreSearch = this.OnPathPreSearch;
+				if (onPathPreSearch != null)
 				{
-					tmpOnPathPreSearch(p);
+					onPathPreSearch(p);
 				}
-				numPaths++;
-				long startTicks = DateTime.UtcNow.Ticks;
+				int num = numPaths;
+				numPaths = num + 1;
+				long ticks = DateTime.UtcNow.Ticks;
 				long totalTicks = 0L;
 				ip.Prepare();
 				if (!p.IsDone())
@@ -341,28 +346,28 @@ namespace Pathfinding
 						{
 							break;
 						}
-						totalTicks += DateTime.UtcNow.Ticks - startTicks;
+						totalTicks += DateTime.UtcNow.Ticks - ticks;
 						yield return null;
-						startTicks = DateTime.UtcNow.Ticks;
+						ticks = DateTime.UtcNow.Ticks;
 						if (this.queue.IsTerminating)
 						{
 							p.Error();
 						}
 						targetTick = DateTime.UtcNow.Ticks + maxTicks;
 					}
-					totalTicks += DateTime.UtcNow.Ticks - startTicks;
+					totalTicks += DateTime.UtcNow.Ticks - ticks;
 					p.duration = (float)totalTicks * 0.0001f;
 				}
 				ip.Cleanup();
-				OnPathDelegate tmpImmediateCallback = p.immediateCallback;
-				if (tmpImmediateCallback != null)
+				OnPathDelegate immediateCallback = p.immediateCallback;
+				if (immediateCallback != null)
 				{
-					tmpImmediateCallback(p);
+					immediateCallback(p);
 				}
-				Action<Path> tmpOnPathPostSearch = this.OnPathPostSearch;
-				if (tmpOnPathPostSearch != null)
+				Action<Path> onPathPostSearch = this.OnPathPostSearch;
+				if (onPathPostSearch != null)
 				{
-					tmpOnPathPostSearch(p);
+					onPathPostSearch(p);
 				}
 				this.returnQueue.Enqueue(p);
 				ip.AdvanceState(PathState.ReturnQueue);
@@ -372,6 +377,8 @@ namespace Pathfinding
 					targetTick = DateTime.UtcNow.Ticks + maxTicks;
 					numPaths = 0;
 				}
+				p = null;
+				ip = null;
 			}
 			yield break;
 		}

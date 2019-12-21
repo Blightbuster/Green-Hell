@@ -192,8 +192,9 @@ namespace MirzaBeig.ParticleSystems.Demos
 			{
 				this.SetLevel((this.currentLevel + 1) % (DemoManager.Level)Enum.GetNames(typeof(DemoManager.Level)).Length);
 			}
-			else if (Input.GetKey(KeyCode.R))
+			else
 			{
+				Input.GetKey(KeyCode.R);
 			}
 			if (this.particleMode == DemoManager.ParticleMode.oneshot)
 			{
@@ -223,8 +224,9 @@ namespace MirzaBeig.ParticleSystems.Demos
 			{
 				Text text = this.particleCountText;
 				text.text += this.loopingParticleSystems.GetParticleCount().ToString();
+				return;
 			}
-			else if (this.particleMode == DemoManager.ParticleMode.oneshot)
+			if (this.particleMode == DemoManager.ParticleMode.oneshot)
 			{
 				Text text2 = this.particleCountText;
 				text2.text += this.oneshotParticleSystems.GetParticleCount().ToString();
@@ -242,8 +244,9 @@ namespace MirzaBeig.ParticleSystems.Demos
 			if (this.particleMode == DemoManager.ParticleMode.looping)
 			{
 				this.currentParticleSystemText.text = this.loopingParticleSystems.GetCurrentPrefabName(true);
+				return;
 			}
-			else if (this.particleMode == DemoManager.ParticleMode.oneshot)
+			if (this.particleMode == DemoManager.ParticleMode.oneshot)
 			{
 				this.currentParticleSystemText.text = this.oneshotParticleSystems.GetCurrentPrefabName(true);
 			}

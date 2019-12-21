@@ -13,7 +13,7 @@ namespace MirzaBeig.ParticleSystems
 
 		private void Update()
 		{
-			this.time = (this.unscaledTime ? Time.unscaledTime : Time.time);
+			this.time = ((!this.unscaledTime) ? Time.time : Time.unscaledTime);
 			base.transform.localPosition = this.positionNoise.GetXYZ(this.time);
 			base.transform.localEulerAngles = this.rotationNoise.GetXYZ(this.time);
 		}

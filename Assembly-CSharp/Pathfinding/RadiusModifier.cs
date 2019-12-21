@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_radius_modifier.php")]
 	[AddComponentMenu("Pathfinding/Modifiers/Radius Offset")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_radius_modifier.php")]
 	public class RadiusModifier : MonoModifier
 	{
 		public override int Order
@@ -49,14 +49,14 @@ namespace Pathfinding
 		{
 			bool flag = VectorMath.RightOrColinearXZ(p1, p2, p3);
 			bool flag2 = VectorMath.RightOrColinearXZ(p2, p3, p4);
-			return (RadiusModifier.TangentType)(1 << (((!flag) ? 0 : 2) + ((!flag2) ? 0 : 1) & 31));
+			return (RadiusModifier.TangentType)(1 << ((flag ? 2 : 0) + (flag2 ? 1 : 0) & 31));
 		}
 
 		private RadiusModifier.TangentType CalculateTangentTypeSimple(Vector3 p1, Vector3 p2, Vector3 p3)
 		{
 			bool flag = VectorMath.RightOrColinearXZ(p1, p2, p3);
 			bool flag2 = flag;
-			return (RadiusModifier.TangentType)(1 << (((!flag2) ? 0 : 2) + ((!flag) ? 0 : 1) & 31));
+			return (RadiusModifier.TangentType)(1 << ((flag2 ? 2 : 0) + (flag ? 1 : 0) & 31));
 		}
 
 		public override void Apply(Path p)

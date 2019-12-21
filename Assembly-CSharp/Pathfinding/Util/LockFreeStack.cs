@@ -7,13 +7,11 @@ namespace Pathfinding.Util
 	{
 		public void Push(Path p)
 		{
-			Path path;
 			do
 			{
 				p.next = this.head;
-				path = Interlocked.CompareExchange<Path>(ref this.head, p, p.next);
 			}
-			while (path != p.next);
+			while (Interlocked.CompareExchange<Path>(ref this.head, p, p.next) != p.next);
 		}
 
 		public Path PopAll()

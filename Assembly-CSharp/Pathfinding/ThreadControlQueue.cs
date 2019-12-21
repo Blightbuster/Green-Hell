@@ -228,19 +228,16 @@ namespace Pathfinding
 						{
 							throw new ThreadControlQueue.QueueTerminationException();
 						}
-						if (this.blockedReceivers != this.numReceivers)
+						if (this.blockedReceivers != this.numReceivers && this.blockedReceivers > this.numReceivers)
 						{
-							if (this.blockedReceivers > this.numReceivers)
+							throw new InvalidOperationException(string.Concat(new object[]
 							{
-								throw new InvalidOperationException(string.Concat(new object[]
-								{
-									"More receivers are blocked than specified in constructor (",
-									this.blockedReceivers,
-									" > ",
-									this.numReceivers,
-									")"
-								}));
-							}
+								"More receivers are blocked than specified in constructor (",
+								this.blockedReceivers,
+								" > ",
+								this.numReceivers,
+								")"
+							}));
 						}
 					}
 					result = null;

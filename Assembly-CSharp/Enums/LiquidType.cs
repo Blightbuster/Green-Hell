@@ -56,6 +56,20 @@ namespace Enums
 		Caiman_Lizard_Soup,
 		Armadillo_Three_Banded_Soup,
 		Guanabana_Fruit_Infusion,
-		Albahaca_Leaf_Infusion
+		Albahaca_Leaf_Infusion,
+		Albahaca_Flower_Infusion,
+		Crab_Soup,
+		Snail_Soup,
+		DiscusFish_Soup,
+		Angelfish_Soup,
+		Caiman_Soup,
+		geoglossum_Soup,
+		geoglossum_Drayed_Soup,
+		marasmius_Soup,
+		marasmius_Drayed_Soup,
+		Tea,
+		Coffee,
+		Banisteriopsis_Infusion,
+		Psychotria_Infusion
 	}
 }

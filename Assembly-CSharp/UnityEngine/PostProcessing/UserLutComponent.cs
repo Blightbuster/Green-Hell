@@ -24,8 +24,7 @@ namespace UnityEngine.PostProcessing
 		public void OnGUI()
 		{
 			UserLutModel.Settings settings = base.model.settings;
-			Rect position = new Rect(this.context.viewport.x * (float)Screen.width + 8f, 8f, (float)settings.lut.width, (float)settings.lut.height);
-			GUI.DrawTexture(position, settings.lut);
+			GUI.DrawTexture(new Rect(this.context.viewport.x * (float)Screen.width + 8f, 8f, (float)settings.lut.width, (float)settings.lut.height), settings.lut);
 		}
 
 		private static class Uniforms

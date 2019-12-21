@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace Medvedya.VertexPainter
 {
-	[DisallowMultipleComponent]
 	[ExecuteInEditMode]
-	[AddComponentMenu("Vertex painter/Vertex painter instance")]
-	[RequireComponent(typeof(MeshRenderer))]
 	[RequireComponent(typeof(MeshFilter))]
+	[RequireComponent(typeof(MeshRenderer))]
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Vertex painter/Vertex painter instance")]
 	public class VertexPainterInstance : MonoBehaviour, IPainting
 	{
 		public MeshFilter meshFilter
@@ -35,8 +35,7 @@ namespace Medvedya.VertexPainter
 					return;
 				}
 				this._vertexPainter = value;
-				MeshRenderer component = base.GetComponent<MeshRenderer>();
-				component.sharedMaterials = this.vertexPainter.GetComponent<MeshRenderer>().sharedMaterials;
+				base.GetComponent<MeshRenderer>().sharedMaterials = this.vertexPainter.GetComponent<MeshRenderer>().sharedMaterials;
 				this.Init();
 			}
 		}

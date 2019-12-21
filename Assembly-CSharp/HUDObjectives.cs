@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CJTools;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,7 +27,7 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 
 	protected override bool ShouldShow()
 	{
-		return this.m_ObjectivesElements.Count > 0 || MapController.Get().IsActive();
+		return !ScenarioManager.Get().IsDreamOrPreDream() && (this.m_ObjectivesElements.Count > 0 || this.m_Queue.Count > 0 || MapController.Get().IsActive());
 	}
 
 	public void OnObjectiveActivated(Objective obj)
@@ -67,6 +68,11 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 
 	public HUDObjective AddHUDObjective(Objective obj, ref List<HUDObjective> list)
 	{
+		if (this.m_ObjectivesElements.Count > 0 && list == this.m_ObjectivesElements)
+		{
+			this.m_Queue.Add(obj);
+			return null;
+		}
 		GameObject gameObject = base.AddElement("HUDObjectiveElement");
 		if (gameObject != null)
 		{
@@ -75,8 +81,11 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 			hudobjective.m_Objective = obj;
 			hudobjective.m_HudElem = gameObject;
 			hudobjective.m_TextComponent = gameObject.GetComponentInChildren<Text>();
-			hudobjective.m_TextComponent.text = GreenHellGame.Instance.GetLocalization().Get(hudobjective.m_Objective.m_TextID);
-			hudobjective.m_BG = gameObject.GetComponentInChildren<RawImage>();
+			hudobjective.m_TextComponent.text = GreenHellGame.Instance.GetLocalization().Get(hudobjective.m_Objective.m_TextID, true);
+			hudobjective.m_TextComponent.transform.position = base.transform.position;
+			hudobjective.m_BG = gameObject.transform.FindDeepChild("BG").GetComponent<RawImage>();
+			hudobjective.m_BG.transform.position = base.transform.position;
+			hudobjective.m_Icon = gameObject.transform.FindDeepChild("Icon").GetComponent<RawImage>();
 			this.SetupTargetPosition(hudobjective);
 			this.PlaceOutsideOfScreen(hudobjective);
 			if (list != null)
@@ -113,7 +122,11 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 	protected override void Update()
 	{
 		base.Update();
-		this.UpdateState();
+		if (this.m_Queue.Count > 0 && this.m_ObjectivesElements.Count == 0)
+		{
+			this.AddHUDObjective(this.m_Queue[0], ref this.m_ObjectivesElements);
+			this.m_Queue.RemoveAt(0);
+		}
 		this.UpdateElements();
 	}
 
@@ -122,11 +135,9 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 		if (MapController.Get().IsActive())
 		{
 			this.m_State = HUDObjectiveState.Map;
+			return;
 		}
-		else
-		{
-			this.m_State = HUDObjectiveState.Normal;
-		}
+		this.m_State = HUDObjectiveState.Normal;
 	}
 
 	private void UpdateElements()
@@ -144,28 +155,38 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 			{
 				HUDObjective hudobjective = this.m_ObjectivesElements[i];
 				this.SetupTargetPosition(hudobjective);
-				hudobjective.m_HudElem.transform.localPosition.Set(hudobjective.m_HudElem.transform.localPosition.x, num3 - num, hudobjective.m_HudElem.transform.localPosition.z);
+				Vector3 zero = Vector3.zero;
+				zero.Set(hudobjective.m_HudElem.transform.localPosition.x, num3 - num, hudobjective.m_HudElem.transform.localPosition.z);
+				hudobjective.m_HudElem.transform.localPosition = zero;
 				Vector3 position = hudobjective.m_BG.transform.position;
 				position.x += (hudobjective.m_BGTargetPosition.x - hudobjective.m_BG.transform.position.x) * Time.deltaTime * 6f;
 				hudobjective.m_BG.transform.position = position;
 				position = hudobjective.m_TextComponent.transform.position;
 				position.x += (hudobjective.m_TextTargetPosition.x - hudobjective.m_TextComponent.transform.position.x) * Time.deltaTime * 6f;
 				hudobjective.m_TextComponent.transform.position = position;
-				float y = hudobjective.m_TextComponent.transform.localPosition.y;
+				Vector3 localPosition = hudobjective.m_TextComponent.transform.localPosition;
 				num += hudobjective.m_BG.rectTransform.sizeDelta.y + num2;
-				float num4 = (this.m_ObjectiveDuration != 0f) ? Mathf.Clamp01((this.m_ObjectiveDuration - (Time.time - hudobjective.m_StartTime)) / 0.5f) : 1f;
+				float num4 = (this.m_ObjectiveDuration == 0f) ? 1f : Mathf.Clamp01((this.m_ObjectiveDuration - (Time.time - hudobjective.m_StartTime)) / 0.5f);
 				Color color = hudobjective.m_TextComponent.color;
-				color.a = ((!ChallengesManager.Get().IsChallengeActive()) ? num4 : 1f);
+				color.a = (ChallengesManager.Get().IsChallengeActive() ? 1f : num4);
 				hudobjective.m_TextComponent.color = color;
 				color = hudobjective.m_BG.color;
-				color.a = ((!ChallengesManager.Get().IsChallengeActive()) ? num4 : 1f);
+				color.a = (ChallengesManager.Get().IsChallengeActive() ? 1f : num4);
 				hudobjective.m_BG.color = color;
+				Vector3 localScale = ((RectTransform)HUDManager.Get().m_CanvasGameObject.transform).localScale;
+				color = Color.white;
+				color.a = Mathf.Abs(Mathf.Sin((Time.time - hudobjective.m_StartTime) * 5f));
+				if (Time.time - hudobjective.m_StartTime > 5f)
+				{
+					color.a = 1f;
+				}
+				hudobjective.m_Icon.color = color;
 			}
 			int j = 0;
 			while (j < this.m_ObjectivesElements.Count)
 			{
 				HUDObjective hudobjective2 = this.m_ObjectivesElements[j];
-				bool flag = (this.m_ObjectiveDuration <= 0f) ? (hudobjective2.m_Objective.GetState() == ObjectiveState.Completed) : (Time.time > hudobjective2.m_StartTime + this.m_ObjectiveDuration);
+				bool flag = (this.m_ObjectiveDuration > 0f) ? (Time.time > hudobjective2.m_StartTime + this.m_ObjectiveDuration) : (hudobjective2.m_Objective.GetState() == ObjectiveState.Completed);
 				if (GreenHellGame.ROADSHOW_DEMO)
 				{
 					flag = (hudobjective2.m_Objective.GetState() == ObjectiveState.Completed);
@@ -191,6 +212,7 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 			if (this.m_MapHUDObjective != null)
 			{
 				this.m_MapHUDObjective.m_HudElem.SetActive(false);
+				return;
 			}
 		}
 		else if (this.m_State == HUDObjectiveState.Map)
@@ -272,6 +294,8 @@ public class HUDObjectives : HUDBase, IObjectivesManagerObserver, ISaveLoad
 	{
 		this.m_ObjectiveDuration = SaveGame.LoadFVal("HUDObjectiveDur");
 	}
+
+	private List<Objective> m_Queue = new List<Objective>();
 
 	private List<HUDObjective> m_ObjectivesElements = new List<HUDObjective>();
 

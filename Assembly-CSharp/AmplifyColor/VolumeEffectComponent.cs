@@ -15,22 +15,6 @@ namespace AmplifyColor
 			this.fields = new List<VolumeEffectField>();
 		}
 
-		public VolumeEffectComponent(Component c, VolumeEffectComponentFlags compFlags) : this(compFlags.componentName)
-		{
-			foreach (VolumeEffectFieldFlags volumeEffectFieldFlags in compFlags.componentFields)
-			{
-				if (volumeEffectFieldFlags.blendFlag)
-				{
-					FieldInfo field = c.GetType().GetField(volumeEffectFieldFlags.fieldName);
-					VolumeEffectField volumeEffectField = (!VolumeEffectField.IsValidType(field.FieldType.FullName)) ? null : new VolumeEffectField(field, c);
-					if (volumeEffectField != null)
-					{
-						this.fields.Add(volumeEffectField);
-					}
-				}
-			}
-		}
-
 		public VolumeEffectField AddField(FieldInfo pi, Component c)
 		{
 			return this.AddField(pi, c, -1);
@@ -38,7 +22,7 @@ namespace AmplifyColor
 
 		public VolumeEffectField AddField(FieldInfo pi, Component c, int position)
 		{
-			VolumeEffectField volumeEffectField = (!VolumeEffectField.IsValidType(pi.FieldType.FullName)) ? null : new VolumeEffectField(pi, c);
+			VolumeEffectField volumeEffectField = VolumeEffectField.IsValidType(pi.FieldType.FullName) ? new VolumeEffectField(pi, c) : null;
 			if (volumeEffectField != null)
 			{
 				if (position < 0 || position >= this.fields.Count)
@@ -58,6 +42,22 @@ namespace AmplifyColor
 			this.fields.Remove(field);
 		}
 
+		public VolumeEffectComponent(Component c, VolumeEffectComponentFlags compFlags) : this(compFlags.componentName)
+		{
+			foreach (VolumeEffectFieldFlags volumeEffectFieldFlags in compFlags.componentFields)
+			{
+				if (volumeEffectFieldFlags.blendFlag)
+				{
+					FieldInfo field = c.GetType().GetField(volumeEffectFieldFlags.fieldName);
+					VolumeEffectField volumeEffectField = VolumeEffectField.IsValidType(field.FieldType.FullName) ? new VolumeEffectField(field, c) : null;
+					if (volumeEffectField != null)
+					{
+						this.fields.Add(volumeEffectField);
+					}
+				}
+			}
+		}
+
 		public void UpdateComponent(Component c, VolumeEffectComponentFlags compFlags)
 		{
 			using (List<VolumeEffectFieldFlags>.Enumerator enumerator = compFlags.componentFields.GetEnumerator())
@@ -65,16 +65,13 @@ namespace AmplifyColor
 				while (enumerator.MoveNext())
 				{
 					VolumeEffectFieldFlags fieldFlags = enumerator.Current;
-					if (fieldFlags.blendFlag)
+					if (fieldFlags.blendFlag && !this.fields.Exists((VolumeEffectField s) => s.fieldName == fieldFlags.fieldName))
 					{
-						if (!this.fields.Exists((VolumeEffectField s) => s.fieldName == fieldFlags.fieldName))
+						FieldInfo field = c.GetType().GetField(fieldFlags.fieldName);
+						VolumeEffectField volumeEffectField = VolumeEffectField.IsValidType(field.FieldType.FullName) ? new VolumeEffectField(field, c) : null;
+						if (volumeEffectField != null)
 						{
-							FieldInfo field = c.GetType().GetField(fieldFlags.fieldName);
-							VolumeEffectField volumeEffectField = (!VolumeEffectField.IsValidType(field.FieldType.FullName)) ? null : new VolumeEffectField(field, c);
-							if (volumeEffectField != null)
-							{
-								this.fields.Add(volumeEffectField);
-							}
+							this.fields.Add(volumeEffectField);
 						}
 					}
 				}
@@ -99,8 +96,7 @@ namespace AmplifyColor
 			{
 				return new FieldInfo[0];
 			}
-			FieldInfo[] source = c.GetType().GetFields();
-			return (from f in source
+			return (from f in c.GetType().GetFields()
 			where VolumeEffectField.IsValidType(f.FieldType.FullName)
 			select f).ToArray<FieldInfo>();
 		}

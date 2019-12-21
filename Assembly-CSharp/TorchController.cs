@@ -13,7 +13,7 @@ public class TorchController : WeaponMeleeController
 	{
 		base.Awake();
 		TorchController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Torch;
+		base.m_ControllerType = PlayerControllerType.Torch;
 	}
 
 	protected override void OnEnable()
@@ -51,12 +51,10 @@ public class TorchController : WeaponMeleeController
 			if (this.m_Torch.m_Burning)
 			{
 				this.m_Torch.Extinguish();
+				return;
 			}
-			else
-			{
-				this.m_Torch.m_Fuel = 1f;
-				this.m_Torch.StartBurning();
-			}
+			this.m_Torch.m_Fuel = 1f;
+			this.m_Torch.StartBurning();
 		}
 	}
 
@@ -64,13 +62,13 @@ public class TorchController : WeaponMeleeController
 	{
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
 		if (Inventory3DManager.Get().gameObject.activeSelf)
 		{
 			return;
 		}
-		base.OnInputAction(action);
+		base.OnInputAction(action_data);
 	}
 
 	private void SetState(TorchController.TorchState state)
@@ -90,22 +88,24 @@ public class TorchController : WeaponMeleeController
 		{
 		case TorchController.TorchState.None:
 			this.m_Animator.SetBool(this.m_TorchAimHash, false);
-			break;
+			return;
 		case TorchController.TorchState.Swing:
 			this.m_Torch.OnStartSwing();
-			break;
+			return;
 		case TorchController.TorchState.FinishSwing:
 			this.m_Torch.OnStopSwing();
 			this.m_Player.DecreaseStamina(StaminaDecreaseReason.Swing);
-			break;
+			return;
 		case TorchController.TorchState.Aim:
 			this.m_Animator.SetBool(this.m_TorchAimHash, true);
-			this.m_Player.StartAim(Player.AimType.Item);
-			break;
+			this.m_Player.StartAim(Player.AimType.Item, 18f);
+			return;
 		case TorchController.TorchState.Throw:
 			this.m_Animator.SetTrigger(this.m_TorchThrowHash);
 			this.m_Animator.SetBool(this.m_TorchAimHash, false);
-			break;
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -124,38 +124,37 @@ public class TorchController : WeaponMeleeController
 		if (id == AnimEventID.TorchIgnite)
 		{
 			this.OnIgnite();
+			return;
 		}
-		else if (id == AnimEventID.TorchIgniteEnd)
+		if (id == AnimEventID.TorchIgniteEnd)
 		{
-			this.m_Firecamp = null;
+			this.m_FireObject = null;
 			this.m_Animator.ResetTrigger(this.m_TorchIgniteHash);
 		}
 	}
 
-	public void OnFirecampIgnite(Firecamp firecamp)
+	public void IgniteFireObject(IFireObject fire_object)
 	{
-		if (this.m_Firecamp)
-		{
-			return;
-		}
-		this.m_Firecamp = firecamp;
+		this.m_FireObject = fire_object;
 		this.m_Animator.SetBool(this.m_TorchHash, true);
 		this.m_Animator.SetTrigger(this.m_TorchIgniteHash);
 	}
 
 	private void OnIgnite()
 	{
-		if (this.m_Firecamp)
+		if (this.m_FireObject != null)
 		{
-			if (this.m_Firecamp.m_Burning != this.m_Torch.m_Burning)
+			if (this.m_FireObject.IsBurning() != this.m_Torch.m_Burning)
 			{
 				if (this.m_Torch.m_Burning)
 				{
-					this.m_Firecamp.StartBurning();
+					this.m_FireObject.Ignite();
+					return;
 				}
-				else if (this.m_Firecamp.m_Burning)
+				if (this.m_FireObject.IsBurning())
 				{
 					this.m_Torch.StartBurning();
+					return;
 				}
 			}
 		}
@@ -171,6 +170,11 @@ public class TorchController : WeaponMeleeController
 		this.m_Animator.SetTrigger(this.m_TorchIgniteHash);
 	}
 
+	public override bool IsAttack()
+	{
+		return this.m_Animator.GetCurrentAnimatorStateInfo(1).shortNameHash == this.m_TorchSwing;
+	}
+
 	private int m_TorchHash = Animator.StringToHash("Torch");
 
 	private int m_TorchIgniteHash = Animator.StringToHash("TorchIgnite");
@@ -181,11 +185,13 @@ public class TorchController : WeaponMeleeController
 
 	private int m_TorchThrowHash = Animator.StringToHash("TorchThrow");
 
+	private int m_TorchSwing = Animator.StringToHash("ObjectSwing");
+
 	private TorchController.TorchState m_TorchState;
 
 	private Torch m_Torch;
 
-	private Firecamp m_Firecamp;
+	private IFireObject m_FireObject;
 
 	private Dynamite m_Dynamite;
 

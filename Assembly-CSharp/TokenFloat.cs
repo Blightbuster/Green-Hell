@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 public class TokenFloat : Token
 {
@@ -6,36 +7,28 @@ public class TokenFloat : Token
 	{
 	}
 
-	public override bool Check()
+	public override bool TryToGet()
 	{
 		if (!base.Check())
 		{
 			return false;
 		}
 		int num = this.m_Parser.Position;
-		bool result = false;
-		while (ScriptParser.DIGITS.Contains(this.m_Parser.GetText()[num].ToString()) || this.m_Parser.GetText()[num] == ScriptParser.PERIOD || this.m_Parser.GetText()[num] == ScriptParser.MINUS)
+		bool flag = false;
+		while (ScriptParser.DIGITS.Contains(this.m_Parser.GetText()[num]) || this.m_Parser.GetText()[num] == ScriptParser.PERIOD || this.m_Parser.GetText()[num] == ScriptParser.MINUS)
 		{
 			if (this.m_Parser.GetText()[num] == ScriptParser.PERIOD)
 			{
-				result = true;
+				flag = true;
 			}
 			num++;
 		}
-		return result;
-	}
-
-	public override bool TryToGet()
-	{
-		if (!this.Check())
+		if (flag)
 		{
-			return false;
+			this.m_Value = this.m_Parser.GetText().Substring(this.m_Parser.Position, num - this.m_Parser.Position);
+			this.m_Parser.Position = num;
+			return true;
 		}
-		while (ScriptParser.DIGITS.Contains(this.m_Parser.GetText()[this.m_Parser.Position].ToString()) || this.m_Parser.GetText()[this.m_Parser.Position] == ScriptParser.PERIOD || this.m_Parser.GetText()[this.m_Parser.Position] == ScriptParser.MINUS)
-		{
-			this.m_Value += this.m_Parser.GetText()[this.m_Parser.Position];
-			this.m_Parser.Position++;
-		}
-		return true;
+		return false;
 	}
 }

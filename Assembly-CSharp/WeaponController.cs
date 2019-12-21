@@ -7,190 +7,18 @@ using UnityEngine;
 
 public class WeaponController : FightController
 {
+	[HideInInspector]
+	public bool m_AnimationStopped { get; private set; }
+
+	public float m_AnimationStopFrame { get; protected set; } = -1f;
+
+	public int m_AnimationStopStateHash { get; protected set; }
+
 	protected override void Awake()
 	{
 		base.Awake();
-		this.SetupAudio();
-		this.SetupHitSpecificSounds();
-	}
-
-	private void SetupAudio()
-	{
 		this.m_AudioModule = base.gameObject.GetComponent<PlayerAudioModule>();
 		DebugUtils.Assert(this.m_AudioModule, true);
-		for (int i = 0; i < 13; i++)
-		{
-			this.m_AudioClipsHit[i] = new List<AudioClip>();
-			for (int j = 1; j < 10; j++)
-			{
-				string str = string.Empty;
-				EObjectMaterial eobjectMaterial = (EObjectMaterial)i;
-				switch (eobjectMaterial)
-				{
-				case EObjectMaterial.Unknown:
-					str = "axe_unknown_0" + j.ToString();
-					break;
-				case EObjectMaterial.Wood:
-					str = "axe_wood_0" + j.ToString();
-					break;
-				case EObjectMaterial.Bush:
-					str = "axe_bush_0" + j.ToString();
-					break;
-				case EObjectMaterial.Stone:
-					str = "axe_stone_0" + j.ToString();
-					break;
-				default:
-					if (eobjectMaterial == EObjectMaterial.TurtleShell)
-					{
-						str = "axe_wood_0" + j.ToString();
-					}
-					break;
-				case EObjectMaterial.Flesh:
-					str = "axe_flesh_0" + j.ToString();
-					break;
-				}
-				AudioClip audioClip = (AudioClip)Resources.Load("Sounds/Hit/" + str);
-				if (!(audioClip != null))
-				{
-					break;
-				}
-				this.m_AudioClipsHit[i].Add(audioClip);
-			}
-		}
-		this.m_SwingSoundClipsDict[-1] = new List<AudioClip>();
-		AudioClip item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_01");
-		this.m_SwingSoundClipsDict[-1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_02");
-		this.m_SwingSoundClipsDict[-1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_03");
-		this.m_SwingSoundClipsDict[-1].Add(item);
-		this.m_SwingSoundClipsDict[291] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_01");
-		this.m_SwingSoundClipsDict[291].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_02");
-		this.m_SwingSoundClipsDict[291].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_swing_03");
-		this.m_SwingSoundClipsDict[291].Add(item);
-		this.m_SwingSoundClipsDict[312] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_01");
-		this.m_SwingSoundClipsDict[312].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_02");
-		this.m_SwingSoundClipsDict[312].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_03");
-		this.m_SwingSoundClipsDict[312].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_04");
-		this.m_SwingSoundClipsDict[312].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_whoosh_05");
-		this.m_SwingSoundClipsDict[312].Add(item);
-		this.m_SwingSoundClipsDict[288] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/stoneblade_swing_01");
-		this.m_SwingSoundClipsDict[288].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/stoneblade_swing_02");
-		this.m_SwingSoundClipsDict[288].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/stoneblade_swing_03");
-		this.m_SwingSoundClipsDict[288].Add(item);
-		this.m_SwingSoundClipsDict[308] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_01");
-		this.m_SwingSoundClipsDict[308].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_02");
-		this.m_SwingSoundClipsDict[308].Add(item);
-		this.m_SwingSoundClipsDict[303] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_01");
-		this.m_SwingSoundClipsDict[303].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_02");
-		this.m_SwingSoundClipsDict[303].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_attack_swing_03");
-		this.m_SwingSoundClipsDict[303].Add(item);
-		this.m_SwingSoundClipsDict[313] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
-		this.m_SwingSoundClipsDict[313].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
-		this.m_SwingSoundClipsDict[313].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
-		this.m_SwingSoundClipsDict[313].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_whoosh_01");
-		this.m_SwingSoundClipsDict[313].Add(item);
-	}
-
-	private void SetupHitSpecificSounds()
-	{
-		this.m_HitSpecificSounds[312] = new Dictionary<int, List<AudioClip>>();
-		this.m_HitSpecificSounds[312][1] = new List<AudioClip>();
-		AudioClip item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_01");
-		this.m_HitSpecificSounds[312][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_02");
-		this.m_HitSpecificSounds[312][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_03");
-		this.m_HitSpecificSounds[312][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_04");
-		this.m_HitSpecificSounds[312][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_05");
-		this.m_HitSpecificSounds[312][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/axe_professional_tree_hit_06");
-		this.m_HitSpecificSounds[312][1].Add(item);
-		this.m_HitSpecificSounds[313] = new Dictionary<int, List<AudioClip>>();
-		this.m_HitSpecificSounds[313][2] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_01");
-		this.m_HitSpecificSounds[313][2].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_02");
-		this.m_HitSpecificSounds[313][2].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_03");
-		this.m_HitSpecificSounds[313][2].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_04");
-		this.m_HitSpecificSounds[313][2].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_05");
-		this.m_HitSpecificSounds[313][2].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_branch_hit_06");
-		this.m_HitSpecificSounds[313][2].Add(item);
-		this.m_HitSpecificSounds[313][1] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_01");
-		this.m_HitSpecificSounds[313][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_02");
-		this.m_HitSpecificSounds[313][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_03");
-		this.m_HitSpecificSounds[313][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_04");
-		this.m_HitSpecificSounds[313][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_05");
-		this.m_HitSpecificSounds[313][1].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/machete_tree_hit_06");
-		this.m_HitSpecificSounds[313][1].Add(item);
-		this.m_HitSpecificSounds[308] = new Dictionary<int, List<AudioClip>>();
-		this.m_HitSpecificSounds[308][8] = new List<AudioClip>();
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_01");
-		this.m_HitSpecificSounds[308][8].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_02");
-		this.m_HitSpecificSounds[308][8].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_03");
-		this.m_HitSpecificSounds[308][8].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_04");
-		this.m_HitSpecificSounds[308][8].Add(item);
-		item = (AudioClip)Resources.Load("Sounds/Weapon/spear_flesh_hit_05");
-		this.m_HitSpecificSounds[308][8].Add(item);
-		this.m_HitSpecificSounds[307] = this.m_HitSpecificSounds[308];
-		this.m_HitSpecificSounds[306] = this.m_HitSpecificSounds[308];
-		this.m_HitSpecificSounds[305] = this.m_HitSpecificSounds[308];
-		this.m_HitSpecificSounds[303] = this.m_HitSpecificSounds[308];
-		this.m_HitSpecificSounds[327] = this.m_HitSpecificSounds[308];
-	}
-
-	private AudioClip GetSpecificSound(ItemID item_id, EObjectMaterial material)
-	{
-		Dictionary<int, List<AudioClip>> dictionary;
-		if (!this.m_HitSpecificSounds.TryGetValue((int)item_id, out dictionary))
-		{
-			return null;
-		}
-		List<AudioClip> list;
-		if (!dictionary.TryGetValue((int)material, out list))
-		{
-			return null;
-		}
-		if (list.Count == 0)
-		{
-			return null;
-		}
-		return list[UnityEngine.Random.Range(0, list.Count)];
 	}
 
 	protected override void OnEnable()
@@ -198,6 +26,13 @@ public class WeaponController : FightController
 		base.OnEnable();
 		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 		DebugUtils.Assert(currentItem && currentItem.m_Info.IsWeapon(), true);
+		if (!currentItem)
+		{
+			this.Stop();
+			Player.Get().StartController(PlayerControllerType.FistFight);
+			Player.Get().StartControllerInternal();
+			return;
+		}
 		if (!Inventory3DManager.Get().gameObject.activeSelf && !currentItem.m_IsBeingDestroyed)
 		{
 			currentItem.gameObject.SetActive(false);
@@ -230,7 +65,7 @@ public class WeaponController : FightController
 
 	protected virtual bool CanAttack()
 	{
-		return !MainLevel.Instance.IsPause() && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && !this.IsAttack() && !this.m_Player.m_Aim && !PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel);
+		return !MainLevel.Instance.IsPause() && Time.time - MainLevel.Instance.m_LastUnpauseTime >= 0.25f && !this.m_Player.GetRotationBlocked() && !Inventory3DManager.Get().gameObject.activeSelf && !HitReactionController.Get().IsActive() && !base.IsBlock() && !this.IsAttack() && !this.m_Player.m_Aim && !ScenarioManager.Get().IsBoolVariableTrue("PlayerMechGameEnding") && !HUDSelectDialog.Get().enabled;
 	}
 
 	protected virtual void EndAttack()
@@ -261,29 +96,39 @@ public class WeaponController : FightController
 		{
 			this.UpdateStoppedAnimation();
 		}
-		if (PlayerConditionModule.Get().IsStaminaLevel(this.m_BlockAttackStaminaLevel))
+		bool flag = PlayerConditionModule.Get().IsLowStamina();
+		bool @bool = this.m_Animator.GetBool(this.m_LowStaminaHash);
+		if (flag)
 		{
 			this.m_ComboScheduled = false;
 			this.m_ReleaseComboScheduled = false;
-			if (!this.m_Animator.GetBool(this.m_LowStaminaHash) && !this.IsAttack())
+			if (!@bool && !this.IsAttack())
 			{
 				this.m_Animator.SetBool(this.m_LowStaminaHash, true);
+				if (!this.m_WasActivated && !currentItem.gameObject.activeSelf)
+				{
+					currentItem.gameObject.SetActive(true);
+					this.m_WasActivated = true;
+					return;
+				}
 			}
-			return;
 		}
-		if (this.m_Animator.GetBool(this.m_LowStaminaHash))
+		else
 		{
-			this.m_Animator.SetBool(this.m_LowStaminaHash, false);
-		}
-		WeaponType weaponType = ((Weapon)currentItem).GetWeaponType();
-		this.m_Animator.SetInteger(this.m_IWeaponType, (int)weaponType);
-		if (!this.m_WasActivated && !currentItem.gameObject.activeSelf)
-		{
-			int shortNameHash = this.m_Animator.GetCurrentAnimatorStateInfo(this.m_SpineLayerIndex).shortNameHash;
-			if (shortNameHash == this.m_MeleeIdleHash || shortNameHash == this.m_TakeOutItemHash || shortNameHash == this.m_SpearIdleHash)
+			if (@bool && !this.IsAttack())
 			{
-				currentItem.gameObject.SetActive(true);
-				this.m_WasActivated = true;
+				this.m_Animator.SetBool(this.m_LowStaminaHash, false);
+			}
+			WeaponType weaponType = ((Weapon)currentItem).GetWeaponType();
+			this.m_Animator.SetInteger(this.m_IWeaponType, (int)weaponType);
+			if (!this.m_WasActivated && !currentItem.gameObject.activeSelf)
+			{
+				int shortNameHash = this.m_Animator.GetCurrentAnimatorStateInfo(this.m_SpineLayerIndex).shortNameHash;
+				if (shortNameHash == this.m_MeleeIdleHash || shortNameHash == this.m_ChangeWeaponHash || shortNameHash == this.m_TakeOutItemHash || shortNameHash == this.m_SpearIdleHash || shortNameHash == this.m_TorchIdleHash)
+				{
+					currentItem.gameObject.SetActive(true);
+					this.m_WasActivated = true;
+				}
 			}
 		}
 	}
@@ -298,11 +143,9 @@ public class WeaponController : FightController
 		if (!this.m_AnimationStopped)
 		{
 			this.UpdateAttack();
+			return;
 		}
-		else
-		{
-			this.UpdateStoppedAnimationPose();
-		}
+		this.UpdateStoppedAnimationPose();
 	}
 
 	private void UpdateAttack()
@@ -380,7 +223,7 @@ public class WeaponController : FightController
 		if (num2 >= 0)
 		{
 			AnimatorClipInfo animatorClipInfo2 = currentAnimatorClipInfo[num2];
-			if (animatorClipInfo2.clip.events.Length > 0)
+			if (animatorClipInfo2.clip.events.Length != 0)
 			{
 				for (int j = 0; j < animatorClipInfo2.clip.events.Length; j++)
 				{
@@ -408,6 +251,10 @@ public class WeaponController : FightController
 		CJObject cjobject = null;
 		Collider collider = null;
 		bool flag = false;
+		if (currentAnimatorStateInfo.shortNameHash == this.m_NMeleeAttackRightWindUp || this.m_Animator.GetBool(this.m_BAttackRightRelease))
+		{
+			damage_window = false;
+		}
 		Vector3 zero = Vector3.zero;
 		if (this.UpdateCollisions(this.m_BladeT0, this.m_BladeT1, null, null, normalized, damage_window, out cjobject, out collider, out flag, num3, num4, out zero) && !this.m_HitObjects.Contains(collider.gameObject))
 		{
@@ -437,32 +284,54 @@ public class WeaponController : FightController
 		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 		if (cj_object)
 		{
-			HumanAI component = cj_object.GetComponent<HumanAI>();
-			if (component)
+			HumanAI humanAI = null;
+			AI component = cj_object.GetComponent<AI>();
+			if (component && component.IsHuman())
 			{
-				if (component.m_Hallucination && component.m_HallucinationDisappearing)
+				humanAI = (HumanAI)component;
+			}
+			if (humanAI)
+			{
+				if (humanAI.m_Hallucination && humanAI.m_HallucinationDisappearing)
 				{
 					return;
 				}
-				this.HitHumanAI(component, hit_pos, hit_dir);
+				this.HitHumanAI(humanAI, hit_pos, hit_dir);
 				this.MakeHitSound(coll.gameObject, currentItem.m_Info.m_ID);
 				this.m_AlreadyHit = true;
-				return;
 			}
 			else
+			{
+				Fish component2 = cj_object.GetComponent<Fish>();
+				if (component2 && component2.m_ID != AI.AIID.AngelFish && component2.m_ID != AI.AIID.DiscusFish && UnityEngine.Random.Range(0f, 1f) < 0.5f)
+				{
+					this.m_AlreadyHit = true;
+				}
+				else if (base.m_ControllerType == PlayerControllerType.WeaponMelee && component2 && component2.m_ID != AI.AIID.AngelFish && component2.m_ID != AI.AIID.DiscusFish)
+				{
+					component2.OnHitByItem(null, hit_pos);
+					this.MakeHitSound(coll.gameObject, currentItem.m_Info.m_ID);
+					this.m_AlreadyHit = true;
+				}
+			}
+			if (component)
+			{
+				PlayerConditionModule.Get().GetDirtinessAdd(GetDirtyReason.Combat, null);
+			}
+			if (!this.m_AlreadyHit)
 			{
 				this.HitObject(cj_object, hit_pos, hit_dir);
 			}
 		}
 		else
 		{
-			RagdollBone component2 = coll.gameObject.GetComponent<RagdollBone>();
-			if (component2 && component2.m_Parent)
+			RagdollBone component3 = coll.gameObject.GetComponent<RagdollBone>();
+			if (component3 && component3.m_ParentObject)
 			{
-				DeadBody component3 = component2.m_Parent.GetComponent<DeadBody>();
-				if (component3)
+				DeadBody component4 = component3.m_ParentObject.GetComponent<DeadBody>();
+				if (component4)
 				{
-					component3.OnTakeDamage(new DamageInfo
+					component4.OnTakeDamage(new DamageInfo
 					{
 						m_DamageItem = currentItem,
 						m_Damager = base.gameObject,
@@ -470,21 +339,21 @@ public class WeaponController : FightController
 						m_HitDir = hit_dir,
 						m_Normal = -hit_dir
 					});
-					return;
+					this.m_AlreadyHit = true;
 				}
 			}
 		}
 		DamageInfo damageInfo = new DamageInfo();
-		ObjectMaterial component4;
+		ObjectMaterial component5;
 		if (cj_object != null)
 		{
-			component4 = cj_object.gameObject.GetComponent<ObjectMaterial>();
+			component5 = cj_object.gameObject.GetComponent<ObjectMaterial>();
 		}
 		else
 		{
-			component4 = coll.gameObject.GetComponent<ObjectMaterial>();
+			component5 = coll.gameObject.GetComponent<ObjectMaterial>();
 		}
-		EObjectMaterial mat = (!(component4 == null)) ? component4.m_ObjectMaterial : EObjectMaterial.Unknown;
+		EObjectMaterial mat = (component5 == null) ? EObjectMaterial.Unknown : component5.m_ObjectMaterial;
 		damageInfo.m_Damage = currentItem.m_Info.m_DamageSelf * ObjectMaterial.GetDamageSelfMul(mat);
 		damageInfo.m_DamageItem = currentItem;
 		this.MakeHitSound(coll.gameObject, currentItem.m_Info.m_ID);
@@ -530,49 +399,54 @@ public class WeaponController : FightController
 			hit_pos = Vector3.zero;
 			return false;
 		}
-		Collider[] array = Physics.OverlapBox(zero2, zero, identity);
-		for (int i = 0; i < array.Length; i++)
+		int num = Physics.OverlapBoxNonAlloc(zero2, zero, this.m_HitCollidersTmp, identity);
+		for (int i = 0; i < num; i++)
 		{
 			bool flag = false;
-			Collider collider2 = array[i];
+			Collider collider2 = this.m_HitCollidersTmp[i];
 			if (collider2.gameObject.IsWater())
 			{
 				this.OnHitWater(collider2);
 			}
-			if (!collider2.isTrigger || collider2.gameObject.IsAI())
+			if (!(collider2 == this.m_Player.m_CharacterController.m_Controller) && (!collider2.isTrigger || collider2.gameObject.IsAI() || collider2.gameObject.IsFish()) && !(collider2.gameObject == this.m_Player.gameObject) && !(collider2.gameObject == this.m_Player.GetCurrentItem(Hand.Right).gameObject) && !(collider2.gameObject.GetComponent<Player>() != null) && !PlayerArmorModule.Get().IsgameObjectEquipedArmor(collider2.gameObject))
 			{
-				if (!(collider2.gameObject == this.m_Player.gameObject) && !(collider2.gameObject == this.m_Player.GetCurrentItem(Hand.Right).gameObject))
+				CJObject component = collider2.gameObject.GetComponent<CJObject>();
+				if (!this.m_HitObjects.Contains(collider2.gameObject))
 				{
-					if (!(collider2.gameObject.GetComponent<Player>() != null))
+					Item component2 = collider2.gameObject.GetComponent<Item>();
+					if (!component2 || !component2.m_Info.IsParasite())
 					{
-						CJObject component = collider2.gameObject.GetComponent<CJObject>();
-						if (component == null && collider2.gameObject.transform.parent != null)
+						AI component3 = collider2.gameObject.GetComponent<AI>();
+						if (!component3 || !component3.m_GoalsModule || component3.m_GoalsModule.m_ActiveGoal == null || component3.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.HumanJumpBack || component3.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.5f)
 						{
-							component = collider2.gameObject.transform.parent.GetComponent<CJObject>();
-						}
-						if (component != null && component.GetHitCollisionType() == HitCollisionType.Bones)
-						{
-							if (this.CheckBonesIntersection(blade_t0, blade_t1, component))
+							if (component == null && collider2.gameObject.transform.parent != null)
+							{
+								component = collider2.gameObject.transform.parent.GetComponent<CJObject>();
+							}
+							if (component != null && component.GetHitCollisionType() == HitCollisionType.Bones)
+							{
+								if (this.CheckBonesIntersection(blade_t0, blade_t1, component))
+								{
+									flag = true;
+								}
+							}
+							else
 							{
 								flag = true;
 							}
-						}
-						else
-						{
-							flag = true;
-						}
-						if (flag)
-						{
-							float anim_frame = this.m_Animator.GetCurrentAnimatorStateInfo(1).length * this.m_Animator.GetCurrentAnimatorStateInfo(1).normalizedTime;
-							this.SetupAnimFrameForHit(zero2, zero, identity, anim_frame, collider2);
-							this.m_LastBoxHalfSizes = zero;
-							this.m_LastBoxPos = zero2;
-							this.m_LastBoxQuaternion = identity;
-							this.m_LastAnimFrame = this.m_Animator.GetCurrentAnimatorStateInfo(1).length * this.m_Animator.GetCurrentAnimatorStateInfo(1).normalizedTime;
-							cj_obj = component;
-							collider = collider2;
-							hit_pos = blade_t0.p0;
-							return true;
+							if (flag)
+							{
+								float anim_frame = this.m_Animator.GetCurrentAnimatorStateInfo(1).length * this.m_Animator.GetCurrentAnimatorStateInfo(1).normalizedTime;
+								this.SetupAnimFrameForHit(zero2, zero, identity, anim_frame, collider2);
+								this.m_LastBoxHalfSizes = zero;
+								this.m_LastBoxPos = zero2;
+								this.m_LastBoxQuaternion = identity;
+								this.m_LastAnimFrame = this.m_Animator.GetCurrentAnimatorStateInfo(1).length * this.m_Animator.GetCurrentAnimatorStateInfo(1).normalizedTime;
+								cj_obj = component;
+								collider = collider2;
+								hit_pos = blade_t0.p0;
+								return true;
+							}
 						}
 					}
 				}
@@ -595,20 +469,20 @@ public class WeaponController : FightController
 	{
 		int num = 10;
 		float animationStopFrame = this.m_LastAnimFrame;
-		Vector3 center = this.m_LastBoxPos;
+		Vector3 lastBoxPos = this.m_LastBoxPos;
 		Vector3 halfExtents = this.m_LastBoxHalfSizes;
 		Quaternion orientation = this.m_LastBoxQuaternion;
 		for (int i = 0; i < num; i++)
 		{
 			animationStopFrame = this.m_LastAnimFrame + (anim_frame - this.m_LastAnimFrame) / (float)num * (float)i;
 			float t = (float)i / (float)num;
-			center = Vector3.Lerp(this.m_LastBoxPos, box_center, t);
+			Vector3 center = Vector3.Lerp(this.m_LastBoxPos, box_center, t);
 			halfExtents = Vector3.Lerp(this.m_LastBoxHalfSizes, box_half_sizes, t);
 			orientation = Quaternion.Slerp(this.m_LastBoxQuaternion, q, t);
-			Collider[] array = Physics.OverlapBox(center, halfExtents, orientation);
-			for (int j = 0; j < array.Length; j++)
+			int num2 = Physics.OverlapBoxNonAlloc(center, halfExtents, this.m_HitCollidersTmp, orientation);
+			for (int j = 0; j < num2; j++)
 			{
-				if (array[j] == coll)
+				if (this.m_HitCollidersTmp[j] == coll)
 				{
 					this.m_AnimationStopFrame = animationStopFrame;
 					return;
@@ -732,7 +606,7 @@ public class WeaponController : FightController
 
 	private void HitHumanAI(HumanAI human, Vector3 hit_pos, Vector3 hit_dir)
 	{
-		if (!human.CanReceiveHit())
+		if (!human.CanReceiveHit(null))
 		{
 			return;
 		}
@@ -748,19 +622,28 @@ public class WeaponController : FightController
 			this.ExecuteSkill(currentItem);
 		}
 		DamageInfo damageInfo = new DamageInfo();
-		damageInfo.m_Damage = ((!(weapon != null)) ? 1000f : ((WeaponInfo)weapon.m_Info).m_HumanDamage);
+		damageInfo.m_Damage = ((weapon != null) ? ((WeaponInfo)weapon.m_Info).m_HumanDamage : 1000f);
 		damageInfo.m_Damage *= this.GetDamageMultiplier(currentItem);
 		damageInfo.m_DamageItem = currentItem;
 		damageInfo.m_Damager = this.m_Player.gameObject;
 		damageInfo.m_Position = hit_pos;
 		damageInfo.m_HitDir = hit_dir;
 		damageInfo.m_Normal = -hit_dir;
+		if (PlayerConditionModule.Get().IsLowStamina())
+		{
+			damageInfo.m_Damage *= this.m_Player.GetParam<float>("LowStaminaDamageMul");
+		}
 		human.TakeDamage(damageInfo);
 	}
 
 	protected virtual void HitObject(CJObject obj, Vector3 hit_pos, Vector3 hit_dir)
 	{
-		this.m_AudioModule.PlayHitSound(1f, false);
+		bool flag = false;
+		if (Time.time - this.m_LastPlayHitSound > 0.5f)
+		{
+			this.m_AudioModule.PlayHitSound(1f, false);
+			this.m_LastPlayHitSound = Time.time;
+		}
 		if (obj.GetParticleOnHit().Length > 3)
 		{
 			this.SpawnFX(obj.GetParticleOnHit(), hit_pos);
@@ -771,7 +654,7 @@ public class WeaponController : FightController
 		{
 			weapon = (Weapon)currentItem;
 		}
-		bool flag = true;
+		bool flag2 = true;
 		Item component = obj.GetComponent<Item>();
 		if (component && component.m_IsPlant)
 		{
@@ -792,18 +675,32 @@ public class WeaponController : FightController
 					damageInfo.m_Damage = weaponInfo.m_AnimalDamage;
 					if (((AI)obj).IsDead())
 					{
-						flag = false;
+						flag2 = false;
+					}
+					else
+					{
+						AI ai = (AI)obj;
+						if (ai && ai.m_ID == AI.AIID.ArmadilloThreeBanded && ai.m_GoalsModule != null && ai.m_GoalsModule.m_ActiveGoal != null && ai.m_GoalsModule.m_ActiveGoal.m_Type == AIGoalType.Hide)
+						{
+							flag2 = false;
+						}
 					}
 				}
 				else if (component)
 				{
-					if (component.m_IsPlant)
+					if (component.GetInfoID() == ItemID.iron_vein)
+					{
+						damageInfo.m_Damage = weaponInfo.m_IronVeinDamage;
+					}
+					else if (component.m_IsPlant)
 					{
 						damageInfo.m_Damage = weaponInfo.m_PlantDamage;
+						flag = true;
 					}
 					else if (component.m_IsTree)
 					{
 						damageInfo.m_Damage = weaponInfo.m_TreeDamage;
+						flag = true;
 					}
 					else
 					{
@@ -830,8 +727,12 @@ public class WeaponController : FightController
 			damageInfo.m_Normal = Vector3.up;
 			damageInfo.m_DamageItem = currentItem;
 			obj.TakeDamage(damageInfo);
-			this.HitDestroyableChunkSource(obj.GetComponent<Collider>(), hit_pos, hit_dir, currentItem);
 			if (flag)
+			{
+				PlayerConditionModule.Get().GetDirtinessAdd(GetDirtyReason.ChopPlants, null);
+			}
+			this.HitDestroyableChunkSource(obj.GetComponent<Collider>(), hit_pos, hit_dir, currentItem);
+			if (flag2)
 			{
 				this.ExecuteSkill(currentItem);
 			}
@@ -840,79 +741,52 @@ public class WeaponController : FightController
 
 	protected virtual void SpawnFX(string fx_name, Vector3 hit_pos)
 	{
-		ParticlesManager.Get().Spawn(fx_name, hit_pos, Quaternion.identity, null);
+		ParticlesManager.Get().Spawn(fx_name, hit_pos, Quaternion.identity, Vector3.zero, null, -1f, false);
 	}
 
 	private void ExecuteSkill(Item current_item)
 	{
-		if (current_item.IsKnife())
+		if (current_item.m_Info.IsKnife())
 		{
 			Skill.Get<BladeSkill>().OnSkillAction();
+			return;
 		}
-		else if (current_item.IsSpear())
+		if (current_item.m_Info.IsSpear())
 		{
 			Skill.Get<SpearSkill>().OnSkillAction();
+			return;
 		}
-		else if (current_item.IsAxe())
+		if (current_item.m_Info.IsAxe())
 		{
 			Skill.Get<AxeSkill>().OnSkillAction();
-		}
-		else if (current_item.IsMachete())
-		{
-			Skill.Get<MacheteSkill>().OnSkillAction();
 		}
 	}
 
 	private float GetDamageMultiplier(Item current_item)
 	{
-		if (current_item.IsKnife())
+		if (current_item.m_Info.IsKnife())
 		{
 			return Skill.Get<BladeSkill>().GetDamageMul();
 		}
-		if (current_item.IsSpear())
+		if (current_item.m_Info.IsSpear())
 		{
 			return Skill.Get<SpearSkill>().GetDamageMul();
 		}
-		if (current_item.IsAxe())
+		if (current_item.m_Info.IsAxe())
 		{
 			return Skill.Get<AxeSkill>().GetDamageMul();
-		}
-		if (current_item.IsMachete())
-		{
-			return Skill.Get<MacheteSkill>().GetDamageMul();
 		}
 		return 1f;
 	}
 
 	private void MakeHitSound(GameObject obj, ItemID item_id)
 	{
-		if (this.m_AudioSource == null)
+		if (Time.time - this.m_LastMakeHitSoundTime < 0.5f)
 		{
-			this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
-			this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
+			return;
 		}
-		ObjectMaterial component = obj.GetComponent<ObjectMaterial>();
-		if (component)
-		{
-			AudioClip specificSound = this.GetSpecificSound(item_id, component.m_ObjectMaterial);
-			if (specificSound)
-			{
-				this.m_AudioSource.PlayOneShot(specificSound);
-				return;
-			}
-		}
-		if (component)
-		{
-			int index = UnityEngine.Random.Range(0, this.m_AudioClipsHit[(int)component.m_ObjectMaterial].Count);
-			AudioClip clip = this.m_AudioClipsHit[(int)component.m_ObjectMaterial][index];
-			this.m_AudioSource.PlayOneShot(clip);
-		}
-		else
-		{
-			int index2 = UnityEngine.Random.Range(0, this.m_AudioClipsHit[0].Count);
-			AudioClip clip2 = this.m_AudioClipsHit[0][index2];
-			this.m_AudioSource.PlayOneShot(clip2);
-		}
+		this.m_LastMakeHitSoundTime = Time.time;
+		this.m_AudioModule.MakeHitSound(obj, item_id);
 	}
 
 	private bool StopAnimation()
@@ -920,6 +794,7 @@ public class WeaponController : FightController
 		this.m_AnimationStopped = true;
 		this.m_AnimationStopTime = Time.time;
 		this.SetAnimationFrame(this.m_AnimationStopFrame);
+		this.m_AnimationStopStateHash = this.m_Animator.GetCurrentAnimatorStateInfo(1).fullPathHash;
 		this.m_Animator.SetBool(this.m_BRemoveWeaponFromObstacle, true);
 		this.m_Player.BlockMoves();
 		this.m_Player.BlockRotation();
@@ -969,6 +844,10 @@ public class WeaponController : FightController
 	protected override void Attack()
 	{
 		base.Attack();
+		if (WalkieTalkieController.Get().IsActive())
+		{
+			WalkieTalkieController.Get().Stop();
+		}
 		this.m_AlreadyHit = false;
 		this.m_HitObjects.Clear();
 		this.SetState(WeaponControllerState.Swing);
@@ -1010,7 +889,12 @@ public class WeaponController : FightController
 		base.OnAnimEvent(id);
 		if (id == AnimEventID.PlaySwingSound && this.CanPlaySwingSound())
 		{
-			this.PlaySwingSound();
+			Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
+			if (currentItem != null)
+			{
+				ItemInfo info = currentItem.m_Info;
+				this.m_AudioModule.PlaySwingSound(info.m_ID);
+			}
 		}
 	}
 
@@ -1029,30 +913,6 @@ public class WeaponController : FightController
 		return true;
 	}
 
-	private void PlaySwingSound()
-	{
-		if (this.m_AudioSource == null)
-		{
-			this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
-			this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
-		}
-		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
-		if (currentItem == null)
-		{
-			return;
-		}
-		ItemInfo info = currentItem.m_Info;
-		List<AudioClip> list = null;
-		if (this.m_SwingSoundClipsDict.TryGetValue((int)info.m_ID, out list))
-		{
-			this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
-		}
-		else if (this.m_SwingSoundClipsDict.TryGetValue(-1, out list))
-		{
-			this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
-		}
-	}
-
 	protected int m_IWeaponType = Animator.StringToHash("WeaponType");
 
 	private int m_MeleeIdleHash = Animator.StringToHash("MeleeIdle");
@@ -1061,7 +921,9 @@ public class WeaponController : FightController
 
 	protected int m_SpearIdleHash = Animator.StringToHash("Spear_Idle");
 
-	private int m_LowStaminaHash = Animator.StringToHash("LowStamina");
+	protected int m_TorchIdleHash = Animator.StringToHash("TorchIdle");
+
+	protected int m_ChangeWeaponHash = Animator.StringToHash("ChangeWeapon");
 
 	private int m_BRemoveWeaponFromObstacle = Animator.StringToHash("RemoveWeaponFromObstacle");
 
@@ -1075,19 +937,11 @@ public class WeaponController : FightController
 
 	private Transform m_HandleEndTransform;
 
-	private AudioSource m_AudioSource;
-
-	private Dictionary<int, List<AudioClip>> m_AudioClipsHit = new Dictionary<int, List<AudioClip>>();
-
 	private float m_LastHitTime;
-
-	protected bool m_AnimationStopped;
 
 	private float m_AnimationStopDuration = 0.2333f;
 
 	private float m_AnimationStopTime = -1f;
-
-	protected float m_AnimationStopFrame = -1f;
 
 	protected float m_AnimationStopLength = -1f;
 
@@ -1102,8 +956,6 @@ public class WeaponController : FightController
 	protected float m_LastAnimFrame = -1f;
 
 	protected bool m_MovesBlocked;
-
-	private Dictionary<int, List<AudioClip>> m_SwingSoundClipsDict = new Dictionary<int, List<AudioClip>>();
 
 	protected bool m_AlreadyHit;
 
@@ -1125,5 +977,14 @@ public class WeaponController : FightController
 
 	private bool m_WasActivated;
 
-	private Dictionary<int, Dictionary<int, List<AudioClip>>> m_HitSpecificSounds = new Dictionary<int, Dictionary<int, List<AudioClip>>>();
+	protected int m_NMeleeAttackRightWindUp = Animator.StringToHash("AttackRightWindUp");
+
+	protected int m_BAttackRightRelease = Animator.StringToHash("AttackRightRelease");
+
+	[NonSerialized]
+	private Collider[] m_HitCollidersTmp = new Collider[20];
+
+	private float m_LastPlayHitSound = float.MinValue;
+
+	private float m_LastMakeHitSoundTime = float.MinValue;
 }

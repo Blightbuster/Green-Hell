@@ -45,15 +45,15 @@ public class TerrainNeighbours : MonoBehaviour
 			foreach (Terrain terrain in list)
 			{
 				this._terrains.Add(terrain);
-				Vector3 a = terrain.transform.position;
+				Vector3 vector = terrain.transform.position;
 				if (this.worldMover != null)
 				{
-					a -= this.worldMover.currentMove;
+					vector -= this.worldMover.currentMove;
 				}
 				int[] key = new int[]
 				{
-					Mathf.RoundToInt((a.x - this.firstPosition.x) / (float)this.sizeX),
-					Mathf.RoundToInt((a.z - this.firstPosition.y) / (float)this.sizeZ)
+					Mathf.RoundToInt((vector.x - this.firstPosition.x) / (float)this.sizeX),
+					Mathf.RoundToInt((vector.z - this.firstPosition.y) / (float)this.sizeZ)
 				};
 				if (this._terrainDict.ContainsKey(key))
 				{

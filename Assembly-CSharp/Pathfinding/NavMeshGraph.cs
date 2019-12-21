@@ -35,7 +35,7 @@ namespace Pathfinding
 
 		public override GraphTransform CalculateTransform()
 		{
-			return new GraphTransform(Matrix4x4.TRS(this.offset, Quaternion.Euler(this.rotation), Vector3.one) * Matrix4x4.TRS((!(this.sourceMesh != null)) ? Vector3.zero : (this.sourceMesh.bounds.min * this.scale), Quaternion.identity, Vector3.one));
+			return new GraphTransform(Matrix4x4.TRS(this.offset, Quaternion.Euler(this.rotation), Vector3.one) * Matrix4x4.TRS((this.sourceMesh != null) ? (this.sourceMesh.bounds.min * this.scale) : Vector3.zero, Quaternion.identity, Vector3.one));
 		}
 
 		public GraphUpdateThreading CanUpdateAsync(GraphUpdateObject o)
@@ -107,7 +107,7 @@ namespace Pathfinding
 				}
 				for (int j = 0; j < 3; j++)
 				{
-					int i2 = (j <= 1) ? (j + 1) : 0;
+					int i2 = (j > 1) ? 0 : (j + 1);
 					Int3 vertex2 = triangleMeshNode.GetVertex(j);
 					Int3 vertex3 = triangleMeshNode.GetVertex(i2);
 					if (VectorMath.SegmentsIntersectXZ(a, b, vertex2, vertex3))
@@ -191,12 +191,12 @@ namespace Pathfinding
 			}
 			yield return new Progress(0f, "Transforming Vertices");
 			this.forcedBoundsSize = this.sourceMesh.bounds.size * this.scale;
-			Vector3[] vectorVertices = this.sourceMesh.vertices;
-			List<Int3> intVertices = ListPool<Int3>.Claim(vectorVertices.Length);
-			Matrix4x4 matrix = Matrix4x4.TRS(-this.sourceMesh.bounds.min * this.scale, Quaternion.identity, Vector3.one * this.scale);
-			for (int i = 0; i < vectorVertices.Length; i++)
+			Vector3[] vertices = this.sourceMesh.vertices;
+			List<Int3> intVertices = ListPool<Int3>.Claim(vertices.Length);
+			Matrix4x4 matrix4x = Matrix4x4.TRS(-this.sourceMesh.bounds.min * this.scale, Quaternion.identity, Vector3.one * this.scale);
+			for (int i = 0; i < vertices.Length; i++)
 			{
-				intVertices.Add((Int3)matrix.MultiplyPoint3x4(vectorVertices[i]));
+				intVertices.Add((Int3)matrix4x.MultiplyPoint3x4(vertices[i]));
 			}
 			yield return new Progress(0.1f, "Compressing Vertices");
 			Int3[] compressedVertices = null;
@@ -209,6 +209,7 @@ namespace Pathfinding
 			{
 				this.OnRecalculatedTiles(this.tiles.Clone() as NavmeshTile[]);
 			}
+			yield break;
 			yield break;
 		}
 

@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 public class RestingPlace : Construction
 {
+	public override bool CanExecuteActions()
+	{
+		return base.CanExecuteActions() && PlayerStateModule.Get().m_State != PlayerStateModule.State.Combat;
+	}
+
 	public override void OnExecute(TriggerAction.TYPE action)
 	{
 		base.OnExecute(action);
@@ -23,6 +28,16 @@ public class RestingPlace : Construction
 
 	public override bool CanTrigger()
 	{
-		return true;
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !ReplicatedPlayerTriggerHelper.IsTriggerExecutedByOtherPlayer(this);
+	}
+
+	public override bool ShowAdditionalInfo()
+	{
+		return PlayerStateModule.Get().m_State == PlayerStateModule.State.Combat;
+	}
+
+	public override string GetAdditionalInfoLocalized()
+	{
+		return GreenHellGame.Instance.GetLocalization().Get("HUD_CantSleep_Combat", true);
 	}
 }

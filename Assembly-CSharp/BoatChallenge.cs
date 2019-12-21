@@ -36,6 +36,7 @@ public class BoatChallenge : Challenge, IGhostObserver
 			else if (gameObject.name == this.m_SuppliesGhostName)
 			{
 				ConstructionGhost component2 = gameObject.GetComponent<ConstructionGhost>();
+				component2.gameObject.SetActive(false);
 				this.m_Supplies = component2;
 				this.m_Supplies.RegisterObserver(this);
 			}
@@ -51,8 +52,9 @@ public class BoatChallenge : Challenge, IGhostObserver
 		{
 			this.m_Supplies.gameObject.SetActive(true);
 			base.NextObjective();
+			return;
 		}
-		else if (ghost == this.m_Supplies)
+		if (ghost == this.m_Supplies)
 		{
 			this.Success();
 		}
@@ -60,16 +62,14 @@ public class BoatChallenge : Challenge, IGhostObserver
 
 	public override string GetLocalizedInfo()
 	{
-		Localization localization = GreenHellGame.Instance.GetLocalization();
-		string text = localization.Get("HUDBoatChallenge_Boat");
+		string text = GreenHellGame.Instance.GetLocalization().Get("HUDBoatChallenge_Boat", true);
 		text += " ";
 		int num = 0;
 		int num2 = 0;
 		Player.Get().GetGPSCoordinates(this.m_Boat.transform.position, out num, out num2);
-		string text2 = text;
 		text = string.Concat(new string[]
 		{
-			text2,
+			text,
 			num.ToString(),
 			"'W ",
 			num2.ToString(),

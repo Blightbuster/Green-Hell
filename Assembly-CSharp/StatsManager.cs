@@ -192,32 +192,27 @@ public class StatsManager : MonoBehaviour, ISaveLoad, IEventsReceiver
 
 	public void OnEvent(Enums.Event event_type, float val, int data)
 	{
-		CJVariable statistic = this.GetStatistic(event_type);
-		statistic.FValue += val;
+		this.GetStatistic(event_type).FValue += val;
 	}
 
 	public void OnEvent(Enums.Event event_type, int val, int data)
 	{
-		CJVariable statistic = this.GetStatistic(event_type);
-		statistic.IValue += val;
+		this.GetStatistic(event_type).IValue += val;
 	}
 
 	public void OnEvent(Enums.Event event_type, int val, int data, int data2)
 	{
-		CJVariable statistic = this.GetStatistic(event_type);
-		statistic.IValue += val;
+		this.GetStatistic(event_type).IValue += val;
 	}
 
 	public void OnEvent(Enums.Event event_type, bool val, int data)
 	{
-		CJVariable statistic = this.GetStatistic(event_type);
-		statistic.BValue = val;
+		this.GetStatistic(event_type).BValue = val;
 	}
 
 	public void OnEvent(Enums.Event event_type, string val, int data)
 	{
-		CJVariable statistic = this.GetStatistic(event_type);
-		statistic.SValue = val;
+		this.GetStatistic(event_type).SValue = val;
 	}
 
 	private void Update()

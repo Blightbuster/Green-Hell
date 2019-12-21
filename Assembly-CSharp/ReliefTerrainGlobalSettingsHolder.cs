@@ -41,7 +41,6 @@ public class ReliefTerrainGlobalSettingsHolder
 		this.GlobalColorHiBlend = new float[12];
 		this.PER_LAYER_HEIGHT_MODIFIER = new float[12];
 		this._snow_strength_per_layer = new float[12];
-		this.Substances = new ProceduralMaterial[12];
 		this._SuperDetailStrengthMultA = new float[12];
 		this._SuperDetailStrengthMultASelfMaskNear = new float[12];
 		this._SuperDetailStrengthMultASelfMaskFar = new float[12];
@@ -72,10 +71,10 @@ public class ReliefTerrainGlobalSettingsHolder
 
 	public void ReInit(Terrain terrainComp)
 	{
-		if (terrainComp.terrainData.splatPrototypes.Length > this.numLayers)
+		if (terrainComp.terrainData.terrainLayers.Length > this.numLayers)
 		{
-			Texture2D[] array = new Texture2D[terrainComp.terrainData.splatPrototypes.Length];
-			Texture2D[] array2 = new Texture2D[terrainComp.terrainData.splatPrototypes.Length];
+			Texture2D[] array = new Texture2D[terrainComp.terrainData.terrainLayers.Length];
+			Texture2D[] array2 = new Texture2D[terrainComp.terrainData.terrainLayers.Length];
 			for (int i = 0; i < this.splats.Length; i++)
 			{
 				array[i] = this.splats[i];
@@ -83,13 +82,13 @@ public class ReliefTerrainGlobalSettingsHolder
 			}
 			this.splats = array;
 			this.Bumps = array2;
-			this.splats[terrainComp.terrainData.splatPrototypes.Length - 1] = terrainComp.terrainData.splatPrototypes[(terrainComp.terrainData.splatPrototypes.Length - 2 < 0) ? 0 : (terrainComp.terrainData.splatPrototypes.Length - 2)].texture;
-			this.Bumps[terrainComp.terrainData.splatPrototypes.Length - 1] = terrainComp.terrainData.splatPrototypes[(terrainComp.terrainData.splatPrototypes.Length - 2 < 0) ? 0 : (terrainComp.terrainData.splatPrototypes.Length - 2)].normalMap;
+			this.splats[terrainComp.terrainData.terrainLayers.Length - 1] = terrainComp.terrainData.terrainLayers[(terrainComp.terrainData.terrainLayers.Length - 2 >= 0) ? (terrainComp.terrainData.terrainLayers.Length - 2) : 0].diffuseTexture;
+			this.Bumps[terrainComp.terrainData.terrainLayers.Length - 1] = terrainComp.terrainData.terrainLayers[(terrainComp.terrainData.terrainLayers.Length - 2 >= 0) ? (terrainComp.terrainData.terrainLayers.Length - 2) : 0].normalMapTexture;
 		}
-		else if (terrainComp.terrainData.splatPrototypes.Length < this.numLayers)
+		else if (terrainComp.terrainData.terrainLayers.Length < this.numLayers)
 		{
-			Texture2D[] array3 = new Texture2D[terrainComp.terrainData.splatPrototypes.Length];
-			Texture2D[] array4 = new Texture2D[terrainComp.terrainData.splatPrototypes.Length];
+			Texture2D[] array3 = new Texture2D[terrainComp.terrainData.terrainLayers.Length];
+			Texture2D[] array4 = new Texture2D[terrainComp.terrainData.terrainLayers.Length];
 			for (int j = 0; j < array3.Length; j++)
 			{
 				array3[j] = this.splats[j];
@@ -98,7 +97,7 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.splats = array3;
 			this.Bumps = array4;
 		}
-		this.numLayers = terrainComp.terrainData.splatPrototypes.Length;
+		this.numLayers = terrainComp.terrainData.terrainLayers.Length;
 	}
 
 	public void SetShaderParam(string name, Texture2D tex)
@@ -110,11 +109,9 @@ public class ReliefTerrainGlobalSettingsHolder
 		if (this.use_mat)
 		{
 			this.use_mat.SetTexture(name, tex);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalTexture(name, tex);
-		}
+		Shader.SetGlobalTexture(name, tex);
 	}
 
 	public void SetShaderParam(string name, Cubemap tex)
@@ -126,11 +123,9 @@ public class ReliefTerrainGlobalSettingsHolder
 		if (this.use_mat)
 		{
 			this.use_mat.SetTexture(name, tex);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalTexture(name, tex);
-		}
+		Shader.SetGlobalTexture(name, tex);
 	}
 
 	public void SetShaderParam(string name, Matrix4x4 mtx)
@@ -138,11 +133,9 @@ public class ReliefTerrainGlobalSettingsHolder
 		if (this.use_mat)
 		{
 			this.use_mat.SetMatrix(name, mtx);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalMatrix(name, mtx);
-		}
+		Shader.SetGlobalMatrix(name, mtx);
 	}
 
 	public void SetShaderParam(string name, Vector4 vec)
@@ -150,11 +143,9 @@ public class ReliefTerrainGlobalSettingsHolder
 		if (this.use_mat)
 		{
 			this.use_mat.SetVector(name, vec);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalVector(name, vec);
-		}
+		Shader.SetGlobalVector(name, vec);
 	}
 
 	public void SetShaderParam(string name, float val)
@@ -162,11 +153,9 @@ public class ReliefTerrainGlobalSettingsHolder
 		if (this.use_mat)
 		{
 			this.use_mat.SetFloat(name, val);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalFloat(name, val);
-		}
+		Shader.SetGlobalFloat(name, val);
 	}
 
 	public void SetShaderParam(string name, Color col)
@@ -174,11 +163,9 @@ public class ReliefTerrainGlobalSettingsHolder
 		if (this.use_mat)
 		{
 			this.use_mat.SetColor(name, col);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalColor(name, col);
-		}
+		Shader.SetGlobalColor(name, col);
 	}
 
 	public RTP_LODmanager Get_RTP_LODmanagerScript()
@@ -203,8 +190,7 @@ public class ReliefTerrainGlobalSettingsHolder
 		}
 		if (light)
 		{
-			ReliefShaders_applyLightForDeferred reliefShaders_applyLightForDeferred = light.gameObject.AddComponent(typeof(ReliefShaders_applyLightForDeferred)) as ReliefShaders_applyLightForDeferred;
-			reliefShaders_applyLightForDeferred.lightForSelfShadowing = light;
+			(light.gameObject.AddComponent(typeof(ReliefShaders_applyLightForDeferred)) as ReliefShaders_applyLightForDeferred).lightForSelfShadowing = light;
 		}
 	}
 
@@ -872,6 +858,7 @@ public class ReliefTerrainGlobalSettingsHolder
 
 	public void RestorePreset(ReliefTerrainPresetHolder holder)
 	{
+		this.terrainLayers = holder.terrainLayers;
 		this.numLayers = holder.numLayers;
 		this.splats = new Texture2D[holder.splats.Length];
 		for (int i = 0; i < holder.splats.Length; i++)
@@ -1056,7 +1043,6 @@ public class ReliefTerrainGlobalSettingsHolder
 		this.VerticalTextureStrength = new float[holder.Bumps.Length];
 		this.Heights = new Texture2D[holder.Bumps.Length];
 		this._snow_strength_per_layer = new float[holder.Bumps.Length];
-		this.Substances = new ProceduralMaterial[holder.Bumps.Length];
 		this.TERRAIN_LayerWetStrength = new float[holder.Bumps.Length];
 		this.TERRAIN_WaterLevel = new float[holder.Bumps.Length];
 		this.TERRAIN_WaterLevelSlopeDamp = new float[holder.Bumps.Length];
@@ -1143,7 +1129,6 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.AO_strength[k] = holder.AO_strength[k];
 			this.Heights[k] = holder.Heights[k];
 			this._snow_strength_per_layer[k] = holder._snow_strength_per_layer[k];
-			this.Substances[k] = holder.Substances[k];
 			this.TERRAIN_LayerWetStrength[k] = holder.TERRAIN_LayerWetStrength[k];
 			this.TERRAIN_WaterLevel[k] = holder.TERRAIN_WaterLevel[k];
 			this.TERRAIN_WaterLevelSlopeDamp[k] = holder.TERRAIN_WaterLevelSlopeDamp[k];
@@ -1173,6 +1158,7 @@ public class ReliefTerrainGlobalSettingsHolder
 
 	public void SavePreset(ref ReliefTerrainPresetHolder holder)
 	{
+		holder.terrainLayers = this.terrainLayers;
 		holder.numLayers = this.numLayers;
 		holder.splats = new Texture2D[this.splats.Length];
 		for (int i = 0; i < holder.splats.Length; i++)
@@ -1358,7 +1344,6 @@ public class ReliefTerrainGlobalSettingsHolder
 		holder.AO_strength = new float[this.numLayers];
 		holder.Heights = new Texture2D[this.numLayers];
 		holder._snow_strength_per_layer = new float[this.numLayers];
-		holder.Substances = new ProceduralMaterial[this.numLayers];
 		holder.TERRAIN_LayerWetStrength = new float[this.numLayers];
 		holder.TERRAIN_WaterLevel = new float[this.numLayers];
 		holder.TERRAIN_WaterLevelSlopeDamp = new float[this.numLayers];
@@ -1445,7 +1430,6 @@ public class ReliefTerrainGlobalSettingsHolder
 			holder.AO_strength[k] = this.AO_strength[k];
 			holder.Heights[k] = this.Heights[k];
 			holder._snow_strength_per_layer[k] = this._snow_strength_per_layer[k];
-			holder.Substances[k] = this.Substances[k];
 			holder.TERRAIN_LayerWetStrength[k] = this.TERRAIN_LayerWetStrength[k];
 			holder.TERRAIN_WaterLevel[k] = this.TERRAIN_WaterLevel[k];
 			holder.TERRAIN_WaterLevelSlopeDamp[k] = this.TERRAIN_WaterLevelSlopeDamp[k];
@@ -1621,7 +1605,7 @@ public class ReliefTerrainGlobalSettingsHolder
 
 	public void ReturnToDefaults(string what = "", int layerIdx = -1)
 	{
-		if (what == string.Empty || what == "main")
+		if (what == "" || what == "main")
 		{
 			this.ReliefTransform = new Vector4(3f, 3f, 0f, 0f);
 			this.distance_start = 5f;
@@ -1638,7 +1622,7 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.EmissionRefractFiltering = 4f;
 			this.EmissionRefractAnimSpeed = 4f;
 		}
-		if (what == string.Empty || what == "perlin")
+		if (what == "" || what == "perlin")
 		{
 			this.BumpMapGlobalScale = 0.1f;
 			this._FarNormalDamp = 0.2f;
@@ -1646,7 +1630,7 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.distance_transition_bumpglobal = 30f;
 			this.rtp_perlin_start_val = 0f;
 		}
-		if (what == string.Empty || what == "global_color")
+		if (what == "" || what == "global_color")
 		{
 			this.GlobalColorMapBlendValues = new Vector3(0.2f, 0.4f, 0.5f);
 			this.GlobalColorMapSaturation = 1f;
@@ -1671,11 +1655,11 @@ public class ReliefTerrainGlobalSettingsHolder
 			this._AmbientEmissiveMultiplier = 1f;
 			this._AmbientEmissiveRelief = 0.5f;
 		}
-		if (what == string.Empty || what == "uvblend")
+		if (what == "" || what == "uvblend")
 		{
 			this.blendMultiplier = 1f;
 		}
-		if (what == string.Empty || what == "pom/pm")
+		if (what == "" || what == "pom/pm")
 		{
 			this.ExtrudeHeight = 0.05f;
 			this.DIST_STEPS = 20f;
@@ -1687,7 +1671,7 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.ShadowSoftnessFade = 0.8f;
 			this.CJ_flattenShadows = 0f;
 		}
-		if (what == string.Empty || what == "snow")
+		if (what == "" || what == "snow")
 		{
 			this._global_color_brightness_to_snow = 0.5f;
 			this._snow_strength = 0f;
@@ -1702,16 +1686,16 @@ public class ReliefTerrainGlobalSettingsHolder
 			this._snow_diff_fresnel = 0.5f;
 			this._SnowGlitterColor = new Color(1f, 1f, 1f, 0.1f);
 		}
-		if (what == string.Empty || what == "superdetail")
+		if (what == "" || what == "superdetail")
 		{
 			this._SuperDetailTiling = 8f;
 		}
-		if (what == string.Empty || what == "vertical")
+		if (what == "" || what == "vertical")
 		{
 			this.VerticalTextureGlobalBumpInfluence = 0f;
 			this.VerticalTextureTiling = 50f;
 		}
-		if (what == string.Empty || what == "glitter")
+		if (what == "" || what == "glitter")
 		{
 			this._GlitterColor = new Color(1f, 1f, 1f, 0.1f);
 			this._GlitterTiling = 1f;
@@ -1719,7 +1703,7 @@ public class ReliefTerrainGlobalSettingsHolder
 			this._GlitterFilter = 0f;
 			this._GlitterColorization = 0.5f;
 		}
-		if (what == string.Empty || what == "water")
+		if (what == "" || what == "water")
 		{
 			this.TERRAIN_GlobalWetness = 1f;
 			this.TERRAIN_RippleScale = 4f;
@@ -1735,7 +1719,7 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.TERRAIN_WetHeight_Treshold = -200f;
 			this.TERRAIN_WetHeight_Transition = 5f;
 		}
-		if (what == string.Empty || what == "caustics")
+		if (what == "" || what == "caustics")
 		{
 			this.TERRAIN_CausticsAnimSpeed = 2f;
 			this.TERRAIN_CausticsColor = Color.white;
@@ -1745,10 +1729,10 @@ public class ReliefTerrainGlobalSettingsHolder
 			this.TERRAIN_CausticsWaterShallowFadeLength = 30f;
 			this.TERRAIN_CausticsTilingScale = 1f;
 		}
-		if (what == string.Empty || what == "layer")
+		if (what == "" || what == "layer")
 		{
 			int num = 0;
-			int num2 = (this.numLayers >= 12) ? 12 : this.numLayers;
+			int num2 = (this.numLayers < 12) ? this.numLayers : 12;
 			if (layerIdx >= 0)
 			{
 				num = layerIdx;
@@ -1850,6 +1834,8 @@ public class ReliefTerrainGlobalSettingsHolder
 
 	public int numLayers;
 
+	public TerrainLayer[] terrainLayers;
+
 	[NonSerialized]
 	public bool dont_check_weak_references;
 
@@ -1869,45 +1855,45 @@ public class ReliefTerrainGlobalSettingsHolder
 
 	public Texture2D[] splat_atlases = new Texture2D[3];
 
-	public string save_path_atlasA = string.Empty;
+	public string save_path_atlasA = "";
 
-	public string save_path_atlasB = string.Empty;
+	public string save_path_atlasB = "";
 
-	public string save_path_atlasC = string.Empty;
+	public string save_path_atlasC = "";
 
-	public string save_path_terrain_steepness = string.Empty;
+	public string save_path_terrain_steepness = "";
 
-	public string save_path_terrain_height = string.Empty;
+	public string save_path_terrain_height = "";
 
-	public string save_path_terrain_direction = string.Empty;
+	public string save_path_terrain_direction = "";
 
-	public string save_path_Bump01 = string.Empty;
+	public string save_path_Bump01 = "";
 
-	public string save_path_Bump23 = string.Empty;
+	public string save_path_Bump23 = "";
 
-	public string save_path_Bump45 = string.Empty;
+	public string save_path_Bump45 = "";
 
-	public string save_path_Bump67 = string.Empty;
+	public string save_path_Bump67 = "";
 
-	public string save_path_Bump89 = string.Empty;
+	public string save_path_Bump89 = "";
 
-	public string save_path_BumpAB = string.Empty;
+	public string save_path_BumpAB = "";
 
-	public string save_path_HeightMap = string.Empty;
+	public string save_path_HeightMap = "";
 
-	public string save_path_HeightMap2 = string.Empty;
+	public string save_path_HeightMap2 = "";
 
-	public string save_path_HeightMap3 = string.Empty;
+	public string save_path_HeightMap3 = "";
 
-	public string save_path_SSColorCombinedA = string.Empty;
+	public string save_path_SSColorCombinedA = "";
 
-	public string save_path_SSColorCombinedB = string.Empty;
+	public string save_path_SSColorCombinedB = "";
 
-	public string save_path_CausticsMask = string.Empty;
+	public string save_path_CausticsMask = "";
 
-	public string save_path_PuddleMask = string.Empty;
+	public string save_path_PuddleMask = "";
 
-	public string save_path_WetMask = string.Empty;
+	public string save_path_WetMask = "";
 
 	public string newPresetName = "a preset name...";
 
@@ -2244,8 +2230,6 @@ public class ReliefTerrainGlobalSettingsHolder
 	public Texture2D[] Heights;
 
 	public float[] _snow_strength_per_layer;
-
-	public ProceduralMaterial[] Substances;
 
 	public float[] TERRAIN_LayerWetStrength;
 

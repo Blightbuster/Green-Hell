@@ -19,20 +19,18 @@ public class _appControlerShaderOnTriplanarMesh : MonoBehaviour
 	private void OnGUI()
 	{
 		GUILayout.Space(10f);
-		GUILayout.BeginVertical("box", new GUILayoutOption[0]);
-		GUILayout.Label(string.Empty + FPSmeter.fps, new GUILayoutOption[0]);
+		GUILayout.BeginVertical("box", Array.Empty<GUILayoutOption>());
+		GUILayout.Label(string.Concat(FPSmeter.fps), Array.Empty<GUILayoutOption>());
 		if (this.panel_enabled)
 		{
-			this.shadows = GUILayout.Toggle(this.shadows, "disable Unity's shadows", new GUILayoutOption[0]);
-			Light component = GameObject.Find("Directional light").GetComponent<Light>();
-			component.shadows = ((!this.shadows) ? LightShadows.Soft : LightShadows.None);
-			this.forward_path = GUILayout.Toggle(this.forward_path, "forward rendering", new GUILayoutOption[0]);
-			Camera component2 = GameObject.Find("Main Camera").GetComponent<Camera>();
-			component2.renderingPath = ((!this.forward_path) ? RenderingPath.DeferredShading : RenderingPath.Forward);
-			GUILayout.Label("  Drag model/env to rotate", new GUILayoutOption[0]);
-			GUILayout.Label("  Wheel - zoom camera", new GUILayoutOption[0]);
+			this.shadows = GUILayout.Toggle(this.shadows, "disable Unity's shadows", Array.Empty<GUILayoutOption>());
+			GameObject.Find("Directional light").GetComponent<Light>().shadows = (this.shadows ? LightShadows.None : LightShadows.Soft);
+			this.forward_path = GUILayout.Toggle(this.forward_path, "forward rendering", Array.Empty<GUILayoutOption>());
+			GameObject.Find("Main Camera").GetComponent<Camera>().renderingPath = (this.forward_path ? RenderingPath.Forward : RenderingPath.DeferredShading);
+			GUILayout.Label("  Drag model/env to rotate", Array.Empty<GUILayoutOption>());
+			GUILayout.Label("  Wheel - zoom camera", Array.Empty<GUILayoutOption>());
 		}
-		GUILayout.Label("  P - toggle panel", new GUILayoutOption[0]);
+		GUILayout.Label("  P - toggle panel", Array.Empty<GUILayoutOption>());
 		GUILayout.EndVertical();
 	}
 

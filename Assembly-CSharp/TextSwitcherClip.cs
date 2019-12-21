@@ -16,8 +16,7 @@ public class TextSwitcherClip : PlayableAsset, ITimelineClipAsset
 
 	public override Playable CreatePlayable(PlayableGraph graph, GameObject owner)
 	{
-		ScriptPlayable<TextSwitcherBehaviour> playable = ScriptPlayable<TextSwitcherBehaviour>.Create(graph, this.template, 0);
-		return playable;
+		return ScriptPlayable<TextSwitcherBehaviour>.Create(graph, this.template, 0);
 	}
 
 	public TextSwitcherBehaviour template = new TextSwitcherBehaviour();

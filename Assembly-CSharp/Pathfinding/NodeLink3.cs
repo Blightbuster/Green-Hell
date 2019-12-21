@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link3.php")]
 	[AddComponentMenu("Pathfinding/Link3")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link3.php")]
 	public class NodeLink3 : GraphModifier
 	{
 		public static NodeLink3 GetNodeLink(GraphNode node)
@@ -53,15 +53,13 @@ namespace Pathfinding
 			if (AstarPath.active.isScanning)
 			{
 				this.InternalOnPostScan();
+				return;
 			}
-			else
+			AstarPath.active.AddWorkItem(new AstarWorkItem(delegate(bool force)
 			{
-				AstarPath.active.AddWorkItem(new AstarWorkItem(delegate(bool force)
-				{
-					this.InternalOnPostScan();
-					return true;
-				}));
-			}
+				this.InternalOnPostScan();
+				return true;
+			}));
 		}
 
 		public void InternalOnPostScan()
@@ -103,11 +101,9 @@ namespace Pathfinding
 				if (!this.postScanCalled)
 				{
 					this.OnPostScan();
+					return;
 				}
-				else
-				{
-					this.Apply(false);
-				}
+				this.Apply(false);
 			}
 		}
 
@@ -213,45 +209,42 @@ namespace Pathfinding
 					{
 						Int3 vertex3 = this.connectedNode2.GetVertex(j);
 						Int3 vertex4 = this.connectedNode2.GetVertex((j + 1) % this.connectedNode2.GetVertexCount());
-						if (Int3.DotLong((vertex4 - vertex3).Normal2D(), rhs) >= 0L)
+						if (Int3.DotLong((vertex4 - vertex3).Normal2D(), rhs) >= 0L && (double)Int3.Angle(vertex4 - vertex3, vertex2 - vertex) > 2.9670598109563189)
 						{
-							if ((double)Int3.Angle(vertex4 - vertex3, vertex2 - vertex) > 2.9670598109563189)
+							float num = 0f;
+							float num2 = 1f;
+							num2 = Math.Min(num2, VectorMath.ClosestPointOnLineFactor(vertex, vertex2, vertex3));
+							num = Math.Max(num, VectorMath.ClosestPointOnLineFactor(vertex, vertex2, vertex4));
+							if (num2 >= num)
 							{
-								float num = 0f;
-								float num2 = 1f;
-								num2 = Math.Min(num2, VectorMath.ClosestPointOnLineFactor(vertex, vertex2, vertex3));
-								num = Math.Max(num, VectorMath.ClosestPointOnLineFactor(vertex, vertex2, vertex4));
-								if (num2 >= num)
-								{
-									Vector3 vector = (Vector3)(vertex2 - vertex) * num + (Vector3)vertex;
-									Vector3 vector2 = (Vector3)(vertex2 - vertex) * num2 + (Vector3)vertex;
-									this.startNode.portalA = vector;
-									this.startNode.portalB = vector2;
-									this.endNode.portalA = vector2;
-									this.endNode.portalB = vector;
-									this.connectedNode1.AddConnection(this.startNode, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped1 - this.StartTransform.position)).costMagnitude * this.costFactor));
-									this.connectedNode2.AddConnection(this.endNode, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped2 - this.EndTransform.position)).costMagnitude * this.costFactor));
-									this.startNode.AddConnection(this.connectedNode1, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped1 - this.StartTransform.position)).costMagnitude * this.costFactor));
-									this.endNode.AddConnection(this.connectedNode2, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped2 - this.EndTransform.position)).costMagnitude * this.costFactor));
-									return;
-								}
-								Debug.LogError(string.Concat(new object[]
-								{
-									"Something went wrong! ",
-									num,
-									" ",
-									num2,
-									" ",
-									vertex,
-									" ",
-									vertex2,
-									" ",
-									vertex3,
-									" ",
-									vertex4,
-									"\nTODO, how can this happen?"
-								}));
+								Vector3 vector = (Vector3)(vertex2 - vertex) * num + (Vector3)vertex;
+								Vector3 vector2 = (Vector3)(vertex2 - vertex) * num2 + (Vector3)vertex;
+								this.startNode.portalA = vector;
+								this.startNode.portalB = vector2;
+								this.endNode.portalA = vector2;
+								this.endNode.portalB = vector;
+								this.connectedNode1.AddConnection(this.startNode, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped1 - this.StartTransform.position)).costMagnitude * this.costFactor));
+								this.connectedNode2.AddConnection(this.endNode, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped2 - this.EndTransform.position)).costMagnitude * this.costFactor));
+								this.startNode.AddConnection(this.connectedNode1, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped1 - this.StartTransform.position)).costMagnitude * this.costFactor));
+								this.endNode.AddConnection(this.connectedNode2, (uint)Mathf.RoundToInt((float)((Int3)(this.clamped2 - this.EndTransform.position)).costMagnitude * this.costFactor));
+								return;
 							}
+							Debug.LogError(string.Concat(new object[]
+							{
+								"Something went wrong! ",
+								num,
+								" ",
+								num2,
+								" ",
+								vertex,
+								" ",
+								vertex2,
+								" ",
+								vertex3,
+								" ",
+								vertex4,
+								"\nTODO, how can this happen?"
+							}));
 						}
 					}
 				}
@@ -270,7 +263,7 @@ namespace Pathfinding
 
 		public void OnDrawGizmos(bool selected)
 		{
-			Color color = (!selected) ? NodeLink3.GizmosColor : NodeLink3.GizmosColorSelected;
+			Color color = selected ? NodeLink3.GizmosColorSelected : NodeLink3.GizmosColor;
 			if (this.StartTransform != null)
 			{
 				Draw.Gizmos.CircleXZ(this.StartTransform.position, 0.4f, color, 0f, 6.28318548f, 10);

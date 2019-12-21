@@ -18,7 +18,7 @@ public class HUDSaving : HUDBase
 	protected override void Start()
 	{
 		base.Start();
-		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get("HUD_Saving");
+		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get("HUD_Saving", true);
 	}
 
 	public override void SetupGroups()
@@ -60,7 +60,7 @@ public class HUDSaving : HUDBase
 
 	private void UpdateActivity()
 	{
-		if (this.m_Active && SaveGame.m_State != SaveGame.State.Save && Time.time - this.m_ActivationTime >= this.m_MinActiveTime)
+		if (this.m_Active && SaveGame.m_State != SaveGame.State.Save && SaveGame.m_State != SaveGame.State.SaveCoop && Time.time - this.m_ActivationTime >= this.m_MinActiveTime)
 		{
 			this.m_Active = false;
 		}

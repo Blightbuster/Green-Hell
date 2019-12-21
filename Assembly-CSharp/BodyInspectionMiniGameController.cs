@@ -2,7 +2,6 @@
 using CJTools;
 using Enums;
 using UnityEngine;
-using UnityStandardAssets.CrossPlatformInput;
 
 public class BodyInspectionMiniGameController : PlayerController
 {
@@ -32,8 +31,7 @@ public class BodyInspectionMiniGameController : PlayerController
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeOut(FadeType.All, new VDelegate(this.StartMinigame), 1.5f, null);
+		GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, new VDelegate(this.StartMinigame), 1.5f, null);
 		this.m_LHAnimator.SetInteger(this.m_IBIMinigameState, 1);
 		this.m_LHAnimator.SetFloat(this.m_FBIMinigameBlend, 0.5f);
 		this.m_LHAnimator.speed = 0f;
@@ -79,8 +77,7 @@ public class BodyInspectionMiniGameController : PlayerController
 	private void StartMinigame()
 	{
 		this.SetCamera();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 1.5f);
+		GreenHellGame.GetFadeSystem().FadeIn(FadeType.All, null, 1.5f);
 		this.m_SkyDome.gameObject.SetActive(false);
 	}
 
@@ -100,12 +97,11 @@ public class BodyInspectionMiniGameController : PlayerController
 		this.SetRHandTransform();
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if ((action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && GreenHellGame.GetFadeSystem().CanStartFade())
+		if ((action_data.m_Action == InputsManager.InputAction.Quit || action_data.m_Action == InputsManager.InputAction.AdditionalQuit) && GreenHellGame.GetFadeSystem().CanStartFade())
 		{
-			FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-			fadeSystem.FadeOut(FadeType.All, new VDelegate(this.StopMinigame), 1.5f, null);
+			GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, new VDelegate(this.StopMinigame), 1.5f, null);
 		}
 	}
 
@@ -177,8 +173,7 @@ public class BodyInspectionMiniGameController : PlayerController
 			{
 				this.m_Player.GetComponent<PlayerInjuryModule>().HealInjury(this.m_Injury);
 				this.m_Injury = null;
-				FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-				fadeSystem.FadeOut(FadeType.All, new VDelegate(this.StopMinigame), 1.5f, null);
+				GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, new VDelegate(this.StopMinigame), 1.5f, null);
 				this.m_State = EBIMState.Leaving;
 				PlayerSanityModule.Get().OnEvent(PlayerSanityModule.SanityEventType.WormMinigameSuccess, 1);
 			}
@@ -190,8 +185,7 @@ public class BodyInspectionMiniGameController : PlayerController
 	{
 		this.m_SkyDome.gameObject.SetActive(true);
 		this.ResetCamera();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 1.5f);
+		GreenHellGame.GetFadeSystem().FadeIn(FadeType.All, null, 1.5f);
 		this.m_Player.SetWantedItem(Hand.Left, null, true);
 		this.m_Player.SetWantedItem(Hand.Right, null, true);
 		this.Stop();
@@ -200,8 +194,7 @@ public class BodyInspectionMiniGameController : PlayerController
 	private void SetRHandTransform()
 	{
 		this.m_RhandTrans.rotation = this.m_RHStartRotation;
-		Quaternion localRotation = this.m_RhandTrans.localRotation;
-		Quaternion rhs = Quaternion.Inverse(localRotation);
+		Quaternion rhs = Quaternion.Inverse(this.m_RhandTrans.localRotation);
 		this.m_RH.transform.rotation = this.m_LhandTrans.rotation * rhs;
 		Vector3 b = this.m_RH.transform.position - this.m_RhandTrans.position;
 		this.m_RH.transform.position = this.m_LhandTrans.position;
@@ -213,7 +206,7 @@ public class BodyInspectionMiniGameController : PlayerController
 	{
 		if (this.m_State == EBIMState.Rotation)
 		{
-			this.m_MouseAxisX -= CrossPlatformInputManager.GetAxis("Mouse X") * this.m_MouseSensitivityX * Time.deltaTime;
+			this.m_MouseAxisX -= InputHelpers.GetLookInput(this.m_MouseSensitivityX, 1f, 150f).x * Time.deltaTime;
 			if (this.m_MouseAxisX < -30f)
 			{
 				this.m_MouseAxisX = -30f;
@@ -275,11 +268,9 @@ public class BodyInspectionMiniGameController : PlayerController
 			if (this.m_Result > 0.1f)
 			{
 				this.m_WormAnimator.speed = 0f;
+				return;
 			}
-			else
-			{
-				this.m_WormAnimator.speed = 1f;
-			}
+			this.m_WormAnimator.speed = 1f;
 		}
 	}
 

@@ -14,23 +14,19 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			return this.m_Active || (Time.time - this.m_LastSwitchWeaponTime >= this.m_MinSwitchWeaponsInterval && (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.HunterBowAttack) && this.m_HunterAI.m_WeaponType == HumanAI.WeaponType.Primary && this.m_HunterAI.transform.position.Distance(Player.Get().transform.position) <= this.m_HunterAI.m_SecondaryWeaponDist);
+			return this.m_Active || (Time.time - this.m_LastSwitchWeaponTime >= this.m_MinSwitchWeaponsInterval && (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.HunterBowAttack) && this.m_HunterAI.m_WeaponType == HumanAI.WeaponType.Primary && !(this.m_AI.m_EnemyModule.m_Enemy == null) && this.m_HunterAI.transform.position.Distance(this.m_AI.m_EnemyModule.m_Enemy.transform.position) <= this.m_HunterAI.m_SecondaryWeaponDist);
 		}
 
 		protected override void Prepare()
 		{
 			base.Prepare();
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
-			float num = Vector3.Angle(normalized2D, this.m_AI.transform.forward.GetNormalized2D());
-			if (num >= 15f)
+			if (Vector3.Angle((this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) >= 15f)
 			{
-				this.m_HumanRotateTo.SetupParams(Player.Get().transform.position, 15f);
+				this.m_HumanRotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.transform.position, 15f);
 				base.StartAction(this.m_HumanRotateTo);
+				return;
 			}
-			else
-			{
-				base.StartAction(this.m_SwitchWeapon);
-			}
+			base.StartAction(this.m_SwitchWeapon);
 		}
 
 		public override void OnStopAction(AIAction action)
@@ -39,8 +35,9 @@ namespace AIs
 			if (action.GetType() == typeof(HumanRotateTo))
 			{
 				base.StartAction(this.m_SwitchWeapon);
+				return;
 			}
-			else if (action.GetType() == typeof(SwitchWeapon))
+			if (action.GetType() == typeof(SwitchWeapon))
 			{
 				this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.HumanMoveToEnemy);
 			}

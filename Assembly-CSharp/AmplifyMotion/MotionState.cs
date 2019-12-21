@@ -8,15 +8,6 @@ namespace AmplifyMotion
 	[Serializable]
 	internal abstract class MotionState
 	{
-		public MotionState(AmplifyMotionCamera owner, AmplifyMotionObjectBase obj)
-		{
-			this.m_error = false;
-			this.m_initialized = false;
-			this.m_owner = owner;
-			this.m_obj = obj;
-			this.m_transform = obj.transform;
-		}
-
 		public AmplifyMotionCamera Owner
 		{
 			get
@@ -39,6 +30,15 @@ namespace AmplifyMotion
 			{
 				return this.m_error;
 			}
+		}
+
+		public MotionState(AmplifyMotionCamera owner, AmplifyMotionObjectBase obj)
+		{
+			this.m_error = false;
+			this.m_initialized = false;
+			this.m_owner = owner;
+			this.m_obj = obj;
+			this.m_transform = obj.transform;
 		}
 
 		internal virtual void Initialize()

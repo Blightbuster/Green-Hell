@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class MenuObjectives : MenuScreen
 {
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.Setup();
@@ -19,7 +19,7 @@ public class MenuObjectives : MenuScreen
 		Text contentActive = this.m_ContentActive;
 		contentActive.text += "<color=orange>";
 		Text contentActive2 = this.m_ContentActive;
-		contentActive2.text += GreenHellGame.Instance.GetLocalization().Get("MenuObjectives_ActiveObjectives");
+		contentActive2.text += GreenHellGame.Instance.GetLocalization().Get("MenuObjectives_ActiveObjectives", true);
 		Text contentActive3 = this.m_ContentActive;
 		contentActive3.text += "</color>";
 		Text contentActive4 = this.m_ContentActive;
@@ -27,7 +27,7 @@ public class MenuObjectives : MenuScreen
 		Text contentCompleted = this.m_ContentCompleted;
 		contentCompleted.text += "<color=orange>";
 		Text contentCompleted2 = this.m_ContentCompleted;
-		contentCompleted2.text += GreenHellGame.Instance.GetLocalization().Get("MenuObjectives_CompletedObjectives");
+		contentCompleted2.text += GreenHellGame.Instance.GetLocalization().Get("MenuObjectives_CompletedObjectives", true);
 		Text contentCompleted3 = this.m_ContentCompleted;
 		contentCompleted3.text += "</color>";
 		Text contentCompleted4 = this.m_ContentCompleted;
@@ -38,7 +38,7 @@ public class MenuObjectives : MenuScreen
 			Text contentActive5 = this.m_ContentActive;
 			contentActive5.text += "<color=white>";
 			Text contentActive6 = this.m_ContentActive;
-			contentActive6.text += GreenHellGame.Instance.GetLocalization().Get(objective.m_TextID);
+			contentActive6.text += GreenHellGame.Instance.GetLocalization().Get(objective.m_TextID, true);
 			Text contentActive7 = this.m_ContentActive;
 			contentActive7.text += "</color>";
 			Text contentActive8 = this.m_ContentActive;
@@ -50,7 +50,7 @@ public class MenuObjectives : MenuScreen
 			Text contentCompleted5 = this.m_ContentCompleted;
 			contentCompleted5.text += "<color=green>";
 			Text contentCompleted6 = this.m_ContentCompleted;
-			contentCompleted6.text += GreenHellGame.Instance.GetLocalization().Get(objective2.m_Name);
+			contentCompleted6.text += GreenHellGame.Instance.GetLocalization().Get(objective2.m_Name, true);
 			Text contentCompleted7 = this.m_ContentCompleted;
 			contentCompleted7.text += "</color>";
 			Text contentCompleted8 = this.m_ContentCompleted;

@@ -1,58 +1,123 @@
 ﻿using System;
+using CJTools;
 using Enums;
-using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuOptionsControls : MainMenuScreen, IYesNoDialogOwner
+public class MainMenuOptionsControls : MenuScreen, IYesNoDialogOwner
 {
-	private void Start()
+	protected override void Awake()
 	{
-		this.m_InvertMouseYButton.SetTitle(GreenHellGame.Instance.GetLocalization().Get("OptionsControls_InvertMouse"));
-		this.m_InvertMouseYButton.AddOption("Yes", GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_Yes"));
-		this.m_InvertMouseYButton.AddOption("No", GreenHellGame.Instance.GetLocalization().Get("MenuYesNoDialog_No"));
-		this.m_XSensitivitySlider = this.m_XSensitivityButton.GetComponentInChildren<Slider>();
-		this.m_YSensitivitySlider = this.m_YSensitivityButton.GetComponentInChildren<Slider>();
-		this.m_AcceptButton.interactable = false;
+		base.Awake();
+		this.m_InvertMouseYButton.AddOption("No", "MenuYesNoDialog_No");
+		this.m_InvertMouseYButton.AddOption("Yes", "MenuYesNoDialog_Yes");
+		this.m_ToggleRunButton.AddOption("No", "MenuYesNoDialog_No");
+		this.m_ToggleRunButton.AddOption("Yes", "MenuYesNoDialog_Yes");
+		this.m_ToggleRunButton.AddOption("Always", "MenuOptionsControls_AlwaysRun");
+		this.m_ToggleCrouchButton.AddOption("No", "MenuYesNoDialog_No");
+		this.m_ToggleCrouchButton.AddOption("Yes", "MenuYesNoDialog_Yes");
+		this.m_ToggleWatchButton.AddOption("No", "MenuYesNoDialog_No");
+		this.m_ToggleWatchButton.AddOption("Yes", "MenuYesNoDialog_Yes");
+		this.m_ControllerButton.AddOption("No", "MenuOptionsControls_Controller_Keyboard");
+		this.m_ControllerButton.AddOption("Yes", "MenuOptionsControls_Controller_Pad");
 		this.m_KeyBindingsText = this.m_KeyBindingsButton.GetComponentInChildren<Text>();
 	}
 
 	public override void OnShow()
 	{
 		base.OnShow();
-		this.m_InvertMouseYButton.SetByOption((!GreenHellGame.Instance.m_Settings.m_InvertMouseY) ? "No" : "Yes");
+		this.m_ControllerButton.SetByOption((GreenHellGame.Instance.m_Settings.m_ControllerType == ControllerType.PC) ? "No" : "Yes");
+		switch (GreenHellGame.Instance.m_Settings.m_ToggleRunOption)
+		{
+		case GameSettings.ToggleRunOption.No:
+			this.m_ToggleRunButton.SetByOption("No");
+			break;
+		case GameSettings.ToggleRunOption.Yes:
+			this.m_ToggleRunButton.SetByOption("Yes");
+			break;
+		case GameSettings.ToggleRunOption.Always:
+			this.m_ToggleRunButton.SetByOption("On");
+			break;
+		}
+		this.m_ToggleCrouchButton.SetByOption(GreenHellGame.Instance.m_Settings.m_ToggleCrouch ? "Yes" : "No");
+		this.m_ToggleWatchButton.SetByOption(GreenHellGame.Instance.m_Settings.m_ToggleWatch ? "Yes" : "No");
+		this.m_InvertMouseYButton.SetByOption(GreenHellGame.Instance.m_Settings.m_InvertMouseY ? "Yes" : "No");
 		this.m_InvertMouseY = GreenHellGame.Instance.m_Settings.m_InvertMouseY;
 		this.m_XSensitivitySlider.value = GreenHellGame.Instance.m_Settings.m_XSensitivity;
 		this.m_YSensitivitySlider.value = GreenHellGame.Instance.m_Settings.m_YSensitivity;
-		this.m_StartXSensitivity = GreenHellGame.Instance.m_Settings.m_XSensitivity;
-		this.m_StartYSensitivity = GreenHellGame.Instance.m_Settings.m_YSensitivity;
-		this.m_AcceptButton.interactable = false;
+		if (GreenHellGame.Instance.m_Settings.m_LookRotationSpeed > 50f)
+		{
+			this.m_MouseSmoothing.value = CJTools.Math.GetProportionalClamp(0f, 0.5f, GreenHellGame.Instance.m_Settings.m_LookRotationSpeed, 200f, 50f);
+		}
+		else
+		{
+			this.m_MouseSmoothing.value = CJTools.Math.GetProportionalClamp(0.5f, 1f, GreenHellGame.Instance.m_Settings.m_LookRotationSpeed, 50f, 12f);
+		}
+		this.m_CursorVisible = GreenHellGame.IsPCControllerActive();
+		this.m_KeyBindingsButton.gameObject.SetActive(GreenHellGame.IsPCControllerActive());
+		this.m_PadControllerConnected = GreenHellGame.IsPadControllerConnected();
+		this.m_ControllerButton.gameObject.SetActive(this.m_PadControllerConnected);
 	}
 
 	public override void OnSelectionChanged(UISelectButton button, string option)
 	{
-		if (option == "Yes")
+		if (button == this.m_InvertMouseYButton)
 		{
-			this.m_InvertMouseY = true;
+			if (option == "Yes")
+			{
+				this.m_InvertMouseY = true;
+				return;
+			}
+			if (option == "No")
+			{
+				this.m_InvertMouseY = false;
+			}
 		}
-		else if (option == "No")
-		{
-			this.m_InvertMouseY = false;
-		}
-		this.m_AcceptButton.interactable = true;
 	}
 
 	public void OnYesFromDialog()
 	{
-		if (this.m_Question == OptionsControlsQuestion.Back)
+		if (this.m_Question == MainMenuOptionsControls.OptionsControlsQuestion.Back)
 		{
-			MainMenuManager.Get().SetActiveScreen(typeof(MainMenuOptions), true);
+			this.ShowPreviousScreen();
+			return;
 		}
-		else if (this.m_Question == OptionsControlsQuestion.Accept)
+		if (this.m_Question == MainMenuOptionsControls.OptionsControlsQuestion.Accept)
 		{
-			this.ApplySettings();
-			GreenHellGame.Instance.m_Settings.SaveSettings();
-			GreenHellGame.Instance.m_Settings.ApplySettings();
+			this.ChangeControllerOption();
+			this.ShowPreviousScreen();
 		}
+	}
+
+	public void ChangeControllerOption()
+	{
+		this.ApplySettings();
+		GreenHellGame.Instance.OnChangeControllerOption();
+		this.m_KeyBindingsButton.gameObject.SetActive(GreenHellGame.IsPCControllerActive());
+		this.OnChangeControllerOption();
+	}
+
+	private void ShowCursor()
+	{
+		CursorManager.Get().ShowCursor(true, false);
+		this.m_CursorVisible = true;
+		MenuInGameManager menuInGameManager = MenuInGameManager.Get();
+		if (menuInGameManager == null)
+		{
+			return;
+		}
+		menuInGameManager.SetCursorVisible(true);
+	}
+
+	private void HideCursor()
+	{
+		CursorManager.Get().ShowCursor(false, false);
+		this.m_CursorVisible = false;
+		MenuInGameManager menuInGameManager = MenuInGameManager.Get();
+		if (menuInGameManager == null)
+		{
+			return;
+		}
+		menuInGameManager.SetCursorVisible(false);
 	}
 
 	public void OnNoFromDialog()
@@ -63,80 +128,114 @@ public class MainMenuOptionsControls : MainMenuScreen, IYesNoDialogOwner
 	{
 	}
 
+	public void OnCloseDialog()
+	{
+	}
+
 	private void ApplySettings()
 	{
-		GreenHellGame.Instance.m_Settings.m_InvertMouseY = this.m_InvertMouseY;
+		GreenHellGame.Instance.m_Settings.m_ToggleRunOption = this.m_ToggleRunButton.GetSelectedOptionEnumValue<GameSettings.ToggleRunOption>();
+		GreenHellGame.Instance.m_Settings.m_ToggleCrouch = this.m_ToggleCrouchButton.GetSelectedOptionBoolValue();
+		GreenHellGame.Instance.m_Settings.m_ToggleWatch = this.m_ToggleWatchButton.GetSelectedOptionBoolValue();
+		GreenHellGame.Instance.m_Settings.m_InvertMouseY = this.m_InvertMouseYButton.GetSelectedOptionBoolValue();
 		GreenHellGame.Instance.m_Settings.m_XSensitivity = this.m_XSensitivitySlider.value;
 		GreenHellGame.Instance.m_Settings.m_YSensitivity = this.m_YSensitivitySlider.value;
+		GreenHellGame.Instance.m_Settings.m_ControllerType = (ControllerType)this.m_ControllerButton.m_SelectionIdx;
+		if (this.m_MouseSmoothing.value > 0.5f)
+		{
+			GreenHellGame.Instance.m_Settings.m_LookRotationSpeed = CJTools.Math.GetProportionalClamp(50f, 12f, this.m_MouseSmoothing.value, 0.5f, 1f);
+			return;
+		}
+		GreenHellGame.Instance.m_Settings.m_LookRotationSpeed = CJTools.Math.GetProportionalClamp(200f, 50f, this.m_MouseSmoothing.value, 0f, 0.5f);
 	}
 
-	public void OnBack()
+	public override void OnBack()
 	{
-		this.m_Question = OptionsControlsQuestion.Back;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_BackTitle"), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Back"), true);
+		if (base.IsAnyOptionModified())
+		{
+			this.m_Question = MainMenuOptionsControls.OptionsControlsQuestion.Back;
+			GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_BackTitle", true), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Back", true), !this.m_IsIngame);
+			return;
+		}
+		base.OnBack();
 	}
 
-	public void OnAccept()
+	public override void OnAccept()
 	{
-		this.m_Question = OptionsControlsQuestion.Accept;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_AcceptTitle"), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Accept"), true);
+		if (base.IsAnyOptionModified())
+		{
+			this.m_Question = MainMenuOptionsControls.OptionsControlsQuestion.Accept;
+			GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_AcceptTitle", true), GreenHellGame.Instance.GetLocalization().Get("YNDialog_OptionsGame_Accept", true), !this.m_IsIngame);
+			return;
+		}
+		this.ShowPreviousScreen();
 	}
 
 	public void OnKeyBindings()
 	{
+		if (this.m_IsIngame)
+		{
+			this.m_MenuInGameManager.ShowScreen(typeof(MainMenuOptionsControlsKeysBinding));
+			return;
+		}
 		MainMenuManager.Get().SetActiveScreen(typeof(MainMenuOptionsControlsKeysBinding), true);
 	}
 
-	private void Update()
+	public override bool IsMenuButtonEnabled(Button b)
 	{
-		if (this.m_XSensitivitySlider.value != this.m_StartXSensitivity || this.m_YSensitivitySlider.value != this.m_StartYSensitivity)
+		if (b == this.m_AcceptButton)
 		{
-			this.m_AcceptButton.interactable = true;
+			return base.IsAnyOptionModified();
 		}
-		this.UpdateButtons();
+		return base.IsMenuButtonEnabled(b);
 	}
 
-	private void UpdateButtons()
+	protected override void Update()
 	{
-		Color color = this.m_BackButton.GetComponentInChildren<Text>().color;
-		Color color2 = this.m_BackButton.GetComponentInChildren<Text>().color;
-		color.a = MainMenuScreen.s_ButtonsAlpha;
-		color2.a = MainMenuScreen.s_InactiveButtonsAlpha;
-		this.m_KeyBindingsButton.GetComponentInChildren<Text>().color = color;
-		Vector2 screenPoint = Input.mousePosition;
-		this.m_ActiveButton = null;
-		RectTransform component = this.m_KeyBindingsButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
+		base.Update();
+		this.UpdateController();
+	}
+
+	private void UpdateController()
+	{
+		if (GreenHellGame.IsPadControllerConnected() != this.m_PadControllerConnected)
 		{
-			this.m_ActiveButton = this.m_KeyBindingsButton.gameObject;
-		}
-		component = this.m_KeyBindingsText.GetComponent<RectTransform>();
-		Vector3 localPosition = component.localPosition;
-		float num = (!(this.m_ActiveButton == this.m_KeyBindingsButton.gameObject)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX;
-		float num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
-		localPosition.x += num2;
-		component.localPosition = localPosition;
-		if (this.m_ActiveButton == this.m_KeyBindingsButton.gameObject)
-		{
-			color = this.m_KeyBindingsText.color;
-			color.a = 1f;
-			this.m_KeyBindingsText.color = color;
+			this.OnChangeControllerOption();
 		}
 	}
+
+	private void OnChangeControllerOption()
+	{
+		base.SetupController();
+		bool flag = GreenHellGame.IsPadControllerConnected();
+		this.m_ControllerButton.gameObject.SetActive(flag);
+		this.m_ControllerButton.SetByOption(GreenHellGame.IsPCControllerActive() ? "No" : "Yes");
+		if (GreenHellGame.IsPadControllerActive() && this.m_CursorVisible)
+		{
+			this.HideCursor();
+		}
+		else if (GreenHellGame.IsPCControllerActive() && !this.m_CursorVisible)
+		{
+			this.ShowCursor();
+		}
+		this.m_PadControllerConnected = flag;
+	}
+
+	public UISelectButton m_ControllerButton;
 
 	public UISelectButton m_InvertMouseYButton;
 
-	public GameObject m_XSensitivityButton;
+	public UISelectButton m_ToggleRunButton;
 
-	public GameObject m_YSensitivityButton;
+	public UISelectButton m_ToggleCrouchButton;
 
-	private Slider m_XSensitivitySlider;
+	public UISelectButton m_ToggleWatchButton;
 
-	private Slider m_YSensitivitySlider;
+	public Slider m_XSensitivitySlider;
 
-	private float m_StartXSensitivity = 1f;
+	public Slider m_YSensitivitySlider;
 
-	private float m_StartYSensitivity = 1f;
+	public Slider m_MouseSmoothing;
 
 	private bool m_InvertMouseY;
 
@@ -148,11 +247,22 @@ public class MainMenuOptionsControls : MainMenuScreen, IYesNoDialogOwner
 
 	public Button m_BackButton;
 
-	private OptionsControlsQuestion m_Question;
+	private const float SPEED_SMOOTHING_MAX = 12f;
 
-	private GameObject m_ActiveButton;
+	private const float SPEED_SMOOTHING_MIN = 200f;
 
-	private float m_ButtonTextStartX;
+	private const float SPEED_SMOOTHING_DEFAULT = 50f;
 
-	private float m_SelectedButtonX = 10f;
+	private MainMenuOptionsControls.OptionsControlsQuestion m_Question;
+
+	private bool m_CursorVisible;
+
+	private bool m_PadControllerConnected;
+
+	public enum OptionsControlsQuestion
+	{
+		None,
+		Back,
+		Accept
+	}
 }

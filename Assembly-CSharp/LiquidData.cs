@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Enums;
 
 public class LiquidData
@@ -25,13 +26,7 @@ public class LiquidData
 
 	public int m_PoisonDebuff;
 
-	public ConsumeEffect m_ConsumeEffect = ConsumeEffect.None;
-
-	public float m_ConsumeEffectChance;
-
-	public float m_ConsumeEffectDelay;
-
-	public int m_ConsumeEffectLevel;
+	public List<LiquidConsumeEffectData> m_ConsumeEffects = new List<LiquidConsumeEffectData>();
 
 	public bool m_Disgusting;
 }

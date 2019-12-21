@@ -8,24 +8,29 @@ public class ParasiteSickness : Disease
 		this.m_Type = ConsumeEffect.ParasiteSickness;
 	}
 
+	protected override bool CanApplyConsumeEffect(ConsumableInfo info)
+	{
+		return true;
+	}
+
 	public override void Load(Key key)
 	{
 		if (key.GetName() == "MacroNutricientFatLossMul")
 		{
 			this.m_MacroNutricientFatLossMul = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "MacroNutricientCarboLossMul")
+		if (key.GetName() == "MacroNutricientCarboLossMul")
 		{
 			this.m_MacroNutricientCarboLossMul = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "MacroNutricientProteinsLossMul")
+		if (key.GetName() == "MacroNutricientProteinsLossMul")
 		{
 			this.m_MacroNutricientProteinsLossMul = key.GetVariable(0).FValue;
+			return;
 		}
-		else
-		{
-			base.Load(key);
-		}
+		base.Load(key);
 	}
 
 	public float m_MacroNutricientFatLossMul = 1f;

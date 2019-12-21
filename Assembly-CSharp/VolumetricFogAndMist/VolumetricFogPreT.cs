@@ -20,14 +20,12 @@ namespace VolumetricFogAndMist
 			if (this.fog.renderBeforeTransparent)
 			{
 				this.fog.DoOnRenderImage(source, destination);
+				return;
 			}
-			else
-			{
-				RenderTexture temporary = RenderTexture.GetTemporary(source.width, source.height, 0, source.format);
-				this.fog.DoOnRenderImage(source, temporary);
-				Shader.SetGlobalTexture("_VolumetricFog_OpaqueFrame", temporary);
-				Graphics.Blit(temporary, destination);
-			}
+			RenderTexture temporary = RenderTexture.GetTemporary(source.width, source.height, 0, source.format);
+			this.fog.DoOnRenderImage(source, temporary);
+			Shader.SetGlobalTexture("_VolumetricFog_OpaqueFrame", temporary);
+			Graphics.Blit(temporary, destination);
 		}
 
 		private void OnPostRender()

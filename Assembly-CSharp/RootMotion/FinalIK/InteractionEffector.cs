@@ -7,11 +7,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class InteractionEffector
 	{
-		public InteractionEffector(FullBodyBipedEffector effectorType)
-		{
-			this.effectorType = effectorType;
-		}
-
 		public FullBodyBipedEffector effectorType { get; private set; }
 
 		public bool isPaused { get; private set; }
@@ -24,6 +19,11 @@ namespace RootMotion.FinalIK
 			{
 				return this.interactionObject != null;
 			}
+		}
+
+		public InteractionEffector(FullBodyBipedEffector effectorType)
+		{
+			this.effectorType = effectorType;
 		}
 
 		public void Initiate(InteractionSystem interactionSystem)
@@ -185,7 +185,7 @@ namespace RootMotion.FinalIK
 			this.StoreDefaults();
 			this.timer = 0f;
 			this.weight = 0f;
-			this.fadeInSpeed = ((fadeInTime <= 0f) ? 1000f : (1f / fadeInTime));
+			this.fadeInSpeed = ((fadeInTime > 0f) ? (1f / fadeInTime) : 1000f);
 			this.length = interactionObject.length;
 			this.isPaused = false;
 			this.pickedUp = false;
@@ -224,13 +224,13 @@ namespace RootMotion.FinalIK
 				this.interactionObject.Apply(this.interactionSystem.ik.solver, this.effectorType, this.interactionTarget, this.timer, this.weight);
 				return;
 			}
-			this.timer += Time.deltaTime * speed * ((!(this.interactionTarget != null)) ? 1f : this.interactionTarget.interactionSpeedMlp);
+			this.timer += Time.deltaTime * speed * ((this.interactionTarget != null) ? this.interactionTarget.interactionSpeedMlp : 1f);
 			this.weight = Mathf.Clamp(this.weight + Time.deltaTime * this.fadeInSpeed * speed, 0f, 1f);
 			bool flag = false;
 			bool flag2 = false;
 			this.TriggerUntriggeredEvents(true, out flag, out flag2);
-			Vector3 b = (!this.pickedUp) ? this.target.position : this.pickUpPosition;
-			Quaternion b2 = (!this.pickedUp) ? this.target.rotation : this.pickUpRotation;
+			Vector3 b = this.pickedUp ? this.pickUpPosition : this.target.position;
+			Quaternion b2 = this.pickedUp ? this.pickUpRotation : this.target.rotation;
 			this.effector.position = Vector3.Lerp(this.effector.bone.position, b, this.weight);
 			this.effector.rotation = Quaternion.Lerp(this.effector.bone.rotation, b2, this.weight);
 			this.interactionObject.Apply(this.interactionSystem.ik.solver, this.effectorType, this.interactionTarget, this.timer, this.weight);
@@ -329,8 +329,7 @@ namespace RootMotion.FinalIK
 				}
 				if (root.GetComponent<Collider>() != null)
 				{
-					Collider[] componentsInChildren = this.interactionObject.targetsRoot.GetComponentsInChildren<Collider>();
-					foreach (Collider collider in componentsInChildren)
+					foreach (Collider collider in this.interactionObject.targetsRoot.GetComponentsInChildren<Collider>())
 					{
 						if (!collider.isTrigger)
 						{
@@ -387,7 +386,7 @@ namespace RootMotion.FinalIK
 			float num = this.interactionObject.GetValue(InteractionObject.WeightCurve.Type.RotateBoneWeight, this.interactionTarget, this.timer) * this.weight;
 			if (num > 0f)
 			{
-				Quaternion b = (!this.pickedUp) ? this.effector.rotation : this.pickUpRotation;
+				Quaternion b = this.pickedUp ? this.pickUpRotation : this.effector.rotation;
 				Quaternion rhs = Quaternion.Slerp(this.effector.bone.rotation, b, num * num);
 				this.effector.bone.localRotation = Quaternion.Inverse(this.effector.bone.parent.rotation) * rhs;
 			}

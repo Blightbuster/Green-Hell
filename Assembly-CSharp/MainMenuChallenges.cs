@@ -4,7 +4,7 @@ using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuChallenges : MainMenuScreen
+public class MainMenuChallenges : MenuScreen
 {
 	public override void OnShow()
 	{
@@ -13,7 +13,7 @@ public class MainMenuChallenges : MainMenuScreen
 		for (int i = 0; i < ChallengesManager.Get().m_Challenges.Count; i++)
 		{
 			Text componentInChildren = this.m_Buttons[i].GetComponentInChildren<Text>();
-			componentInChildren.text = GreenHellGame.Instance.GetLocalization().Get(ChallengesManager.Get().m_Challenges[i].m_NameID);
+			componentInChildren.text = GreenHellGame.Instance.GetLocalization().Get(ChallengesManager.Get().m_Challenges[i].m_NameID, true);
 			this.m_Color = componentInChildren.color;
 		}
 		for (int j = ChallengesManager.Get().m_Challenges.Count; j < this.m_Buttons.Count; j++)
@@ -23,19 +23,16 @@ public class MainMenuChallenges : MainMenuScreen
 		this.m_Loading = false;
 	}
 
-	private void Update()
+	protected override void Update()
 	{
+		base.Update();
 		this.UpdateButtons();
+		this.UpdateDescription();
 	}
 
 	private void UpdateButtons()
 	{
-		Color color = this.m_Color;
-		color.a = MainMenuScreen.s_ButtonsAlpha;
-		Vector2 screenPoint = Input.mousePosition;
-		Button activeButton = null;
 		this.m_SelectedChallenge = null;
-		RectTransform component;
 		for (int i = 0; i < this.m_Buttons.Count; i++)
 		{
 			Button button = this.m_Buttons[i];
@@ -43,53 +40,14 @@ public class MainMenuChallenges : MainMenuScreen
 			{
 				break;
 			}
-			button.GetComponentInChildren<Text>().color = this.m_Color;
-			component = button.GetComponent<RectTransform>();
-			if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
+			UnityEngine.Object gameObject = button.gameObject;
+			MenuBase.MenuOptionData activeMenuOption = this.m_ActiveMenuOption;
+			if (gameObject == ((activeMenuOption != null) ? activeMenuOption.m_Object : null))
 			{
-				activeButton = button;
 				this.m_SelectedChallenge = ChallengesManager.Get().m_Challenges[i];
+				this.SetActiveButton(button);
 			}
 		}
-		this.m_BackButton.GetComponentInChildren<Text>().color = this.m_Color;
-		component = this.m_BackButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-		{
-			activeButton = this.m_BackButton;
-		}
-		this.SetActiveButton(activeButton);
-		foreach (Button button2 in this.m_Buttons)
-		{
-			if (!button2.gameObject.activeSelf)
-			{
-				break;
-			}
-			component = button2.GetComponentInChildren<Text>().GetComponent<RectTransform>();
-			Vector3 position = component.position;
-			float num = (!(this.m_ActiveButton == button2)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX;
-			float num2 = Mathf.Ceil(num - position.x) * Time.deltaTime * 10f;
-			num = ((!(this.m_ActiveButton == button2)) ? MainMenu.s_ButtonTextStartX : MainMenu.s_SelectedButtonX);
-			num2 = Mathf.Ceil(num - position.x) * Time.deltaTime * 10f;
-			position.x += num2;
-			component.position = position;
-			if (this.m_ActiveButton == button2)
-			{
-				color = button2.GetComponentInChildren<Text>().color;
-				color.a = 1f;
-				button2.GetComponentInChildren<Text>().color = color;
-			}
-		}
-		if (this.m_ActiveButton == this.m_BackButton)
-		{
-			color = this.m_BackButton.GetComponentInChildren<Text>().color;
-			color.a = 1f;
-			this.m_BackButton.GetComponentInChildren<Text>().color = color;
-		}
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			this.OnBack();
-		}
-		this.UpdateDescription();
 	}
 
 	private void UpdateDescription()
@@ -97,8 +55,9 @@ public class MainMenuChallenges : MainMenuScreen
 		if (this.m_SelectedChallenge != null && this.m_DescCanvasGroup.alpha < 1f && Time.time - this.m_SetActiveButtonTime > 0.3f)
 		{
 			this.m_DescCanvasGroup.alpha += Time.deltaTime * 0.5f;
+			return;
 		}
-		else if (this.m_SelectedChallenge == null)
+		if (this.m_SelectedChallenge == null)
 		{
 			this.m_DescCanvasGroup.alpha = 0f;
 		}
@@ -121,13 +80,13 @@ public class MainMenuChallenges : MainMenuScreen
 		if (this.m_SelectedChallenge != null)
 		{
 			this.m_Icon.sprite = this.m_SelectedChallenge.m_Icon;
-			this.m_ChallengeName.text = GreenHellGame.Instance.GetLocalization().Get(this.m_SelectedChallenge.m_NameID);
-			this.m_Description.text = GreenHellGame.Instance.GetLocalization().Get(this.m_SelectedChallenge.m_DescriptionID);
+			this.m_ChallengeName.text = GreenHellGame.Instance.GetLocalization().Get(this.m_SelectedChallenge.m_NameID, true);
+			this.m_Description.text = GreenHellGame.Instance.GetLocalization().Get(this.m_SelectedChallenge.m_DescriptionID, true);
 			this.m_StartTime.text = ChallengesManager.Get().DateTimeToLocalizedString(this.m_SelectedChallenge.m_StartDate, true);
 			this.m_EndTime.text = ChallengesManager.Get().DateTimeToLocalizedString(this.m_SelectedChallenge.m_EndDate, true);
 			if (this.m_SelectedChallenge.m_BestScore > 0f)
 			{
-				this.m_BestTime.text = GreenHellGame.Instance.GetLocalization().Get("ChallengeResult_BestTime");
+				this.m_BestTime.text = GreenHellGame.Instance.GetLocalization().Get("ChallengeResult_BestTime", true);
 				Text bestTime = this.m_BestTime;
 				bestTime.text += " - ";
 				DateTime date = this.m_SelectedChallenge.m_StartDate.AddHours((double)this.m_SelectedChallenge.m_BestScore);
@@ -135,12 +94,10 @@ public class MainMenuChallenges : MainMenuScreen
 				bestTime2.text += ChallengesManager.Get().DateTimeToLocalizedString(date, false);
 				float fillAmount = this.m_SelectedChallenge.m_BestScore / this.m_SelectedChallenge.m_Duration;
 				this.m_BestResultBelt.fillAmount = fillAmount;
+				return;
 			}
-			else
-			{
-				this.m_BestTime.text = string.Empty;
-				this.m_BestResultBelt.fillAmount = 0f;
-			}
+			this.m_BestTime.text = string.Empty;
+			this.m_BestResultBelt.fillAmount = 0f;
 		}
 	}
 
@@ -153,37 +110,51 @@ public class MainMenuChallenges : MainMenuScreen
 
 	private void OnPreStartGame()
 	{
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeOut(FadeType.All, new VDelegate(this.OnStartGame), 2f, null);
-		CursorManager.Get().ShowCursor(false);
+		GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, new VDelegate(this.OnStartGame), 2f, null);
+		CursorManager.Get().ShowCursor(false, false);
 	}
 
 	private void OnStartGame()
 	{
-		GreenHellGame.Instance.m_GameDifficulty = GameDifficulty.Hard;
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.Hard);
 		LoadingScreen.Get().Show(LoadingScreenState.StartGame);
 		GreenHellGame.Instance.m_FromSave = false;
-		Music.Get().Stop(1f);
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 2f);
+		Music.Get().Stop(1f, 0);
+		GreenHellGame.GetFadeSystem().FadeIn(FadeType.All, null, 2f);
 		base.Invoke("OnStartGameDelayed", 1f);
 		MainMenuManager.Get().HideAllScreens();
 	}
 
 	private void OnStartGameDelayed()
 	{
-		Music.Get().PlayByName("loading_screen", false);
-		Music.Get().m_Source.loop = true;
+		Music.Get().PlayByName("loading_screen", false, 1f, 0);
+		Music.Get().m_Source[0].loop = true;
 		GreenHellGame.Instance.StartGame();
 	}
 
-	public void OnBack()
+	public override void OnBack()
 	{
 		if (this.m_Loading)
 		{
 			return;
 		}
-		MainMenuManager.Get().SetActiveScreen(typeof(MainMenu), true);
+		this.ShowPreviousScreen();
+	}
+
+	public override void OnInputAction(InputActionData action_data)
+	{
+		if (action_data.m_Action == InputsManager.InputAction.Button_A)
+		{
+			if (this.m_ActiveMenuOption != null && this.m_ActiveMenuOption.m_Button && !GreenHellGame.IsYesNoDialogActive())
+			{
+				this.m_ActiveMenuOption.m_Button.onClick.Invoke();
+				return;
+			}
+		}
+		else
+		{
+			base.OnInputAction(action_data);
+		}
 	}
 
 	public List<Button> m_Buttons = new List<Button>();

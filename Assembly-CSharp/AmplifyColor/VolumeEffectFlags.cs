@@ -16,14 +16,12 @@ namespace AmplifyColor
 		public void AddComponent(Component c)
 		{
 			VolumeEffectComponentFlags volumeEffectComponentFlags;
-			if ((volumeEffectComponentFlags = this.components.Find((VolumeEffectComponentFlags s) => s.componentName == c.GetType() + string.Empty)) != null)
+			if ((volumeEffectComponentFlags = this.components.Find((VolumeEffectComponentFlags s) => s.componentName == string.Concat(c.GetType()))) != null)
 			{
 				volumeEffectComponentFlags.UpdateComponentFlags(c);
+				return;
 			}
-			else
-			{
-				this.components.Add(new VolumeEffectComponentFlags(c));
-			}
+			this.components.Add(new VolumeEffectComponentFlags(c));
 		}
 
 		public void UpdateFlags(VolumeEffect effectVol)
@@ -51,9 +49,9 @@ namespace AmplifyColor
 			foreach (AmplifyColorBase amplifyColorBase in effects)
 			{
 				amplifyColorBase.EffectFlags = new VolumeEffectFlags();
-				foreach (AmplifyColorVolumeBase amplifyColorVolumeBase in volumes)
+				for (int j = 0; j < volumes.Length; j++)
 				{
-					VolumeEffect volumeEffect = amplifyColorVolumeBase.EffectContainer.FindVolumeEffect(amplifyColorBase);
+					VolumeEffect volumeEffect = volumes[j].EffectContainer.FindVolumeEffect(amplifyColorBase);
 					if (volumeEffect != null)
 					{
 						amplifyColorBase.EffectFlags.UpdateFlags(volumeEffect);

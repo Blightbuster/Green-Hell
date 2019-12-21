@@ -318,11 +318,11 @@ namespace Pathfinding
 				}
 				if (num == num2)
 				{
-					goto IL_E3;
+					goto IL_AF;
 				}
 			}
 			Debug.LogWarning("Infinite Loop in Convex Hull Calculation");
-			IL_E3:
+			IL_AF:
 			Vector3[] result = list.ToArray();
 			ListPool<Vector3>.Release(list);
 			return result;
@@ -358,39 +358,27 @@ namespace Pathfinding
 			{
 				return b;
 			}
-			if (num >= 0f && num3 <= 0f)
+			if (num >= 0f && num3 <= 0f && num * num4 - num3 * num2 <= 0f)
 			{
-				float num5 = num * num4 - num3 * num2;
-				if (num5 <= 0f)
-				{
-					float d = num / (num - num3);
-					return a + vector * d;
-				}
+				float d = num / (num - num3);
+				return a + vector * d;
 			}
 			Vector2 rhs3 = p - c;
-			float num6 = Vector2.Dot(vector, rhs3);
-			float num7 = Vector2.Dot(vector2, rhs3);
-			if (num7 >= 0f && num6 <= num7)
+			float num5 = Vector2.Dot(vector, rhs3);
+			float num6 = Vector2.Dot(vector2, rhs3);
+			if (num6 >= 0f && num5 <= num6)
 			{
 				return c;
 			}
-			if (num2 >= 0f && num7 <= 0f)
+			if (num2 >= 0f && num6 <= 0f && num5 * num2 - num * num6 <= 0f)
 			{
-				float num8 = num6 * num2 - num * num7;
-				if (num8 <= 0f)
-				{
-					float d2 = num2 / (num2 - num7);
-					return a + vector2 * d2;
-				}
+				float d2 = num2 / (num2 - num6);
+				return a + vector2 * d2;
 			}
-			if (num4 - num3 >= 0f && num6 - num7 >= 0f)
+			if (num4 - num3 >= 0f && num5 - num6 >= 0f && num3 * num6 - num5 * num4 <= 0f)
 			{
-				float num9 = num3 * num7 - num6 * num4;
-				if (num9 <= 0f)
-				{
-					float d3 = (num4 - num3) / (num4 - num3 + (num6 - num7));
-					return b + (c - b) * d3;
-				}
+				float d3 = (num4 - num3) / (num4 - num3 + (num5 - num6));
+				return b + (c - b) * d3;
 			}
 			return p;
 		}

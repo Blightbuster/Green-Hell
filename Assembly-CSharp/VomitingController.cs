@@ -15,7 +15,7 @@ public class VomitingController : PlayerController
 	{
 		VomitingController.s_Instance = this;
 		base.Awake();
-		this.m_ControllerType = PlayerControllerType.Vomiting;
+		base.m_ControllerType = PlayerControllerType.Vomiting;
 		this.m_AudioModule = this.m_Player.GetComponent<PlayerAudioModule>();
 	}
 
@@ -31,6 +31,11 @@ public class VomitingController : PlayerController
 		this.m_Animator.SetBool(this.m_BVomiting, true);
 		EventsManager.OnEvent(Enums.Event.Vomit, 1);
 		TriggerController.Get().m_TriggerToExecute = null;
+		TriggerController.Get().ResetTrigger();
+		if (HUDItem.Get().m_Active)
+		{
+			HUDItem.Get().Deactivate();
+		}
 		this.m_Animator.SetBool(TriggerController.s_BGrabItem, false);
 		this.m_Animator.SetBool(TriggerController.s_BGrabItemBow, false);
 		this.m_Animator.SetBool(TriggerController.s_BGrabItemBambooBow, false);
@@ -52,12 +57,9 @@ public class VomitingController : PlayerController
 	private void UpdateState()
 	{
 		VomitingController.State state = this.m_State;
-		if (state != VomitingController.State.Vomiting)
+		if (state != VomitingController.State.Vomiting && state == VomitingController.State.End)
 		{
-			if (state == VomitingController.State.End)
-			{
-				this.Stop();
-			}
+			this.Stop();
 		}
 	}
 
@@ -67,8 +69,9 @@ public class VomitingController : PlayerController
 		if (id == AnimEventID.VomitingThrowUp)
 		{
 			this.ThrowUp();
+			return;
 		}
-		else if (id == AnimEventID.VomitingEnd)
+		if (id == AnimEventID.VomitingEnd)
 		{
 			this.m_Animator.SetBool(this.m_BVomiting, false);
 			this.m_State = VomitingController.State.End;
@@ -85,7 +88,7 @@ public class VomitingController : PlayerController
 	{
 		Transform transform = this.m_Player.gameObject.transform.FindDeepChild("mixamorig:Head");
 		Vector3 pos = transform.position + transform.TransformDirection(this.m_ParticlePosShift);
-		ParticlesManager.Get().Spawn("Vomit", pos, transform.rotation, transform);
+		ParticlesManager.Get().Spawn("Vomit", pos, transform.rotation, Vector3.zero, transform, -1f, false);
 		this.m_FXCounter++;
 		if (this.m_FXCounter < 10)
 		{

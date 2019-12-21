@@ -5,7 +5,7 @@ using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MenuNotepad : MonoBehaviour, ISaveLoad
+public class MenuNotepad : MonoBehaviour, ISaveLoad, IInputsReceiver
 {
 	public static MenuNotepad Get()
 	{
@@ -23,8 +23,8 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		{
 			this.m_ActiveTab = MenuNotepad.MenuNotepadTab.ConstructionsTab;
 		}
-		this.m_WasTabActivated = new bool[12];
-		for (int i = 0; i < 12; i++)
+		this.m_WasTabActivated = new bool[13];
+		for (int i = 0; i < 13; i++)
 		{
 			this.m_WasTabActivated[i] = false;
 		}
@@ -40,11 +40,11 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	private void Initialize()
 	{
-		List<NotepadTab> componentsDeepChild = General.GetComponentsDeepChild<NotepadTab>(base.gameObject);
+		NotepadTab[] componentsDeepChild = General.GetComponentsDeepChild<NotepadTab>(base.gameObject);
 		string[] names = Enum.GetNames(typeof(MenuNotepad.MenuNotepadTab));
 		for (int i = 0; i < names.Length - 1; i++)
 		{
-			for (int j = 0; j < componentsDeepChild.Count; j++)
+			for (int j = 0; j < componentsDeepChild.Length; j++)
 			{
 				if (names[i] == componentsDeepChild[j].GetType().ToString())
 				{
@@ -55,13 +55,14 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 					{
 						((MapTab)this.m_Tabs[menuNotepadTab]).InitMapsData();
 					}
+					this.m_Tabs[menuNotepadTab].Init();
 					break;
 				}
 			}
 		}
 		this.m_NoEntries = base.gameObject.transform.FindDeepChild("NoEntries").gameObject;
 		this.m_NoEntries.SetActive(false);
-		this.m_NoEntries.GetComponent<Text>().text = GreenHellGame.Instance.GetLocalization().Get("NoEntries");
+		this.m_NoEntries.GetComponent<Text>().text = GreenHellGame.Instance.GetLocalization().Get("NoEntries", true);
 		base.gameObject.SetActive(false);
 		this.UpdatePrevNextButtons();
 		this.InitializeSounds();
@@ -111,11 +112,12 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		this.SetProperPage();
 		this.SetNoEntries();
 		this.PlayShowSound();
+		InputsManager.Get().RegisterReceiver(this);
 	}
 
 	private void OnDisable()
 	{
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 13; i++)
 		{
 			this.m_Tabs[(MenuNotepad.MenuNotepadTab)i].gameObject.SetActive(false);
 			this.m_Tabs[(MenuNotepad.MenuNotepadTab)i].OnHide();
@@ -128,6 +130,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
 		this.m_MouseOverButton = false;
 		this.m_MouseOverConstruction = false;
+		InputsManager.Get().UnregisterReceiver(this);
 	}
 
 	public void OnNotepadHide()
@@ -137,25 +140,27 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	public void AddStoryEvent(string element_name)
 	{
-		StoryTab storyTab = (StoryTab)this.m_Tabs[MenuNotepad.MenuNotepadTab.StoryTab];
-		storyTab.AddStoryEvent(element_name);
+		((StoryTab)this.m_Tabs[MenuNotepad.MenuNotepadTab.StoryTab]).AddStoryEvent(element_name);
 		this.OnAddStoryEvent();
 	}
 
 	public void RemoveStoryEvent(string element_name)
 	{
-		StoryTab storyTab = (StoryTab)this.m_Tabs[MenuNotepad.MenuNotepadTab.StoryTab];
-		storyTab.RemoveStoryEvent(element_name);
+		((StoryTab)this.m_Tabs[MenuNotepad.MenuNotepadTab.StoryTab]).RemoveStoryEvent(element_name);
 		this.OnRemoveStoryEvent();
 	}
 
 	public void OnAddStoryEvent()
 	{
 		this.UpdatePrevNextButtons();
+		if (SaveGame.m_State != SaveGame.State.None)
+		{
+			return;
+		}
 		HUDInfoLog hudinfoLog = (HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog));
-		string title = GreenHellGame.Instance.GetLocalization().Get("MSG_Notepad_Story_NewEntry");
+		string title = GreenHellGame.Instance.GetLocalization().Get("MSG_Notepad_Story_NewEntry", true);
 		this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryTab, true);
-		hudinfoLog.AddInfo(title, string.Empty);
+		hudinfoLog.AddInfo(title, string.Empty, HUDInfoLogTextureType.Notepad);
 		PlayerAudioModule.Get().PlayNotepadEntrySound();
 	}
 
@@ -166,7 +171,14 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	public void OnAddMapArea()
 	{
-		HUDMessages.Get().AddMessage(GreenHellGame.Instance.GetLocalization().Get("MSG_Map_New_Location"), null, HUDMessageIcon.None, string.Empty);
+		if (SaveGame.m_State != SaveGame.State.None)
+		{
+			return;
+		}
+		HUDInfoLog hudinfoLog = (HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog));
+		string title = GreenHellGame.Instance.GetLocalization().Get("MSG_Map_New_Location", true);
+		this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryTab, true);
+		hudinfoLog.AddInfo(title, string.Empty, HUDInfoLogTextureType.Map);
 		PlayerAudioModule.Get().PlayNotepadEntrySound();
 	}
 
@@ -185,9 +197,15 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	private void Update()
 	{
+		this.UpdatePadControll();
 		this.UpdateInputs();
 		this.UpdateCursorOnNotepadPosition();
 		this.UpdateCursor();
+	}
+
+	private void UpdatePadControll()
+	{
+		CursorManager.Get().UpdatePadCursor(1f);
 	}
 
 	private void UpdateCursorOnNotepadPosition()
@@ -248,26 +266,25 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		{
 			return;
 		}
-		Ray ray = Camera.main.ViewportPointToRay(new Vector3(Input.mousePosition.x / (float)Screen.width, Input.mousePosition.y / (float)Screen.height, 0f));
-		RaycastHit[] array = Physics.RaycastAll(ray, 10f);
+		int num = Physics.RaycastNonAlloc(Camera.main.ViewportPointToRay(new Vector3(Input.mousePosition.x / (float)Screen.width, Input.mousePosition.y / (float)Screen.height, 0f)), this.m_RaycastHitsTmp, 10f);
 		this.m_MouseOverButton = false;
-		int num = 0;
-		for (int i = 0; i < array.Length; i++)
+		int num2 = 0;
+		for (int i = 0; i < num; i++)
 		{
-			if (array[i].collider == this.m_PrevMap)
+			if (this.m_RaycastHitsTmp[i].collider == this.m_PrevMap)
 			{
-				num = -1;
+				num2 = -1;
 			}
-			else if (array[i].collider == this.m_NextMap)
+			else if (this.m_RaycastHitsTmp[i].collider == this.m_NextMap)
 			{
-				num = 1;
+				num2 = 1;
 			}
 		}
-		if (num != 0)
+		if (num2 != 0)
 		{
 			if (Input.GetMouseButtonUp(0))
 			{
-				this.OnLMouseUp(MenuNotepad.MenuNotepadTab.MapTab, num);
+				this.OnLMouseUp(MenuNotepad.MenuNotepadTab.MapTab, num2);
 			}
 			this.m_MouseOverButton = true;
 			return;
@@ -277,74 +294,70 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 			return;
 		}
 		MenuNotepad.MenuNotepadTab menuNotepadTab = MenuNotepad.MenuNotepadTab.None;
-		for (int j = 0; j < array.Length; j++)
+		for (int j = 0; j < num; j++)
 		{
-			if (array[j].collider == this.m_Notepad.m_StoryTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_StoryTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.StoryTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_SkillsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_SkillsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.SkillsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_ItemsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_ItemsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.ItemsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_ConstructionsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_ConstructionsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.ConstructionsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_FirecampTabCollider)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_FirecampTabCollider)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.FirecampTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_TrapsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_TrapsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.TrapsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_PlannerTabCollider && !GreenHellGame.ROADSHOW_DEMO)
-			{
-				if (Debug.isDebugBuild && Input.GetKey(KeyCode.LeftShift))
-				{
-					HUDPlanner.Get().m_PlannerMode = PlannerMode.Planning;
-				}
-				else
-				{
-					HUDPlanner.Get().m_PlannerMode = PlannerMode.ReadOnly;
-				}
-				menuNotepadTab = MenuNotepad.MenuNotepadTab.PlannerTab;
-			}
-			else if (array[j].collider == this.m_Notepad.m_WaterConstructionsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_WaterConstructionsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.WaterConstructionsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_HealingItemsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_HealingItemsTabCollider && !GreenHellGame.ROADSHOW_DEMO)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.HealingItemsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_PlantsTabCollider)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_PlantsTabCollider)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.PlantsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_CustomConstructionsTabCollider)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_CustomConstructionsTabCollider)
 			{
 				menuNotepadTab = MenuNotepad.MenuNotepadTab.CustomConstructionsTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_PrevPage || array[j].collider == this.m_PrevMap)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_StoryObjectivesTabCollider)
 			{
-				num = -1;
+				menuNotepadTab = MenuNotepad.MenuNotepadTab.StoryObjectivesTab;
 			}
-			else if (array[j].collider == this.m_Notepad.m_NextPage || array[j].collider == this.m_NextMap)
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_MudBuildingsTabCollider)
 			{
-				num = 1;
+				menuNotepadTab = MenuNotepad.MenuNotepadTab.MudBuildingsTab;
+			}
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_PrevPage || this.m_RaycastHitsTmp[j].collider == this.m_PrevMap)
+			{
+				num2 = -1;
+			}
+			else if (this.m_RaycastHitsTmp[j].collider == this.m_Notepad.m_NextPage || this.m_RaycastHitsTmp[j].collider == this.m_NextMap)
+			{
+				num2 = 1;
 			}
 		}
-		if (Input.GetMouseButtonUp(0) && (menuNotepadTab >= MenuNotepad.MenuNotepadTab.StoryTab || num != 0))
+		if ((Input.GetMouseButtonUp(0) || Input.GetKeyUp(InputHelpers.PadButton.Button_X.KeyFromPad())) && (menuNotepadTab >= MenuNotepad.MenuNotepadTab.StoryTab || num2 != 0))
 		{
-			this.OnLMouseUp(menuNotepadTab, num);
+			this.OnLMouseUp(menuNotepadTab, num2);
 		}
-		this.m_MouseOverButton = (menuNotepadTab >= MenuNotepad.MenuNotepadTab.StoryTab || num != 0);
+		this.m_MouseOverButton = (menuNotepadTab >= MenuNotepad.MenuNotepadTab.StoryTab || num2 != 0);
 	}
 
 	private void OnLMouseUp(MenuNotepad.MenuNotepadTab tab, int page)
@@ -379,19 +392,6 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 			this.SetActiveTab(MenuNotepad.MenuNotepadTab.TrapsTab, false);
 			return;
 		}
-		if (tab == MenuNotepad.MenuNotepadTab.PlannerTab && !GreenHellGame.ROADSHOW_DEMO)
-		{
-			if (Debug.isDebugBuild && Input.GetKey(KeyCode.LeftShift))
-			{
-				HUDPlanner.Get().m_PlannerMode = PlannerMode.Planning;
-			}
-			else
-			{
-				HUDPlanner.Get().m_PlannerMode = PlannerMode.ReadOnly;
-			}
-			this.SetActiveTab(MenuNotepad.MenuNotepadTab.PlannerTab, false);
-			return;
-		}
 		if (tab == MenuNotepad.MenuNotepadTab.WaterConstructionsTab && !GreenHellGame.ROADSHOW_DEMO)
 		{
 			this.SetActiveTab(MenuNotepad.MenuNotepadTab.WaterConstructionsTab, false);
@@ -410,6 +410,16 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (tab == MenuNotepad.MenuNotepadTab.CustomConstructionsTab)
 		{
 			this.SetActiveTab(MenuNotepad.MenuNotepadTab.CustomConstructionsTab, false);
+			return;
+		}
+		if (tab == MenuNotepad.MenuNotepadTab.StoryObjectivesTab)
+		{
+			this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryObjectivesTab, false);
+			return;
+		}
+		if (tab == MenuNotepad.MenuNotepadTab.MudBuildingsTab)
+		{
+			this.SetActiveTab(MenuNotepad.MenuNotepadTab.MudBuildingsTab, false);
 			return;
 		}
 		if (page == -1)
@@ -435,7 +445,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		{
 			this.PlaySwitchTabSound();
 		}
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 13; i++)
 		{
 			if (tab == (MenuNotepad.MenuNotepadTab)i)
 			{
@@ -474,44 +484,32 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 			return;
 		}
 		NotepadTab notepadTab = this.m_Tabs[this.m_ActiveTab];
-		if (notepadTab.GetCurrentPage() == 0)
+		this.m_Notepad.EnablePrevPage(notepadTab.GetCurrentPage() > 0);
+		int currentPage = notepadTab.GetCurrentPage();
+		bool enable = false;
+		for (int i = currentPage + 1; i < notepadTab.GetNumActivePages(); i++)
 		{
-			this.m_Notepad.EnablePrevPage(false);
-			if (notepadTab.GetNumActivePages() > 2)
+			notepadTab.SetPageNum(i);
+			if (notepadTab.m_NumActiveElementsOnPage > 0)
 			{
-				this.m_Notepad.EnableNextPage(true);
-			}
-			else
-			{
-				this.m_Notepad.EnableNextPage(false);
+				enable = true;
+				break;
 			}
 		}
-		else
-		{
-			this.m_Notepad.EnablePrevPage(true);
-			if (notepadTab.GetNumActivePages() > (notepadTab.GetCurrentPage() + 1) * 2)
-			{
-				this.m_Notepad.EnableNextPage(true);
-			}
-			else
-			{
-				this.m_Notepad.EnableNextPage(false);
-			}
-		}
+		this.m_Notepad.EnableNextPage(enable);
+		notepadTab.SetPageNum(currentPage);
 	}
 
 	private void SetPrevPage()
 	{
-		NotepadTab notepadTab = this.m_Tabs[this.m_ActiveTab];
-		notepadTab.SetPrevPage();
+		this.m_Tabs[this.m_ActiveTab].SetPrevPage();
 		this.UpdatePrevNextButtons();
 		this.PlayFlipPageSound();
 	}
 
 	private void SetNextPage()
 	{
-		NotepadTab notepadTab = this.m_Tabs[this.m_ActiveTab];
-		notepadTab.SetNextPage();
+		this.m_Tabs[this.m_ActiveTab].SetNextPage();
 		this.UpdatePrevNextButtons();
 		this.PlayFlipPageSound();
 	}
@@ -522,28 +520,33 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		return this.m_WasTabActivated[(int)menuNotepadTab];
 	}
 
-	public bool IsTabActive(string tab_name)
+	public bool IsTabActive(string tab_name, int page_num = -1)
 	{
 		if (base.enabled && base.gameObject.activeSelf)
 		{
 			MenuNotepad.MenuNotepadTab menuNotepadTab = (MenuNotepad.MenuNotepadTab)Enum.Parse(typeof(MenuNotepad.MenuNotepadTab), tab_name);
-			return this.m_ActiveTab == menuNotepadTab;
+			bool flag = page_num < 0 || page_num == this.m_Tabs[menuNotepadTab].GetCurrentPage();
+			return this.m_ActiveTab == menuNotepadTab && flag;
 		}
 		return false;
 	}
 
 	public void Save()
 	{
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 13; i++)
 		{
+			MenuNotepad.MenuNotepadTab key = (MenuNotepad.MenuNotepadTab)i;
+			this.m_Tabs[key].Save(key.ToString());
 			SaveGame.SaveVal("NotepadWasActive" + i, this.m_WasTabActivated[i]);
 		}
 	}
 
 	public void Load()
 	{
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 13; i++)
 		{
+			MenuNotepad.MenuNotepadTab key = (MenuNotepad.MenuNotepadTab)i;
+			this.m_Tabs[key].Load(key.ToString());
 			this.m_WasTabActivated[i] = SaveGame.LoadBVal("NotepadWasActive" + i);
 		}
 	}
@@ -562,7 +565,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (this.m_ShowSounds.Count > 0)
 		{
 			AudioClip audioClip = this.m_ShowSounds[UnityEngine.Random.Range(0, this.m_ShowSounds.Count)];
-			if (audioClip)
+			if (audioClip && this.m_AudioSource)
 			{
 				this.m_AudioSource.PlayOneShot(audioClip);
 			}
@@ -574,7 +577,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (this.m_HideSounds.Count > 0)
 		{
 			AudioClip audioClip = this.m_HideSounds[UnityEngine.Random.Range(0, this.m_HideSounds.Count)];
-			if (audioClip)
+			if (audioClip && this.m_AudioSource)
 			{
 				this.m_AudioSource.PlayOneShot(audioClip);
 			}
@@ -586,7 +589,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (this.m_SwitchTabSounds.Count > 0)
 		{
 			AudioClip audioClip = this.m_SwitchTabSounds[UnityEngine.Random.Range(0, this.m_SwitchTabSounds.Count)];
-			if (audioClip)
+			if (audioClip && this.m_AudioSource)
 			{
 				this.m_AudioSource.PlayOneShot(audioClip);
 			}
@@ -598,7 +601,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (this.m_FlipPageSounds.Count > 0)
 		{
 			AudioClip audioClip = this.m_FlipPageSounds[UnityEngine.Random.Range(0, this.m_FlipPageSounds.Count)];
-			if (audioClip)
+			if (audioClip && this.m_AudioSource)
 			{
 				this.m_AudioSource.PlayOneShot(audioClip);
 			}
@@ -616,11 +619,9 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (this.m_Tabs[this.m_ActiveTab].ShouldShowNoEntries())
 		{
 			this.m_NoEntries.SetActive(true);
+			return;
 		}
-		else
-		{
-			this.m_NoEntries.SetActive(false);
-		}
+		this.m_NoEntries.SetActive(false);
 	}
 
 	private void UpdateCursor()
@@ -628,22 +629,157 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		if (this.m_ActiveTab == MenuNotepad.MenuNotepadTab.MapTab)
 		{
 			CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
+			return;
 		}
-		else if (this.m_MouseOverConstruction)
+		if (this.m_MouseOverConstruction)
 		{
 			CursorManager.Get().SetCursor(CursorManager.TYPE.Hammer);
+			return;
 		}
-		else if (this.m_MouseOverButton)
+		if (this.m_MouseOverButton)
 		{
 			CursorManager.Get().SetCursor(CursorManager.TYPE.MouseOver);
+			return;
 		}
-		else if (!HUDNewWheel.Get().IsSelected())
+		if (!HUDNewWheel.Get().IsSelected())
 		{
 			CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
 		}
 	}
 
-	private Dictionary<MenuNotepad.MenuNotepadTab, NotepadTab> m_Tabs = new Dictionary<MenuNotepad.MenuNotepadTab, NotepadTab>();
+	public void OnInputAction(InputActionData action_data)
+	{
+		if (action_data.m_Action == InputsManager.InputAction.PrevItemOrPage)
+		{
+			if (!WatchController.Get().IsActive())
+			{
+				this.SetPrevPage();
+				return;
+			}
+		}
+		else if (action_data.m_Action == InputsManager.InputAction.NextItemOrPage)
+		{
+			if (!WatchController.Get().IsActive())
+			{
+				this.SetNextPage();
+				return;
+			}
+		}
+		else if (action_data.m_Action == InputsManager.InputAction.NotepadNextTab)
+		{
+			switch (this.m_ActiveTab)
+			{
+			case MenuNotepad.MenuNotepadTab.StoryTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.ItemsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.MapTab:
+				break;
+			case MenuNotepad.MenuNotepadTab.ItemsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.PlantsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.ConstructionsTab:
+				if (GreenHellGame.Instance.m_GameMode == GameMode.Survival)
+				{
+					this.SetActiveTab(MenuNotepad.MenuNotepadTab.ItemsTab, false);
+					return;
+				}
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryObjectivesTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.FirecampTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.WaterConstructionsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.TrapsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.ConstructionsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.SkillsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.MudBuildingsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.WaterConstructionsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.TrapsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.HealingItemsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.SkillsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.PlantsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.HealingItemsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.CustomConstructionsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.FirecampTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.StoryObjectivesTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.MudBuildingsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.CustomConstructionsTab, false);
+				return;
+			default:
+				return;
+			}
+		}
+		else if (action_data.m_Action == InputsManager.InputAction.NotepadPrevTab)
+		{
+			switch (this.m_ActiveTab)
+			{
+			case MenuNotepad.MenuNotepadTab.StoryTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryObjectivesTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.MapTab:
+				break;
+			case MenuNotepad.MenuNotepadTab.ItemsTab:
+				if (GreenHellGame.Instance.m_GameMode == GameMode.Survival)
+				{
+					this.SetActiveTab(MenuNotepad.MenuNotepadTab.ConstructionsTab, false);
+					return;
+				}
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.StoryTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.ConstructionsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.TrapsTab, false);
+				break;
+			case MenuNotepad.MenuNotepadTab.FirecampTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.CustomConstructionsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.TrapsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.WaterConstructionsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.SkillsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.HealingItemsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.WaterConstructionsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.FirecampTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.HealingItemsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.PlantsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.PlantsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.ItemsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.CustomConstructionsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.MudBuildingsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.StoryObjectivesTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.ConstructionsTab, false);
+				return;
+			case MenuNotepad.MenuNotepadTab.MudBuildingsTab:
+				this.SetActiveTab(MenuNotepad.MenuNotepadTab.SkillsTab, false);
+				return;
+			default:
+				return;
+			}
+		}
+	}
+
+	public bool CanReceiveAction()
+	{
+		return base.isActiveAndEnabled;
+	}
+
+	public bool CanReceiveActionPaused()
+	{
+		return false;
+	}
+
+	public Dictionary<MenuNotepad.MenuNotepadTab, NotepadTab> m_Tabs = new Dictionary<MenuNotepad.MenuNotepadTab, NotepadTab>();
 
 	public static MenuNotepad s_Instance;
 
@@ -659,7 +795,7 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 
 	private MeshFilter m_MeshFilter;
 
-	private Ray m_CameraRay = default(Ray);
+	private Ray m_CameraRay;
 
 	private Triangle m_Triangle = new Triangle();
 
@@ -703,6 +839,8 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 	[HideInInspector]
 	public Collider m_PrevMap;
 
+	private RaycastHit[] m_RaycastHitsTmp = new RaycastHit[20];
+
 	public enum MenuNotepadTab
 	{
 		None = -1,
@@ -712,12 +850,13 @@ public class MenuNotepad : MonoBehaviour, ISaveLoad
 		ConstructionsTab,
 		FirecampTab,
 		TrapsTab,
-		PlannerTab,
 		SkillsTab,
 		WaterConstructionsTab,
 		HealingItemsTab,
 		PlantsTab,
 		CustomConstructionsTab,
+		StoryObjectivesTab,
+		MudBuildingsTab,
 		Count
 	}
 }

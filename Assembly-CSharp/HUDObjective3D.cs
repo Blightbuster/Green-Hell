@@ -35,7 +35,7 @@ public class HUDObjective3D : HUDBase
 	public override void UpdateAfterCamera()
 	{
 		base.UpdateAfterCamera();
-		if (Camera.main == null)
+		if (CameraManager.Get().m_MainCamera == null)
 		{
 			foreach (GameObject key in this.m_Objectives.Keys)
 			{
@@ -49,16 +49,16 @@ public class HUDObjective3D : HUDBase
 		foreach (GameObject gameObject in this.m_Objectives.Keys)
 		{
 			HUDObjective3D.Objective objective2 = this.m_Objectives[gameObject];
-			Vector3 position = Camera.main.WorldToViewportPoint(gameObject.transform.position);
-			position = Camera.main.ViewportToScreenPoint(position);
-			if (position.z <= 0f)
+			Vector3 vector = CameraManager.Get().m_MainCamera.WorldToViewportPoint(gameObject.transform.position);
+			vector = CameraManager.Get().m_MainCamera.ViewportToScreenPoint(vector);
+			if (vector.z <= 0f)
 			{
 				objective2.icon.gameObject.SetActive(false);
 			}
 			else
 			{
 				objective2.icon.gameObject.SetActive(true);
-				objective2.icon.transform.position = position;
+				objective2.icon.transform.position = vector;
 				Color color = objective2.icon.color;
 				float num = Vector3.Distance(gameObject.transform.position, Player.Get().transform.position);
 				color.a = CJTools.Math.GetProportionalClamp(0.6f, 1f, num, 10f, 0f);
@@ -80,12 +80,12 @@ public class HUDObjective3D : HUDBase
 		{
 			return;
 		}
-		HUDObjective3D.Objective value = default(HUDObjective3D.Objective);
-		value.icon = UnityEngine.Object.Instantiate<GameObject>(this.m_IconPrefab, base.transform).GetComponent<RawImage>();
-		value.text = value.icon.transform.Find("Name").GetComponent<Text>();
-		value.text.text = GreenHellGame.Instance.GetLocalization().Get(text);
-		value.dist = value.icon.transform.Find("Dist").GetComponent<Text>();
-		this.m_Objectives.Add(obj, value);
+		HUDObjective3D.Objective objective = default(HUDObjective3D.Objective);
+		objective.icon = UnityEngine.Object.Instantiate<GameObject>(this.m_IconPrefab, base.transform).GetComponent<RawImage>();
+		objective.text = objective.icon.transform.Find("Name").GetComponent<Text>();
+		objective.text.text = GreenHellGame.Instance.GetLocalization().Get(text, true);
+		objective.dist = objective.icon.transform.Find("Dist").GetComponent<Text>();
+		this.m_Objectives.Add(obj, objective);
 		this.m_ShowObjectives = true;
 	}
 

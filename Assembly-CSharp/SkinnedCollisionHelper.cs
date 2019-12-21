@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using UnityEngine;
 
 public class SkinnedCollisionHelper : MonoBehaviour
@@ -51,11 +50,9 @@ public class SkinnedCollisionHelper : MonoBehaviour
 				num += 1;
 			}
 			this.UpdateCollisionMesh();
+			return;
 		}
-		else
-		{
-			Debug.LogError(base.gameObject.name + ": SkinnedCollisionHelper: this object either has no SkinnedMeshRenderer or has no MeshCollider!");
-		}
+		Debug.LogError(base.gameObject.name + ": SkinnedCollisionHelper: this object either has no SkinnedMeshRenderer or has no MeshCollider!");
 	}
 
 	private void UpdateCollisionMesh()
@@ -68,23 +65,10 @@ public class SkinnedCollisionHelper : MonoBehaviour
 			}
 			foreach (CWeightList cweightList in this.nodeWeights)
 			{
-				IEnumerator enumerator = cweightList.weights.GetEnumerator();
-				try
+				foreach (object obj in cweightList.weights)
 				{
-					while (enumerator.MoveNext())
-					{
-						object obj = enumerator.Current;
-						CVertexWeight cvertexWeight = (CVertexWeight)obj;
-						this.newVert[cvertexWeight.index] += cweightList.transform.localToWorldMatrix.MultiplyPoint3x4(cvertexWeight.localPosition) * cvertexWeight.weight;
-					}
-				}
-				finally
-				{
-					IDisposable disposable;
-					if ((disposable = (enumerator as IDisposable)) != null)
-					{
-						disposable.Dispose();
-					}
+					CVertexWeight cvertexWeight = (CVertexWeight)obj;
+					this.newVert[cvertexWeight.index] += cweightList.transform.localToWorldMatrix.MultiplyPoint3x4(cvertexWeight.localPosition) * cvertexWeight.weight;
 				}
 			}
 			for (int k = 0; k < this.newVert.Length; k++)

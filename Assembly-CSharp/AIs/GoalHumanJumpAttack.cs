@@ -30,7 +30,11 @@ namespace AIs
 			{
 				return true;
 			}
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_HumanAI.transform.position).GetNormalized2D();
+			(this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_HumanAI.transform.position).GetNormalized2D();
+			if (Mathf.Abs(this.m_AI.m_EnemyModule.m_Enemy.transform.position.y - this.m_HumanAI.transform.position.y) > 1.5f)
+			{
+				return false;
+			}
 			float num = enemy.transform.position.Distance(this.m_AI.transform.position);
 			return num > this.m_AI.m_Params.m_AttackRange && num < this.m_AI.m_Params.m_JumpAttackRange;
 		}

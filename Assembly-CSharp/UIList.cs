@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IEventSystemHandler
+public class UIList : MonoBehaviour, IPointerClickHandler, IEventSystemHandler, IPointerDownHandler
 {
 	private void Awake()
 	{
@@ -25,10 +24,24 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 
 	public void AddElement(string element, int data = -1)
 	{
-		UIListElement uilistElement = new UIListElement();
+		UIListElement<int> uilistElement = new UIListElement<int>(data);
 		uilistElement.text = element;
 		uilistElement.data = data;
 		this.m_Elements.Add(uilistElement);
+		this.OnElementAdded();
+	}
+
+	public void AddElement<T>(string element, T data)
+	{
+		UIListElement<T> uilistElement = new UIListElement<T>(data);
+		uilistElement.text = element;
+		uilistElement.data = data;
+		this.m_Elements.Add(uilistElement);
+		this.OnElementAdded();
+	}
+
+	private void OnElementAdded()
+	{
 		if (this.m_Sorted)
 		{
 			this.SortAlphabetically();
@@ -44,11 +57,9 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 		{
 			this.m_Elements.RemoveAt(idx);
 			this.UpdateText();
+			return;
 		}
-		else
-		{
-			DebugUtils.Assert(DebugUtils.AssertType.Info);
-		}
+		DebugUtils.Assert(DebugUtils.AssertType.Info);
 	}
 
 	private void Update()
@@ -85,7 +96,7 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 			{
 				text = text + "<color=" + this.m_UnfocusedColor + ">";
 			}
-			text += this.m_Elements[num].text;
+			text += this.m_Elements[num].GetText();
 			text += "</color>";
 			text += "\n";
 			num++;
@@ -120,8 +131,7 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 		{
 			return;
 		}
-		int num = this.m_Elements.Count - this.m_Capacity;
-		if (num > 0)
+		if (this.m_Elements.Count - this.m_Capacity > 0)
 		{
 			this.m_Slider.normalizedValue = (float)this.m_ListStartIndex / (float)(this.m_Elements.Count - this.m_Capacity);
 		}
@@ -145,11 +155,9 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 			if (this.m_Elements.Count - this.m_ListStartIndex > this.m_Capacity)
 			{
 				this.m_ButtonDown.enabled = true;
+				return;
 			}
-			else
-			{
-				this.m_ButtonDown.enabled = false;
-			}
+			this.m_ButtonDown.enabled = false;
 		}
 	}
 
@@ -188,7 +196,7 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 		this.m_SelectionIndex--;
 		if (this.m_SelectionIndex < 0)
 		{
-			this.m_SelectionIndex = ((this.m_Elements.Count <= 0) ? 0 : (this.m_Elements.Count - 1));
+			this.m_SelectionIndex = ((this.m_Elements.Count > 0) ? (this.m_Elements.Count - 1) : 0);
 		}
 		if (this.m_SelectionIndex >= this.m_ListStartIndex + this.m_Capacity)
 		{
@@ -212,7 +220,7 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 		this.m_SelectionIndex = index;
 		if (this.m_SelectionIndex < 0)
 		{
-			this.m_SelectionIndex = ((this.m_Elements.Count <= 0) ? 0 : (this.m_Elements.Count - 1));
+			this.m_SelectionIndex = ((this.m_Elements.Count > 0) ? (this.m_Elements.Count - 1) : 0);
 		}
 		if (this.m_SelectionIndex > this.m_Elements.Count - 1)
 		{
@@ -247,17 +255,29 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 
 	public string GetElementText(int index)
 	{
-		return (index < 0 || index >= this.m_Elements.Count) ? string.Empty : this.m_Elements[index].text;
+		if (index < 0 || index >= this.m_Elements.Count)
+		{
+			return string.Empty;
+		}
+		return this.m_Elements[index].GetText();
 	}
 
-	public int GetSelectedElementData()
+	public T GetSelectedElementData<T>()
 	{
-		return this.GetElementData(this.m_SelectionIndex);
+		return this.GetElementData<T>(this.m_SelectionIndex);
 	}
 
-	public int GetElementData(int index)
+	public T GetElementData<T>(int index)
 	{
-		return (index < 0 || index >= this.m_Elements.Count) ? -1 : this.m_Elements[index].data;
+		if (index >= 0 && index < this.m_Elements.Count)
+		{
+			UIListElement<T> uilistElement = this.m_Elements[index] as UIListElement<T>;
+			if (uilistElement != null)
+			{
+				return uilistElement.data;
+			}
+		}
+		return default(T);
 	}
 
 	public int GetCount()
@@ -293,8 +313,7 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 		List<GameObject> hovered = eventData.hovered;
 		for (int i = 0; i < hovered.Count; i++)
 		{
-			GameObject x = hovered[i];
-			if (x == this.m_Text.gameObject)
+			if (hovered[i] == this.m_Text.gameObject)
 			{
 				this.OnPointerDownText(eventData);
 				break;
@@ -332,24 +351,19 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 		}
 	}
 
-	private static int CompareListByName(UIListElement i1, UIListElement i2)
+	private static int CompareListByName(IUIListElement i1, IUIListElement i2)
 	{
-		return i1.text.CompareTo(i2.text);
+		return i1.GetText().CompareTo(i2.GetText());
 	}
 
 	public void SortAlphabetically()
 	{
-		List<UIListElement> elements = this.m_Elements;
-		if (UIList.<>f__mg$cache0 == null)
-		{
-			UIList.<>f__mg$cache0 = new Comparison<UIListElement>(UIList.CompareListByName);
-		}
-		elements.Sort(UIList.<>f__mg$cache0);
+		this.m_Elements.Sort(new Comparison<IUIListElement>(UIList.CompareListByName));
 	}
 
 	public Text m_Text;
 
-	private List<UIListElement> m_Elements = new List<UIListElement>();
+	private List<IUIListElement> m_Elements = new List<IUIListElement>();
 
 	private int m_SelectionIndex;
 
@@ -380,7 +394,4 @@ public class UIList : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
 	public bool m_Sorted;
 
 	private float m_LastSliderVal;
-
-	[CompilerGenerated]
-	private static Comparison<UIListElement> <>f__mg$cache0;
 }

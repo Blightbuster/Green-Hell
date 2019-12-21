@@ -56,8 +56,7 @@ public class DynamicBone : MonoBehaviour
 		}
 		if (transform != null)
 		{
-			float sqrMagnitude = (transform.position - base.transform.position).sqrMagnitude;
-			bool flag = sqrMagnitude > this.m_DistanceToObject * this.m_DistanceToObject;
+			bool flag = (transform.position - base.transform.position).sqrMagnitude > this.m_DistanceToObject * this.m_DistanceToObject;
 			if (flag != this.m_DistantDisabled)
 			{
 				if (!flag)
@@ -248,8 +247,7 @@ public class DynamicBone : MonoBehaviour
 				{
 					for (int j = 0; j < this.m_Exclusions.Count; j++)
 					{
-						Transform x = this.m_Exclusions[j];
-						if (x == b.GetChild(i))
+						if (this.m_Exclusions[j] == b.GetChild(i))
 						{
 							flag = true;
 							break;
@@ -290,23 +288,23 @@ public class DynamicBone : MonoBehaviour
 			if (this.m_BoneTotalLength > 0f)
 			{
 				float time = particle.m_BoneLength / this.m_BoneTotalLength;
-				if (this.m_DampingDistrib != null && this.m_DampingDistrib.keys.Length > 0)
+				if (this.m_DampingDistrib != null && this.m_DampingDistrib.keys.Length != 0)
 				{
 					particle.m_Damping *= this.m_DampingDistrib.Evaluate(time);
 				}
-				if (this.m_ElasticityDistrib != null && this.m_ElasticityDistrib.keys.Length > 0)
+				if (this.m_ElasticityDistrib != null && this.m_ElasticityDistrib.keys.Length != 0)
 				{
 					particle.m_Elasticity *= this.m_ElasticityDistrib.Evaluate(time);
 				}
-				if (this.m_StiffnessDistrib != null && this.m_StiffnessDistrib.keys.Length > 0)
+				if (this.m_StiffnessDistrib != null && this.m_StiffnessDistrib.keys.Length != 0)
 				{
 					particle.m_Stiffness *= this.m_StiffnessDistrib.Evaluate(time);
 				}
-				if (this.m_InertDistrib != null && this.m_InertDistrib.keys.Length > 0)
+				if (this.m_InertDistrib != null && this.m_InertDistrib.keys.Length != 0)
 				{
 					particle.m_Inert *= this.m_InertDistrib.Evaluate(time);
 				}
-				if (this.m_RadiusDistrib != null && this.m_RadiusDistrib.keys.Length > 0)
+				if (this.m_RadiusDistrib != null && this.m_RadiusDistrib.keys.Length != 0)
 				{
 					particle.m_Radius *= this.m_RadiusDistrib.Evaluate(time);
 				}
@@ -433,24 +431,17 @@ public class DynamicBone : MonoBehaviour
 			}
 			if (this.m_FreezeAxis != DynamicBone.FreezeAxis.None)
 			{
-				DynamicBone.FreezeAxis freezeAxis = this.m_FreezeAxis;
-				if (freezeAxis != DynamicBone.FreezeAxis.X)
+				switch (this.m_FreezeAxis)
 				{
-					if (freezeAxis != DynamicBone.FreezeAxis.Y)
-					{
-						if (freezeAxis == DynamicBone.FreezeAxis.Z)
-						{
-							plane.SetNormalAndPosition(particle2.m_Transform.forward, particle2.m_Position);
-						}
-					}
-					else
-					{
-						plane.SetNormalAndPosition(particle2.m_Transform.up, particle2.m_Position);
-					}
-				}
-				else
-				{
+				case DynamicBone.FreezeAxis.X:
 					plane.SetNormalAndPosition(particle2.m_Transform.right, particle2.m_Position);
+					break;
+				case DynamicBone.FreezeAxis.Y:
+					plane.SetNormalAndPosition(particle2.m_Transform.up, particle2.m_Position);
+					break;
+				case DynamicBone.FreezeAxis.Z:
+					plane.SetNormalAndPosition(particle2.m_Transform.forward, particle2.m_Position);
+					break;
 				}
 				particle.m_Position -= plane.normal * plane.GetDistanceToPoint(particle.m_Position);
 			}

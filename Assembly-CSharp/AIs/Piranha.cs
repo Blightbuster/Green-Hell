@@ -91,8 +91,7 @@ namespace AIs
 				base.SetState(Fish.State.Swim);
 				return;
 			}
-			float num = Vector3.Distance(this.m_Mouth.transform.position, Player.Get().transform.position);
-			if (num < this.m_BiteDist)
+			if (Vector3.Distance(this.m_Mouth ? this.m_Mouth.transform.position : base.transform.position, Player.Get().transform.position) < this.m_BiteDist)
 			{
 				base.SetState(Fish.State.BitePlayer);
 			}
@@ -100,8 +99,8 @@ namespace AIs
 
 		private void UpdateBitePlayer()
 		{
-			Vector3 hit_dir = Player.Get().transform.position + Vector3.up * Player.Get().GetComponent<CharacterController>().height * 0.5f - base.transform.position;
-			Player.Get().GiveDamage(null, null, this.m_Damage, hit_dir, DamageType.None, 0, false);
+			Vector3 hit_dir = Player.Get().transform.position + Vector3.up * Player.Get().GetComponent<CharacterControllerProxy>().height * 0.5f - base.transform.position;
+			Player.Get().GiveDamage(base.gameObject, null, this.m_Damage, hit_dir, DamageType.None, 0, false);
 			this.m_LastBiteTime = Time.time;
 			base.SetState(Fish.State.Swim);
 		}

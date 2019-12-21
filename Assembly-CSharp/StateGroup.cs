@@ -17,7 +17,7 @@ public class StateGroup
 			}
 			num++;
 			CJVariable variable = key.GetVariable(num);
-			text = ((variable == null) ? string.Empty : variable.SValue);
+			text = ((variable != null) ? variable.SValue : string.Empty);
 		}
 	}
 

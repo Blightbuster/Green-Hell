@@ -46,9 +46,9 @@ namespace DynamicFogAndMist
 
 		private void UpdateFogData()
 		{
-			Vector4 value = new Vector4(this.height + 0.001f, this.baselineHeight, Camera.main.farClipPlane * this.distance, this.heightFallOff);
-			Shader.SetGlobalVector("_FogData", value);
-			Shader.SetGlobalFloat("_FogData2", this.distanceFallOff * value.z + 0.0001f);
+			Vector4 vector = new Vector4(this.height + 0.001f, this.baselineHeight, Camera.main.farClipPlane * this.distance, this.heightFallOff);
+			Shader.SetGlobalVector("_FogData", vector);
+			Shader.SetGlobalFloat("_FogData2", this.distanceFallOff * vector.z + 0.0001f);
 		}
 
 		private void UpdateFogColor()

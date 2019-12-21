@@ -63,13 +63,13 @@ public class HunterChallenge : Challenge
 	public override string GetLocalizedInfo()
 	{
 		Localization localization = GreenHellGame.Instance.GetLocalization();
-		string text = localization.Get("HunterChallenge_Collect");
+		string text = localization.Get("HunterChallenge_Collect", true);
 		for (int i = 0; i < this.m_RequredItemNames.Count; i++)
 		{
 			if (!InventoryBackpack.Get().Contains((ItemID)this.m_RequredItemIDs[i]))
 			{
 				text += "\n";
-				text += localization.Get(this.m_RequredItemNames[i].ToString());
+				text += localization.Get(this.m_RequredItemNames[i].ToString(), true);
 			}
 		}
 		return text;

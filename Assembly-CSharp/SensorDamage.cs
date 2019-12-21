@@ -1,4 +1,6 @@
 ﻿using System;
+using AIs;
+using Enums;
 using UnityEngine;
 
 public class SensorDamage : SensorBase
@@ -26,7 +28,10 @@ public class SensorDamage : SensorBase
 		{
 			return;
 		}
+		this.m_DamageInfo.m_FromDamageSensor = true;
 		this.m_DamageInfo.m_Damage = UnityEngine.Random.Range(this.m_DamageMin, this.m_DamageMax);
+		this.m_DamageInfo.m_DamageType = this.m_DamageType;
+		this.m_DamageInfo.m_AIType = this.m_AiType;
 		Player.Get().TakeDamage(this.m_DamageInfo);
 		this.m_LastDamageTime = Time.time;
 		this.SetupInterval();
@@ -39,6 +44,10 @@ public class SensorDamage : SensorBase
 	public float m_DamageMin;
 
 	public float m_DamageMax;
+
+	public DamageType m_DamageType;
+
+	public AI.AIID m_AiType = AI.AIID.None;
 
 	private float m_LastDamageTime;
 

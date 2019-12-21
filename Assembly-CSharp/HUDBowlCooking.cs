@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CJTools;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,11 +27,15 @@ public class HUDBowlCooking : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return this.m_Datas.Count > 0;
+		return this.m_Datas.Count > 0 && !MapController.Get().IsActive() && !NotepadController.Get().IsActive();
 	}
 
 	public void RegisterBowl(Bowl bowl)
 	{
+		if (this.m_Datas.Keys.Contains(bowl))
+		{
+			return;
+		}
 		BowlIconData bowlIconData = new BowlIconData();
 		bowlIconData.obj = UnityEngine.Object.Instantiate<GameObject>(this.m_IconPrefab, base.transform);
 		bowlIconData.canvas_group = bowlIconData.obj.GetComponent<CanvasGroup>();
@@ -41,8 +46,7 @@ public class HUDBowlCooking : HUDBase
 
 	public void UnregisterBowl(Bowl bowl)
 	{
-		BowlIconData bowlIconData = this.m_Datas[bowl];
-		UnityEngine.Object.Destroy(bowlIconData.obj);
+		UnityEngine.Object.Destroy(this.m_Datas[bowl].obj);
 		this.m_Datas.Remove(bowl);
 	}
 
@@ -52,7 +56,7 @@ public class HUDBowlCooking : HUDBase
 		foreach (Bowl bowl in this.m_Datas.Keys)
 		{
 			BowlIconData bowlIconData = this.m_Datas[bowl];
-			bowlIconData.obj.transform.position = Camera.main.WorldToScreenPoint(bowl.transform.position + Vector3.up * 0.3f);
+			bowlIconData.obj.transform.position = CameraManager.Get().m_MainCamera.WorldToScreenPoint(bowl.transform.position + Vector3.up * 0.3f);
 			if (bowlIconData.obj.transform.position.z <= 0f)
 			{
 				bowlIconData.obj.SetActive(false);
@@ -77,7 +81,7 @@ public class HUDBowlCooking : HUDBase
 
 	public GameObject m_IconPrefab;
 
-	private static HUDBowlCooking s_Instance;
+	private static HUDBowlCooking s_Instance = null;
 
 	public static float s_DistToActivate = 3f;
 }

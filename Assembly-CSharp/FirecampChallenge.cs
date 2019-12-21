@@ -10,8 +10,7 @@ public class FirecampChallenge : Challenge, IGhostObserver
 		this.m_Firecamps.Clear();
 		for (int i = 0; i < parent.transform.childCount; i++)
 		{
-			GameObject gameObject = parent.transform.GetChild(i).gameObject;
-			ConstructionGhost component = gameObject.GetComponent<ConstructionGhost>();
+			ConstructionGhost component = parent.transform.GetChild(i).gameObject.GetComponent<ConstructionGhost>();
 			if (component)
 			{
 				component.RegisterObserver(this);
@@ -46,8 +45,7 @@ public class FirecampChallenge : Challenge, IGhostObserver
 		bool flag = true;
 		for (int i = 0; i < this.m_Firecamps.Count; i++)
 		{
-			Firecamp firecamp = this.m_Firecamps[i];
-			if (!firecamp.m_Burning)
+			if (!this.m_Firecamps[i].m_Burning)
 			{
 				flag = false;
 				break;
@@ -65,16 +63,15 @@ public class FirecampChallenge : Challenge, IGhostObserver
 		Localization localization = GreenHellGame.Instance.GetLocalization();
 		for (int i = 0; i < this.m_Ghosts.Count; i++)
 		{
-			text += localization.Get("HUDFirecampChallenge_Firecamp");
+			text += localization.Get("HUDFirecampChallenge_Firecamp", true);
 			text = text + " " + (i + 1).ToString();
 			text += " ";
 			int num = 0;
 			int num2 = 0;
 			Player.Get().GetGPSCoordinates(this.m_Ghosts[i].transform.position, out num, out num2);
-			string text2 = text;
 			text = string.Concat(new string[]
 			{
-				text2,
+				text,
 				num.ToString(),
 				"'W ",
 				num2.ToString(),

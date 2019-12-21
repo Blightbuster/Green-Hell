@@ -1,26 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using CJTools;
-using Enums;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class LoadSaveGameMenuCommon : MainMenuScreen
+public class LoadSaveGameMenuCommon : MenuScreen
 {
-	private void Start()
-	{
-		MainMenuScreen.s_ButtonsAlpha = this.m_BackButton.GetComponentInChildren<Text>().color.a;
-		MainMenuScreen.s_InactiveButtonsAlpha = MainMenuScreen.s_ButtonsAlpha * 0.5f;
-	}
-
 	public static bool IsAnySave()
 	{
 		for (int i = 0; i < LoadSaveGameMenuCommon.s_MaxSlots; i++)
 		{
-			string str = "Slot" + i.ToString() + ".sav";
-			if (File.Exists(Application.persistentDataPath + "/" + str))
+			if (GreenHellGame.Instance.FileExistsInRemoteStorage(SaveGame.SLOT_NAME + i.ToString() + ".sav") || GreenHellGame.Instance.FileExistsInRemoteStorage(SaveGame.OLD_SLOT_NAME + i.ToString() + ".sav"))
 			{
 				return true;
 			}
@@ -31,8 +22,27 @@ public class LoadSaveGameMenuCommon : MainMenuScreen
 	public override void OnShow()
 	{
 		base.OnShow();
-		this.m_BackButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("Menu_Back");
+		EventSystem current = EventSystem.current;
+		if (current != null)
+		{
+			current.SetSelectedGameObject(null);
+		}
+		this.m_BackButton.GetComponentInChildren<Text>().text = GreenHellGame.Instance.GetLocalization().Get("Menu_Back", true);
 		this.FillSlots();
+		if (GreenHellGame.IsPadControllerActive())
+		{
+			this.m_Slots[0].Select();
+			this.m_Slots[0].OnSelect(null);
+		}
+	}
+
+	public override void OnHide()
+	{
+		base.OnHide();
+		foreach (SaveGameMenuSlot saveGameMenuSlot in this.m_Slots)
+		{
+			saveGameMenuSlot.ReleseScreenshot();
+		}
 	}
 
 	private void FillSlots()
@@ -46,117 +56,108 @@ public class LoadSaveGameMenuCommon : MainMenuScreen
 		}
 		for (int j = 0; j < LoadSaveGameMenuCommon.s_MaxSlots; j++)
 		{
-			string str = "Slot" + j.ToString() + ".sav";
-			bool flag = File.Exists(Application.persistentDataPath + "/" + str);
-			if (flag)
+			this.m_Slots[j].SetSaveInfo(SaveGameInfo.ReadSaveSlot(j));
+		}
+	}
+
+	public override void OnInputAction(InputActionData action_data)
+	{
+		if (action_data.m_Action == InputsManager.InputAction.LSBackward || action_data.m_Action == InputsManager.InputAction.DPadDown)
+		{
+			for (int i = 0; i < this.m_Slots.Count; i++)
 			{
-				BinaryFormatter binaryFormatter = new BinaryFormatter();
-				FileStream fileStream = File.Open(Application.persistentDataPath + "/" + str, FileMode.Open);
-				GameVersion gameVersion = new GameVersion((GameVersion)binaryFormatter.Deserialize(fileStream));
-				GameMode gameMode = (GameMode)binaryFormatter.Deserialize(fileStream);
-				long dateData = (long)binaryFormatter.Deserialize(fileStream);
-				int num = (int)binaryFormatter.Deserialize(fileStream) + 1;
-				int num2 = (int)binaryFormatter.Deserialize(fileStream);
-				fileStream.Close();
-				Localization localization = GreenHellGame.Instance.GetLocalization();
-				this.m_Slots[j].m_Header.enabled = true;
-				this.m_Slots[j].m_Text.enabled = true;
-				this.m_Slots[j].m_Header.text = string.Empty;
-				this.m_Slots[j].m_Text.text = string.Empty;
-				if (gameMode == GameMode.Story)
+				if ((!this.IsLoadGameMenu() || this.m_Slots[i].m_SaveInfo.loadable) && this.m_Slots[i].IsHighlighted())
 				{
-					this.m_Slots[j].m_Header.text = localization.Get("GameMode_Story") + " ";
-				}
-				else if (gameMode == GameMode.Survival)
-				{
-					this.m_Slots[j].m_Header.text = localization.Get("GameMode_Survival") + " ";
-				}
-				GameDifficulty gameDifficulty = (GameDifficulty)num2;
-				if (gameDifficulty != GameDifficulty.Easy)
-				{
-					if (gameDifficulty != GameDifficulty.Normal)
+					for (int j = i + 1; j < this.m_Slots.Count; j++)
 					{
-						if (gameDifficulty == GameDifficulty.Hard)
+						if (!this.IsLoadGameMenu() || this.m_Slots[j].m_SaveInfo.loadable)
 						{
-							Text header = this.m_Slots[j].m_Header;
-							header.text += localization.Get("DifficultyLevel_Hard");
+							this.m_Slots[j].Select();
+							this.m_Slots[j].OnSelect(null);
+							return;
 						}
 					}
-					else
+					return;
+				}
+			}
+			return;
+		}
+		if (action_data.m_Action == InputsManager.InputAction.LSForward || action_data.m_Action == InputsManager.InputAction.DPadUp)
+		{
+			for (int k = 0; k < this.m_Slots.Count; k++)
+			{
+				if ((!this.IsLoadGameMenu() || this.m_Slots[k].m_SaveInfo.loadable) && this.m_Slots[k].IsHighlighted())
+				{
+					for (int l = k - 1; l >= 0; l--)
 					{
-						Text header2 = this.m_Slots[j].m_Header;
-						header2.text += localization.Get("DifficultyLevel_Normal");
+						if (!this.IsLoadGameMenu() || this.m_Slots[l].m_SaveInfo.loadable)
+						{
+							this.m_Slots[l].Select();
+							this.m_Slots[l].OnSelect(null);
+							break;
+						}
 					}
 				}
-				else
-				{
-					Text header3 = this.m_Slots[j].m_Header;
-					header3.text += localization.Get("DifficultyLevel_Easy");
-				}
-				Text header4 = this.m_Slots[j].m_Header;
-				header4.text += " ";
-				Text header5 = this.m_Slots[j].m_Header;
-				header5.text += localization.Get("SaveGame_Day");
-				Text header6 = this.m_Slots[j].m_Header;
-				header6.text += ": ";
-				Text header7 = this.m_Slots[j].m_Header;
-				header7.text += num.ToString();
-				DateTime dateTime = DateTime.FromBinary(dateData);
-				this.m_Slots[j].m_Text.text = dateTime.ToString();
-				this.m_Slots[j].m_GameMode = gameMode;
-				this.m_Slots[j].m_Empty = false;
 			}
-			else
-			{
-				this.m_Slots[j].m_Header.enabled = true;
-				this.m_Slots[j].m_Text.enabled = false;
-				this.m_Slots[j].m_Header.text = GreenHellGame.Instance.GetLocalization().Get("MenuSaveGameSlotEmpty");
-				this.m_Slots[j].m_Empty = true;
-			}
+			return;
 		}
+		if (action_data.m_Action == InputsManager.InputAction.Button_A)
+		{
+			this.CheckSelection();
+			return;
+		}
+		base.OnInputAction(action_data);
 	}
 
-	protected virtual void Update()
+	protected override void Update()
 	{
-		this.UpdateButtons();
+		base.Update();
 		this.UpdateSlots();
+		if (!GreenHellGame.IsYesNoDialogActive())
+		{
+			CursorManager.Get().SetCursor(((this.m_ActiveMenuOption != null && this.m_ActiveMenuOption.m_Button != null) || this.m_HLSlotIdx >= 0) ? CursorManager.TYPE.MouseOver : CursorManager.TYPE.Normal);
+		}
+		if (GreenHellGame.IsPadControllerActive())
+		{
+			CursorManager.Get().SetCursorPos(Vector2.zero);
+		}
 	}
 
-	private void UpdateButtons()
+	protected virtual bool IsLoadGameMenu()
 	{
-		this.m_ActiveButton = null;
-		Vector2 screenPoint = Input.mousePosition;
-		RectTransform component = this.m_BackButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-		{
-			this.m_ActiveButton = this.m_BackButton;
-		}
-		Color color = this.m_BackButton.GetComponentInChildren<Text>().color;
-		float s_ButtonsAlpha = MainMenuScreen.s_ButtonsAlpha;
-		color.a = s_ButtonsAlpha;
-		this.m_BackButton.GetComponentInChildren<Text>().color = color;
-		if (this.m_BackButton == this.m_ActiveButton)
-		{
-			color.a = 1f;
-			this.m_BackButton.GetComponentInChildren<Text>().color = color;
-		}
+		return false;
 	}
 
 	private void UpdateSlots()
 	{
-		Vector3 mousePosition = Input.mousePosition;
+		if (GreenHellGame.GetYesNoDialog().gameObject.activeSelf)
+		{
+			return;
+		}
+		if (GreenHellGame.IsPCControllerActive())
+		{
+			this.CheckSelection();
+		}
+	}
+
+	private void CheckSelection()
+	{
+		EventSystem current = EventSystem.current;
+		GameObject x = (current != null) ? current.currentSelectedGameObject : null;
 		this.m_HLSlotIdx = -1;
 		for (int i = 0; i < this.m_Slots.Count; i++)
 		{
-			RectTransform component = this.m_Slots[i].GetComponent<RectTransform>();
-			if (RectTransformUtility.RectangleContainsScreenPoint(component, mousePosition))
+			if (!this.IsLoadGameMenu() || this.m_Slots[i].m_SaveInfo.loadable)
 			{
-				this.m_HLSlotIdx = i;
+				if (this.m_Slots[i].IsHighlighted())
+				{
+					this.m_HLSlotIdx = i;
+				}
+				if (x == this.m_Slots[i].gameObject)
+				{
+					this.OnSlotSelected(i);
+				}
 			}
-		}
-		if (Input.GetMouseButton(0) && this.m_HLSlotIdx >= 0 && !LoadingScreen.Get().m_Active)
-		{
-			this.OnSlotSelected(this.m_HLSlotIdx);
 		}
 	}
 
@@ -164,13 +165,40 @@ public class LoadSaveGameMenuCommon : MainMenuScreen
 	{
 	}
 
-	public static int s_MaxSlots = 4;
+	protected void EnableSlots(bool enable)
+	{
+		foreach (SaveGameMenuSlot saveGameMenuSlot in this.m_Slots)
+		{
+			if (saveGameMenuSlot)
+			{
+				saveGameMenuSlot.enabled = enable;
+			}
+		}
+	}
 
-	private Button m_ActiveButton;
+	protected string GetSelectedSlotFileName()
+	{
+		if (this.m_SlotIdx >= 0 && this.m_SlotIdx < this.m_Slots.Count)
+		{
+			SaveGameMenuSlot saveGameMenuSlot = this.m_Slots[this.m_SlotIdx];
+			return ((saveGameMenuSlot != null) ? saveGameMenuSlot.m_SaveInfo.file_name : null) ?? this.GetSlotSaveName(this.m_SlotIdx);
+		}
+		DebugUtils.Assert("Invalid slot idex to load", true, DebugUtils.AssertType.Info);
+		return string.Empty;
+	}
+
+	protected string GetSlotSaveName(int slot_idx)
+	{
+		return SaveGame.SLOT_NAME + slot_idx.ToString() + ".sav";
+	}
+
+	public static int s_MaxSlots = 4;
 
 	public Button m_BackButton;
 
 	protected List<SaveGameMenuSlot> m_Slots = new List<SaveGameMenuSlot>();
+
+	protected int m_SlotIdx = -1;
 
 	private int m_HLSlotIdx = -1;
 }

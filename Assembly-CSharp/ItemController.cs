@@ -14,7 +14,7 @@ public class ItemController : PlayerController
 	{
 		base.Awake();
 		ItemController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Item;
+		base.m_ControllerType = PlayerControllerType.Item;
 		this.SetupAudio();
 	}
 
@@ -51,6 +51,13 @@ public class ItemController : PlayerController
 		base.OnEnable();
 		this.m_Item = Player.Get().GetCurrentItem(Hand.Right);
 		DebugUtils.Assert(this.m_Item != null, "[ItemController:OnEnable] Missing current item!", true, DebugUtils.AssertType.Info);
+		if (!this.m_Item)
+		{
+			this.Stop();
+			Player.Get().StartController(PlayerControllerType.FistFight);
+			Player.Get().StartControllerInternal();
+			return;
+		}
 		this.SetAnimatorParameters();
 		this.m_StoneThrowing = this.m_Item.m_Info.IsStone();
 		if (this.m_StoneThrowing)
@@ -64,8 +71,9 @@ public class ItemController : PlayerController
 		if (this.m_Item.m_Info.m_ID == ItemID.Fire)
 		{
 			this.m_Animator.SetBool(this.m_FireHash, true);
+			return;
 		}
-		else if (!this.m_Item.m_Info.IsWeapon())
+		if (!this.m_Item.m_Info.IsWeapon())
 		{
 			this.m_Animator.SetBool(this.m_ObjectHash, true);
 		}
@@ -76,6 +84,11 @@ public class ItemController : PlayerController
 		base.OnDisable();
 		this.m_Animator.SetBool(this.m_ObjectHash, false);
 		this.m_Animator.SetBool(this.m_FireHash, false);
+		if (this.m_State == ItemController.State.StoneAim && this.m_Item.m_Info.IsStone())
+		{
+			InventoryBackpack.Get().InsertItem(this.m_Item, null, null, true, true, true, true, true);
+			Player.Get().SetWantedItem(Hand.Right, null, true);
+		}
 		this.m_StoneThrowing = false;
 		this.SetState(ItemController.State.None);
 		this.m_Item = null;
@@ -85,6 +98,15 @@ public class ItemController : PlayerController
 	{
 		base.ControllerUpdate();
 		this.UpdateState();
+		if (CutscenesManager.Get().IsCutscenePlaying() && (this.m_State == ItemController.State.Aim || this.m_State == ItemController.State.StoneAim))
+		{
+			if (this.m_Item.m_Info.IsStone())
+			{
+				InventoryBackpack.Get().InsertItem(this.m_Item, null, null, true, true, true, true, true);
+				Player.Get().SetWantedItem(Hand.Right, null, true);
+			}
+			this.SetState(ItemController.State.None);
+		}
 		if (this.m_Player.GetCurrentItem(Hand.Right) == null)
 		{
 			this.Stop();
@@ -97,57 +119,70 @@ public class ItemController : PlayerController
 		{
 		case ItemController.State.None:
 			this.SetAnimatorParameters();
+			return;
+		case ItemController.State.Swing:
+		case ItemController.State.Throw:
 			break;
 		case ItemController.State.FinishSwing:
 			this.SetState(ItemController.State.None);
-			break;
+			return;
 		case ItemController.State.Aim:
 			if (this.m_Item.m_Info.IsStone())
 			{
-				if (!InputsManager.Get().IsActionActive(InputsManager.InputAction.ThrowStone))
+				if (GreenHellGame.IsPCControllerActive() && !InputsManager.Get().IsActionActive(InputsManager.InputAction.ThrowStone) && Player.Get().CanThrowStone())
 				{
 					this.SetState(ItemController.State.Throw);
+					return;
 				}
 			}
 			else if (!InputsManager.Get().IsActionActive(InputsManager.InputAction.ItemAim) || TriggerController.Get().IsGrabInProgress() || Inventory3DManager.Get().gameObject.activeSelf)
 			{
 				this.SetState(ItemController.State.None);
+				return;
 			}
 			break;
 		case ItemController.State.StoneAim:
-			if (this.m_Animator.GetCurrentAnimatorStateInfo(this.m_SpineLayerIndex).shortNameHash == this.m_ObjectAimHash && !this.m_Animator.IsInTransition(this.m_SpineLayerIndex) && !InputsManager.Get().IsActionActive(InputsManager.InputAction.ThrowStone))
+			if (GreenHellGame.IsPCControllerActive() && this.m_Animator.GetCurrentAnimatorStateInfo(this.m_SpineLayerIndex).shortNameHash == this.m_ObjectAimHash && !this.m_Animator.IsInTransition(this.m_SpineLayerIndex) && !InputsManager.Get().IsActionActive(InputsManager.InputAction.ThrowStone))
 			{
-				Player.Get().m_StopAimCameraMtx.SetColumn(0, Camera.main.transform.right);
-				Player.Get().m_StopAimCameraMtx.SetColumn(1, Camera.main.transform.up);
-				Player.Get().m_StopAimCameraMtx.SetColumn(2, Camera.main.transform.forward);
-				Player.Get().m_StopAimCameraMtx.SetColumn(3, Camera.main.transform.position);
-				Player.Get().m_AimPower = 0f;
+				Camera mainCamera = CameraManager.Get().m_MainCamera;
+				Player.Get().m_StopAimCameraMtx.SetColumn(0, mainCamera.transform.right);
+				Player.Get().m_StopAimCameraMtx.SetColumn(1, mainCamera.transform.up);
+				Player.Get().m_StopAimCameraMtx.SetColumn(2, mainCamera.transform.forward);
+				Player.Get().m_StopAimCameraMtx.SetColumn(3, mainCamera.transform.position);
 				this.SetState(ItemController.State.Throw);
 			}
 			break;
+		default:
+			return;
 		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
+		InputsManager.InputAction action = action_data.m_Action;
 		switch (action)
 		{
 		case InputsManager.InputAction.Drop:
 			if (this.m_Animator.GetBool(this.m_FireHash) && this.m_Item && this.m_Item.gameObject && !this.m_Item.m_IsBeingDestroyed)
 			{
 				UnityEngine.Object.Destroy(this.m_Item.gameObject);
+				Player.Get().SetWantedItem(Hand.Right, null, true);
 			}
+			break;
+		case InputsManager.InputAction.MeleeAttack:
 			break;
 		case InputsManager.InputAction.ItemSwing:
 			if (this.CanSwing())
 			{
 				this.SetState(ItemController.State.Swing);
+				return;
 			}
 			break;
 		case InputsManager.InputAction.ItemAim:
 			if (this.CanThrow())
 			{
 				this.SetState(ItemController.State.Aim);
+				return;
 			}
 			break;
 		case InputsManager.InputAction.ItemCancelAim:
@@ -158,13 +193,32 @@ public class ItemController : PlayerController
 					InventoryBackpack.Get().InsertItem(this.m_Item, null, null, true, true, true, true, true);
 					Player.Get().SetWantedItem(Hand.Right, null, true);
 				}
+				this.m_LastUnAimTime = Time.time;
 				this.SetState(ItemController.State.None);
+				return;
 			}
 			break;
 		case InputsManager.InputAction.ItemThrow:
 			if (this.m_State == ItemController.State.Aim)
 			{
 				this.SetState(ItemController.State.Throw);
+				return;
+			}
+			break;
+		default:
+			if (action != InputsManager.InputAction.ThrowStonePad)
+			{
+				return;
+			}
+			if (this.m_State == ItemController.State.StoneAim)
+			{
+				Camera mainCamera = CameraManager.Get().m_MainCamera;
+				Player.Get().m_StopAimCameraMtx.SetColumn(0, mainCamera.transform.right);
+				Player.Get().m_StopAimCameraMtx.SetColumn(1, mainCamera.transform.up);
+				Player.Get().m_StopAimCameraMtx.SetColumn(2, mainCamera.transform.forward);
+				Player.Get().m_StopAimCameraMtx.SetColumn(3, mainCamera.transform.position);
+				this.SetState(ItemController.State.Throw);
+				return;
 			}
 			break;
 		}
@@ -172,6 +226,11 @@ public class ItemController : PlayerController
 
 	private void Throw()
 	{
+		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
+		if (currentItem)
+		{
+			currentItem.m_Info.m_Health -= currentItem.m_Info.m_DamageSelf;
+		}
 		Player.Get().ThrowItem(Hand.Right);
 		this.SetState(ItemController.State.None);
 	}
@@ -194,46 +253,46 @@ public class ItemController : PlayerController
 		{
 		case ItemController.State.None:
 			this.m_Animator.SetBool(this.m_ObjectAimHash, false);
+			this.m_Animator.SetBool(this.m_ObjectThrowingHash, false);
 			this.m_Player.StopAim();
-			break;
+			return;
 		case ItemController.State.Swing:
 			this.m_Animator.SetTrigger(this.m_ObjectSwingHash);
 			this.m_Item.OnStartSwing();
 			this.PlaySwingSound();
-			break;
+			return;
 		case ItemController.State.FinishSwing:
 		{
 			this.m_Item.OnStopSwing();
 			float num = this.m_Player.GetStaminaDecrease(StaminaDecreaseReason.Swing);
-			if (this.m_Item.IsKnife())
+			if (this.m_Item.m_Info.IsKnife())
 			{
 				num *= Skill.Get<BladeSkill>().GetStaminaMul();
 			}
-			else if (this.m_Item.IsAxe())
+			else if (this.m_Item.m_Info.IsAxe())
 			{
 				num *= Skill.Get<AxeSkill>().GetStaminaMul();
 			}
-			else if (this.m_Item.IsMachete())
-			{
-				num *= Skill.Get<MacheteSkill>().GetStaminaMul();
-			}
 			this.m_Player.DecreaseStamina(num);
-			break;
+			return;
 		}
 		case ItemController.State.Aim:
 			this.m_Animator.SetBool(this.m_ObjectAimHash, true);
-			this.m_Player.StartAim(Player.AimType.Item);
-			break;
+			this.m_Player.StartAim(Player.AimType.Item, 18f);
+			return;
 		case ItemController.State.Throw:
 			this.m_Animator.SetTrigger(this.m_ObjectThrowHash);
 			this.m_Animator.SetBool(this.m_ObjectAimHash, false);
+			this.m_Animator.SetBool(this.m_ObjectThrowingHash, true);
 			this.PlayThrowSound();
-			break;
+			return;
 		case ItemController.State.StoneAim:
 			this.m_Player.GetCurrentItem(Hand.Right).gameObject.SetActive(true);
 			this.m_Animator.SetBool(this.m_ObjectAimHash, true);
-			this.m_Player.StartAim(Player.AimType.Item);
-			break;
+			this.m_Player.StartAim(Player.AimType.Item, 18f);
+			return;
+		default:
+			return;
 		}
 	}
 
@@ -251,19 +310,22 @@ public class ItemController : PlayerController
 		if (id == AnimEventID.ObjectSwingEnd)
 		{
 			this.SetState(ItemController.State.FinishSwing);
+			return;
 		}
-		else if (id == AnimEventID.ObjectThrow && this.m_State == ItemController.State.Throw)
+		if (id == AnimEventID.ObjectThrow && this.m_State == ItemController.State.Throw)
 		{
 			this.Throw();
+			return;
 		}
-		else if (id == AnimEventID.FireIgnite)
+		if (id == AnimEventID.FireIgnite)
 		{
-			if (this.m_FirecampToIgnite)
+			if (this.m_FireObjectToIgnite != null)
 			{
-				this.m_FirecampToIgnite.StartBurning();
+				this.m_FireObjectToIgnite.Ignite();
 				Player.Get().SetWantedItem(Hand.Right, null, true);
 				UnityEngine.Object.Destroy(this.m_Item.gameObject);
-				this.m_FirecampToIgnite = null;
+				this.m_FireObjectToIgnite = null;
+				return;
 			}
 		}
 		else
@@ -279,7 +341,7 @@ public class ItemController : PlayerController
 
 	private bool CanThrow()
 	{
-		return this.m_State == ItemController.State.None && this.m_Item.GetInfoID() != ItemID.Fire && !Inventory3DManager.Get().gameObject.activeSelf && (!Player.Get().m_ActiveFightController || !Player.Get().m_ActiveFightController.IsBlock()) && (!Player.Get().m_ActiveFightController || !PlayerConditionModule.Get().IsStaminaLevel(Player.Get().m_ActiveFightController.m_BlockAttackStaminaLevel));
+		return this.m_State == ItemController.State.None && this.m_Item.GetInfoID() != ItemID.Fire && !Inventory3DManager.Get().gameObject.activeSelf && (!Player.Get().m_ActiveFightController || !Player.Get().m_ActiveFightController.IsBlock()) && (!Player.Get().m_ActiveFightController || PlayerConditionModule.Get().GetStamina() != 0f);
 	}
 
 	public override void GetInputActions(ref List<int> actions)
@@ -287,19 +349,25 @@ public class ItemController : PlayerController
 		ItemController.State state = this.m_State;
 		if (state != ItemController.State.None)
 		{
-			if (state != ItemController.State.Aim)
-			{
-				if (state == ItemController.State.StoneAim)
-				{
-					actions.Add(48);
-					actions.Add(4);
-				}
-			}
-			else
+			if (state == ItemController.State.Aim)
 			{
 				actions.Add(5);
 				actions.Add(4);
+				return;
 			}
+			if (state != ItemController.State.StoneAim)
+			{
+				return;
+			}
+			if (GreenHellGame.IsPCControllerActive())
+			{
+				actions.Add(51);
+			}
+			else
+			{
+				actions.Add(106);
+			}
+			actions.Add(4);
 		}
 		else
 		{
@@ -310,14 +378,15 @@ public class ItemController : PlayerController
 			if (this.m_Animator.GetBool(this.m_FireHash))
 			{
 				actions.Add(0);
+				return;
 			}
 		}
 	}
 
-	public void IgniteFirecamp(Firecamp firecamp)
+	public void IgniteFireObject(IFireObject fire_object)
 	{
 		this.m_Animator.SetTrigger(this.m_TCarriedFireIgnite);
-		this.m_FirecampToIgnite = firecamp;
+		this.m_FireObjectToIgnite = fire_object;
 	}
 
 	public override string ReplaceClipsGetItemName()
@@ -330,7 +399,7 @@ public class ItemController : PlayerController
 		{
 			return string.Empty;
 		}
-		return this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID.ToString();
+		return EnumUtils<ItemID>.GetName((int)this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID);
 	}
 
 	private void PlayThrowSound()
@@ -345,8 +414,9 @@ public class ItemController : PlayerController
 		if (this.m_ThrowSoundClipsDict.TryGetValue((int)info.m_ID, out list))
 		{
 			this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
+			return;
 		}
-		else if (this.m_ThrowSoundClipsDict.TryGetValue(-1, out list))
+		if (this.m_ThrowSoundClipsDict.TryGetValue(-1, out list))
 		{
 			this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
 		}
@@ -359,13 +429,19 @@ public class ItemController : PlayerController
 			this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
 			this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
 		}
-		ItemInfo info = this.m_Player.GetCurrentItem(Hand.Right).m_Info;
+		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
+		if (currentItem == null)
+		{
+			return;
+		}
+		ItemInfo info = currentItem.m_Info;
 		List<AudioClip> list = null;
 		if (this.m_SwingSoundClipsDict.TryGetValue((int)info.m_ID, out list))
 		{
 			this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
+			return;
 		}
-		else if (this.m_SwingSoundClipsDict.TryGetValue(-1, out list))
+		if (this.m_SwingSoundClipsDict.TryGetValue(-1, out list))
 		{
 			this.m_AudioSource.PlayOneShot(list[UnityEngine.Random.Range(0, list.Count)]);
 		}
@@ -374,6 +450,11 @@ public class ItemController : PlayerController
 	public override bool SetupActiveControllerOnStop()
 	{
 		return false;
+	}
+
+	public override bool PlayUnequipAnimation()
+	{
+		return true;
 	}
 
 	private int m_ObjectHash = Animator.StringToHash("CarriedObject");
@@ -386,9 +467,11 @@ public class ItemController : PlayerController
 
 	private int m_ObjectThrowHash = Animator.StringToHash("ObjectThrow");
 
+	private int m_ObjectThrowingHash = Animator.StringToHash("ObjectThrowing");
+
 	private int m_TCarriedFireIgnite = Animator.StringToHash("CarriedFireIgnite");
 
-	private Firecamp m_FirecampToIgnite;
+	private IFireObject m_FireObjectToIgnite;
 
 	private AudioSource m_AudioSource;
 
@@ -396,7 +479,8 @@ public class ItemController : PlayerController
 
 	private Dictionary<int, List<AudioClip>> m_SwingSoundClipsDict = new Dictionary<int, List<AudioClip>>();
 
-	private ItemController.State m_State;
+	[HideInInspector]
+	public ItemController.State m_State;
 
 	private float m_EnterStateTime;
 
@@ -406,9 +490,12 @@ public class ItemController : PlayerController
 
 	public bool m_StoneThrowing;
 
+	[HideInInspector]
+	public float m_LastUnAimTime;
+
 	private static ItemController s_Instance;
 
-	private enum State
+	public enum State
 	{
 		None,
 		Swing,

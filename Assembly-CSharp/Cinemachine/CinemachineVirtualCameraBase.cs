@@ -10,7 +10,11 @@ namespace Cinemachine
 		{
 			get
 			{
-				return (!this.m_OnValidateCalled) ? CinemachineCore.kStreamingVersion : this.m_ValidatingStreamVersion;
+				if (!this.m_OnValidateCalled)
+				{
+					return CinemachineCore.kStreamingVersion;
+				}
+				return this.m_ValidatingStreamVersion;
 			}
 			private set
 			{
@@ -54,7 +58,7 @@ namespace Cinemachine
 		{
 			get
 			{
-				return string.Empty;
+				return "";
 			}
 		}
 
@@ -238,6 +242,7 @@ namespace Cinemachine
 				{
 					CinemachineCore.Instance.AddActiveCamera(this);
 					this.m_QueuePriority = this.m_Priority;
+					return;
 				}
 			}
 			else if (base.isActiveAndEnabled)
@@ -255,26 +260,26 @@ namespace Cinemachine
 		[NoSaveDuringPlay]
 		public Action CinemachineGUIDebuggerCallback;
 
+		[HideInInspector]
 		[SerializeField]
 		[NoSaveDuringPlay]
-		[HideInInspector]
 		public string[] m_ExcludedPropertiesInInspector = new string[]
 		{
 			"m_Script"
 		};
 
-		[NoSaveDuringPlay]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[NoSaveDuringPlay]
 		public CinemachineCore.Stage[] m_LockStageInInspector;
 
 		private int m_ValidatingStreamVersion;
 
 		private bool m_OnValidateCalled;
 
-		[NoSaveDuringPlay]
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
+		[NoSaveDuringPlay]
 		private int m_StreamingVersion;
 
 		[NoSaveDuringPlay]

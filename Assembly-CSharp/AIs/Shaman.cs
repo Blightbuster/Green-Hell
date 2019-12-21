@@ -16,7 +16,7 @@ namespace AIs
 			this.SetupAgent();
 			this.InitItem();
 			base.transform.rotation = Quaternion.LookRotation(Player.Get().transform.position - base.transform.position, Vector3.up);
-			DebugUtils.Assert(this.m_AttackClips.Length > 0, "[Shaman:Start] Missing attack clips!", true, DebugUtils.AssertType.Info);
+			DebugUtils.Assert(this.m_AttackClips.Length != 0, "[Shaman:Start] Missing attack clips!", true, DebugUtils.AssertType.Info);
 			this.m_AudioSource = base.gameObject.GetComponent<AudioSource>();
 			this.m_AudioSource.clip = this.m_AttackClips[UnityEngine.Random.Range(0, this.m_AttackClips.Length)];
 			this.m_AudioSource.Play();
@@ -73,17 +73,19 @@ namespace AIs
 			case Shaman.State.MoveToPlayer:
 				this.m_Animator.SetTrigger(this.m_MoveHash);
 				this.m_Agent.speed = this.m_MoveSpeed;
-				break;
+				return;
 			case Shaman.State.Attack:
-				this.m_Animator.SetTrigger((ShamanManager.Get().m_AttackVersion != ShamanManager.AttackVersion.Slow) ? this.m_AttackFastHash : this.m_AttackHash);
+				this.m_Animator.SetTrigger((ShamanManager.Get().m_AttackVersion == ShamanManager.AttackVersion.Slow) ? this.m_AttackHash : this.m_AttackFastHash);
 				this.m_Agent.speed = this.m_MoveSpeed;
-				break;
+				return;
 			case Shaman.State.Idle:
 				this.m_Animator.SetTrigger(this.m_IdleHash);
-				break;
+				return;
 			case Shaman.State.Spawn:
 				this.m_Animator.SetTrigger(this.m_IdleHash);
-				break;
+				return;
+			default:
+				return;
 			}
 		}
 
@@ -120,12 +122,10 @@ namespace AIs
 		{
 			if (ShamanManager.Get().m_AttackVersion == ShamanManager.AttackVersion.Slow)
 			{
-				this.m_Animator.SetFloat(this.m_MoveSpeedHash, (this.m_State != Shaman.State.MoveToPlayer) ? 0f : this.m_Agent.velocity.magnitude);
+				this.m_Animator.SetFloat(this.m_MoveSpeedHash, (this.m_State == Shaman.State.MoveToPlayer) ? this.m_Agent.velocity.magnitude : 0f);
+				return;
 			}
-			else
-			{
-				this.m_Animator.SetFloat(this.m_MoveSpeedHash, this.m_Agent.velocity.magnitude);
-			}
+			this.m_Animator.SetFloat(this.m_MoveSpeedHash, this.m_Agent.velocity.magnitude);
 		}
 
 		private void UpdateState()
@@ -140,29 +140,31 @@ namespace AIs
 				if (base.transform.position.Distance(this.m_Player.transform.position) <= this.m_Agent.stoppingDistance)
 				{
 					this.SetState(Shaman.State.Attack);
+					return;
 				}
 				break;
 			case Shaman.State.Attack:
 				if (this.ShouldSetupDestination())
 				{
 					this.SetupDestination();
+					return;
 				}
 				break;
 			case Shaman.State.Idle:
 				if (ShamanManager.Get().m_AttackVersion == ShamanManager.AttackVersion.Fast && Time.time - this.m_EnterStateTime >= 0.5f && base.transform.position.Distance(this.m_Player.transform.position) > this.m_Agent.stoppingDistance + 1f)
 				{
 					this.SetState(Shaman.State.MoveToPlayer);
+					return;
 				}
-				else if (Time.time - this.m_EnterStateTime >= 2f)
+				if (Time.time - this.m_EnterStateTime >= 2f)
 				{
 					if (base.transform.position.Distance(this.m_Player.transform.position) <= this.m_Agent.stoppingDistance)
 					{
 						this.SetState(Shaman.State.Attack);
+						return;
 					}
-					else
-					{
-						this.SetState(Shaman.State.MoveToPlayer);
-					}
+					this.SetState(Shaman.State.MoveToPlayer);
+					return;
 				}
 				break;
 			case Shaman.State.Spawn:
@@ -171,6 +173,8 @@ namespace AIs
 					this.SetState(Shaman.State.MoveToPlayer);
 				}
 				break;
+			default:
+				return;
 			}
 		}
 
@@ -215,11 +219,10 @@ namespace AIs
 					if (base.transform.position.Distance(this.m_Player.transform.position) <= this.m_Agent.stoppingDistance)
 					{
 						this.SetState(Shaman.State.Attack);
+						return;
 					}
-					else
-					{
-						this.SetState(Shaman.State.MoveToPlayer);
-					}
+					this.SetState(Shaman.State.MoveToPlayer);
+					return;
 				}
 				else if (ShamanManager.Get().m_AttackVersion == ShamanManager.AttackVersion.Slow)
 				{
@@ -227,12 +230,11 @@ namespace AIs
 					{
 						this.SetState(Shaman.State.Attack);
 						this.m_AttacksCount++;
+						return;
 					}
-					else
-					{
-						this.SetState(Shaman.State.Idle);
-						this.m_AttacksCount = 0;
-					}
+					this.SetState(Shaman.State.Idle);
+					this.m_AttacksCount = 0;
+					return;
 				}
 			}
 			else if (id == AnimEventID.ShamanDamage)
@@ -249,7 +251,7 @@ namespace AIs
 			}
 			DamageInfo damageInfo = new DamageInfo();
 			damageInfo.m_Damager = base.gameObject;
-			damageInfo.m_Damage = ((ShamanManager.Get().m_AttackVersion != ShamanManager.AttackVersion.Fast) ? 20f : 5f);
+			damageInfo.m_Damage = ((ShamanManager.Get().m_AttackVersion == ShamanManager.AttackVersion.Fast) ? 5f : 20f);
 			this.m_Player.TakeDamage(damageInfo);
 			CJDebug.Log("TryGiveDamage");
 		}

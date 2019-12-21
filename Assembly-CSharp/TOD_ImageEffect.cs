@@ -78,7 +78,7 @@ public abstract class TOD_ImageEffect : MonoBehaviour
 		}
 		if (needHdr)
 		{
-			this.cam.hdr = true;
+			this.cam.allowHDR = true;
 		}
 		return true;
 	}
@@ -105,7 +105,7 @@ public abstract class TOD_ImageEffect : MonoBehaviour
 				y2 = 1f;
 			}
 			float x = 0f;
-			float x2 = 1f / ((float)dest.width * 1f);
+			float x2 = 0f + 1f / ((float)dest.width * 1f);
 			float y3 = 0f;
 			float y4 = 1f;
 			GL.Begin(7);
@@ -117,42 +117,42 @@ public abstract class TOD_ImageEffect : MonoBehaviour
 			GL.Vertex3(x2, y4, 0.1f);
 			GL.TexCoord2(0f, y2);
 			GL.Vertex3(x, y4, 0.1f);
-			x = 1f - 1f / ((float)dest.width * 1f);
+			float x3 = 1f - 1f / ((float)dest.width * 1f);
 			x2 = 1f;
 			y3 = 0f;
 			y4 = 1f;
 			GL.TexCoord2(0f, y);
-			GL.Vertex3(x, y3, 0.1f);
+			GL.Vertex3(x3, y3, 0.1f);
 			GL.TexCoord2(1f, y);
 			GL.Vertex3(x2, y3, 0.1f);
 			GL.TexCoord2(1f, y2);
 			GL.Vertex3(x2, y4, 0.1f);
 			GL.TexCoord2(0f, y2);
-			GL.Vertex3(x, y4, 0.1f);
-			x = 0f;
+			GL.Vertex3(x3, y4, 0.1f);
+			float x4 = 0f;
 			x2 = 1f;
 			y3 = 0f;
-			y4 = 1f / ((float)dest.height * 1f);
+			y4 = 0f + 1f / ((float)dest.height * 1f);
 			GL.TexCoord2(0f, y);
-			GL.Vertex3(x, y3, 0.1f);
+			GL.Vertex3(x4, y3, 0.1f);
 			GL.TexCoord2(1f, y);
 			GL.Vertex3(x2, y3, 0.1f);
 			GL.TexCoord2(1f, y2);
 			GL.Vertex3(x2, y4, 0.1f);
 			GL.TexCoord2(0f, y2);
-			GL.Vertex3(x, y4, 0.1f);
-			x = 0f;
+			GL.Vertex3(x4, y4, 0.1f);
+			float x5 = 0f;
 			x2 = 1f;
 			y3 = 1f - 1f / ((float)dest.height * 1f);
 			y4 = 1f;
 			GL.TexCoord2(0f, y);
-			GL.Vertex3(x, y3, 0.1f);
+			GL.Vertex3(x5, y3, 0.1f);
 			GL.TexCoord2(1f, y);
 			GL.Vertex3(x2, y3, 0.1f);
 			GL.TexCoord2(1f, y2);
 			GL.Vertex3(x2, y4, 0.1f);
 			GL.TexCoord2(0f, y2);
-			GL.Vertex3(x, y4, 0.1f);
+			GL.Vertex3(x5, y4, 0.1f);
 			GL.End();
 		}
 		GL.PopMatrix();

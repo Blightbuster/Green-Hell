@@ -90,15 +90,15 @@ namespace CJTools
 			float num2 = -(u1[(int)i0] - u0[(int)i0]);
 			float num3 = -num * u0[(int)i0] - num2 * u0[(int)i1];
 			float num4 = num * v0[(int)i0] + num2 * v0[(int)i1] + num3;
-			num = u2[(int)i1] - u1[(int)i1];
+			float num5 = u2[(int)i1] - u1[(int)i1];
 			num2 = -(u2[(int)i0] - u1[(int)i0]);
-			num3 = -num * u1[(int)i0] - num2 * u1[(int)i1];
-			float num5 = num * v0[(int)i0] + num2 * v0[(int)i1] + num3;
-			num = u0[(int)i1] - u2[(int)i1];
+			num3 = -num5 * u1[(int)i0] - num2 * u1[(int)i1];
+			float num6 = num5 * v0[(int)i0] + num2 * v0[(int)i1] + num3;
+			float num7 = u0[(int)i1] - u2[(int)i1];
 			num2 = -(u0[(int)i0] - u2[(int)i0]);
-			num3 = -num * u2[(int)i0] - num2 * u2[(int)i1];
-			float num6 = num * v0[(int)i0] + num2 * v0[(int)i1] + num3;
-			return num4 * num5 > 0f && num4 * num6 > 0f;
+			num3 = -num7 * u2[(int)i0] - num2 * u2[(int)i1];
+			float num8 = num7 * v0[(int)i0] + num2 * v0[(int)i1] + num3;
+			return num4 * num6 > 0f && num4 * num8 > 0f;
 		}
 
 		private static bool TriTriCoplanar(Vector3 N, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 u0, Vector3 u1, Vector3 u2)
@@ -220,9 +220,9 @@ namespace CJTools
 			{
 				return false;
 			}
-			lhs = u1 - u0;
+			Vector3 lhs2 = u1 - u0;
 			rhs = u2 - u0;
-			Vector3 vector2 = Vector3.Cross(lhs, rhs);
+			Vector3 vector2 = Vector3.Cross(lhs2, rhs);
 			float num7 = -Vector3.Dot(vector2, u0);
 			float num8 = Vector3.Dot(vector2, v0) + num7;
 			float num9 = Vector3.Dot(vector2, v1) + num7;

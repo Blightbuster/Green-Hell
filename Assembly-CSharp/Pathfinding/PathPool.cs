@@ -7,7 +7,7 @@ namespace Pathfinding
 	{
 		public static void Pool(Path path)
 		{
-			object obj = PathPool.pool;
+			Dictionary<Type, Stack<Path>> obj = PathPool.pool;
 			lock (obj)
 			{
 				if (((IPathInternals)path).Pooled)
@@ -48,7 +48,7 @@ namespace Pathfinding
 
 		public static T GetPath<T>() where T : Path, new()
 		{
-			object obj = PathPool.pool;
+			Dictionary<Type, Stack<Path>> obj = PathPool.pool;
 			T result;
 			lock (obj)
 			{
@@ -65,8 +65,10 @@ namespace Pathfinding
 					{
 						PathPool.totalCreated[typeof(T)] = 0;
 					}
-					Dictionary<Type, int> dictionary;
-					(dictionary = PathPool.totalCreated)[typeof(T)] = dictionary[typeof(T)] + 1;
+					Dictionary<Type, int> dictionary = PathPool.totalCreated;
+					Type typeFromHandle = typeof(T);
+					int num = dictionary[typeFromHandle];
+					dictionary[typeFromHandle] = num + 1;
 				}
 				t.Pooled = false;
 				t.Reset();

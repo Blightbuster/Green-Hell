@@ -9,18 +9,16 @@ namespace AIs
 		public override void Initialize(AI ai, AIGoal goal)
 		{
 			base.Initialize(ai, goal);
-			string str = (!this.m_AI.IsHunter()) ? "Taunt_" : "HunterTaunt_";
-			for (int i = 0; i < 999; i++)
+			string str = this.m_AI.IsHunter() ? "HunterTaunt_" : "Taunt_";
+			int num = 0;
+			while (num < 999 && this.m_AI.m_AnimationModule.ContainsState(str + num.ToString()))
 			{
-				if (!this.m_AI.m_AnimationModule.ContainsState(str + i.ToString()))
-				{
-					break;
-				}
-				this.m_Anims.Add(str + i.ToString());
+				this.m_Anims.Add(str + num.ToString());
+				num++;
 			}
 			if (this.m_Anims.Count == 0)
 			{
-				this.m_Anims.Add((!this.m_AI.IsHunter()) ? "Taunt" : "HunterTaunt");
+				this.m_Anims.Add(this.m_AI.IsHunter() ? "HunterTaunt" : "Taunt");
 			}
 		}
 

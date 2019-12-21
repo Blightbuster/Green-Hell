@@ -55,16 +55,16 @@ public class HUDQuickAccessBar : HUDBase
 	private void SetupSelections()
 	{
 		Color color = this.m_Craft.color;
-		color.a = (Player.Get().CanStartCrafting() ? ((!CraftingManager.Get().gameObject.activeSelf) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanStartCrafting()) ? this.m_InactiveAlpha : (CraftingManager.Get().gameObject.activeSelf ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Craft.color = color;
 		color = this.m_Notepad.color;
-		color.a = (Player.Get().CanShowNotepad() ? ((!NotepadController.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanShowNotepad()) ? this.m_InactiveAlpha : (NotepadController.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Notepad.color = color;
 		color = this.m_Backpack.color;
-		color.a = ((!Inventory3DManager.Get().gameObject.activeSelf) ? this.m_NormalAlpha : this.m_SelectedAlpha);
+		color.a = (Inventory3DManager.Get().gameObject.activeSelf ? this.m_SelectedAlpha : this.m_NormalAlpha);
 		this.m_Backpack.color = color;
 		color = this.m_Inspect.color;
-		color.a = (Player.Get().CanStartBodyInspection() ? ((!BodyInspectionController.Get().IsActive()) ? this.m_NormalAlpha : this.m_SelectedAlpha) : this.m_InactiveAlpha);
+		color.a = ((!Player.Get().CanStartBodyInspection()) ? this.m_InactiveAlpha : (BodyInspectionController.Get().IsActive() ? this.m_SelectedAlpha : this.m_NormalAlpha));
 		this.m_Inspect.color = color;
 	}
 
@@ -72,24 +72,17 @@ public class HUDQuickAccessBar : HUDBase
 	{
 		if (this.m_DelayedType != HUDQuickAccessBar.TYPE.None)
 		{
-			HUDQuickAccessBar.TYPE delayedType = this.m_DelayedType;
-			if (delayedType != HUDQuickAccessBar.TYPE.Backpack)
+			switch (this.m_DelayedType)
 			{
-				if (delayedType != HUDQuickAccessBar.TYPE.Craft)
-				{
-					if (delayedType == HUDQuickAccessBar.TYPE.Inspect)
-					{
-						this.OnInspection(this.m_DelayedObj);
-					}
-				}
-				else
-				{
-					this.OnCraft(this.m_DelayedObj);
-				}
-			}
-			else
-			{
+			case HUDQuickAccessBar.TYPE.Craft:
+				this.OnCraft(this.m_DelayedObj);
+				break;
+			case HUDQuickAccessBar.TYPE.Backpack:
 				this.OnBackpack(this.m_DelayedObj);
+				break;
+			case HUDQuickAccessBar.TYPE.Inspect:
+				this.OnInspection(this.m_DelayedObj);
+				break;
 			}
 			this.m_DelayedObj = null;
 			this.m_DelayedType = HUDQuickAccessBar.TYPE.None;
@@ -120,11 +113,9 @@ public class HUDQuickAccessBar : HUDBase
 		if (!CraftingManager.Get().gameObject.activeSelf)
 		{
 			CraftingManager.Get().Activate();
+			return;
 		}
-		else
-		{
-			CraftingManager.Get().Deactivate();
-		}
+		CraftingManager.Get().Deactivate();
 	}
 
 	public void OnNotepad(GameObject obj)
@@ -144,11 +135,9 @@ public class HUDQuickAccessBar : HUDBase
 		if (!NotepadController.Get().IsActive())
 		{
 			Player.Get().StartController(PlayerControllerType.Notepad);
+			return;
 		}
-		else
-		{
-			NotepadController.Get().Hide();
-		}
+		NotepadController.Get().Hide();
 	}
 
 	public void OnBackpack(GameObject obj)
@@ -163,11 +152,9 @@ public class HUDQuickAccessBar : HUDBase
 		if (!Inventory3DManager.Get().gameObject.activeSelf)
 		{
 			Inventory3DManager.Get().Activate();
+			return;
 		}
-		else
-		{
-			Inventory3DManager.Get().Deactivate();
-		}
+		Inventory3DManager.Get().Deactivate();
 	}
 
 	public void OnInspection(GameObject obj)
@@ -190,11 +177,9 @@ public class HUDQuickAccessBar : HUDBase
 		if (!BodyInspectionController.Get().IsActive())
 		{
 			Player.Get().StartController(PlayerControllerType.BodyInspection);
+			return;
 		}
-		else
-		{
-			Player.Get().StopController(PlayerControllerType.BodyInspection);
-		}
+		Player.Get().StopController(PlayerControllerType.BodyInspection);
 	}
 
 	protected override void OnShow()

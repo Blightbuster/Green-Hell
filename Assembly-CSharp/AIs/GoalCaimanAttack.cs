@@ -10,30 +10,23 @@ namespace AIs
 		{
 			base.Initialize(ai);
 			this.m_Attack = (base.CreateAction(typeof(Attack)) as Attack);
+			this.m_SwimAttack = (base.CreateAction(typeof(SwimAttack)) as SwimAttack);
 		}
 
 		public override bool ShouldPerform()
 		{
 			Being enemy = this.m_AI.m_EnemyModule.m_Enemy;
-			if (!enemy)
-			{
-				return false;
-			}
-			if (enemy.IsDead())
-			{
-				return false;
-			}
-			if (this.m_Active)
-			{
-				return true;
-			}
-			float num = enemy.transform.position.Distance(this.m_AI.transform.position);
-			return num <= this.m_AI.m_Params.m_AttackRange;
+			return enemy && !enemy.IsDead() && (this.m_Active || (enemy.GetHeadTransform().position.To2D().Distance(this.m_AI.GetHeadTransform().position.To2D()) <= (this.m_AI.IsSwimming() ? 1.3f : this.m_AI.m_Params.m_AttackRange) && (!this.m_AI.IsSwimming() || Vector3.Dot((this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) >= 0.5f)));
 		}
 
 		protected override void Prepare()
 		{
 			base.Prepare();
+			if (this.m_AI.IsSwimming())
+			{
+				base.AddToPlan(this.m_SwimAttack);
+				return;
+			}
 			base.AddToPlan(this.m_Attack);
 		}
 
@@ -45,8 +38,7 @@ namespace AIs
 
 		private void UpdateBlend()
 		{
-			Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.GetHeadTransform().position).GetNormalized2D();
-			float b = normalized2D.AngleSigned(this.m_AI.transform.forward.GetNormalized2D(), Vector3.up);
+			float b = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.GetHeadTransform().position).GetNormalized2D().AngleSigned(this.m_AI.transform.forward.GetNormalized2D(), Vector3.up);
 			float proportionalClamp = CJTools.Math.GetProportionalClamp(0f, 1f, b, 45f, -45f);
 			this.m_AI.m_AnimationModule.SetWantedAttackBlend(proportionalClamp);
 		}
@@ -68,5 +60,7 @@ namespace AIs
 		}
 
 		private Attack m_Attack;
+
+		private SwimAttack m_SwimAttack;
 	}
 }

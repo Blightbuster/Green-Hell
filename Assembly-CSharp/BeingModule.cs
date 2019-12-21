@@ -7,7 +7,12 @@ public class BeingModule : MonoBehaviour
 	{
 	}
 
-	public virtual void Initialize()
+	public virtual void Initialize(Being being)
+	{
+		this.m_Being = being;
+	}
+
+	public virtual void PostInitialize()
 	{
 	}
 
@@ -26,4 +31,14 @@ public class BeingModule : MonoBehaviour
 	public virtual void OnDie()
 	{
 	}
+
+	public virtual void OnDestroy()
+	{
+		if (this.m_Being)
+		{
+			this.m_Being.OnDestroyModule(this);
+		}
+	}
+
+	protected Being m_Being;
 }

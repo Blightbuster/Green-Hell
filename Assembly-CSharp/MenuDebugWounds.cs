@@ -5,9 +5,9 @@ using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MenuDebugWounds : MenuScreen
+public class MenuDebugWounds : MenuDebugScreen
 {
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.Setup();
@@ -41,6 +41,11 @@ public class MenuDebugWounds : MenuScreen
 				this.m_WoundParameters.Add(component);
 			}
 		}
+		this.InitSliders();
+	}
+
+	private void InitSliders()
+	{
 		PlayerConditionModule playerConditionModule = PlayerConditionModule.Get();
 		this.m_Proteins.minValue = 0f;
 		this.m_Proteins.maxValue = playerConditionModule.GetMaxNutritionProtein();
@@ -54,15 +59,18 @@ public class MenuDebugWounds : MenuScreen
 		this.m_Hydration.minValue = 0f;
 		this.m_Hydration.maxValue = playerConditionModule.GetMaxHydration();
 		this.m_Hydration.value = playerConditionModule.GetHydration();
-		this.m_HP.minValue = 0f;
+		this.m_HP.minValue = 1f;
 		this.m_HP.maxValue = playerConditionModule.GetMaxHP();
 		this.m_HP.value = playerConditionModule.GetHP();
-		this.m_Energy.minValue = 0f;
+		this.m_Energy.minValue = 1f;
 		this.m_Energy.maxValue = playerConditionModule.GetMaxEnergy();
 		this.m_Energy.value = playerConditionModule.GetEnergy();
 		this.m_Sanity.minValue = 0f;
 		this.m_Sanity.maxValue = 100f;
 		this.m_Sanity.value = (float)PlayerSanityModule.Get().m_Sanity;
+		this.m_Dirtiness.minValue = 0f;
+		this.m_Dirtiness.maxValue = PlayerConditionModule.Get().m_MaxDirtiness;
+		this.m_Dirtiness.value = PlayerConditionModule.Get().m_Dirtiness;
 	}
 
 	public void OnLimbSelChanged(bool set)
@@ -121,16 +129,12 @@ public class MenuDebugWounds : MenuScreen
 		if (biwoundSlot != null)
 		{
 			int poison_level = 0;
-			if (injuryType == InjuryType.VenomBite || injuryType == InjuryType.SnakeBite)
+			if ((injuryType == InjuryType.VenomBite || injuryType == InjuryType.SnakeBite) && !int.TryParse(this.m_PosionLevel.text, out poison_level))
 			{
-				string text = this.m_PosionLevel.text;
-				if (!int.TryParse(text, out poison_level))
-				{
-					poison_level = 1;
-				}
+				poison_level = 1;
 			}
 			InjuryState state = InjuryState.Open;
-			if (injuryType == InjuryType.Laceration || injuryType == InjuryType.Laceration)
+			if (injuryType == InjuryType.Laceration || injuryType == InjuryType.LacerationCat)
 			{
 				state = InjuryState.Bleeding;
 			}
@@ -138,7 +142,7 @@ public class MenuDebugWounds : MenuScreen
 			{
 				state = InjuryState.WormInside;
 			}
-			playerInjuryModule.AddInjury(injuryType, biwoundSlot.m_InjuryPlace, biwoundSlot, state, poison_level, null);
+			playerInjuryModule.AddInjury(injuryType, biwoundSlot.m_InjuryPlace, biwoundSlot, state, poison_level, null, null);
 		}
 	}
 
@@ -239,11 +243,81 @@ public class MenuDebugWounds : MenuScreen
 		playerConditionModule.m_HP = this.m_HP.value;
 		playerConditionModule.m_Energy = this.m_Energy.value;
 		PlayerSanityModule.Get().m_Sanity = (int)this.m_Sanity.value;
+		PlayerConditionModule.Get().m_Dirtiness = (float)((int)this.m_Dirtiness.value);
 	}
 
 	public void OnFeverButton()
 	{
 		PlayerDiseasesModule.Get().RequestDisease(ConsumeEffect.Fever, 0f, 1);
+	}
+
+	public void OnFeverHealButton()
+	{
+	}
+
+	public void OnInsomniaButton()
+	{
+		Insomnia insomnia = (Insomnia)PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.Insomnia);
+		if (insomnia != null)
+		{
+			if (insomnia.m_InsomniaLevel <= 0f)
+			{
+				SleepController.Get().m_LastWakeUpTimeLogical -= insomnia.m_NoSleepTmeToActivate;
+				return;
+			}
+			SleepController.Get().m_LastWakeUpTimeLogical -= insomnia.m_NoSleepTimeToIncreaseLevel;
+		}
+	}
+
+	public void OnInsomniaDecreaseButton()
+	{
+		Insomnia insomnia = (Insomnia)PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.Insomnia);
+		if (insomnia != null)
+		{
+			if (insomnia.m_InsomniaLevel < 1f)
+			{
+				this.OnInsomniaHealButton();
+				return;
+			}
+			SleepController.Get().m_LastWakeUpTimeLogical += insomnia.m_NoSleepTimeToIncreaseLevel;
+			SleepController.Get().m_LastWakeUpTimeLogical = System.Math.Min(MainLevel.Instance.GetCurrentTimeMinutes(), SleepController.Get().m_LastWakeUpTimeLogical);
+		}
+	}
+
+	public void OnInsomniaHealButton()
+	{
+		Insomnia insomnia = (Insomnia)PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.Insomnia);
+		if (insomnia != null)
+		{
+			insomnia.m_InsomniaLevel = 0f;
+			SleepController.Get().m_LastWakeUpTimeLogical = MainLevel.Instance.GetCurrentTimeMinutes();
+		}
+	}
+
+	public void OnFoodPoisoningButton()
+	{
+		PlayerDiseasesModule.Get().RequestDisease(ConsumeEffect.FoodPoisoning, 0f, 1);
+	}
+
+	public void OnFoodPoisoningHealButton()
+	{
+	}
+
+	public void OnParasiteSicknesButton()
+	{
+		PlayerDiseasesModule.Get().RequestDisease(ConsumeEffect.ParasiteSickness, 0f, 1);
+	}
+
+	public void OnParasiteSicknesHealButton()
+	{
+	}
+
+	public void OnSetAllFullButton()
+	{
+		PlayerConditionModule.Get().m_MaxHP = 100f;
+		PlayerConditionModule.Get().ResetParams();
+		PlayerSanityModule.Get().m_Sanity = 100;
+		this.InitSliders();
 	}
 
 	public Toggle m_ToggleLH;
@@ -281,6 +355,8 @@ public class MenuDebugWounds : MenuScreen
 	public Slider m_Energy;
 
 	public Slider m_Sanity;
+
+	public Slider m_Dirtiness;
 
 	public InputField m_PosionLevel;
 }

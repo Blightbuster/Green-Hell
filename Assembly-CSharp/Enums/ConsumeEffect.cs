@@ -7,6 +7,8 @@ namespace Enums
 		None = -1,
 		FoodPoisoning,
 		Fever,
-		ParasiteSickness
+		ParasiteSickness,
+		Insomnia,
+		DirtSickness
 	}
 }

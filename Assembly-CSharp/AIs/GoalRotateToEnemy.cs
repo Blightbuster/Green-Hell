@@ -24,8 +24,7 @@ namespace AIs
 			}
 			Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 			Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-			float num = Vector3.Angle(normalized2D, normalized2D2);
-			return num > RotateTo.MAX_ANGLE;
+			return Vector3.Angle(normalized2D, normalized2D2) > RotateTo.MAX_ANGLE;
 		}
 
 		protected override void Prepare()

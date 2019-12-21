@@ -3,50 +3,37 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MenuDebugSkills : MenuScreen
+public class MenuDebugSkills : MenuDebugScreen
 {
-	protected override void Start()
+	protected void Start()
 	{
-		base.Start();
-		int num = 7;
-		int num2 = 0;
-		float num3 = this.m_StartY;
-		float x = -100f;
-		SkillsManager skillsManager = SkillsManager.Get();
-		foreach (Skill skill in skillsManager.m_Skills)
+		Transform transform = base.transform.Find("Slots");
+		for (int i = 0; i < transform.childCount; i++)
 		{
-			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_SkillSlotPrefab);
-			gameObject.transform.parent = base.transform;
-			MenuDebugSkills.SkillUISlot item = default(MenuDebugSkills.SkillUISlot);
-			Vector3 zero = Vector3.zero;
-			zero.x = x;
-			zero.y = num3;
-			num3 -= this.m_YDiff;
-			num2++;
-			if (num2 >= num)
-			{
-				num3 = this.m_StartY;
-				num2 = 0;
-				x = 100f;
-			}
-			gameObject.transform.localPosition = zero;
-			item.slot = gameObject;
-			item.skill = skill;
-			item.name = gameObject.transform.Find("Name").gameObject.GetComponent<Text>();
-			item.name.text = skill.m_Name;
-			item.level = gameObject.transform.Find("Level").gameObject.GetComponent<Text>();
-			item.next_level = gameObject.transform.Find("NextLevel").gameObject.GetComponent<Text>();
-			item.value = gameObject.transform.Find("Value").gameObject.GetComponent<Text>();
-			item.value_slider = gameObject.transform.Find("Slider").gameObject.GetComponent<Slider>();
-			item.value_slider.minValue = 0f;
-			item.value_slider.maxValue = 100f;
-			item.check_box = gameObject.transform.Find("Toggle").gameObject.GetComponent<Toggle>();
-			this.m_Skills.Add(item);
+			transform.GetChild(i).gameObject.SetActive(false);
+		}
+		foreach (Skill skill in SkillsManager.Get().m_Skills)
+		{
+			GameObject gameObject = transform.GetChild(this.m_Skills.Count).gameObject;
+			gameObject.SetActive(true);
+			MenuDebugSkills.SkillUISlot skillUISlot = default(MenuDebugSkills.SkillUISlot);
+			skillUISlot.slot = gameObject;
+			skillUISlot.skill = skill;
+			skillUISlot.name = gameObject.transform.Find("Name").gameObject.GetComponent<Text>();
+			skillUISlot.name.text = skill.m_Name;
+			skillUISlot.level = gameObject.transform.Find("Level").gameObject.GetComponent<Text>();
+			skillUISlot.next_level = gameObject.transform.Find("NextLevel").gameObject.GetComponent<Text>();
+			skillUISlot.value = gameObject.transform.Find("Value").gameObject.GetComponent<Text>();
+			skillUISlot.value_slider = gameObject.transform.Find("Slider").gameObject.GetComponent<Slider>();
+			skillUISlot.value_slider.minValue = 0f;
+			skillUISlot.value_slider.maxValue = 100f;
+			skillUISlot.check_box = gameObject.transform.Find("Toggle").gameObject.GetComponent<Toggle>();
+			this.m_Skills.Add(skillUISlot);
 		}
 		this.Setup();
 	}
 
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.Setup();
@@ -82,12 +69,6 @@ public class MenuDebugSkills : MenuScreen
 	}
 
 	private List<MenuDebugSkills.SkillUISlot> m_Skills = new List<MenuDebugSkills.SkillUISlot>();
-
-	public GameObject m_SkillSlotPrefab;
-
-	private float m_StartY = 290f;
-
-	private float m_YDiff = 90f;
 
 	private struct SkillUISlot
 	{

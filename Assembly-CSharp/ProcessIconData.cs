@@ -8,7 +8,7 @@ public class ProcessIconData
 
 	public CanvasGroup canvas_group;
 
-	public Item item;
+	public Trigger trigger;
 
 	public Image icon;
 

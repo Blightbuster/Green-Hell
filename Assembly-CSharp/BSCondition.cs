@@ -14,5 +14,6 @@ public enum BSCondition
 	Poison,
 	Hydration,
 	Fever,
-	HasFire
+	HasFire,
+	HasNoDressing
 }

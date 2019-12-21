@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Terrain/Objects on terrain placer")]
 [ExecuteInEditMode]
+[AddComponentMenu("Terrain/Objects on terrain placer")]
 public class ObjectsPainter : MonoBehaviour
 {
 }

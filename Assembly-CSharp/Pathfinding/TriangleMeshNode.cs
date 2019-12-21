@@ -48,12 +48,20 @@ namespace Pathfinding
 
 		public int GetVertexIndex(int i)
 		{
-			return (i != 0) ? ((i != 1) ? this.v2 : this.v1) : this.v0;
+			if (i == 0)
+			{
+				return this.v0;
+			}
+			if (i != 1)
+			{
+				return this.v2;
+			}
+			return this.v1;
 		}
 
 		public int GetVertexArrayIndex(int i)
 		{
-			return TriangleMeshNode.GetNavmeshHolder(base.GraphIndex).GetVertexArrayIndex((i != 0) ? ((i != 1) ? this.v2 : this.v1) : this.v0);
+			return TriangleMeshNode.GetNavmeshHolder(base.GraphIndex).GetVertexArrayIndex((i == 0) ? this.v0 : ((i == 1) ? this.v1 : this.v2));
 		}
 
 		public void GetVertices(out Int3 v0, out Int3 v1, out Int3 v2)
@@ -268,7 +276,7 @@ namespace Pathfinding
 				{
 					Int3 vertex = this.GetVertex(num8);
 					Int3 vertex2 = this.GetVertex((num8 + 1) % vertexCount);
-					int i2 = (num7 != 2) ? 2 : 0;
+					int i2 = (num7 == 2) ? 0 : 2;
 					int num11 = Math.Min(vertex[i2], vertex2[i2]);
 					int num12 = Math.Max(vertex[i2], vertex2[i2]);
 					num11 = Math.Max(num11, Math.Min(triangleMeshNode.GetVertex(num9)[i2], triangleMeshNode.GetVertex((num9 + 1) % vertexCount2)[i2]));

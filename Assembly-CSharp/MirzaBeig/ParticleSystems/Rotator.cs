@@ -31,7 +31,7 @@ namespace MirzaBeig.ParticleSystems
 
 		private void rotate()
 		{
-			float d = this.unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+			float d = (!this.unscaledTime) ? Time.deltaTime : Time.unscaledDeltaTime;
 			if (this.localRotationSpeed != Vector3.zero)
 			{
 				base.transform.Rotate(this.localRotationSpeed * d, Space.Self);

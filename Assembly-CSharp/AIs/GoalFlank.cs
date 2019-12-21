@@ -25,7 +25,7 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			this.m_Strafe.SetupParams(UnityEngine.Random.Range(4f, 6f), (UnityEngine.Random.Range(0, 2) != 0) ? Direction.Right : Direction.Left);
+			this.m_Strafe.SetupParams(UnityEngine.Random.Range(4f, 6f), (UnityEngine.Random.Range(0, 2) == 0) ? Direction.Left : Direction.Right);
 			base.AddToPlan(this.m_Strafe);
 			this.m_AI.m_PathModule.CalcPath(PathModule.PathType.Flank);
 		}

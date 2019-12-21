@@ -60,14 +60,13 @@ namespace Cinemachine
 				float num2 = num * this.m_MaxSpeed;
 				if (Mathf.Abs(num2) < 0.0001f || (Mathf.Sign(this.mCurrentSpeed) == Mathf.Sign(num2) && Mathf.Abs(num2) < Mathf.Abs(this.mCurrentSpeed)))
 				{
-					float num3 = Mathf.Abs(num2 - this.mCurrentSpeed) / Mathf.Max(0.0001f, this.m_DecelTime);
-					float num4 = Mathf.Min(num3 * deltaTime, Mathf.Abs(this.mCurrentSpeed));
-					this.mCurrentSpeed -= Mathf.Sign(this.mCurrentSpeed) * num4;
+					float num3 = Mathf.Min(Mathf.Abs(num2 - this.mCurrentSpeed) / Mathf.Max(0.0001f, this.m_DecelTime) * deltaTime, Mathf.Abs(this.mCurrentSpeed));
+					this.mCurrentSpeed -= Mathf.Sign(this.mCurrentSpeed) * num3;
 				}
 				else
 				{
-					float num5 = Mathf.Abs(num2 - this.mCurrentSpeed) / Mathf.Max(0.0001f, this.m_AccelTime);
-					this.mCurrentSpeed += Mathf.Sign(num2) * num5 * deltaTime;
+					float num4 = Mathf.Abs(num2 - this.mCurrentSpeed) / Mathf.Max(0.0001f, this.m_AccelTime);
+					this.mCurrentSpeed += Mathf.Sign(num2) * num4 * deltaTime;
 					if (Mathf.Sign(this.mCurrentSpeed) == Mathf.Sign(num2) && Mathf.Abs(this.mCurrentSpeed) > Mathf.Abs(num2))
 					{
 						this.mCurrentSpeed = num2;
@@ -77,8 +76,7 @@ namespace Cinemachine
 			float maxSpeed = this.GetMaxSpeed();
 			this.mCurrentSpeed = Mathf.Clamp(this.mCurrentSpeed, -maxSpeed, maxSpeed);
 			this.Value += this.mCurrentSpeed * deltaTime;
-			bool flag = this.Value > this.mMaxValue || this.Value < this.mMinValue;
-			if (flag)
+			if (this.Value > this.mMaxValue || this.Value < this.mMinValue)
 			{
 				if (this.mWrapAround)
 				{
@@ -137,12 +135,12 @@ namespace Cinemachine
 		[Tooltip("The name of this axis as specified in Unity Input manager. Setting to an empty string will disable the automatic updating of this axis")]
 		public string m_InputAxisName;
 
-		[Tooltip("The value of the input axis.  A value of 0 means no input.  You can drive this directly from a custom input system, or you can set the Axis Name and have the value driven by the internal Input Manager")]
 		[NoSaveDuringPlay]
+		[Tooltip("The value of the input axis.  A value of 0 means no input.  You can drive this directly from a custom input system, or you can set the Axis Name and have the value driven by the internal Input Manager")]
 		public float m_InputAxisValue;
 
-		[Tooltip("If checked, then the raw value of the input axis will be inverted before it is used")]
 		[NoSaveDuringPlay]
+		[Tooltip("If checked, then the raw value of the input axis will be inverted before it is used")]
 		public bool m_InvertAxis;
 
 		private float mCurrentSpeed;

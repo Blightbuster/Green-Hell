@@ -160,8 +160,7 @@ namespace Pathfinding
 				while (num5 - num4 > 0.01f)
 				{
 					float num6 = (num4 + num5) / 2f;
-					Vector3 a = PathUtilities.InvoluteOfCircle(num, num6);
-					if ((a - b).sqrMagnitude < clearance * clearance)
+					if ((PathUtilities.InvoluteOfCircle(num, num6) - b).sqrMagnitude < clearance * clearance)
 					{
 						num4 = num6;
 					}
@@ -195,8 +194,8 @@ namespace Pathfinding
 			vector /= (float)previousPoints.Count;
 			for (int j = 0; j < previousPoints.Count; j++)
 			{
-				int index;
-				previousPoints[index = j] = previousPoints[index] - vector;
+				int index = j;
+				previousPoints[index] -= vector;
 			}
 			PathUtilities.GetPointsAroundPoint(p, g, previousPoints, radius, clearanceRadius);
 		}
@@ -281,12 +280,12 @@ namespace Pathfinding
 					vector.y = 0f;
 					num2++;
 				}
-				IL_1E2:
+				IL_19D:
 				i++;
 				continue;
 				Block_7:
 				previousPoints[i] = vector2;
-				goto IL_1E2;
+				goto IL_19D;
 			}
 		}
 
@@ -342,8 +341,7 @@ namespace Pathfinding
 						}
 						else
 						{
-							GraphNode graphNode = nodes[num5];
-							Vector3 vector = graphNode.RandomPointOnSurface();
+							Vector3 vector = nodes[num5].RandomPointOnSurface();
 							if (clearanceRadius > 0f)
 							{
 								for (int k = 0; k < list.Count; k++)

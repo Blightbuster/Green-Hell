@@ -24,7 +24,7 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			this.m_LastEnemyPos = Player.Get().transform.position;
+			this.m_LastEnemyPos = this.m_AI.m_EnemyModule.m_Enemy.transform.position;
 			this.m_AI.m_MoveStyle = AIMoveStyle.Walk;
 			this.Setup();
 			base.StartAction(this.m_HumanMoveBack);
@@ -37,7 +37,7 @@ namespace AIs
 				base.Deactivate();
 				return;
 			}
-			this.m_LastEnemyPos = Player.Get().transform.position;
+			this.m_LastEnemyPos = this.m_AI.m_EnemyModule.m_Enemy.transform.position;
 		}
 
 		private Vector3 m_LastEnemyPos = Vector3.zero;

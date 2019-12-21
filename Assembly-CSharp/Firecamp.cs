@@ -4,12 +4,11 @@ using CJTools;
 using Enums;
 using UnityEngine;
 
-public class Firecamp : Construction, IItemSlotParent
+public class Firecamp : Construction, IItemSlotParent, IFireObject
 {
 	protected override void Awake()
 	{
 		base.Awake();
-		Firecamp.s_Firecamps.Add(this);
 		this.m_Sound = base.gameObject.GetComponent<AudioSource>();
 		for (int i = 0; i < 100; i++)
 		{
@@ -32,16 +31,57 @@ public class Firecamp : Construction, IItemSlotParent
 		}
 		this.m_DamageBounds = this.m_BoxCollider.bounds;
 		this.m_DamageBounds.Expand(0.5f);
+		Firecamp.s_Firecamps.Add(this);
+		this.m_FireAnimation = (this.m_FireAnim ? this.m_FireAnim.GetComponent<TileAnimation>() : null);
+		base.RegisterConstantUpdateItem();
 	}
 
 	protected override void Start()
 	{
 		base.Start();
-		this.SetupEffects();
+		FirecampGroupsManager.Get().OnCreateFirecamp(this);
 		this.m_FireLevel = 1f;
+		this.SetupEffects();
 		if (this.m_IgniteOnStart)
 		{
-			this.StartBurning();
+			this.Ignite();
+		}
+		if (this.m_Freezed)
+		{
+			ItemSlot[] cookingSlots = this.m_CookingSlots;
+			for (int i = 0; i < cookingSlots.Length; i++)
+			{
+				cookingSlots[i].gameObject.SetActive(false);
+			}
+			this.m_WoodSlot.gameObject.SetActive(false);
+			this.m_Light.gameObject.SetActive(true);
+			for (int j = 0; j < this.m_Particles.Count; j++)
+			{
+				this.m_Particles[j].gameObject.SetActive(true);
+			}
+			if (this.m_FireAnim)
+			{
+				this.m_FireAnim.SetActive(true);
+			}
+			base.enabled = false;
+			base.Invoke("Freeze", 2f);
+		}
+	}
+
+	public override bool IsFIrecamp()
+	{
+		return true;
+	}
+
+	private void Freeze()
+	{
+		for (int i = 0; i < this.m_Particles.Count; i++)
+		{
+			this.m_Particles[i].Pause(true);
+		}
+		if (this.m_FireAnimation)
+		{
+			this.m_FireAnimation.enabled = false;
 		}
 	}
 
@@ -53,6 +93,16 @@ public class Firecamp : Construction, IItemSlotParent
 			HUDFirecamp.Get().UnregisterFirecamp(this);
 		}
 		Firecamp.s_Firecamps.Remove(this);
+		if (FirecampGroupsManager.Get())
+		{
+			FirecampGroupsManager.Get().OnDestroyFirecamp(this);
+		}
+		base.UnregisterConstantUpdateItem();
+	}
+
+	public override bool IsFirecamp()
+	{
+		return true;
 	}
 
 	public static bool IsAnyBurning()
@@ -73,8 +123,40 @@ public class Firecamp : Construction, IItemSlotParent
 		this.UpdateFireLevel();
 	}
 
-	public void ConstantUpdate()
+	public void SetStoneRing(Construction ring)
 	{
+		this.m_StoneRing = ring;
+		ItemSlot[] componentsInChildren = ring.GetComponentsInChildren<ItemSlot>();
+		foreach (ItemSlot itemSlot in componentsInChildren)
+		{
+			if (itemSlot.m_Item && itemSlot.m_Item.m_Info.IsBowl())
+			{
+				((Bowl)itemSlot.m_Item).OnFirecampAdd(this);
+			}
+		}
+		foreach (ItemSlot itemSlot2 in this.m_CookingSlots)
+		{
+			if (itemSlot2.m_Item)
+			{
+				Item item = itemSlot2.m_Item;
+				itemSlot2.RemoveItem();
+				foreach (ItemSlot itemSlot3 in componentsInChildren)
+				{
+					if (!itemSlot3.m_Item)
+					{
+						itemSlot3.InsertItem(item);
+						break;
+					}
+				}
+			}
+			itemSlot2.m_ActivityUpdate = false;
+			itemSlot2.gameObject.SetActive(false);
+		}
+	}
+
+	public override void ConstantUpdate()
+	{
+		base.ConstantUpdate();
 		this.CheckRain();
 		this.UpdateBuriningDuration();
 		this.UpdateFireLevel();
@@ -82,10 +164,20 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public void UpdateBuriningDuration()
 	{
-		if (this.m_Burning)
+		if (!this.m_Burning)
 		{
-			this.m_BurningDuration += MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+			return;
 		}
+		float num = MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+		if (HUDSleeping.Get().GetState() == HUDSleepingState.Progress)
+		{
+			num = SleepController.Get().m_HoursDelta;
+		}
+		else if (ConsciousnessController.Get().IsUnconscious())
+		{
+			num = ConsciousnessController.Get().m_HoursDelta;
+		}
+		this.m_BurningDuration += num;
 	}
 
 	public void CheckRain()
@@ -101,6 +193,7 @@ public class Firecamp : Construction, IItemSlotParent
 			if (this.m_RainDuration >= this.m_MinRainDurationToExtinguish)
 			{
 				this.Extinguish();
+				return;
 			}
 		}
 		else
@@ -121,7 +214,7 @@ public class Firecamp : Construction, IItemSlotParent
 		this.UpdateDamage();
 		if (this.m_DebugIgnite)
 		{
-			this.StartBurning();
+			this.Ignite();
 			this.m_DebugIgnite = false;
 		}
 		if (this.m_DebugExtinguish)
@@ -134,6 +227,10 @@ public class Firecamp : Construction, IItemSlotParent
 	private void UpdateDamage()
 	{
 		if (!this.m_Burning)
+		{
+			return;
+		}
+		if (this.m_BlockGivingDamage)
 		{
 			return;
 		}
@@ -151,13 +248,21 @@ public class Firecamp : Construction, IItemSlotParent
 
 	private void UpdateSlots()
 	{
-		if (this.m_WoodSlot.m_Active != this.m_Burning)
+		bool flag = this.m_FireLevel < 1f;
+		if (this.m_WoodSlot.m_Active != flag)
 		{
-			this.m_WoodSlot.Activate(this.m_Burning);
+			this.m_WoodSlot.Activate(flag);
 		}
 		for (int i = 0; i < this.m_CookingSlots.Length; i++)
 		{
-			if (!this.m_CookingSlots[i].m_Active)
+			if (this.m_StoneRing)
+			{
+				if (this.m_CookingSlots[i].m_Active)
+				{
+					this.m_CookingSlots[i].Activate(false);
+				}
+			}
+			else if (!this.m_CookingSlots[i].m_Active)
 			{
 				this.m_CookingSlots[i].Activate(true);
 			}
@@ -199,7 +304,11 @@ public class Firecamp : Construction, IItemSlotParent
 
 	private float GetBurningLength()
 	{
-		return (!this.m_StoneRing) ? this.m_BurningLength : (this.m_BurningLength * 1.2f);
+		if (!this.m_StoneRing)
+		{
+			return this.m_BurningLength;
+		}
+		return this.m_BurningLength * 1.2f;
 	}
 
 	private void UpdateFireLevel()
@@ -239,8 +348,9 @@ public class Firecamp : Construction, IItemSlotParent
 			{
 				this.m_Particles[i].emission.rateOverTime = proportionalClamp * 10f;
 			}
+			return;
 		}
-		else if (!this.m_Burning)
+		if (!this.m_Burning)
 		{
 			this.m_Light.intensity = 0f;
 		}
@@ -306,11 +416,11 @@ public class Firecamp : Construction, IItemSlotParent
 			Transform child = trans.GetChild(i);
 			if (child.name.Contains("small_stick"))
 			{
-				child.GetComponent<MeshRenderer>().material = ((!this.m_Burning) ? ((this.m_FireLevel != 1f && this.m_BurnoutMat) ? this.m_BurnoutMat : this.m_NormalSmallStickMat) : this.m_BurningStickMat);
+				child.GetComponent<MeshRenderer>().material = (this.m_Burning ? this.m_BurningStickMat : ((this.m_FireLevel == 1f || !this.m_BurnoutMat) ? this.m_NormalSmallStickMat : this.m_BurnoutMat));
 			}
 			else if (child.name.Contains("stick"))
 			{
-				child.GetComponent<MeshRenderer>().material = ((!this.m_Burning) ? ((this.m_FireLevel != 1f && this.m_BurnoutMat) ? this.m_BurnoutMat : this.m_NormalStickMat) : this.m_BurningStickMat);
+				child.GetComponent<MeshRenderer>().material = (this.m_Burning ? this.m_BurningStickMat : ((this.m_FireLevel == 1f || !this.m_BurnoutMat) ? this.m_NormalStickMat : this.m_BurnoutMat));
 			}
 			this.SetupMaterial(child);
 		}
@@ -330,6 +440,14 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public override bool CanTrigger()
 	{
+		if (this.m_Freezed)
+		{
+			return false;
+		}
+		if (this.m_CantTriggerDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
+		{
+			return false;
+		}
 		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
 		if (currentItem)
 		{
@@ -338,13 +456,9 @@ public class Firecamp : Construction, IItemSlotParent
 			{
 				return true;
 			}
-			if (id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch)
+			if ((id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch) && ((Torch)currentItem).m_Burning != this.m_Burning)
 			{
-				Torch torch = (Torch)currentItem;
-				if (torch.m_Burning != this.m_Burning)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return this.ShouldShowEmberRequired();
@@ -366,13 +480,9 @@ public class Firecamp : Construction, IItemSlotParent
 		{
 			actions.Add(TriggerAction.TYPE.Ignite);
 		}
-		if (id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch)
+		if ((id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch) && ((Torch)currentItem).m_Burning != this.m_Burning)
 		{
-			Torch torch = (Torch)currentItem;
-			if (torch.m_Burning != this.m_Burning)
-			{
-				actions.Add(TriggerAction.TYPE.Ignite);
-			}
+			actions.Add(TriggerAction.TYPE.Ignite);
 		}
 	}
 
@@ -384,22 +494,33 @@ public class Firecamp : Construction, IItemSlotParent
 			Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
 			if (currentItem && currentItem.GetInfoID() == ItemID.Fire)
 			{
-				ItemController.Get().IgniteFirecamp(this);
+				ItemController.Get().IgniteFireObject(this);
+				return;
 			}
-			else if (action == TriggerAction.TYPE.Ignite)
+			if (action == TriggerAction.TYPE.Ignite)
 			{
-				Player.Get().m_TorchController.OnFirecampIgnite(this);
+				Player.Get().m_TorchController.IgniteFireObject(this);
 			}
 		}
 	}
 
-	public void StartBurning()
+	public bool IsBurning()
+	{
+		return this.m_Burning;
+	}
+
+	public void Ignite()
 	{
 		if (this.m_Burning)
 		{
 			return;
 		}
 		this.m_Burning = true;
+		if (!this.ReplIsBeingDeserialized(false))
+		{
+			this.ReplRequestOwnership(false);
+			this.ReplSetDirty();
+		}
 		this.OnStartBurning();
 		EventsManager.OnEvent(Enums.Event.IgniteFire, 1);
 	}
@@ -414,19 +535,36 @@ public class Firecamp : Construction, IItemSlotParent
 	public void Extinguish()
 	{
 		this.m_Burning = false;
+		if (!this.ReplIsBeingDeserialized(false))
+		{
+			this.ReplRequestOwnership(false);
+			this.ReplSetDirty();
+		}
 		this.m_WoodSlot.gameObject.SetActive(false);
 		this.SetupEffects();
 	}
 
-	private void BurnOut()
+	public void BurnOut()
 	{
+		if (!this.ReplIsOwner())
+		{
+			return;
+		}
 		for (int i = 0; i < this.m_CookingSlots.Length; i++)
 		{
 			this.m_CookingSlots[i].RemoveItem();
 		}
+		if (this.m_StonesPrefab != null)
+		{
+			UnityEngine.Object.Instantiate<GameObject>(this.m_StonesPrefab, base.transform.position, base.transform.rotation);
+		}
 		if (this.m_AshPrefab != null)
 		{
-			UnityEngine.Object.Instantiate<GameObject>(this.m_AshPrefab, base.transform.position, base.transform.rotation);
+			Item component = UnityEngine.Object.Instantiate<GameObject>(this.m_AshPrefab, base.transform.position, base.transform.rotation).GetComponent<Item>();
+			if (component)
+			{
+				component.m_StaticPhx = true;
+			}
 		}
 		GameObject prefab = GreenHellGame.Instance.GetPrefab("Charcoal");
 		UnityEngine.Object.Instantiate<GameObject>(prefab, base.transform.position + Vector3.up * 0.1f + Vector3.forward * 0.08f, base.transform.rotation);
@@ -448,47 +586,46 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public void OnInsertItem(ItemSlot slot)
 	{
-		if (slot == this.m_WoodSlot)
+		if (!(slot == this.m_WoodSlot))
 		{
-			if (slot.m_Item.m_Info.IsLiquidContainer())
+			bool flag = false;
+			for (int i = 0; i < this.m_CookingSlots.Length; i++)
 			{
-				LiquidContainer liquidContainer = (LiquidContainer)slot.m_Item;
-				if (liquidContainer.m_LCInfo.m_Amount > 0f)
+				if (slot == this.m_CookingSlots[i])
 				{
-					liquidContainer.Spill(-1f);
-					this.Extinguish();
+					flag = true;
+					break;
 				}
-				slot.RemoveItem();
-				InventoryBackpack.Get().InsertItem(liquidContainer, null, null, true, true, true, true, true);
 			}
-			else
+			if (flag && slot.m_Item.m_Info.m_Type == ItemType.Bowl)
 			{
-				this.m_BurningDuration -= slot.m_Item.m_Info.m_AddFirecamBurningTime;
-				if (this.m_BurningDuration < 0f)
-				{
-					this.m_BurningDuration = 0f;
-				}
-				UnityEngine.Object.Destroy(slot.m_Item.gameObject);
+				slot.m_Item.gameObject.GetComponent<Collider>().isTrigger = true;
+				slot.Deactivate();
+				((Bowl)slot.m_Item).OnFirecampAdd(this);
 			}
 			return;
 		}
-		bool flag = false;
-		for (int i = 0; i < this.m_CookingSlots.Length; i++)
+		if (slot.m_Item.m_Info.IsLiquidContainer())
 		{
-			if (slot == this.m_CookingSlots[i])
+			LiquidContainer liquidContainer = (LiquidContainer)slot.m_Item;
+			if (liquidContainer.m_LCInfo.m_Amount > 0f)
 			{
-				flag = true;
-				break;
+				liquidContainer.Spill(-1f);
+				this.Extinguish();
 			}
+			slot.RemoveItem();
+			InventoryBackpack.Get().InsertItem(liquidContainer, null, null, true, true, true, true, true);
+			return;
 		}
-		if (flag && slot.m_Item.m_Info.m_Type == ItemType.Bowl)
+		this.m_BurningDuration -= slot.m_Item.m_Info.m_AddFirecamBurningTime;
+		if (this.m_BurningDuration < 0f)
 		{
-			Collider component = slot.m_Item.gameObject.GetComponent<Collider>();
-			component.isTrigger = true;
-			slot.Deactivate();
-			Bowl bowl = (Bowl)slot.m_Item;
-			bowl.OnFirecampAdd(this);
+			this.m_BurningDuration = 0f;
 		}
+		this.m_FireLevel = CJTools.Math.GetProportionalClamp(1f, 0f, this.m_BurningDuration, 0f, this.GetBurningLength());
+		Component item = slot.m_Item;
+		slot.RemoveItem();
+		UnityEngine.Object.Destroy(item.gameObject);
 	}
 
 	public void OnRemoveItem(ItemSlot slot)
@@ -499,8 +636,7 @@ public class Firecamp : Construction, IItemSlotParent
 			{
 				slot.gameObject.SetActive(true);
 			}
-			Bowl bowl = (Bowl)slot.m_Item;
-			bowl.OnFirecampRemove(this);
+			((Bowl)slot.m_Item).OnFirecampRemove(this);
 		}
 	}
 
@@ -522,6 +658,33 @@ public class Firecamp : Construction, IItemSlotParent
 		}
 	}
 
+	public override void SetupAfterLoad(int index)
+	{
+		base.SetupAfterLoad(index);
+		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+		{
+			if ((base.transform.position - firecampRack.transform.position).sqrMagnitude < 0.05f)
+			{
+				IFirecampAttach[] components = firecampRack.gameObject.GetComponents<IFirecampAttach>();
+				for (int i = 0; i < components.Length; i++)
+				{
+					components[i].SetFirecamp(this);
+				}
+			}
+		}
+		foreach (Construction construction in Construction.s_AllConstructions)
+		{
+			if (construction.m_Info != null && (construction.GetInfoID() == ItemID.Smoker || construction.GetInfoID() == ItemID.Bamboo_Smoker) && (base.transform.position - construction.transform.position).To2D().sqrMagnitude < 0.05f)
+			{
+				IFirecampAttach[] components = construction.gameObject.GetComponents<IFirecampAttach>();
+				for (int i = 0; i < components.Length; i++)
+				{
+					components[i].SetFirecamp(this);
+				}
+			}
+		}
+	}
+
 	public override string GetIconName()
 	{
 		if (this.ShouldShowEmberRequired())
@@ -533,37 +696,74 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public override string GetTriggerInfoLocalized()
 	{
-		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
-		if (!currentItem)
-		{
-			return GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Ember_Required");
-		}
-		return base.GetTriggerInfoLocalized();
+		return GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Ember_Required", true);
 	}
 
 	private bool ShouldShowEmberRequired()
 	{
-		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
-		bool flag = false;
-		if (currentItem)
-		{
-			ItemID id = currentItem.m_Info.m_ID;
-			flag = (id == ItemID.Fire || id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch);
-		}
-		return !flag && !this.m_Burning;
+		return !this.m_Burning;
 	}
 
 	public override bool ShowAdditionalInfo()
 	{
-		return this.ShouldShowEmberRequired();
+		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
+		if (currentItem)
+		{
+			if (currentItem.GetInfoID() == ItemID.Fire)
+			{
+				return false;
+			}
+			if (currentItem.m_Info.IsTorch() && ((Torch)currentItem).m_Burning)
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public override string GetAdditionalInfoLocalized()
 	{
-		return GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Ember_Req_Additional_Info");
+		return GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Ember_Req_Additional_Info", true);
+	}
+
+	public override void OnReplicationSerialize(P2PNetworkWriter writer, bool initial_state)
+	{
+		writer.Write(this.m_Burning);
+		writer.Write(this.m_BurningDuration);
+	}
+
+	public override void OnReplicationDeserialize(P2PNetworkReader reader, bool initial_state)
+	{
+		this.m_ReplBurning = reader.ReadBoolean();
+		this.m_BurningDuration = reader.ReadFloat();
+	}
+
+	public override void OnReplicationResolve()
+	{
+		if (this.m_Burning != this.m_ReplBurning)
+		{
+			if (this.m_ReplBurning)
+			{
+				this.Ignite();
+				return;
+			}
+			this.Extinguish();
+		}
+	}
+
+	public override void DestroyMe(bool check_connected = true)
+	{
+		base.DestroyMe(check_connected);
+		ItemSlot[] cookingSlots = this.m_CookingSlots;
+		for (int i = 0; i < cookingSlots.Length; i++)
+		{
+			cookingSlots[i].RemoveItem();
+		}
 	}
 
 	public bool m_Burning;
+
+	private bool m_ReplBurning;
 
 	public float m_BurningLength = 1f;
 
@@ -574,6 +774,8 @@ public class Firecamp : Construction, IItemSlotParent
 	public List<ParticleSystem> m_Particles = new List<ParticleSystem>();
 
 	public GameObject m_FireAnim;
+
+	private TileAnimation m_FireAnimation;
 
 	public Light m_Light;
 
@@ -615,6 +817,8 @@ public class Firecamp : Construction, IItemSlotParent
 
 	public GameObject m_AshPrefab;
 
+	public GameObject m_StonesPrefab;
+
 	private AudioSource m_Sound;
 
 	public Material m_NormalStickMat;
@@ -631,4 +835,8 @@ public class Firecamp : Construction, IItemSlotParent
 
 	[HideInInspector]
 	public Construction m_StoneRing;
+
+	public bool m_Freezed;
+
+	public bool m_BlockGivingDamage;
 }

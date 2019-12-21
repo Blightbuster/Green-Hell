@@ -22,7 +22,7 @@ namespace TFHC_Shader_Samples
 
 		private void switchhighlighted(bool highlighted)
 		{
-			this.mat.SetFloat("_Highlighted", (!highlighted) ? 0f : 1f);
+			this.mat.SetFloat("_Highlighted", highlighted ? 1f : 0f);
 		}
 
 		private Material mat;

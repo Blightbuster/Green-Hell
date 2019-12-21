@@ -76,8 +76,9 @@ namespace AIs
 				this.m_Sky.Clouds.Coverage = this.m_DefaultCloudsCoverage;
 				this.m_Rays.Intensity = this.m_DefaultRaysIntensity;
 				this.m_AmplifyColor.BlendAmount = this.m_DefaulBlendAmount;
+				return;
 			}
-			else if (this.m_State == ShamanManager.State.Attack)
+			if (this.m_State == ShamanManager.State.Attack)
 			{
 				this.m_DefaultDayLightIntensity = this.m_Sky.Day.LightIntensity;
 				this.m_DefaultNightLightIntensity = this.m_Sky.Night.LightIntensity;
@@ -104,6 +105,7 @@ namespace AIs
 				if (this.m_SpawnVersion == ShamanManager.SpawnVersion.Kill)
 				{
 					this.m_SpawnShamanInterval = UnityEngine.Random.Range(this.m_SpawnShamanMinIntervalVKill, this.m_SpawnShamanMaxIntervalVKill);
+					return;
 				}
 			}
 			else
@@ -134,6 +136,7 @@ namespace AIs
 				if (!this.m_Shaman && Time.time - this.m_LastKillShamanTime >= this.m_SpawnShamanInterval)
 				{
 					this.SpawnShaman();
+					return;
 				}
 			}
 			else if (this.m_SpawnVersion == ShamanManager.SpawnVersion.Time && Time.time - this.m_LastSpawnShamanTime >= this.m_SpawnShamanInterval && this.SpawnShaman())
@@ -172,8 +175,9 @@ namespace AIs
 				this.m_Sky.Clouds.Attenuation = CJTools.Math.GetProportionalClamp(this.m_DefaultCloudsAttenuation, 0.7f, b, 0f, this.m_EnterAttackDuration);
 				this.m_Sky.Clouds.Coverage = CJTools.Math.GetProportionalClamp(this.m_DefaultCloudsCoverage, 0.8f, b, 0f, this.m_EnterAttackDuration);
 				this.m_AudioSource.volume = CJTools.Math.GetProportionalClamp(0f, 1f, b, 0f, this.m_EnterAttackDuration);
+				return;
 			}
-			else if (this.m_State == ShamanManager.State.Finish && Time.time - this.m_EnterStateTime <= this.m_ExitAttackDuration)
+			if (this.m_State == ShamanManager.State.Finish && Time.time - this.m_EnterStateTime <= this.m_ExitAttackDuration)
 			{
 				float b2 = Time.time - this.m_EnterStateTime;
 				this.m_Sky.Day.LightIntensity = CJTools.Math.GetProportionalClamp(0.8f, this.m_DefaultDayLightIntensity, b2, 0f, this.m_ExitAttackDuration);

@@ -16,26 +16,25 @@ namespace AIs
 		{
 			this.m_Animation = "Rotate";
 			Vector3 normalized2D = (this.m_Target - this.m_AI.transform.position).GetNormalized2D();
-			Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-			float num = normalized2D2.AngleSigned(normalized2D, Vector3.up);
-			this.m_Animation += ((num < 0f) ? "Left_" : "Right_");
+			float num = this.m_AI.transform.forward.GetNormalized2D().AngleSigned(normalized2D, Vector3.up);
+			this.m_Animation += ((num >= 0f) ? "Right_" : "Left_");
 			float num2 = Mathf.Abs(num);
 			if (num2 <= 67f)
 			{
 				this.m_Animation += "45";
+				return;
 			}
-			else if (num2 <= 112f)
+			if (num2 <= 112f)
 			{
 				this.m_Animation += "90";
+				return;
 			}
-			else if (num2 <= 157f)
+			if (num2 <= 157f)
 			{
 				this.m_Animation += "135";
+				return;
 			}
-			else
-			{
-				this.m_Animation += "180";
-			}
+			this.m_Animation += "180";
 		}
 
 		public override void Update()
@@ -51,9 +50,7 @@ namespace AIs
 
 		protected override bool ShouldFinish()
 		{
-			Vector3 normalized2D = (this.m_Target - this.m_AI.transform.position).GetNormalized2D();
-			float num = Vector3.Angle(normalized2D, this.m_AI.transform.forward.GetNormalized2D());
-			return num <= this.m_MaxAngle;
+			return Vector3.Angle((this.m_Target - this.m_AI.transform.position).GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) <= this.m_MaxAngle;
 		}
 
 		private Vector3 m_Target = Vector3.zero;

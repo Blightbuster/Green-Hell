@@ -11,24 +11,17 @@ public class DynamicBonePlaneCollider : DynamicBoneColliderBase
 	public override void Collide(ref Vector3 particlePosition, float particleRadius)
 	{
 		Vector3 vector = Vector3.up;
-		DynamicBoneColliderBase.Direction direction = this.m_Direction;
-		if (direction != DynamicBoneColliderBase.Direction.X)
+		switch (this.m_Direction)
 		{
-			if (direction != DynamicBoneColliderBase.Direction.Y)
-			{
-				if (direction == DynamicBoneColliderBase.Direction.Z)
-				{
-					vector = base.transform.forward;
-				}
-			}
-			else
-			{
-				vector = base.transform.up;
-			}
-		}
-		else
-		{
+		case DynamicBoneColliderBase.Direction.X:
 			vector = base.transform.right;
+			break;
+		case DynamicBoneColliderBase.Direction.Y:
+			vector = base.transform.up;
+			break;
+		case DynamicBoneColliderBase.Direction.Z:
+			vector = base.transform.forward;
+			break;
 		}
 		Vector3 inPoint = base.transform.TransformPoint(this.m_Center);
 		Plane plane = new Plane(vector, inPoint);
@@ -38,6 +31,7 @@ public class DynamicBonePlaneCollider : DynamicBoneColliderBase
 			if (distanceToPoint < 0f)
 			{
 				particlePosition -= vector * distanceToPoint;
+				return;
 			}
 		}
 		else if (distanceToPoint > 0f)
@@ -61,24 +55,17 @@ public class DynamicBonePlaneCollider : DynamicBoneColliderBase
 			Gizmos.color = Color.magenta;
 		}
 		Vector3 b = Vector3.up;
-		DynamicBoneColliderBase.Direction direction = this.m_Direction;
-		if (direction != DynamicBoneColliderBase.Direction.X)
+		switch (this.m_Direction)
 		{
-			if (direction != DynamicBoneColliderBase.Direction.Y)
-			{
-				if (direction == DynamicBoneColliderBase.Direction.Z)
-				{
-					b = base.transform.forward;
-				}
-			}
-			else
-			{
-				b = base.transform.up;
-			}
-		}
-		else
-		{
+		case DynamicBoneColliderBase.Direction.X:
 			b = base.transform.right;
+			break;
+		case DynamicBoneColliderBase.Direction.Y:
+			b = base.transform.up;
+			break;
+		case DynamicBoneColliderBase.Direction.Z:
+			b = base.transform.forward;
+			break;
 		}
 		Vector3 vector = base.transform.TransformPoint(this.m_Center);
 		Gizmos.DrawLine(vector, vector + b);

@@ -36,13 +36,12 @@ namespace UnityEngine.PostProcessing
 			}
 			else
 			{
-				this.context.camera.projectionMatrix = ((!this.context.camera.orthographic) ? this.GetPerspectiveProjectionMatrix(vector) : this.GetOrthographicProjectionMatrix(vector));
+				this.context.camera.projectionMatrix = (this.context.camera.orthographic ? this.GetOrthographicProjectionMatrix(vector) : this.GetPerspectiveProjectionMatrix(vector));
 			}
 			this.context.camera.useJitteredProjectionMatrixForTransparentRendering = false;
 			vector.x /= (float)this.context.width;
 			vector.y /= (float)this.context.height;
-			Material material = this.context.materialFactory.Get("Hidden/Post FX/Temporal Anti-aliasing");
-			material.SetVector(TaaComponent.Uniforms._Jitter, vector);
+			this.context.materialFactory.Get("Hidden/Post FX/Temporal Anti-aliasing").SetVector(TaaComponent.Uniforms._Jitter, vector);
 			this.jitterVector = vector;
 		}
 
@@ -70,7 +69,7 @@ namespace UnityEngine.PostProcessing
 			this.m_MRT[0] = destination.colorBuffer;
 			this.m_MRT[1] = temporary.colorBuffer;
 			Graphics.SetRenderTarget(this.m_MRT, source.depthBuffer);
-			GraphicsUtils.Blit(material, (!this.context.camera.orthographic) ? 0 : 1);
+			GraphicsUtils.Blit(material, this.context.camera.orthographic ? 1 : 0);
 			RenderTexture.ReleaseTemporary(this.m_HistoryTexture);
 			this.m_HistoryTexture = temporary;
 			this.m_ResetHistory = false;
@@ -92,7 +91,9 @@ namespace UnityEngine.PostProcessing
 		private Vector2 GenerateRandomOffset()
 		{
 			Vector2 result = new Vector2(this.GetHaltonValue(this.m_SampleIndex & 1023, 2), this.GetHaltonValue(this.m_SampleIndex & 1023, 3));
-			if (++this.m_SampleIndex >= 8)
+			int num = this.m_SampleIndex + 1;
+			this.m_SampleIndex = num;
+			if (num >= 8)
 			{
 				this.m_SampleIndex = 0;
 			}

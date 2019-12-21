@@ -53,8 +53,7 @@ namespace RootMotion
 
 		public static LayerMask RemoveFromMask(this LayerMask original, params string[] layerNames)
 		{
-			LayerMask mask = ~original;
-			return ~(mask | LayerMaskExtensions.NamesToMask(layerNames));
+			return ~(~original | LayerMaskExtensions.NamesToMask(layerNames));
 		}
 
 		public static string[] MaskToNames(this LayerMask original)

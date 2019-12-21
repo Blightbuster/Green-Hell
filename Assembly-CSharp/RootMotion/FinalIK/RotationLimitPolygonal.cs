@@ -48,8 +48,7 @@ namespace RootMotion.FinalIK
 			{
 				this.Start();
 			}
-			Quaternion rotation2 = this.LimitSwing(rotation);
-			return RotationLimit.LimitTwist(rotation2, this.axis, base.secondaryAxis, this.twistLimit);
+			return RotationLimit.LimitTwist(this.LimitSwing(rotation), this.axis, base.secondaryAxis, this.twistLimit);
 		}
 
 		private void Start()
@@ -232,15 +231,13 @@ namespace RootMotion.FinalIK
 				}
 				return rotation;
 			}
-			float num = Vector3.Dot(this.reachCones[reachCone].B, vector);
-			if (num > 0f)
+			if (Vector3.Dot(this.reachCones[reachCone].B, vector) > 0f)
 			{
 				return rotation;
 			}
 			Vector3 rhs = Vector3.Cross(this.axis, vector);
 			vector = Vector3.Cross(-this.reachCones[reachCone].B, rhs);
-			Quaternion lhs = Quaternion.FromToRotation(rotation * this.axis, vector);
-			return lhs * rotation;
+			return Quaternion.FromToRotation(rotation * this.axis, vector) * rotation;
 		}
 
 		private int GetReachCone(Vector3 L)
@@ -271,33 +268,21 @@ namespace RootMotion.FinalIK
 		[Range(0f, 3f)]
 		public int smoothIterations;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		public RotationLimitPolygonal.LimitPoint[] points;
 
 		[SerializeField]
 		[HideInInspector]
 		public Vector3[] P;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		public RotationLimitPolygonal.ReachCone[] reachCones = new RotationLimitPolygonal.ReachCone[0];
 
 		[Serializable]
 		public class ReachCone
 		{
-			public ReachCone(Vector3 _o, Vector3 _a, Vector3 _b, Vector3 _c)
-			{
-				this.tetrahedron = new Vector3[4];
-				this.tetrahedron[0] = _o;
-				this.tetrahedron[1] = _a;
-				this.tetrahedron[2] = _b;
-				this.tetrahedron[3] = _c;
-				this.volume = 0f;
-				this.S = Vector3.zero;
-				this.B = Vector3.zero;
-			}
-
 			public Vector3 o
 			{
 				get
@@ -328,6 +313,18 @@ namespace RootMotion.FinalIK
 				{
 					return this.tetrahedron[3];
 				}
+			}
+
+			public ReachCone(Vector3 _o, Vector3 _a, Vector3 _b, Vector3 _c)
+			{
+				this.tetrahedron = new Vector3[4];
+				this.tetrahedron[0] = _o;
+				this.tetrahedron[1] = _a;
+				this.tetrahedron[2] = _b;
+				this.tetrahedron[3] = _c;
+				this.volume = 0f;
+				this.S = Vector3.zero;
+				this.B = Vector3.zero;
 			}
 
 			public bool isValid

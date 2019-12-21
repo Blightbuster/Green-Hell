@@ -25,24 +25,16 @@ public class Food : Consumable
 
 	public bool CanSpoil()
 	{
-		return this.m_FInfo.m_SpoilEffectID != ItemID.None && (!this.m_FInfo.m_SpoilOnlyIfTriggered || this.m_WasTriggered);
+		return !(base.gameObject.GetComponentInParent<FoodProcessor>() != null) && !(Inventory3DManager.Get().m_CarriedItem == this) && !Inventory3DManager.Get().m_StackItems.Contains(this) && ItemsManager.Get().m_ItemsToSetupAfterLoad.Count <= 0 && this.m_FInfo.m_SpoilEffectID != ItemID.None && (!this.m_FInfo.m_SpoilOnlyIfTriggered || this.m_WasTriggered);
 	}
 
 	protected override void Update()
 	{
 		base.Update();
-		if (this.m_CurrentSlot && this.m_CurrentSlot.m_FoodProcessorChild)
+		float num = this.m_FInfo.m_SpoilOnlyIfTriggered ? this.m_FirstTriggerTime : this.m_FInfo.m_CreationTime;
+		if (MainLevel.Instance.m_TODSky.Cycle.GameTime - num >= this.m_FInfo.m_SpoilTime && this.CanSpoil())
 		{
-			return;
-		}
-		if (this.CanSpoil())
-		{
-			float num = (!this.m_FInfo.m_SpoilOnlyIfTriggered) ? this.m_FInfo.m_CreationTime : this.m_FirstTriggerTime;
-			bool flag = MainLevel.Instance.m_TODSky.Cycle.GameTime - num >= this.m_FInfo.m_SpoilTime;
-			if (flag)
-			{
-				this.Spoil();
-			}
+			this.Spoil();
 		}
 	}
 
@@ -56,61 +48,173 @@ public class Food : Consumable
 		{
 			return;
 		}
-		Item item = ItemsManager.Get().CreateItem(this.m_FInfo.m_SpoilEffectID, !this.m_InInventory && !this.m_OnCraftingTable, base.transform.position, base.transform.rotation);
-		if (this.m_InInventory)
+		bool inventoryRotated = this.m_Info.m_InventoryRotated;
+		Quaternion rotation = base.transform.rotation;
+		Vector3 position = base.transform.position;
+		Item item = ItemsManager.Get().CreateItem(this.m_FInfo.m_SpoilEffectID, !base.m_InInventory && !base.m_InStorage && !base.m_OnCraftingTable, base.transform.position, base.transform.rotation);
+		if (Inventory3DManager.Get().m_CarriedItem == this)
 		{
-			InventoryBackpack.Get().RemoveItem(this, false);
+			foreach (Item item2 in Inventory3DManager.Get().m_StackItems)
+			{
+				Quaternion localRotation = item2.transform.localRotation;
+				Vector3 localPosition = item2.transform.localPosition;
+				item2.transform.parent = item.transform;
+				item2.transform.localRotation = localRotation;
+				item2.transform.localPosition = localPosition;
+			}
+			Inventory3DManager.Get().SetCarriedItem(null, false);
+			Inventory3DManager.Get().SetCarriedItem(item, false);
+			ItemsManager.Get().ActivateItem(item);
+		}
+		else if (Inventory3DManager.Get().m_StackItems.Contains(this))
+		{
+			Inventory3DManager.Get().m_StackItems.Remove(this);
+			this.UpdateLayer();
+			item.transform.parent = item.transform;
+			item.transform.localRotation = base.transform.localRotation;
+			item.transform.localPosition = base.transform.localPosition;
+			Inventory3DManager.Get().m_StackItems.Add(item);
+			item.UpdateLayer();
+			ItemsManager.Get().ActivateItem(item);
+		}
+		else if (base.m_CurrentSlot && base.m_CurrentSlot.m_InventoryStackSlot)
+		{
+			ItemSlot currentSlot = base.m_CurrentSlot;
+			InventoryBackpack.Get().m_Items.Remove(this);
 			if (this.m_Info.m_InventoryCellsGroup != null)
 			{
 				this.m_Info.m_InventoryCellsGroup.Remove(this);
 			}
-			if (!this.m_CurrentSlot && this.m_InventorySlot && this.m_InventorySlot.m_Items.Count > 0)
+			((ItemSlotStack)currentSlot).ReplaceItem(this, item);
+			item.gameObject.isStatic = false;
+			if (base.m_InInventory)
 			{
-				this.m_InventorySlot.RemoveItem(this, false);
+				InventoryBackpack.Get().m_Items.Add(item);
+				item.OnAddToInventory();
+				item.gameObject.SetActive(base.gameObject.activeSelf);
+				InventoryBackpack.Get().OnInventoryChanged();
 			}
-			else if (this.m_CurrentSlot)
+			else
 			{
-				if (this.m_CurrentSlot.m_InventoryStackSlot)
-				{
-					this.m_CurrentSlot.RemoveItem(this, false);
-				}
-				else
-				{
-					this.m_CurrentSlot.RemoveItem();
-				}
+				this.m_Storage.m_Items.Add(item);
+				item.OnAddToStorage(this.m_Storage);
+				item.gameObject.SetActive(base.gameObject.activeSelf);
 			}
-			InventoryBackpack.Get().InsertItem(item, this.m_CurrentSlot, this.m_Info.m_InventoryCellsGroup, true, true, true, true, true);
-			if (this.m_InventorySlot)
+		}
+		else
+		{
+			if (base.m_InInventory)
 			{
-				this.m_InventorySlot.m_Blocked = true;
-				if (item.m_InventorySlot)
+				ItemSlot currentSlot2 = base.m_CurrentSlot;
+				InventoryCellsGroup inventoryCellsGroup = this.m_Info.m_InventoryCellsGroup;
+				List<Item> list = this.m_InventorySlot ? new List<Item>(this.m_InventorySlot.m_Items) : new List<Item>();
+				InventoryBackpack.Get().RemoveItem(this, false);
+				if (!base.m_CurrentSlot && this.m_InventorySlot && list.Count > 0)
 				{
-					for (int i = 0; i < this.m_InventorySlot.m_Items.Count; i++)
+					using (List<Item>.Enumerator enumerator = list.GetEnumerator())
 					{
-						item.m_InventorySlot.InsertItem(this.m_InventorySlot.m_Items[i]);
+						while (enumerator.MoveNext())
+						{
+							Item item3 = enumerator.Current;
+							if (item3.m_Info.m_InventoryCellsGroup != null)
+							{
+								item3.m_Info.m_InventoryCellsGroup.Remove(item3);
+							}
+						}
+						goto IL_3A3;
 					}
 				}
-				else
+				if (base.m_CurrentSlot)
 				{
-					while (this.m_InventorySlot.m_Items.Count > 0)
+					if (base.m_CurrentSlot.m_InventoryStackSlot)
 					{
-						Item item2 = this.m_InventorySlot.m_Items[0];
-						InventoryBackpack.Get().RemoveItem(item2, false);
-						InventoryBackpack.Get().InsertItem(item2, null, null, true, true, true, true, true);
+						base.m_CurrentSlot.RemoveItem(this, false);
+					}
+					else
+					{
+						base.m_CurrentSlot.RemoveItem();
+					}
+				}
+				IL_3A3:
+				InventoryBackpack.Get().InsertItem(item, currentSlot2, inventoryCellsGroup, true, true, true, true, true);
+				if (!item.m_InventorySlot || list.Count <= 0)
+				{
+					goto IL_5BD;
+				}
+				using (List<Item>.Enumerator enumerator = list.GetEnumerator())
+				{
+					while (enumerator.MoveNext())
+					{
+						Item item4 = enumerator.Current;
+						item.m_InventorySlot.InsertItem(item4);
+					}
+					goto IL_5BD;
+				}
+			}
+			if (base.m_OnCraftingTable)
+			{
+				CraftingManager.Get().RemoveItem(this, false);
+				CraftingManager.Get().AddItem(item, false);
+			}
+			else if (base.m_CurrentSlot)
+			{
+				ItemSlot currentSlot3 = base.m_CurrentSlot;
+				currentSlot3.RemoveItem();
+				currentSlot3.InsertItem(item);
+			}
+			else if (base.m_InStorage && this.m_Storage)
+			{
+				Storage storage = this.m_Storage;
+				ItemSlot currentSlot4 = base.m_CurrentSlot;
+				InventoryCellsGroup inventoryCellsGroup2 = this.m_Info.m_InventoryCellsGroup;
+				List<Item> list2 = this.m_InventorySlot ? new List<Item>(this.m_InventorySlot.m_Items) : new List<Item>();
+				storage.RemoveItem(this, false);
+				if (!base.m_CurrentSlot && this.m_InventorySlot && list2.Count > 0)
+				{
+					using (List<Item>.Enumerator enumerator = list2.GetEnumerator())
+					{
+						while (enumerator.MoveNext())
+						{
+							Item item5 = enumerator.Current;
+							item5.m_Info.m_InventoryCellsGroup.Remove(item5);
+						}
+						goto IL_559;
+					}
+				}
+				if (base.m_CurrentSlot)
+				{
+					if (base.m_CurrentSlot.m_InventoryStackSlot)
+					{
+						base.m_CurrentSlot.RemoveItem(this, false);
+					}
+					else
+					{
+						base.m_CurrentSlot.RemoveItem();
+					}
+				}
+				IL_559:
+				storage.InsertItem(item, base.m_CurrentSlot, inventoryCellsGroup2, true, true);
+				if (item.m_InventorySlot && list2.Count > 0)
+				{
+					foreach (Item item6 in list2)
+					{
+						item.m_InventorySlot.InsertItem(item6);
 					}
 				}
 			}
 		}
-		else if (this.m_OnCraftingTable)
+		IL_5BD:
+		if (inventoryRotated)
 		{
-			CraftingManager.Get().RemoveItem(this);
-			CraftingManager.Get().AddItem(item, false);
+			Inventory3DManager.Get().RotateItem(item, true);
 		}
 		if (HUDItem.Get().m_Item == this)
 		{
 			HUDItem.Get().Activate(item);
 		}
 		UnityEngine.Object.Destroy(base.gameObject);
+		item.transform.rotation = rotation;
+		item.transform.position = position;
 	}
 
 	public override void Eat()
@@ -141,6 +245,15 @@ public class Food : Consumable
 				Item item = ItemsManager.Get().CreateItem(item_id, false, Vector3.zero, Quaternion.identity);
 				InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, false);
 			}
+			else if (this.m_Storage != null)
+			{
+				Item item2 = ItemsManager.Get().CreateItem(item_id, false, Vector3.zero, Quaternion.identity);
+				InventoryCellsGroup inventoryCellsGroup = this.m_Info.m_InventoryCellsGroup;
+				Storage storage = this.m_Storage;
+				storage.RemoveItem(this, false);
+				storage.InsertItem(item2, base.m_CurrentSlot, inventoryCellsGroup, true, true);
+				item2.gameObject.SetActive(true);
+			}
 			else
 			{
 				GameObject prefab = GreenHellGame.Instance.GetPrefab(item_id.ToString());
@@ -153,6 +266,10 @@ public class Food : Consumable
 					UnityEngine.Object.Instantiate<GameObject>(prefab, base.transform.position, base.transform.rotation);
 				}
 			}
+		}
+		if (this.m_Acre)
+		{
+			this.m_Acre.OnEat(this);
 		}
 	}
 

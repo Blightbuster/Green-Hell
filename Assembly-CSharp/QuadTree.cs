@@ -45,13 +45,11 @@ public class QuadTree
 					this.m_ObjCellMap[obj] = this.m_Cells[i, j];
 				}
 			}
+			return;
 		}
-		else
-		{
-			QuadTreeCell cellAtPos3 = this.GetCellAtPos(obj.transform.position);
-			cellAtPos3.m_Objects.Add(obj);
-			this.m_ObjCellMap[obj] = cellAtPos3;
-		}
+		QuadTreeCell cellAtPos3 = this.GetCellAtPos(obj.transform.position);
+		cellAtPos3.m_Objects.Add(obj);
+		this.m_ObjCellMap[obj] = cellAtPos3;
 	}
 
 	public void RemoveObject(GameObject go)
@@ -66,11 +64,9 @@ public class QuadTree
 		{
 			quadTreeCell.RemoveObject(go);
 			this.m_ObjCellMap.Remove(go);
+			return;
 		}
-		else
-		{
-			DebugUtils.Assert(false, true);
-		}
+		DebugUtils.Assert(false, true);
 	}
 
 	private QuadTreeCell GetCellAtPos(Vector3 pos)
@@ -98,8 +94,7 @@ public class QuadTree
 
 	public GameObject GetObjectsInPos(Vector3 pos)
 	{
-		QuadTreeCell cellAtPos = this.GetCellAtPos(pos);
-		foreach (GameObject gameObject in cellAtPos.m_Objects)
+		foreach (GameObject gameObject in this.GetCellAtPos(pos).m_Objects)
 		{
 			if (gameObject.transform.position == pos)
 			{
@@ -225,7 +220,7 @@ public class QuadTree
 						GameObject gameObject = quadTreeCell.m_Objects[k];
 						if (gameObject)
 						{
-							DebugRender.DrawPoint(gameObject.transform.position, (!gameObject.activeSelf) ? Color.green : Color.red, 0.3f, 0f);
+							DebugRender.DrawPoint(gameObject.transform.position, gameObject.activeSelf ? Color.red : Color.green, 0.3f, 0f);
 						}
 					}
 				}
@@ -235,11 +230,11 @@ public class QuadTree
 
 	private QuadTreeCell[,] m_Cells;
 
-	private Vector2 m_Start = default(Vector2);
+	private Vector2 m_Start;
 
-	private Vector2 m_Size = default(Vector2);
+	private Vector2 m_Size;
 
-	private Vector2 m_CellSize = default(Vector2);
+	private Vector2 m_CellSize;
 
 	private int m_NumCellsX;
 

@@ -5,7 +5,7 @@ public class Parasite : Item
 {
 	public override bool CanTrigger()
 	{
-		return !this.m_InBody && base.CanTrigger();
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !this.m_InBody && base.CanTrigger();
 	}
 
 	public override void OnAddToInventory()
@@ -26,6 +26,11 @@ public class Parasite : Item
 		{
 			component.SetBool("Backpack", false);
 		}
+	}
+
+	protected override void OnEnable()
+	{
+		base.OnEnable();
 	}
 
 	[HideInInspector]

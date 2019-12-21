@@ -40,8 +40,8 @@ namespace RootMotion.FinalIK
 				iksolver.OnPostUpdate = (IKSolver.UpdateDelegate)Delegate.Combine(iksolver.OnPostUpdate, new IKSolver.UpdateDelegate(this.AfterLastIK));
 			}
 			Rigidbody[] componentsInChildren = base.GetComponentsInChildren<Rigidbody>();
-			int num = (!(componentsInChildren[0].gameObject == base.gameObject)) ? 0 : 1;
-			this.rigidbones = new RagdollUtility.Rigidbone[(num != 0) ? (componentsInChildren.Length - 1) : componentsInChildren.Length];
+			int num = (componentsInChildren[0].gameObject == base.gameObject) ? 1 : 0;
+			this.rigidbones = new RagdollUtility.Rigidbone[(num == 0) ? componentsInChildren.Length : (componentsInChildren.Length - 1)];
 			for (int i = 0; i < this.rigidbones.Length; i++)
 			{
 				this.rigidbones[i] = new RagdollUtility.Rigidbone(componentsInChildren[i + num]);
@@ -81,6 +81,7 @@ namespace RootMotion.FinalIK
 			}
 			yield return null;
 			yield break;
+			yield break;
 		}
 
 		private void Update()
@@ -115,31 +116,29 @@ namespace RootMotion.FinalIK
 						this.disabledIKComponents[k] = true;
 					}
 				}
+				return;
 			}
-			else
+			bool flag2 = false;
+			for (int l = 0; l < this.allIKComponents.Length; l++)
 			{
-				bool flag2 = false;
-				for (int l = 0; l < this.allIKComponents.Length; l++)
+				if (this.disabledIKComponents[l])
 				{
-					if (this.disabledIKComponents[l])
+					flag2 = true;
+					break;
+				}
+			}
+			if (flag2)
+			{
+				for (int m = 0; m < this.allIKComponents.Length; m++)
+				{
+					if (this.disabledIKComponents[m])
 					{
-						flag2 = true;
-						break;
+						this.allIKComponents[m].enabled = true;
 					}
 				}
-				if (flag2)
+				for (int n = 0; n < this.allIKComponents.Length; n++)
 				{
-					for (int m = 0; m < this.allIKComponents.Length; m++)
-					{
-						if (this.disabledIKComponents[m])
-						{
-							this.allIKComponents[m].enabled = true;
-						}
-					}
-					for (int n = 0; n < this.allIKComponents.Length; n++)
-					{
-						this.disabledIKComponents[n] = false;
-					}
+					this.disabledIKComponents[n] = false;
 				}
 			}
 		}
@@ -179,11 +178,9 @@ namespace RootMotion.FinalIK
 			if (this.isRagdoll)
 			{
 				this.StoreLocalState();
+				return;
 			}
-			else
-			{
-				this.FixTransforms(this.ragdollWeight);
-			}
+			this.FixTransforms(this.ragdollWeight);
 		}
 
 		private void OnFinalPose()
@@ -243,9 +240,10 @@ namespace RootMotion.FinalIK
 
 		private void RecordVelocities()
 		{
-			foreach (RagdollUtility.Rigidbone rigidbone in this.rigidbones)
+			RagdollUtility.Rigidbone[] array = this.rigidbones;
+			for (int i = 0; i < array.Length; i++)
 			{
-				rigidbone.RecordVelocity();
+				array[i].RecordVelocity();
 			}
 		}
 
@@ -274,17 +272,19 @@ namespace RootMotion.FinalIK
 
 		private void StoreLocalState()
 		{
-			foreach (RagdollUtility.Child child in this.children)
+			RagdollUtility.Child[] array = this.children;
+			for (int i = 0; i < array.Length; i++)
 			{
-				child.StoreLocalState();
+				array[i].StoreLocalState();
 			}
 		}
 
 		private void FixTransforms(float weight)
 		{
-			foreach (RagdollUtility.Child child in this.children)
+			RagdollUtility.Child[] array = this.children;
+			for (int i = 0; i < array.Length; i++)
 			{
-				child.FixTransform(weight);
+				array[i].FixTransform(weight);
 			}
 		}
 

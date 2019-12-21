@@ -6,15 +6,15 @@ namespace Pathfinding
 {
 	public class Profile
 	{
+		public int ControlValue()
+		{
+			return this.control;
+		}
+
 		public Profile(string name)
 		{
 			this.name = name;
 			this.watch = new Stopwatch();
-		}
-
-		public int ControlValue()
-		{
-			return this.control;
 		}
 
 		public static void WriteCSV(string path, params Profile[] profiles)
@@ -59,8 +59,9 @@ namespace Pathfinding
 			if (this.control == 1073741824)
 			{
 				this.control = control;
+				return;
 			}
-			else if (this.control != control)
+			if (this.control != control)
 			{
 				throw new Exception(string.Concat(new object[]
 				{

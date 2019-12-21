@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using AIs;
 using UnityEngine;
 
@@ -12,26 +11,12 @@ public static class GameObjectExtension
 		{
 			return transform.gameObject;
 		}
-		IEnumerator enumerator = parent.transform.GetEnumerator();
-		try
+		foreach (object obj in parent.transform)
 		{
-			while (enumerator.MoveNext())
+			GameObject gameObject = ((Transform)obj).gameObject.FindChild(name);
+			if (gameObject != null)
 			{
-				object obj = enumerator.Current;
-				Transform transform2 = (Transform)obj;
-				GameObject gameObject = transform2.gameObject.FindChild(name);
-				if (gameObject != null)
-				{
-					return gameObject;
-				}
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
+				return gameObject;
 			}
 		}
 		return null;
@@ -82,6 +67,11 @@ public static class GameObjectExtension
 		return obj.GetComponent<AI>() != null;
 	}
 
+	public static bool IsFish(this GameObject obj)
+	{
+		return obj.GetComponent<Fish>() != null;
+	}
+
 	public static bool IsHumanAI(this GameObject obj)
 	{
 		return obj.GetComponent<HumanAI>() != null;
@@ -89,11 +79,56 @@ public static class GameObjectExtension
 
 	public static bool IsPlayer(this GameObject obj)
 	{
-		return Player.Get().gameObject == obj;
+		return obj.CompareTag("Player") || obj.CompareTag("PlayerController");
+	}
+
+	public static bool IsRemotePlayer(this GameObject obj)
+	{
+		foreach (ReplicatedLogicalPlayer replicatedLogicalPlayer in ReplicatedLogicalPlayer.s_AllLogicalPlayers)
+		{
+			if (obj == replicatedLogicalPlayer.gameObject)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static bool IsWater(this GameObject obj)
 	{
-		return obj.tag == "LiquidSource";
+		return obj.CompareTag("LiquidSource");
+	}
+
+	public static T AddComponentWithEvent<T>(this GameObject go) where T : Component
+	{
+		T t = go.AddComponent<T>();
+		if (t != null)
+		{
+			IAddComponentEventListener[] components = go.GetComponents<IAddComponentEventListener>();
+			for (int i = 0; i < components.Length; i++)
+			{
+				components[i].OnComponentAdded(t);
+			}
+		}
+		return t;
+	}
+
+	public static void DestroyComponentWithEvent<T>(this GameObject go, T component) where T : Component
+	{
+		if (component != null)
+		{
+			IDeleteComponentEventListener[] components = go.GetComponents<IDeleteComponentEventListener>();
+			for (int i = 0; i < components.Length; i++)
+			{
+				components[i].OnComponentDestroy(component);
+			}
+			UnityEngine.Object.Destroy(component);
+		}
+	}
+
+	public static bool IsInvisibleInaccurateCheck(this GameObject go)
+	{
+		Camera mainCamera = CameraManager.Get().m_MainCamera;
+		return mainCamera == null || mainCamera.WorldToScreenPoint(go.transform.position).z < 0f;
 	}
 }

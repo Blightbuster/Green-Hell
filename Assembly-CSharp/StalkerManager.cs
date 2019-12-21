@@ -32,7 +32,7 @@ public class StalkerManager : MonoBehaviour
 
 	private bool ShouldDestroyStalker()
 	{
-		return this.m_Stalker && Vector3.Distance(this.m_Stalker.transform.position, Player.Get().transform.position) >= this.m_MoveAwayRange && !this.m_Stalker.m_Visible;
+		return this.m_Stalker && Vector3.Distance(this.m_Stalker.transform.position, Player.Get().transform.position) >= this.m_MoveAwayRange && !this.m_Stalker.IsVisible();
 	}
 
 	private bool CanSpawnStalker()

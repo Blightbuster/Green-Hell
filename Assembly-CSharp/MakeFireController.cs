@@ -14,7 +14,7 @@ public class MakeFireController : PlayerController
 	{
 		base.Awake();
 		MakeFireController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.MakeFire;
+		base.m_ControllerType = PlayerControllerType.MakeFire;
 	}
 
 	protected override void OnEnable()
@@ -23,7 +23,7 @@ public class MakeFireController : PlayerController
 		this.m_PlayerIdleAnimHash = Animator.StringToHash(Player.Get().GetCurrentItem(Hand.Right).m_InfoName + "_Idle");
 		this.m_PlayerAnimHash = Animator.StringToHash(Player.Get().GetCurrentItem(Hand.Right).m_InfoName);
 		this.SetState(MakeFireController.State.WaitingForKindling);
-		HintsManager.Get().ShowHint("AddKindling", 10f);
+		HintsManager.Get().ShowHint("AddKindling", 0f);
 		Vector2 lookDev = this.m_Player.m_FPPController.GetLookDev();
 		lookDev.y = 0f;
 		this.m_Player.m_FPPController.SetLookDev(lookDev);
@@ -62,6 +62,11 @@ public class MakeFireController : PlayerController
 	public bool IsStartingFire()
 	{
 		return this.IsActive() && this.m_State == MakeFireController.State.WaitingForKindling;
+	}
+
+	public bool IsMakeFireGame()
+	{
+		return this.IsActive() && this.m_State > MakeFireController.State.WaitingForKindling;
 	}
 
 	private void SetState(MakeFireController.State state)
@@ -125,7 +130,7 @@ public class MakeFireController : PlayerController
 			this.m_FXSpawned = false;
 			this.m_Player.UnblockMoves();
 			this.m_Player.UnblockRotation();
-			break;
+			return;
 		case MakeFireController.State.WaitingForKindling:
 			this.m_FireLevel = 0f;
 			this.m_Tool = (ItemTool)this.m_Player.GetCurrentItem(Hand.Right);
@@ -153,8 +158,9 @@ public class MakeFireController : PlayerController
 			this.m_Animator.SetBool(this.m_SuccessHash, false);
 			this.m_Animator.SetBool(this.m_FailHash, false);
 			this.m_Tool.OnWaitingForKindling();
-			break;
+			return;
 		case MakeFireController.State.Game:
+			HintsManager.Get().HideHint("AddKindling");
 			PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.StartFire);
 			this.m_Tool.OnStartMakeFireGame();
 			this.m_Animator.CrossFadeInFixedTime(this.m_PlayerAnimHash, 0.25f, this.m_SpineLayerIndex);
@@ -169,19 +175,31 @@ public class MakeFireController : PlayerController
 			this.CalcStaminaConsumption();
 			this.PlaySound();
 			PlayerAudioModule.Get().PlayMakeFireSound();
-			break;
+			return;
 		case MakeFireController.State.Fail:
+		case MakeFireController.State.Quit:
+			this.m_Animator.SetBool(this.m_PlayerAnimHash, false);
+			this.m_Animator.SetBool(this.m_PlayerIdleAnimHash, false);
 			this.m_Tool.OnFailMakeFireGame();
 			this.m_Animator.SetBool(this.m_FailHash, true);
 			ParticlesManager.Get().Remove(this.m_ParticleObj);
 			this.m_ParticleObj = null;
-			this.m_FireTool.m_Animator.SetBool(this.m_ToolAnimHash, false);
+			if (this.m_FireTool != null)
+			{
+				this.m_FireTool.m_Animator.SetBool(this.m_ToolAnimHash, false);
+			}
 			this.StopSound();
 			HintsManager.Get().ShowHint("MakeFire_Fail", 10f);
 			PlayerAudioModule.Get().StopMakeFireSound();
-			PlayerAudioModule.Get().PlayMakeFireFailSound();
+			if (this.m_State == MakeFireController.State.Fail)
+			{
+				PlayerAudioModule.Get().PlayMakeFireFailSound();
+				return;
+			}
 			break;
 		case MakeFireController.State.Success:
+			this.m_Animator.SetBool(this.m_PlayerAnimHash, false);
+			this.m_Animator.SetBool(this.m_PlayerIdleAnimHash, false);
 			Skill.Get<MakeFireSkill>().OnSkillAction();
 			ParticlesManager.Get().Remove(this.m_ParticleObj);
 			this.m_ParticleObj = null;
@@ -190,8 +208,9 @@ public class MakeFireController : PlayerController
 			this.m_FireTool.m_Animator.SetBool(this.m_ToolAnimHash, false);
 			this.StopSound();
 			PlayerAudioModule.Get().StopMakeFireSound();
-			PlayerAudioModule.Get().PlayMakeFireSuccessSound();
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -200,11 +219,11 @@ public class MakeFireController : PlayerController
 		this.m_StaminaConsumption = this.m_FireTool.m_StaminaConsumption * this.m_Kindling.m_Info.m_MakeFireStaminaConsumptionMul;
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if ((action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit) && (this.m_State == MakeFireController.State.WaitingForKindling || this.m_State == MakeFireController.State.Game))
+		if ((action_data.m_Action == InputsManager.InputAction.Quit || action_data.m_Action == InputsManager.InputAction.AdditionalQuit) && (this.m_State == MakeFireController.State.WaitingForKindling || this.m_State == MakeFireController.State.Game) && (!GreenHellGame.IsPadControllerActive() || !HUDItem.Get().m_Active))
 		{
-			this.SetState(MakeFireController.State.Fail);
+			this.SetState(MakeFireController.State.Quit);
 		}
 	}
 
@@ -213,7 +232,7 @@ public class MakeFireController : PlayerController
 		base.ControllerUpdate();
 		this.UpdateToolTransform();
 		this.UpdateState();
-		if (this.m_State != MakeFireController.State.None)
+		if (this.m_State != MakeFireController.State.None && this.m_FireTool)
 		{
 			this.m_FireTool.gameObject.layer = 0;
 			for (int i = 0; i < this.m_FireTool.transform.childCount; i++)
@@ -226,6 +245,10 @@ public class MakeFireController : PlayerController
 	private void UpdateToolTransform()
 	{
 		if (this.m_State != MakeFireController.State.WaitingForKindling)
+		{
+			return;
+		}
+		if (this.m_Tool == null)
 		{
 			return;
 		}
@@ -244,9 +267,14 @@ public class MakeFireController : PlayerController
 		switch (this.m_State)
 		{
 		case MakeFireController.State.WaitingForKindling:
+			if (this.m_Tool == null)
+			{
+				this.SetState(MakeFireController.State.Quit);
+				return;
+			}
 			this.UpdatePose();
 			this.m_Tool.transform.parent = null;
-			break;
+			return;
 		case MakeFireController.State.Game:
 			this.UpdateStamina();
 			this.UpdateToolDurability();
@@ -255,12 +283,19 @@ public class MakeFireController : PlayerController
 			if (this.m_Player.GetStamina() <= 0f)
 			{
 				this.SetState(MakeFireController.State.Fail);
+				return;
 			}
-			else if (Time.time - this.m_StartStateTime >= this.m_Tool.m_Info.m_MakeFireDuration)
+			if (Time.time - this.m_StartStateTime >= this.m_Tool.m_Info.m_MakeFireDuration)
 			{
 				this.SetState(MakeFireController.State.Success);
 			}
 			break;
+		case MakeFireController.State.Fail:
+		case MakeFireController.State.Success:
+		case MakeFireController.State.Quit:
+			break;
+		default:
+			return;
 		}
 	}
 
@@ -297,7 +332,7 @@ public class MakeFireController : PlayerController
 		this.m_FireTool.m_Light.intensity = CJTools.Math.GetProportionalClamp(0f, this.m_MaxLightIntensity, this.m_FireLevel, this.m_MinFireLevelToEnableEffects, 1f);
 		if (!this.m_FXSpawned && this.m_FireLevel >= this.m_MinFireLevelToEnableEffects)
 		{
-			this.m_ParticleObj = ParticlesManager.Get().Spawn("Small Smoke - Ember", this.m_FireTool.m_KindlingSlot.transform.position, Quaternion.identity, null);
+			this.m_ParticleObj = ParticlesManager.Get().Spawn("Small Smoke - Ember", this.m_FireTool.m_KindlingSlot.transform.position, Quaternion.identity, Vector3.zero, null, -1f, false);
 			this.m_FXSpawned = true;
 		}
 	}
@@ -321,24 +356,29 @@ public class MakeFireController : PlayerController
 				InventoryBackpack.Get().InsertItem(tool, null, null, true, true, true, true, true);
 				this.m_Player.ResetControllerToStart();
 				this.m_Player.SetWantedItem(Hand.Right, this.m_Fire, true);
-				this.m_Fire.m_ConnectedParticleObj = ParticlesManager.Get().Spawn("Small Smoke - Ember", this.m_Fire.transform.position, Quaternion.identity, this.m_Fire.transform);
+				this.m_Fire.m_ConnectedParticleObj = ParticlesManager.Get().Spawn("Small Smoke - Ember", this.m_Fire.transform.position, Quaternion.identity, Vector3.zero, this.m_Fire.transform, -1f, false);
 				this.m_Fire = null;
+				return;
 			}
 		}
 		else if (id == AnimEventID.MakeFireFailEnd)
 		{
-			if (this.m_State == MakeFireController.State.Fail)
+			if (this.m_State == MakeFireController.State.Fail || this.m_State == MakeFireController.State.Quit)
 			{
-				this.m_FireTool.m_KindlingSlot.RemoveItem();
-				Item tool2 = this.m_Tool;
-				this.m_Player.DropItem(tool2);
-				InventoryBackpack.Get().InsertItem(tool2, null, null, true, true, true, true, true);
+				if (this.m_FireTool != null)
+				{
+					this.m_FireTool.m_KindlingSlot.RemoveItem();
+					Item tool2 = this.m_Tool;
+					this.m_Player.DropItem(tool2);
+					InventoryBackpack.Get().InsertItem(tool2, null, null, true, true, true, true, true);
+				}
 				this.m_Player.SetWantedItem(Hand.Right, null, true);
 				if (this.m_Kindling != null)
 				{
 					this.m_Kindling.enabled = true;
 					InventoryBackpack.Get().InsertItem(this.m_Kindling, null, null, true, true, true, true, true);
 					this.m_Kindling = null;
+					return;
 				}
 			}
 		}
@@ -353,7 +393,7 @@ public class MakeFireController : PlayerController
 
 	public bool ShouldBlockTriggers()
 	{
-		return this.m_State == MakeFireController.State.Game || this.m_State == MakeFireController.State.Fail || this.m_State == MakeFireController.State.Success;
+		return this.m_State == MakeFireController.State.Game || this.m_State == MakeFireController.State.Fail || this.m_State == MakeFireController.State.Quit || this.m_State == MakeFireController.State.Success;
 	}
 
 	private void PlaySound()
@@ -447,6 +487,7 @@ public class MakeFireController : PlayerController
 		WaitingForKindling,
 		Game,
 		Fail,
-		Success
+		Success,
+		Quit
 	}
 }

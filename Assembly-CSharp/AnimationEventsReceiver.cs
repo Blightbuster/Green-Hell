@@ -7,10 +7,12 @@ using UnityEngine;
 
 public class AnimationEventsReceiver : MonoBehaviour
 {
-	public void Initialize(Being being)
+	public void Initialize(Being being = null)
 	{
 		this.m_AnimEventsReceivers = base.GetComponents<IAnimationEventsReceiver>();
+		this.m_AnimEventsReceiversEx = base.GetComponents<IAnimationEventsReceiverEx>();
 		this.m_SoundEventsReceivers = base.GetComponents<ISoundEventsReceiver>();
+		this.m_Animator = base.GetComponent<Animator>();
 		this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
 		this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.AI);
 		this.m_AudioSource.spatialBlend = 1f;
@@ -18,45 +20,90 @@ public class AnimationEventsReceiver : MonoBehaviour
 		this.m_AudioSource.minDistance = 2f;
 		this.m_AudioSource.maxDistance = 30f;
 		this.m_AudioSource.spatialize = true;
-		this.m_FootstepAudioSource = base.gameObject.AddComponent<AudioSource>();
-		this.m_FootstepAudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.AI);
-		this.m_FootstepAudioSource.spatialBlend = 1f;
-		this.m_FootstepAudioSource.rolloffMode = AudioRolloffMode.Linear;
-		this.m_FootstepAudioSource.maxDistance = 12f;
 		this.m_Being = being;
 		this.SetupEvents();
+	}
+
+	public static void PreParseAnimationEventScripts()
+	{
+		foreach (string text in AnimationEventsReceiver.s_ScriptsToPreparse)
+		{
+			TextAssetParser textAssetParser;
+			if (!AnimationEventsReceiver.s_ParsedAnimEventScriptsCache.TryGetValue(text, out textAssetParser))
+			{
+				textAssetParser = new TextAssetParser();
+				textAssetParser.Parse(text, true);
+				AnimationEventsReceiver.s_ParsedAnimEventScriptsCache.Add(text, textAssetParser);
+			}
+		}
+	}
+
+	private TextAssetParser GetParser()
+	{
+		TextAssetParser textAssetParser = null;
+		if (this.m_HumanAI)
+		{
+			string text = null;
+			AI.AIID id = this.m_HumanAI.m_ID;
+			switch (id)
+			{
+			case AI.AIID.Hunter:
+				text = "AI/SavageAnimEvents";
+				break;
+			case AI.AIID.Spearman:
+				text = "AI/SpearmanAnimEvents";
+				break;
+			case AI.AIID.Thug:
+				text = "AI/ThugAnimEvents";
+				break;
+			case AI.AIID.Savage:
+				text = "AI/SavageAnimEvents";
+				break;
+			default:
+				if (id == AI.AIID.KidRunner)
+				{
+					text = "AI/KidRunnerAnimEvents";
+				}
+				break;
+			}
+			if (text != null && !AnimationEventsReceiver.s_ParsedAnimEventScriptsCache.TryGetValue(text, out textAssetParser))
+			{
+				textAssetParser = new TextAssetParser();
+				textAssetParser.Parse(text, true);
+				AnimationEventsReceiver.s_ParsedAnimEventScriptsCache.Add(text, textAssetParser);
+			}
+		}
+		else if (this.m_AnimEventsScript != null && !AnimationEventsReceiver.s_ParsedAnimEventScriptsCache.TryGetValue(this.m_AnimEventsScript.name, out textAssetParser))
+		{
+			textAssetParser = new TextAssetParser(this.m_AnimEventsScript);
+			AnimationEventsReceiver.s_ParsedAnimEventScriptsCache.Add(this.m_AnimEventsScript.name, textAssetParser);
+		}
+		if (textAssetParser == null)
+		{
+			Debug.Log("Could not parse animation event script for: " + base.name);
+			textAssetParser = new TextAssetParser();
+		}
+		return textAssetParser;
 	}
 
 	private void SetupEvents()
 	{
 		AI ai = null;
-		TextAssetParser textAssetParser;
-		if (this.m_Being.IsAI())
+		if (this.m_Being && this.m_Being.IsAI())
 		{
 			ai = base.GetComponent<AI>();
-			string text = (!ai.IsHuman()) ? (ai.m_ID.ToString() + "AnimEvents") : "SavageAnimEvents";
-			if (!AIManager.Get().m_AnimEventsParsers.ContainsKey(text))
-			{
-				Debug.Log(text);
-			}
-			textAssetParser = AIManager.Get().m_AnimEventsParsers[text];
 			if (ai.IsHuman())
 			{
 				this.m_HumanAI = (HumanAI)ai;
 			}
-			this.m_FootstepAudioSource.spatialize = true;
 			this.m_AudioSource.spatialize = true;
 		}
-		else
-		{
-			textAssetParser = new TextAssetParser(this.m_AnimEventsScript);
-		}
-		Animator component = base.gameObject.GetComponent<Animator>();
+		TextAssetParser parser = this.GetParser();
 		AnimationClip animationClip = null;
-		AnimationClip[] animationClips = component.runtimeAnimatorController.animationClips;
-		for (int i = 0; i < textAssetParser.GetKeysCount(); i++)
+		AnimationClip[] animationClips = this.m_Animator.runtimeAnimatorController.animationClips;
+		for (int i = 0; i < parser.GetKeysCount(); i++)
 		{
-			Key key = textAssetParser.GetKey(i);
+			Key key = parser.GetKey(i);
 			if (key.GetName() == "Anim")
 			{
 				string svalue = key.GetVariable(0).SValue;
@@ -75,16 +122,17 @@ public class AnimationEventsReceiver : MonoBehaviour
 				else
 				{
 					AnimationEvent[] events = animationClip.events;
+					float length = animationClip.length;
 					for (int k = 0; k < key.GetKeysCount(); k++)
 					{
 						Key key2 = key.GetKey(k);
 						if (key2.GetName() == "Event")
 						{
-							AnimEventID animEventID = (AnimEventID)Enum.Parse(typeof(AnimEventID), key2.GetVariable(0).SValue);
+							AnimEventID value = EnumUtils<AnimEventID>.GetValue(key2.GetVariable(0).SValue);
 							bool flag = false;
 							for (int l = 0; l < events.Length; l++)
 							{
-								if (events[l].intParameter == (int)animEventID)
+								if (events[l].intParameter == (int)value)
 								{
 									flag = true;
 									break;
@@ -94,8 +142,8 @@ public class AnimationEventsReceiver : MonoBehaviour
 							{
 								float fvalue = key2.GetVariable(1).FValue;
 								AnimationEvent animationEvent = new AnimationEvent();
-								animationEvent.intParameter = (int)animEventID;
-								animationEvent.time = animationClip.length * fvalue;
+								animationEvent.intParameter = (int)value;
+								animationEvent.time = length * fvalue;
 								animationEvent.functionName = "AnimEvent";
 								animationClip.AddEvent(animationEvent);
 								List<AnimationEvent> list = null;
@@ -112,16 +160,15 @@ public class AnimationEventsReceiver : MonoBehaviour
 							if (!this.m_Sounds.ContainsKey(svalue2))
 							{
 								this.m_Sounds[svalue2] = new List<AudioClip>();
-								string text2 = (!ai || ai.m_SoundPreset == AI.SoundPreset.None) ? string.Empty : (ai.m_SoundPreset.ToString() + "/");
-								string path = string.Concat(new string[]
+								string text = (ai && ai.m_SoundPreset != AI.SoundPreset.None) ? (ai.m_SoundPreset.ToString() + "/") : "";
+								AudioClip audioClip = Resources.Load<AudioClip>(string.Concat(new string[]
 								{
 									"Sounds/",
 									key2.GetVariable(1).SValue,
 									"/",
-									text2,
+									text,
 									svalue2
-								});
-								AudioClip audioClip = Resources.Load<AudioClip>(path);
+								}));
 								if (audioClip)
 								{
 									this.m_Sounds[svalue2].Add(audioClip);
@@ -130,17 +177,16 @@ public class AnimationEventsReceiver : MonoBehaviour
 								{
 									for (int m = 1; m < 99; m++)
 									{
-										path = string.Concat(new string[]
+										audioClip = Resources.Load<AudioClip>(string.Concat(new string[]
 										{
 											"Sounds/",
 											key2.GetVariable(1).SValue,
 											"/",
-											text2,
+											text,
 											svalue2,
-											(m >= 10) ? string.Empty : "0",
+											(m < 10) ? "0" : "",
 											m.ToString()
-										});
-										audioClip = Resources.Load<AudioClip>(path);
+										}));
 										if (!audioClip)
 										{
 											break;
@@ -153,17 +199,14 @@ public class AnimationEventsReceiver : MonoBehaviour
 							{
 								DebugUtils.Assert("Missing clips of sound - " + svalue2, true, DebugUtils.AssertType.Info);
 							}
-							float num = animationClip.length * key2.GetVariable(2).FValue;
+							float num = length * key2.GetVariable(2).FValue;
 							bool flag2 = false;
 							for (int n = 0; n < events.Length; n++)
 							{
-								if (!(events[n].functionName != "SoundEvent"))
+								if (!(events[n].functionName != "SoundEvent") && events[n].stringParameter == svalue2 && events[n].time == num)
 								{
-									if (events[n].stringParameter == svalue2 && events[n].time == num)
-									{
-										flag2 = true;
-										break;
-									}
+									flag2 = true;
+									break;
 								}
 							}
 							if (!flag2)
@@ -178,7 +221,7 @@ public class AnimationEventsReceiver : MonoBehaviour
 						}
 						else if (key2.GetName() == "Footstep")
 						{
-							float num2 = animationClip.length * key2.GetVariable(0).FValue;
+							float num2 = length * key2.GetVariable(0).FValue;
 							string svalue3 = key2.GetVariable(1).SValue;
 							if (!this.m_TransformsForFXesMap.ContainsKey(svalue3))
 							{
@@ -189,13 +232,10 @@ public class AnimationEventsReceiver : MonoBehaviour
 							bool flag3 = false;
 							for (int num3 = 0; num3 < events.Length; num3++)
 							{
-								if (!(events[num3].functionName != "FootstepEvent"))
+								if (!(events[num3].functionName != "FootstepEvent") && events[num3].stringParameter == svalue3 && events[num3].time == num2)
 								{
-									if (events[num3].stringParameter == svalue3 && events[num3].time == num2)
-									{
-										flag3 = true;
-										break;
-									}
+									flag3 = true;
+									break;
 								}
 							}
 							if (!flag3)
@@ -214,18 +254,33 @@ public class AnimationEventsReceiver : MonoBehaviour
 		}
 	}
 
-	public void AnimEvent(AnimEventID event_id)
+	private void LateUpdate()
 	{
-		for (int i = 0; i < this.m_AnimEventsReceivers.Length; i++)
+		this.m_ThisFrameIntAnimEvents.Clear();
+	}
+
+	public void AnimEvent(AnimationEvent anim_event)
+	{
+		if (!this.m_ThisFrameIntAnimEvents.CheckAndStore(anim_event.intParameter))
 		{
-			if (this.m_AnimEventsReceivers[i].IsActive() || this.m_AnimEventsReceivers[i].ForceReceiveAnimEvent())
+			for (int i = 0; i < this.m_AnimEventsReceivers.Length; i++)
 			{
-				this.m_AnimEventsReceivers[i].OnAnimEvent(event_id);
+				if (this.m_AnimEventsReceivers[i].IsActive() || this.m_AnimEventsReceivers[i].ForceReceiveAnimEvent())
+				{
+					this.m_AnimEventsReceivers[i].OnAnimEvent((AnimEventID)anim_event.intParameter);
+				}
+			}
+		}
+		for (int j = 0; j < this.m_AnimEventsReceiversEx.Length; j++)
+		{
+			if (this.m_AnimEventsReceiversEx[j].IsActive() || this.m_AnimEventsReceiversEx[j].ForceReceiveAnimEvent())
+			{
+				this.m_AnimEventsReceiversEx[j].OnAnimEventEx(anim_event);
 			}
 		}
 		if (this.m_Log)
 		{
-			CJDebug.Log("AnimEvent " + event_id.ToString());
+			CJDebug.Log("AnimEvent " + anim_event.intParameter.ToString());
 		}
 	}
 
@@ -261,38 +316,63 @@ public class AnimationEventsReceiver : MonoBehaviour
 		}
 	}
 
-	private void Update()
+	public void FootstepEvent(AnimationEvent anim_event)
 	{
-		if (!this.m_AudioSource)
+		if (anim_event.animatorClipInfo.weight >= 0.5f && this.m_LastFootstepEventTime < Time.time - AnimationEventsReceiver.STEP_INTERVAL)
 		{
-			return;
-		}
-		if (this.m_AudioSource.isPlaying)
-		{
-			this.m_NoSoundDuration = 0f;
-		}
-		else
-		{
-			this.m_NoSoundDuration += Time.deltaTime;
+			this.m_LastFootstepEventTime = Time.time;
+			EObjectMaterial mat = this.m_Being.IsInWater() ? EObjectMaterial.Water : this.m_Being.GetMaterial();
+			foreach (AudioSource audioSource in this.m_FootstepAudioSources)
+			{
+				if (!audioSource.isPlaying)
+				{
+					this.PlayFootstep(audioSource, mat);
+					return;
+				}
+			}
+			if (this.m_FootstepAudioSources.Count < 4)
+			{
+				this.PlayFootstep(this.AddFootstepAudioSource(), mat);
+			}
 		}
 	}
 
-	public void FootstepEvent(string obj_name)
+	private void PlayFootstep(AudioSource source, EObjectMaterial mat)
 	{
-		EObjectMaterial mat = (!this.m_Being.IsInWater()) ? this.m_Being.GetMaterial() : EObjectMaterial.Water;
-		if (this.m_FootstepAudioSource && !this.m_FootstepAudioSource.isPlaying)
+		if (source.rolloffMode != AudioRolloffMode.Custom)
 		{
-			this.m_FootstepAudioSource.PlayOneShot(AIManager.Get().GetFootstepSound(mat));
+			source.rolloffMode = AudioRolloffMode.Custom;
+			source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, MainLevel.Instance.m_SoundRolloffCurve);
 		}
+		source.volume = (this.m_HumanAI ? 1f : 0.5f);
+		source.PlayOneShot(AIManager.Get().GetFootstepSound(mat, this.m_Animator.velocity.magnitude < 4f));
+	}
+
+	private AudioSource AddFootstepAudioSource()
+	{
+		AudioSource audioSource = base.gameObject.AddComponent<AudioSource>();
+		audioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.EnviroAmplified);
+		audioSource.rolloffMode = AudioRolloffMode.Custom;
+		audioSource.spatialBlend = 1f;
+		audioSource.SetCustomCurve(AudioSourceCurveType.CustomRolloff, MainLevel.Instance.m_SoundRolloffCurve);
+		audioSource.minDistance = 2f;
+		audioSource.maxDistance = 30f;
+		audioSource.spatialize = true;
+		this.m_FootstepAudioSources.Add(audioSource);
+		return audioSource;
 	}
 
 	private IAnimationEventsReceiver[] m_AnimEventsReceivers;
+
+	private IAnimationEventsReceiverEx[] m_AnimEventsReceiversEx;
 
 	private ISoundEventsReceiver[] m_SoundEventsReceivers;
 
 	public TextAsset m_AnimEventsScript;
 
 	public Dictionary<int, List<AnimationEvent>> m_Events = new Dictionary<int, List<AnimationEvent>>();
+
+	private static Dictionary<string, TextAssetParser> s_ParsedAnimEventScriptsCache = new Dictionary<string, TextAssetParser>();
 
 	private Dictionary<string, List<AudioClip>> m_Sounds = new Dictionary<string, List<AudioClip>>();
 
@@ -306,7 +386,66 @@ public class AnimationEventsReceiver : MonoBehaviour
 
 	private AudioSource m_AudioSource;
 
-	private AudioSource m_FootstepAudioSource;
+	private List<AudioSource> m_FootstepAudioSources = new List<AudioSource>();
 
-	private float m_NoSoundDuration;
+	private float m_LastFootstepEventTime = float.MinValue;
+
+	private Animator m_Animator;
+
+	private static List<string> s_ScriptsToPreparse = new List<string>
+	{
+		"AI/SavageAnimEvents",
+		"AI/SpearmanAnimEvents",
+		"AI/ThugAnimEvents",
+		"AI/PumaAnimEvents",
+		"AI/JaguarAnimEvents",
+		"AI/BlackCaimanAnimEvents",
+		"AI/PeccaryAnimEvents",
+		"AI/TapirAnimEvents",
+		"AI/CapybaraAnimEvents"
+	};
+
+	private AnimationEventsReceiver.ThisFrameIntAnimEvents m_ThisFrameIntAnimEvents = new AnimationEventsReceiver.ThisFrameIntAnimEvents();
+
+	private static float STEP_INTERVAL = 0.1f;
+
+	private const int MAX_STEP_AUDIOSOURCES = 4;
+
+	private class ThisFrameIntAnimEvents
+	{
+		public bool CheckAndStore(int value)
+		{
+			if (this.m_Items == null)
+			{
+				this.m_Items = new List<int>(3);
+			}
+			for (int i = 0; i < this.m_ItemCount; i++)
+			{
+				if (this.m_Items[i] == value)
+				{
+					return true;
+				}
+			}
+			DebugUtils.Assert(this.m_ItemCount <= this.m_Items.Count, true);
+			if (this.m_ItemCount == this.m_Items.Count)
+			{
+				this.m_Items.Add(value);
+			}
+			else
+			{
+				this.m_Items[this.m_ItemCount] = value;
+			}
+			this.m_ItemCount++;
+			return false;
+		}
+
+		public void Clear()
+		{
+			this.m_ItemCount = 0;
+		}
+
+		private int m_ItemCount;
+
+		private List<int> m_Items;
+	}
 }

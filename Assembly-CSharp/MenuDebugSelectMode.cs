@@ -1,8 +1,34 @@
 ﻿using System;
+using CJTools;
 using Enums;
+using UnityEngine;
 
-public class MenuDebugSelectMode : MenuScreen
+public class MenuDebugSelectMode : MenuDebugScreen
 {
+	public override void OnShow()
+	{
+		base.OnShow();
+		if (GreenHellGame.IsPadControllerActive())
+		{
+			CursorManager.Get().ShowCursor(true, false);
+		}
+		Transform transform = base.transform.FindDeepChild("DebugSpawn");
+		if (transform == null)
+		{
+			return;
+		}
+		transform.gameObject.SetActive(false);
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		if (GreenHellGame.IsPadControllerActive() && Input.GetKeyDown(InputHelpers.PadButton.Back.KeyFromPad()))
+		{
+			this.OnDebug();
+		}
+	}
+
 	public void OnStory()
 	{
 		MainLevel.Instance.m_GameMode = GameMode.Story;
@@ -43,8 +69,29 @@ public class MenuDebugSelectMode : MenuScreen
 		PlayerDiseasesModule.Get().UnlockAllSymptomTreatmentsInNotepad();
 		PlayerInjuryModule.Get().UnlockAllInjuryState();
 		PlayerInjuryModule.Get().UnlockAllInjuryStateTreatment();
+		MapTab.Get().UnlockAll();
 		MainLevel.Instance.m_GameMode = GameMode.Debug;
 		GreenHellGame.Instance.m_GameMode = GameMode.None;
+		MainLevel.Instance.Initialize();
+		MenuInGameManager.Get().HideMenu();
+		this.StartRainforestAmbienceMultisample();
+	}
+
+	public void OnDebugPermaDeath()
+	{
+		Player.Get().UnlockMap();
+		Player.Get().UnlockNotepad();
+		Player.Get().UnlockWatch();
+		ItemsManager.Get().UnlockAllItemsInNotepad();
+		PlayerDiseasesModule.Get().UnlockAllDiseasesInNotepad();
+		PlayerDiseasesModule.Get().UnlockAllDiseasesTratmentInNotepad();
+		PlayerDiseasesModule.Get().UnlockAllSymptomsInNotepad();
+		PlayerDiseasesModule.Get().UnlockAllSymptomTreatmentsInNotepad();
+		PlayerInjuryModule.Get().UnlockAllInjuryState();
+		PlayerInjuryModule.Get().UnlockAllInjuryStateTreatment();
+		MainLevel.Instance.m_GameMode = GameMode.Debug;
+		GreenHellGame.Instance.m_GameMode = GameMode.None;
+		DifficultySettings.SetActivePresetType(DifficultySettings.PresetType.PermaDeath);
 		MainLevel.Instance.Initialize();
 		MenuInGameManager.Get().HideMenu();
 		this.StartRainforestAmbienceMultisample();
@@ -99,10 +146,41 @@ public class MenuDebugSelectMode : MenuScreen
 		MainLevel.Instance.Initialize();
 		MenuInGameManager.Get().HideMenu();
 		this.StartRainforestAmbienceMultisample();
+		BalanceSystem20.Get().Initialize();
 	}
 
 	private void StartRainforestAmbienceMultisample()
 	{
-		MainLevel.Instance.StartRainForestAmbienceMultisample();
+		AmbientAudioSystem.Instance.StartRainForestAmbienceMultisample();
+	}
+
+	public void OnDream(int i)
+	{
+		ScenarioManager.Get().m_SkipTutorial = true;
+		MainLevel.Instance.m_GameMode = GameMode.Story;
+		GreenHellGame.Instance.m_GameMode = GameMode.Story;
+		MainLevel.Instance.Initialize();
+		MenuInGameManager.Get().HideMenu();
+		this.StartRainforestAmbienceMultisample();
+		ScenarioManager.Get().SetBoolVariable("ShouldDream_0" + i.ToString() + "_Start", true);
+	}
+
+	public void OnDream(string variable)
+	{
+		ScenarioManager.Get().m_SkipTutorial = true;
+		MainLevel.Instance.m_GameMode = GameMode.Story;
+		GreenHellGame.Instance.m_GameMode = GameMode.Story;
+		MainLevel.Instance.Initialize();
+		MenuInGameManager.Get().HideMenu();
+		this.StartRainforestAmbienceMultisample();
+		ScenarioManager.Get().SetBoolVariable(variable, true);
+	}
+
+	public void OnDebugFromEditorPos()
+	{
+	}
+
+	public override void OnBack()
+	{
 	}
 }

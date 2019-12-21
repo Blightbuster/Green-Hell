@@ -31,6 +31,7 @@ namespace RootMotion.FinalIK
 			solver.OnPreUpdate = (IKSolver.UpdateDelegate)Delegate.Combine(solver.OnPreUpdate, new IKSolver.UpdateDelegate(this.ModifyOffset));
 			this.lastTime = Time.time;
 			yield break;
+			yield break;
 		}
 
 		private void ModifyOffset()

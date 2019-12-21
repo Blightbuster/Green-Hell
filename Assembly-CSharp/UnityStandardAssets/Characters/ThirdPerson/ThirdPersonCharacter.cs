@@ -55,6 +55,7 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 				this.m_Capsule.height = this.m_Capsule.height / 2f;
 				this.m_Capsule.center = this.m_Capsule.center / 2f;
 				this.m_Crouching = true;
+				return;
 			}
 			else
 			{
@@ -68,6 +69,7 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 				this.m_Capsule.height = this.m_CapsuleHeight;
 				this.m_Capsule.center = this.m_CapsuleCenter;
 				this.m_Crouching = false;
+				return;
 			}
 		}
 
@@ -93,8 +95,7 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 			{
 				this.m_Animator.SetFloat("Jump", this.m_Rigidbody.velocity.y);
 			}
-			float num = Mathf.Repeat(this.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime + this.m_RunCycleLegOffset, 1f);
-			float value = (float)((num >= 0.5f) ? -1 : 1) * this.m_ForwardAmount;
+			float value = (float)((Mathf.Repeat(this.m_Animator.GetCurrentAnimatorStateInfo(0).normalizedTime + this.m_RunCycleLegOffset, 1f) < 0.5f) ? 1 : -1) * this.m_ForwardAmount;
 			if (this.m_IsGrounded)
 			{
 				this.m_Animator.SetFloat("JumpLeg", value);
@@ -102,18 +103,16 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 			if (this.m_IsGrounded && move.magnitude > 0f)
 			{
 				this.m_Animator.speed = this.m_AnimSpeedMultiplier;
+				return;
 			}
-			else
-			{
-				this.m_Animator.speed = 1f;
-			}
+			this.m_Animator.speed = 1f;
 		}
 
 		private void HandleAirborneMovement()
 		{
 			Vector3 force = Physics.gravity * this.m_GravityMultiplier - Physics.gravity;
 			this.m_Rigidbody.AddForce(force);
-			this.m_GroundCheckDistance = ((this.m_Rigidbody.velocity.y >= 0f) ? 0.01f : this.m_OrigGroundCheckDistance);
+			this.m_GroundCheckDistance = ((this.m_Rigidbody.velocity.y < 0f) ? this.m_OrigGroundCheckDistance : 0.01f);
 		}
 
 		private void HandleGroundedMovement(bool crouch, bool jump)
@@ -151,13 +150,11 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 				this.m_GroundNormal = raycastHit.normal;
 				this.m_IsGrounded = true;
 				this.m_Animator.applyRootMotion = true;
+				return;
 			}
-			else
-			{
-				this.m_IsGrounded = false;
-				this.m_GroundNormal = Vector3.up;
-				this.m_Animator.applyRootMotion = false;
-			}
+			this.m_IsGrounded = false;
+			this.m_GroundNormal = Vector3.up;
+			this.m_Animator.applyRootMotion = false;
 		}
 
 		[SerializeField]
@@ -169,8 +166,8 @@ namespace UnityStandardAssets.Characters.ThirdPerson
 		[SerializeField]
 		private float m_JumpPower = 12f;
 
-		[SerializeField]
 		[Range(1f, 4f)]
+		[SerializeField]
 		private float m_GravityMultiplier = 2f;
 
 		[SerializeField]

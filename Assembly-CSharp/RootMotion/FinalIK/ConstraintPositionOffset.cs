@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class ConstraintPositionOffset : Constraint
 	{
-		public ConstraintPositionOffset()
-		{
-		}
-
-		public ConstraintPositionOffset(Transform transform)
-		{
-			this.transform = transform;
-		}
-
 		public override void UpdateConstraint()
 		{
 			if (this.weight <= 0f)
@@ -38,6 +29,15 @@ namespace RootMotion.FinalIK
 			this.transform.localPosition = this.defaultLocalPosition;
 			this.transform.position += this.offset * this.weight;
 			this.lastLocalPosition = this.transform.localPosition;
+		}
+
+		public ConstraintPositionOffset()
+		{
+		}
+
+		public ConstraintPositionOffset(Transform transform)
+		{
+			this.transform = transform;
 		}
 
 		private bool positionChanged

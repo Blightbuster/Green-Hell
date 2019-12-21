@@ -4,8 +4,8 @@ using UnityEngine.Serialization;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_graph_update_scene.php")]
 	[AddComponentMenu("Pathfinding/GraphUpdateScene")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_graph_update_scene.php")]
 	public class GraphUpdateScene : GraphModifier
 	{
 		public void Start()
@@ -36,17 +36,15 @@ namespace Pathfinding
 			{
 				this.setTagInvert = this.setTag;
 				this.setTag = 0;
+				return;
 			}
-			else
-			{
-				this.setTag = this.setTagInvert;
-				this.setTagInvert = 0;
-			}
+			this.setTag = this.setTagInvert;
+			this.setTagInvert = 0;
 		}
 
 		public void RecalcConvex()
 		{
-			this.convexPoints = ((!this.convex) ? null : Polygon.ConvexHullXZ(this.points));
+			this.convexPoints = (this.convex ? Polygon.ConvexHullXZ(this.points) : null);
 		}
 
 		[Obsolete("World space can no longer be used as it does not work well with rotated graphs. Use transform.InverseTransformPoint to transform points to local space.", true)]
@@ -90,7 +88,7 @@ namespace Pathfinding
 				}
 				return bounds;
 			}
-			return GraphUpdateShape.GetBounds((!this.convex) ? this.points : this.convexPoints, (!this.legacyMode || !this.legacyUseWorldSpace) ? base.transform.localToWorldMatrix : Matrix4x4.identity, this.minBoundsHeight);
+			return GraphUpdateShape.GetBounds(this.convex ? this.convexPoints : this.points, (this.legacyMode && this.legacyUseWorldSpace) ? Matrix4x4.identity : base.transform.localToWorldMatrix, this.minBoundsHeight);
 		}
 
 		public void Apply()
@@ -143,10 +141,9 @@ namespace Pathfinding
 				}
 				else
 				{
-					graphUpdateShape = new GraphUpdateShape(this.points, this.convex, (!this.legacyMode || !this.legacyUseWorldSpace) ? base.transform.localToWorldMatrix : Matrix4x4.identity, this.minBoundsHeight);
+					graphUpdateShape = new GraphUpdateShape(this.points, this.convex, (this.legacyMode && this.legacyUseWorldSpace) ? Matrix4x4.identity : base.transform.localToWorldMatrix, this.minBoundsHeight);
 				}
-				Bounds bounds2 = graphUpdateShape.GetBounds();
-				graphUpdateObject = new GraphUpdateObject(bounds2);
+				graphUpdateObject = new GraphUpdateObject(graphUpdateShape.GetBounds());
 				graphUpdateObject.shape = graphUpdateShape;
 			}
 			this.firstApplied = true;
@@ -173,7 +170,7 @@ namespace Pathfinding
 
 		private void OnDrawGizmos(bool selected)
 		{
-			Color color = (!selected) ? new Color(0.8901961f, 0.239215687f, 0.08627451f, 0.9f) : new Color(0.8901961f, 0.239215687f, 0.08627451f, 1f);
+			Color color = selected ? new Color(0.8901961f, 0.239215687f, 0.08627451f, 1f) : new Color(0.8901961f, 0.239215687f, 0.08627451f, 0.9f);
 			if (selected)
 			{
 				Gizmos.color = Color.Lerp(color, new Color(1f, 1f, 1f, 0.2f), 0.9f);
@@ -190,7 +187,7 @@ namespace Pathfinding
 				color.a *= 0.5f;
 			}
 			Gizmos.color = color;
-			Matrix4x4 matrix4x = (!this.legacyMode || !this.legacyUseWorldSpace) ? base.transform.localToWorldMatrix : Matrix4x4.identity;
+			Matrix4x4 matrix4x = (this.legacyMode && this.legacyUseWorldSpace) ? Matrix4x4.identity : base.transform.localToWorldMatrix;
 			if (this.convex)
 			{
 				color.r -= 0.1f;
@@ -211,14 +208,14 @@ namespace Pathfinding
 				{
 					this.RecalcConvex();
 				}
-				Gizmos.color = ((!selected) ? new Color(0.8901961f, 0.239215687f, 0.08627451f, 0.9f) : new Color(0.8901961f, 0.239215687f, 0.08627451f, 1f));
+				Gizmos.color = (selected ? new Color(0.8901961f, 0.239215687f, 0.08627451f, 1f) : new Color(0.8901961f, 0.239215687f, 0.08627451f, 0.9f));
 				for (int j = 0; j < this.convexPoints.Length; j++)
 				{
 					Gizmos.DrawLine(matrix4x.MultiplyPoint3x4(this.convexPoints[j]), matrix4x.MultiplyPoint3x4(this.convexPoints[(j + 1) % this.convexPoints.Length]));
 				}
 			}
-			Vector3[] array = (!this.convex) ? this.points : this.convexPoints;
-			if (selected && array != null && array.Length > 0)
+			Vector3[] array = this.convex ? this.convexPoints : this.points;
+			if (selected && array != null && array.Length != 0)
 			{
 				Gizmos.color = new Color(1f, 1f, 1f, 0.2f);
 				float num = array[0].y;
@@ -266,7 +263,7 @@ namespace Pathfinding
 		{
 			if (this.serializedVersion == 0)
 			{
-				if (this.points != null && this.points.Length > 0)
+				if (this.points != null && this.points.Length != 0)
 				{
 					this.legacyMode = true;
 				}
@@ -313,8 +310,8 @@ namespace Pathfinding
 		[SerializeField]
 		private int serializedVersion;
 
-		[FormerlySerializedAs("useWorldSpace")]
 		[SerializeField]
+		[FormerlySerializedAs("useWorldSpace")]
 		private bool legacyUseWorldSpace;
 	}
 }

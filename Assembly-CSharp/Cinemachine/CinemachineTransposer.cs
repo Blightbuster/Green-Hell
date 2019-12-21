@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("")]
-	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(5f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineTransposer : CinemachineComponentBase
 	{
 		protected virtual void OnValidate()
@@ -61,8 +61,7 @@ namespace Cinemachine
 
 		public override void OnPositionDragged(Vector3 delta)
 		{
-			Quaternion referenceOrientation = this.GetReferenceOrientation(base.VcamState.ReferenceUp);
-			Vector3 b = Quaternion.Inverse(referenceOrientation) * delta;
+			Vector3 b = Quaternion.Inverse(this.GetReferenceOrientation(base.VcamState.ReferenceUp)) * delta;
 			this.m_FollowOffset += b;
 			this.m_FollowOffset = this.EffectiveOffset;
 		}
@@ -72,7 +71,7 @@ namespace Cinemachine
 			if (this.m_previousTarget != base.FollowTarget || deltaTime < 0f)
 			{
 				this.m_previousTarget = base.FollowTarget;
-				this.m_targetOrientationOnAssign = ((!(this.m_previousTarget == null)) ? base.FollowTarget.rotation : Quaternion.identity);
+				this.m_targetOrientationOnAssign = ((this.m_previousTarget == null) ? Quaternion.identity : base.FollowTarget.rotation);
 			}
 			if (deltaTime < 0f)
 			{
@@ -92,8 +91,8 @@ namespace Cinemachine
 				{
 					if (vector[i] > 180f)
 					{
-						int index;
-						vector[index = i] = vector[index] - 360f;
+						int index = i;
+						vector[index] -= 360f;
 					}
 				}
 				vector = Damper.Damp(vector, this.AngularDamping, deltaTime);
@@ -127,11 +126,11 @@ namespace Cinemachine
 			get
 			{
 				CinemachineTransposer.BindingMode bindingMode = this.m_BindingMode;
-				if (bindingMode != CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp)
+				if (bindingMode == CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp)
 				{
-					return new Vector3(this.m_XDamping, this.m_YDamping, this.m_ZDamping);
+					return new Vector3(0f, this.m_YDamping, this.m_ZDamping);
 				}
-				return new Vector3(0f, this.m_YDamping, this.m_ZDamping);
+				return new Vector3(this.m_XDamping, this.m_YDamping, this.m_ZDamping);
 			}
 		}
 
@@ -194,8 +193,7 @@ namespace Cinemachine
 
 		private static Quaternion Uppify(Quaternion q, Vector3 up)
 		{
-			Quaternion lhs = Quaternion.FromToRotation(q * Vector3.up, up);
-			return lhs * q;
+			return Quaternion.FromToRotation(q * Vector3.up, up) * q;
 		}
 
 		[Tooltip("The coordinate space to use when interpreting the offset from the target.  This is also used to set the camera's Up vector, which will be maintained when aiming the camera.")]
@@ -204,8 +202,8 @@ namespace Cinemachine
 		[Tooltip("The distance vector that the transposer will attempt to maintain from the Follow target")]
 		public Vector3 m_FollowOffset = Vector3.back * 10f;
 
-		[Tooltip("How aggressively the camera tries to maintain the offset in the X-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain the offset in the X-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_XDamping = 1f;
 
 		[Range(0f, 20f)]
@@ -216,16 +214,16 @@ namespace Cinemachine
 		[Tooltip("How aggressively the camera tries to maintain the offset in the Z-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_ZDamping = 1f;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's X angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's X angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_PitchDamping;
 
 		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_YawDamping;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_RollDamping;
 
 		private Vector3 m_PreviousTargetPosition = Vector3.zero;

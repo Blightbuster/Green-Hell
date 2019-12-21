@@ -9,30 +9,30 @@ public class PhysicsModifier : MonoBehaviour
 		{
 			return;
 		}
-		Vector3 direction = this.m_RigidBody.transform.InverseTransformDirection(this.m_RigidBody.angularVelocity);
+		Vector3 vector = this.m_RigidBody.transform.InverseTransformDirection(this.m_RigidBody.angularVelocity);
 		Vector3 zero = Vector3.zero;
 		bool flag = false;
-		if (direction.x > this.m_MaxAngularVelocity.x)
+		if (vector.x > this.m_MaxAngularVelocity.x)
 		{
-			zero.x = direction.x - this.m_MaxAngularVelocity.x;
-			direction.x = this.m_MaxAngularVelocity.x;
+			zero.x = vector.x - this.m_MaxAngularVelocity.x;
+			vector.x = this.m_MaxAngularVelocity.x;
 			flag = true;
 		}
-		if (direction.y > this.m_MaxAngularVelocity.y)
+		if (vector.y > this.m_MaxAngularVelocity.y)
 		{
-			zero.y = direction.y - this.m_MaxAngularVelocity.y;
-			direction.y = this.m_MaxAngularVelocity.y;
+			zero.y = vector.y - this.m_MaxAngularVelocity.y;
+			vector.y = this.m_MaxAngularVelocity.y;
 			flag = true;
 		}
-		if (direction.z > this.m_MaxAngularVelocity.z)
+		if (vector.z > this.m_MaxAngularVelocity.z)
 		{
-			zero.z = direction.z - this.m_MaxAngularVelocity.z;
-			direction.z = this.m_MaxAngularVelocity.z;
+			zero.z = vector.z - this.m_MaxAngularVelocity.z;
+			vector.z = this.m_MaxAngularVelocity.z;
 			flag = true;
 		}
 		if (flag)
 		{
-			this.m_RigidBody.angularVelocity = this.m_RigidBody.transform.TransformDirection(direction);
+			this.m_RigidBody.angularVelocity = this.m_RigidBody.transform.TransformDirection(vector);
 		}
 	}
 

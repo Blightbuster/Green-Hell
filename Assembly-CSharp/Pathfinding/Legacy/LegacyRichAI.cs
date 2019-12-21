@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Pathfinding.Legacy
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_rich_a_i.php")]
-	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy RichAI (3D, for navmesh)")]
 	[RequireComponent(typeof(Seeker))]
+	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy RichAI (3D, for navmesh)")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_rich_a_i.php")]
 	public class LegacyRichAI : RichAI
 	{
 		protected override void Awake()
@@ -17,11 +17,9 @@ namespace Pathfinding.Legacy
 				if (this.rvoController is LegacyRVOController)
 				{
 					(this.rvoController as LegacyRVOController).enableRotation = false;
+					return;
 				}
-				else
-				{
-					Debug.LogError("The LegacyRichAI component only works with the legacy RVOController, not the latest one. Please upgrade this component", this);
-				}
+				Debug.LogError("The LegacyRichAI component only works with the legacy RVOController, not the latest one. Please upgrade this component", this);
 			}
 		}
 
@@ -44,8 +42,7 @@ namespace Pathfinding.Legacy
 					Vector3 vector2 = this.nextCorners[num];
 					Vector3 vector3 = vector2 - vector;
 					vector3.y = 0f;
-					bool flag = Vector3.Dot(vector3, this.currentTargetDirection) < 0f;
-					if (flag && this.nextCorners.Count - num > 1)
+					if (Vector3.Dot(vector3, this.currentTargetDirection) < 0f && this.nextCorners.Count - num > 1)
 					{
 						num++;
 						vector2 = this.nextCorners[num];
@@ -61,7 +58,7 @@ namespace Pathfinding.Legacy
 					vector3.y = 0f;
 					float magnitude = vector3.magnitude;
 					this.distanceToWaypoint = magnitude;
-					vector3 = ((magnitude != 0f) ? (vector3 / magnitude) : Vector3.zero);
+					vector3 = ((magnitude == 0f) ? Vector3.zero : (vector3 / magnitude));
 					Vector3 lhs = vector3;
 					Vector3 a = Vector3.zero;
 					if (this.wallForce > 0f && this.wallDist > 0f)
@@ -70,8 +67,7 @@ namespace Pathfinding.Legacy
 						float num3 = 0f;
 						for (int i = 0; i < this.wallBuffer.Count; i += 2)
 						{
-							Vector3 a2 = VectorMath.ClosestPointOnSegment(this.wallBuffer[i], this.wallBuffer[i + 1], this.tr.position);
-							float sqrMagnitude = (a2 - vector).sqrMagnitude;
+							float sqrMagnitude = (VectorMath.ClosestPointOnSegment(this.wallBuffer[i], this.wallBuffer[i + 1], this.tr.position) - vector).sqrMagnitude;
 							if (sqrMagnitude <= this.wallDist * this.wallDist)
 							{
 								Vector3 normalized = (this.wallBuffer[i + 1] - this.wallBuffer[i]).normalized;
@@ -86,25 +82,24 @@ namespace Pathfinding.Legacy
 								}
 							}
 						}
-						Vector3 a3 = Vector3.Cross(Vector3.up, vector3);
-						a = a3 * (num3 - num2);
+						a = Vector3.Cross(Vector3.up, vector3) * (num3 - num2);
 					}
-					bool flag2 = this.lastCorner && this.nextCorners.Count - num == 1;
-					if (flag2)
+					bool flag = this.lastCorner && this.nextCorners.Count - num == 1;
+					if (flag)
 					{
 						if (this.slowdownTime < 0.001f)
 						{
 							this.slowdownTime = 0.001f;
 						}
-						Vector3 a4 = vector2 - vector;
-						a4.y = 0f;
+						Vector3 a2 = vector2 - vector;
+						a2.y = 0f;
 						if (this.preciseSlowdown)
 						{
-							vector3 = (6f * a4 - 4f * this.slowdownTime * this.velocity) / (this.slowdownTime * this.slowdownTime);
+							vector3 = (6f * a2 - 4f * this.slowdownTime * this.velocity) / (this.slowdownTime * this.slowdownTime);
 						}
 						else
 						{
-							vector3 = 2f * (a4 - this.slowdownTime * this.velocity) / (this.slowdownTime * this.slowdownTime);
+							vector3 = 2f * (a2 - this.slowdownTime * this.velocity) / (this.slowdownTime * this.slowdownTime);
 						}
 						vector3 = Vector3.ClampMagnitude(vector3, this.acceleration);
 						a *= Math.Min(magnitude / 0.5f, 1f);
@@ -120,12 +115,12 @@ namespace Pathfinding.Legacy
 					this.velocity += (vector3 + a * this.wallForce) * LegacyRichAI.deltaTime;
 					if (this.slowWhenNotFacingTarget)
 					{
-						float a5 = (Vector3.Dot(lhs, this.tr.forward) + 0.5f) * 0.6666667f;
-						float a6 = Mathf.Sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z);
+						float a3 = (Vector3.Dot(lhs, this.tr.forward) + 0.5f) * 0.6666667f;
+						float a4 = Mathf.Sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z);
 						float y = this.velocity.y;
 						this.velocity.y = 0f;
-						float d = Mathf.Min(a6, this.maxSpeed * Mathf.Max(a5, 0.2f));
-						this.velocity = Vector3.Lerp(this.tr.forward * d, this.velocity.normalized * d, Mathf.Clamp((!flag2) ? 0f : (magnitude * 2f), 0.5f, 1f));
+						float d = Mathf.Min(a4, this.maxSpeed * Mathf.Max(a3, 0.2f));
+						this.velocity = Vector3.Lerp(this.tr.forward * d, this.velocity.normalized * d, Mathf.Clamp(flag ? (magnitude * 2f) : 0f, 0.5f, 1f));
 						this.velocity.y = y;
 					}
 					else
@@ -138,7 +133,7 @@ namespace Pathfinding.Legacy
 							this.velocity.z = this.velocity.z * num5;
 						}
 					}
-					if (flag2)
+					if (flag)
 					{
 						Vector3 trotdir = Vector3.Lerp(this.velocity, this.currentTargetDirection, Math.Max(1f - magnitude * 2f, 0f));
 						this.RotateTowards(trotdir);
@@ -184,7 +179,7 @@ namespace Pathfinding.Legacy
 				this.tr.position = this.RaycastPosition(this.tr.position, this.tr.position.y);
 			}
 			Vector3 position = this.tr.position;
-			this.realVelocity = ((Time.deltaTime <= 0f) ? Vector3.zero : ((position - this.prevPosition) / Time.deltaTime));
+			this.realVelocity = ((Time.deltaTime > 0f) ? ((position - this.prevPosition) / Time.deltaTime) : Vector3.zero);
 			this.prevPosition = position;
 		}
 
@@ -258,6 +253,7 @@ namespace Pathfinding.Legacy
 				this.delayUpdatePath = false;
 				this.UpdatePath();
 			}
+			yield break;
 			yield break;
 		}
 

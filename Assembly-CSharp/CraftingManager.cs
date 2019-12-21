@@ -22,8 +22,7 @@ public class CraftingManager : MonoBehaviour
 
 	private void Start()
 	{
-		Collider componentDeepChild = General.GetComponentDeepChild<Collider>(Player.Get().gameObject);
-		Physics.IgnoreCollision(this.m_TableCollider, componentDeepChild, true);
+		Physics.IgnoreCollision(this.m_TableCollider, Player.Get().m_Collider, true);
 		if (this.m_AvailableItems.Count == 0)
 		{
 			this.InitializeAvailableItems();
@@ -32,8 +31,7 @@ public class CraftingManager : MonoBehaviour
 
 	private void InitializeAvailableItems()
 	{
-		Dictionary<int, ItemInfo> allInfos = ItemsManager.Get().GetAllInfos();
-		foreach (ItemInfo itemInfo in allInfos.Values)
+		foreach (ItemInfo itemInfo in ItemsManager.Get().GetAllInfos().Values)
 		{
 			if (!itemInfo.IsConstruction() && itemInfo.m_Components.Count > 0)
 			{
@@ -59,11 +57,15 @@ public class CraftingManager : MonoBehaviour
 		{
 			Inventory3DManager.Get().Activate();
 		}
+		if (Storage3D.Get().IsActive())
+		{
+			Storage3D.Get().Deactivate();
+		}
 	}
 
 	public bool IsActive()
 	{
-		return base.gameObject && base.gameObject.activeSelf;
+		return !this.m_IsBeingDestroyed && base.gameObject && base.gameObject.activeSelf;
 	}
 
 	private void EnableTable()
@@ -77,11 +79,15 @@ public class CraftingManager : MonoBehaviour
 		{
 			return;
 		}
-		for (int i = 0; i < this.m_Items.Count; i++)
+		while (this.m_Items.Count > 0)
 		{
-			Item item = this.m_Items[i];
+			Item item = this.m_Items[0];
+			this.m_Items.Remove(item);
 			item.StaticPhxRequestRemove();
 			item.m_OnCraftingTable = false;
+			item.UpdatePhx();
+			item.UpdateLayer();
+			item.UpdateScale(false);
 			InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
 		}
 		this.m_Items.Clear();
@@ -98,6 +104,7 @@ public class CraftingManager : MonoBehaviour
 			}
 		}
 		this.UpdateHints();
+		InventoryBackpack.Get().CalculateCurrentWeight();
 	}
 
 	public bool ContainsItem(Item item)
@@ -107,11 +114,12 @@ public class CraftingManager : MonoBehaviour
 
 	public void AddItem(Item item, bool setup_pos)
 	{
-		item.m_OnCraftingTable = true;
 		item.StaticPhxRequestAdd();
+		item.m_OnCraftingTable = true;
 		this.m_Items.Add(item);
 		item.UpdateScale(false);
 		item.UpdatePhx();
+		item.UpdateLayer();
 		if (setup_pos)
 		{
 			item.gameObject.transform.rotation = Quaternion.identity;
@@ -133,23 +141,29 @@ public class CraftingManager : MonoBehaviour
 		}
 		this.CheckResult();
 		HUDCrafting.Get().Setup();
+		InventoryBackpack.Get().CalculateCurrentWeight();
 	}
 
-	public void RemoveAllItems()
+	public void RemoveAllItems(bool crafting_started = false)
 	{
 		while (this.m_Items.Count > 0)
 		{
-			this.RemoveItem(this.m_Items[0]);
+			this.RemoveItem(this.m_Items[0], crafting_started);
 		}
 	}
 
-	public void RemoveItem(Item item)
+	public void RemoveItem(Item item, bool crafting_started = false)
 	{
-		item.m_OnCraftingTable = false;
+		item.m_Info.m_UsedForCrafting = crafting_started;
 		item.StaticPhxRequestRemove();
+		item.m_OnCraftingTable = false;
 		this.m_Items.Remove(item);
+		item.UpdatePhx();
+		item.UpdateLayer();
+		item.UpdateScale(false);
 		this.CheckResult();
 		HUDCrafting.Get().Setup();
+		InventoryBackpack.Get().CalculateCurrentWeight();
 	}
 
 	private void CheckResult()
@@ -166,9 +180,13 @@ public class CraftingManager : MonoBehaviour
 			ItemID infoID = item.GetInfoID();
 			if (dictionary.ContainsKey((int)infoID))
 			{
-				Dictionary<int, int> dictionary2;
-				int key;
-				dictionary[(int)infoID] = ((dictionary2 = dictionary)[key = (int)infoID] = dictionary2[key] + 1);
+				Dictionary<int, int> dictionary2 = dictionary;
+				int key = (int)infoID;
+				Dictionary<int, int> dictionary3 = dictionary;
+				int key2 = (int)infoID;
+				int value = dictionary3[key2] + 1;
+				dictionary3[key2] = value;
+				dictionary2[key] = value;
 			}
 			else
 			{
@@ -185,8 +203,8 @@ public class CraftingManager : MonoBehaviour
 				{
 					while (enumerator3.MoveNext())
 					{
-						ItemID key2 = (ItemID)enumerator3.Current;
-						if (!components.ContainsKey((int)key2) || dictionary[(int)key2] > components[(int)key2])
+						ItemID key3 = (ItemID)enumerator3.Current;
+						if (!components.ContainsKey((int)key3) || dictionary[(int)key3] > components[(int)key3])
 						{
 							flag = false;
 						}
@@ -195,12 +213,12 @@ public class CraftingManager : MonoBehaviour
 				if (flag)
 				{
 					int num = 0;
-					using (Dictionary<int, int>.KeyCollection.Enumerator enumerator4 = components.Keys.GetEnumerator())
+					using (Dictionary<int, int>.KeyCollection.Enumerator enumerator3 = components.Keys.GetEnumerator())
 					{
-						while (enumerator4.MoveNext())
+						while (enumerator3.MoveNext())
 						{
-							ItemID key3 = (ItemID)enumerator4.Current;
-							num += components[(int)key3];
+							ItemID key4 = (ItemID)enumerator3.Current;
+							num += components[(int)key4];
 						}
 					}
 					if (num == this.m_Items.Count)
@@ -230,25 +248,41 @@ public class CraftingManager : MonoBehaviour
 			DebugUtils.Assert("ERROR - Missing result ItemID! Can't craft item!", true, DebugUtils.AssertType.Info);
 			return;
 		}
-		foreach (Item item in items)
+		Item item = this.CreateItem(this.m_Result);
+		Dictionary<int, int> dictionary = new Dictionary<int, int>(item.m_Info.m_ComponentsToReturn);
+		foreach (Item item2 in items)
 		{
-			UnityEngine.Object.Destroy(item.gameObject);
+			int infoID = (int)item2.GetInfoID();
+			if (dictionary.ContainsKey(infoID))
+			{
+				InventoryBackpack.Get().InsertItem(item2, null, null, true, true, true, true, true);
+				Dictionary<int, int> dictionary2 = dictionary;
+				int key = infoID;
+				int value = dictionary2[key] - 1;
+				dictionary2[key] = value;
+				if (dictionary[infoID] == 0)
+				{
+					dictionary.Remove(infoID);
+				}
+			}
+			else
+			{
+				UnityEngine.Object.Destroy(item2.gameObject);
+			}
 		}
-		Item item2 = this.CreateItem(this.m_Result);
 		ItemsManager.Get().OnCrafted(this.m_Result);
 		this.m_Result = ItemID.None;
-		InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(item2, null, null, true, false, true, true, true);
-		if (insertResult != InventoryBackpack.InsertResult.Ok)
+		if (InventoryBackpack.Get().InsertItem(item, null, null, true, false, true, true, true) != InsertResult.Ok)
 		{
 			this.Activate();
-			this.AddItem(item2, true);
+			this.AddItem(item, true);
 		}
 		else
 		{
-			item2.OnTake();
+			item.OnTake();
 		}
-		InventoryBackpack.Get().SetupPocket(item2.m_Info.m_BackpackPocket);
-		Inventory3DManager.Get().SetNewCraftedItem(item2);
+		InventoryBackpack.Get().SetupPocket(item.m_Info.m_BackpackPocket);
+		Inventory3DManager.Get().SetNewCraftedItem(item);
 		this.CheckResult();
 		HUDCrafting.Get().Setup();
 	}
@@ -313,6 +347,47 @@ public class CraftingManager : MonoBehaviour
 		}
 	}
 
+	public float GetItemsMass()
+	{
+		float num = 0f;
+		for (int i = 0; i < this.m_Items.Count; i++)
+		{
+			num += this.m_Items[i].m_Info.GetMass();
+		}
+		return num;
+	}
+
+	private void OnDestroy()
+	{
+		this.m_IsBeingDestroyed = true;
+	}
+
+	public void DeleteAllItems()
+	{
+		foreach (Item item in this.m_Items)
+		{
+			if (item.m_CurrentSlot)
+			{
+				if (item.m_CurrentSlot.IsStack())
+				{
+					item.m_CurrentSlot.RemoveItem(item, false);
+				}
+				else
+				{
+					item.m_CurrentSlot.RemoveItem();
+				}
+			}
+			item.transform.parent = null;
+			if (item.m_Info.m_InventoryCellsGroup != null)
+			{
+				item.m_Info.m_InventoryCellsGroup.Remove(item);
+				item.m_Info.m_InventoryCellsGroup = null;
+			}
+			UnityEngine.Object.Destroy(item.gameObject);
+		}
+		this.m_Items.Clear();
+	}
+
 	public GameObject m_Table;
 
 	[HideInInspector]
@@ -331,6 +406,8 @@ public class CraftingManager : MonoBehaviour
 	private CraftingManager.CraftingHints m_CurrentHint;
 
 	public static CraftingManager s_Instance;
+
+	private bool m_IsBeingDestroyed;
 
 	private enum CraftingHints
 	{

@@ -25,8 +25,8 @@ namespace AIs
 		{
 			base.Prepare();
 			this.m_AI.m_MoveStyle = AIMoveStyle.Run;
-			this.m_Range = (this.m_AI.transform.position - Player.Get().transform.position).magnitude;
-			this.m_Direction = ((UnityEngine.Random.Range(0f, 1f) <= 0.5f) ? Direction.Right : Direction.Left);
+			this.m_Range = (this.m_AI.transform.position - this.m_AI.m_EnemyModule.m_Enemy.transform.position).magnitude;
+			this.m_Direction = ((UnityEngine.Random.Range(0f, 1f) > 0.5f) ? Direction.Left : Direction.Right);
 			this.m_MaxDuration = UnityEngine.Random.Range(4f, 7f);
 			this.m_Duration = 0f;
 			if (!this.SetupPath())
@@ -39,6 +39,7 @@ namespace AIs
 				{
 					this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.HumanMoveToEnemy);
 				}
+				base.Deactivate();
 				return;
 			}
 			base.StartAction(this.m_HumanStartMove);
@@ -59,18 +60,16 @@ namespace AIs
 			if (this.m_Range + 3f < this.m_HunterAI.m_MinBowDistance)
 			{
 				this.m_Range += 3f;
+				return;
 			}
-			else
-			{
-				this.m_Range = UnityEngine.Random.Range(this.m_HunterAI.m_MinBowDistance, this.m_HunterAI.m_MaxBowDistance);
-			}
+			this.m_Range = UnityEngine.Random.Range(this.m_HunterAI.m_MinBowDistance, this.m_HunterAI.m_MaxBowDistance);
 		}
 
 		private bool SetupPath()
 		{
 			this.UpdateRange();
 			Vector3 a = Vector3.zero;
-			Vector3 normalized2D = (this.m_AI.transform.position - Player.Get().transform.position).GetNormalized2D();
+			Vector3 normalized2D = (this.m_AI.transform.position - this.m_AI.m_EnemyModule.m_Enemy.transform.position).GetNormalized2D();
 			if (this.m_Direction == Direction.Right)
 			{
 				a = Vector3.Cross(Vector3.up, normalized2D);
@@ -81,7 +80,7 @@ namespace AIs
 			}
 			for (int i = 0; i < 10; i++)
 			{
-				Vector3 vector = Player.Get().transform.position + normalized2D * this.m_Range + a * 2f;
+				Vector3 vector = this.m_AI.m_EnemyModule.m_Enemy.transform.position + normalized2D * this.m_Range + a * 2f;
 				vector.y = MainLevel.GetTerrainY(vector);
 				NavMeshHit navMeshHit;
 				if (NavMesh.SamplePosition(vector, out navMeshHit, 1f, AIManager.s_WalkableAreaMask) && NavMesh.CalculatePath(this.m_AI.m_PathModule.m_Agent.nextPosition, navMeshHit.position, AIManager.s_WalkableAreaMask, this.m_TempPath) && this.m_TempPath.status == NavMeshPathStatus.PathComplete)
@@ -100,22 +99,28 @@ namespace AIs
 			if (action.GetType() == typeof(HumanStartMove))
 			{
 				base.StartAction(this.m_HumanMove);
+				return;
 			}
-			else if (action.GetType() == typeof(HumanMove))
+			if (action.GetType() == typeof(HumanMove))
 			{
 				if (this.m_HunterAI.IsProperPosToBowAttack())
 				{
 					base.StartAction(this.m_HumanStopMove);
+					return;
 				}
-				else if (this.SetupPath())
+				if (this.SetupPath())
 				{
 					base.StartAction(this.m_HumanMove);
+					return;
 				}
-				else
-				{
-					base.StartAction(this.m_HumanStopMove);
-				}
+				base.StartAction(this.m_HumanStopMove);
 			}
+		}
+
+		protected override void OnDeactivate()
+		{
+			base.OnDeactivate();
+			this.m_HunterAI.m_CheckDistanceToTarget = false;
 		}
 
 		private Direction m_Direction;

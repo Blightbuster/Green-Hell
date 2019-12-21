@@ -18,14 +18,12 @@ public class CharacterMotorCS : MonoBehaviour
 		Vector3 vector2 = Vector3.zero;
 		if (this.MoveWithPlatform())
 		{
-			Vector3 a = this.movingPlatform.activePlatform.TransformPoint(this.movingPlatform.activeLocalPoint);
-			vector2 = a - this.movingPlatform.activeGlobalPoint;
+			vector2 = this.movingPlatform.activePlatform.TransformPoint(this.movingPlatform.activeLocalPoint) - this.movingPlatform.activeGlobalPoint;
 			if (vector2 != Vector3.zero)
 			{
 				this.controller.Move(vector2);
 			}
-			Quaternion lhs = this.movingPlatform.activePlatform.rotation * this.movingPlatform.activeLocalRotation;
-			float y = (lhs * Quaternion.Inverse(this.movingPlatform.activeGlobalRotation)).eulerAngles.y;
+			float y = (this.movingPlatform.activePlatform.rotation * this.movingPlatform.activeLocalRotation * Quaternion.Inverse(this.movingPlatform.activeGlobalRotation)).eulerAngles.y;
 			if (y != 0f)
 			{
 				this.tr.Rotate(0f, y, 0f);
@@ -33,9 +31,7 @@ public class CharacterMotorCS : MonoBehaviour
 		}
 		Vector3 position = this.tr.position;
 		Vector3 vector3 = vector * Time.deltaTime;
-		float stepOffset = this.controller.stepOffset;
-		Vector3 vector4 = new Vector3(vector3.x, 0f, vector3.z);
-		float d = Mathf.Max(stepOffset, vector4.magnitude);
+		float d = Mathf.Max(this.controller.stepOffset, new Vector3(vector3.x, 0f, vector3.z).magnitude);
 		if (this.grounded)
 		{
 			vector3 -= d * Vector3.up;
@@ -51,17 +47,17 @@ public class CharacterMotorCS : MonoBehaviour
 			this.movingPlatform.lastMatrix = this.movingPlatform.hitPlatform.localToWorldMatrix;
 			this.movingPlatform.newPlatform = true;
 		}
-		Vector3 vector5 = new Vector3(vector.x, 0f, vector.z);
+		Vector3 vector4 = new Vector3(vector.x, 0f, vector.z);
 		this.movement.velocity = (this.tr.position - position) / Time.deltaTime;
-		Vector3 lhs2 = new Vector3(this.movement.velocity.x, 0f, this.movement.velocity.z);
-		if (vector5 == Vector3.zero)
+		Vector3 lhs = new Vector3(this.movement.velocity.x, 0f, this.movement.velocity.z);
+		if (vector4 == Vector3.zero)
 		{
 			this.movement.velocity = new Vector3(0f, this.movement.velocity.y, 0f);
 		}
 		else
 		{
-			float value = Vector3.Dot(lhs2, vector5) / vector5.sqrMagnitude;
-			this.movement.velocity = vector5 * Mathf.Clamp01(value) + this.movement.velocity.y * Vector3.up;
+			float value = Vector3.Dot(lhs, vector4) / vector4.sqrMagnitude;
+			this.movement.velocity = vector4 * Mathf.Clamp01(value) + this.movement.velocity.y * Vector3.up;
 		}
 		if (this.movement.velocity.y < vector.y - 0.001f)
 		{
@@ -138,34 +134,33 @@ public class CharacterMotorCS : MonoBehaviour
 		{
 			this.inputMoveDirection = Vector3.zero;
 		}
-		Vector3 vector2;
+		Vector3 vector;
 		if (this.grounded && this.TooSteep())
 		{
-			Vector3 vector = new Vector3(this.groundNormal.x, 0f, this.groundNormal.z);
-			vector2 = vector.normalized;
-			Vector3 vector3 = Vector3.Project(this.inputMoveDirection, vector2);
-			vector2 = vector2 + vector3 * this.sliding.speedControl + (this.inputMoveDirection - vector3) * this.sliding.sidewaysControl;
-			vector2 *= this.sliding.slidingSpeed;
+			vector = new Vector3(this.groundNormal.x, 0f, this.groundNormal.z).normalized;
+			Vector3 vector2 = Vector3.Project(this.inputMoveDirection, vector);
+			vector = vector + vector2 * this.sliding.speedControl + (this.inputMoveDirection - vector2) * this.sliding.sidewaysControl;
+			vector *= this.sliding.slidingSpeed;
 		}
 		else
 		{
-			vector2 = this.GetDesiredHorizontalVelocity();
+			vector = this.GetDesiredHorizontalVelocity();
 		}
 		if (this.movingPlatform.enabled && this.movingPlatform.movementTransfer == CharacterMotorCS.MovementTransferOnJump.PermaTransfer)
 		{
-			vector2 += this.movement.frameVelocity;
-			vector2.y = 0f;
+			vector += this.movement.frameVelocity;
+			vector.y = 0f;
 		}
 		if (this.grounded)
 		{
-			vector2 = this.AdjustGroundVelocityToNormal(vector2, this.groundNormal);
+			vector = this.AdjustGroundVelocityToNormal(vector, this.groundNormal);
 		}
 		else
 		{
 			velocity.y = 0f;
 		}
 		float num = this.GetMaxAcceleration(this.grounded) * Time.deltaTime;
-		Vector3 b = vector2 - velocity;
+		Vector3 b = vector - velocity;
 		if (b.sqrMagnitude > num * num)
 		{
 			b = b.normalized * num;
@@ -276,8 +271,7 @@ public class CharacterMotorCS : MonoBehaviour
 
 	private Vector3 AdjustGroundVelocityToNormal(Vector3 hVelocity, Vector3 groundNormal)
 	{
-		Vector3 lhs = Vector3.Cross(Vector3.up, hVelocity);
-		return Vector3.Cross(lhs, groundNormal).normalized * hVelocity.magnitude;
+		return Vector3.Cross(Vector3.Cross(Vector3.up, hVelocity), groundNormal).normalized * hVelocity.magnitude;
 	}
 
 	private bool IsGroundedTest()
@@ -311,7 +305,7 @@ public class CharacterMotorCS : MonoBehaviour
 
 	private bool IsTouchingCeiling()
 	{
-		return (this.movement.collisionFlags & CollisionFlags.Above) != CollisionFlags.None;
+		return (this.movement.collisionFlags & CollisionFlags.Above) > CollisionFlags.None;
 	}
 
 	private bool IsGrounded()
@@ -340,11 +334,9 @@ public class CharacterMotorCS : MonoBehaviour
 		{
 			return 0f;
 		}
-		float num = ((desiredMovementDirection.z <= 0f) ? this.movement.maxBackwardsSpeed : this.movement.maxForwardSpeed) / this.movement.maxSidewaysSpeed;
-		Vector3 vector = new Vector3(desiredMovementDirection.x, 0f, desiredMovementDirection.z / num);
-		Vector3 normalized = vector.normalized;
-		Vector3 vector2 = new Vector3(normalized.x, 0f, normalized.z * num);
-		return vector2.magnitude * this.movement.maxSidewaysSpeed;
+		float num = ((desiredMovementDirection.z > 0f) ? this.movement.maxForwardSpeed : this.movement.maxBackwardsSpeed) / this.movement.maxSidewaysSpeed;
+		Vector3 normalized = new Vector3(desiredMovementDirection.x, 0f, desiredMovementDirection.z / num).normalized;
+		return new Vector3(normalized.x, 0f, normalized.z * num).magnitude * this.movement.maxSidewaysSpeed;
 	}
 
 	private void SetVelocity(Vector3 velocity)

@@ -5,8 +5,8 @@ using UnityEngine.Serialization;
 
 namespace RootMotion.FinalIK
 {
-	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction System")]
 	[HelpURL("https://www.youtube.com/watch?v=r5jiZnsDH3M")]
+	[AddComponentMenu("Scripts/RootMotion.FinalIK/Interaction System/Interaction System")]
 	public class InteractionSystem : MonoBehaviour
 	{
 		[ContextMenu("TUTORIAL VIDEO (PART 1: BASICS)")]
@@ -559,9 +559,10 @@ namespace RootMotion.FinalIK
 			this.OnInteractionPause = (InteractionSystem.InteractionDelegate)Delegate.Combine(this.OnInteractionPause, new InteractionSystem.InteractionDelegate(this.InteractionPause));
 			this.OnInteractionResume = (InteractionSystem.InteractionDelegate)Delegate.Combine(this.OnInteractionResume, new InteractionSystem.InteractionDelegate(this.InteractionResume));
 			this.OnInteractionStop = (InteractionSystem.InteractionDelegate)Delegate.Combine(this.OnInteractionStop, new InteractionSystem.InteractionDelegate(this.InteractionStop));
-			foreach (InteractionEffector interactionEffector in this.interactionEffectors)
+			InteractionEffector[] array = this.interactionEffectors;
+			for (int i = 0; i < array.Length; i++)
 			{
-				interactionEffector.Initiate(this);
+				array[i].Initiate(this);
 			}
 			this.triggersInRange = new List<InteractionTrigger>();
 			this.c = base.GetComponent<Collider>();
@@ -703,8 +704,7 @@ namespace RootMotion.FinalIK
 			{
 				if (this.characterCollider.GetComponent<TriggerEventBroadcaster>() == null)
 				{
-					TriggerEventBroadcaster triggerEventBroadcaster = this.characterCollider.gameObject.AddComponent<TriggerEventBroadcaster>();
-					triggerEventBroadcaster.target = base.gameObject;
+					this.characterCollider.gameObject.AddComponent<TriggerEventBroadcaster>().target = base.gameObject;
 				}
 				if (this.lastCollider != null && this.lastCollider != this.c && this.lastCollider != this.characterCollider)
 				{
@@ -829,7 +829,7 @@ namespace RootMotion.FinalIK
 		}
 
 		[Tooltip("If not empty, only the targets with the specified tag will be used by this Interaction System.")]
-		public string targetTag = string.Empty;
+		public string targetTag = "";
 
 		[Tooltip("The fade in time of the interaction.")]
 		public float fadeInTime = 0.3f;
@@ -840,13 +840,13 @@ namespace RootMotion.FinalIK
 		[Tooltip("If > 0, lerps all the FBBIK channels used by the Interaction System back to their default or initial values when not in interaction.")]
 		public float resetToDefaultsSpeed = 1f;
 
-		[Tooltip("The collider that registers OnTriggerEnter and OnTriggerExit events with InteractionTriggers.")]
 		[Header("Triggering")]
+		[Tooltip("The collider that registers OnTriggerEnter and OnTriggerExit events with InteractionTriggers.")]
 		[FormerlySerializedAs("collider")]
 		public Collider characterCollider;
 
-		[FormerlySerializedAs("camera")]
 		[Tooltip("Will be used by Interaction Triggers that need the camera's position. Assign the first person view character camera.")]
+		[FormerlySerializedAs("camera")]
 		public Transform FPSCamera;
 
 		[Tooltip("The layers that will be raycasted from the camera (along camera.forward). All InteractionTrigger look at target colliders should be included.")]
@@ -873,9 +873,9 @@ namespace RootMotion.FinalIK
 
 		public RaycastHit raycastHit;
 
+		[Space(10f)]
 		[Tooltip("Reference to the FBBIK component.")]
 		[SerializeField]
-		[Space(10f)]
 		private FullBodyBipedIK fullBody;
 
 		[Tooltip("Handles looking at the interactions.")]

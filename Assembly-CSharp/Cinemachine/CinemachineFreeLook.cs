@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Reflection;
 using Cinemachine.Utility;
 using UnityEngine;
@@ -7,10 +6,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[DocumentationSorting(11f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
+	[ExecuteInEditMode]
 	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineFreeLook")]
 	public class CinemachineFreeLook : CinemachineVirtualCameraBase
 	{
 		protected override void OnValidate()
@@ -33,7 +32,11 @@ namespace Cinemachine
 		public CinemachineVirtualCamera GetRig(int i)
 		{
 			this.UpdateRigCache();
-			return (i >= 0 && i <= 2) ? this.m_Rigs[i] : null;
+			if (i >= 0 && i <= 2)
+			{
+				return this.m_Rigs[i];
+			}
+			return null;
 		}
 
 		public static string[] RigNames
@@ -188,8 +191,7 @@ namespace Cinemachine
 				this.m_Rigs[2].transform.position -= b;
 			}
 			base.PreviousStateIsValid = true;
-			bool flag = deltaTime >= 0f || CinemachineCore.Instance.IsLive(this);
-			if (flag)
+			if (deltaTime >= 0f || CinemachineCore.Instance.IsLive(this))
 			{
 				this.m_YAxis.Update(deltaTime);
 			}
@@ -221,25 +223,12 @@ namespace Cinemachine
 			CinemachineVirtualCamera[] array = new CinemachineVirtualCamera[CinemachineFreeLook.RigNames.Length];
 			for (int i = 0; i < CinemachineFreeLook.RigNames.Length; i++)
 			{
-				IEnumerator enumerator = base.transform.GetEnumerator();
-				try
+				foreach (object obj in base.transform)
 				{
-					while (enumerator.MoveNext())
+					Transform transform = (Transform)obj;
+					if (transform.gameObject.name == CinemachineFreeLook.RigNames[i])
 					{
-						object obj = enumerator.Current;
-						Transform transform = (Transform)obj;
-						if (transform.gameObject.name == CinemachineFreeLook.RigNames[i])
-						{
-							array[i] = transform.GetComponent<CinemachineVirtualCamera>();
-						}
-					}
-				}
-				finally
-				{
-					IDisposable disposable;
-					if ((disposable = (enumerator as IDisposable)) != null)
-					{
-						disposable.Dispose();
+						array[i] = transform.GetComponent<CinemachineVirtualCamera>();
 					}
 				}
 			}
@@ -351,26 +340,26 @@ namespace Cinemachine
 			{
 				CinemachineVirtualCameraBase cinemachineVirtualCameraBase = cinemachineVirtualCamera;
 				string[] excludedPropertiesInInspector;
-				if (this.m_CommonLens)
+				if (!this.m_CommonLens)
 				{
-					string[] array = new string[6];
+					string[] array = new string[5];
 					array[0] = "m_Script";
 					array[1] = "Header";
 					array[2] = "Extensions";
 					array[3] = "m_Priority";
-					array[4] = "m_Follow";
 					excludedPropertiesInInspector = array;
-					array[5] = "m_Lens";
+					array[4] = "m_Follow";
 				}
 				else
 				{
-					string[] array2 = new string[5];
+					string[] array2 = new string[6];
 					array2[0] = "m_Script";
 					array2[1] = "Header";
 					array2[2] = "Extensions";
 					array2[3] = "m_Priority";
-					excludedPropertiesInInspector = array2;
 					array2[4] = "m_Follow";
+					excludedPropertiesInInspector = array2;
+					array2[5] = "m_Lens";
 				}
 				cinemachineVirtualCameraBase.m_ExcludedPropertiesInInspector = excludedPropertiesInInspector;
 				cinemachineVirtualCamera.m_LockStageInInspector = new CinemachineCore.Stage[1];
@@ -386,47 +375,34 @@ namespace Cinemachine
 			this.mOrbitals = new CinemachineOrbitalTransposer[rigNames.Length];
 			this.m_Rigs = new CinemachineVirtualCamera[rigNames.Length];
 			int num = 0;
-			IEnumerator enumerator = base.transform.GetEnumerator();
-			try
+			foreach (object obj in base.transform)
 			{
-				while (enumerator.MoveNext())
+				Transform transform = (Transform)obj;
+				CinemachineVirtualCamera component = transform.GetComponent<CinemachineVirtualCamera>();
+				if (component != null)
 				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					CinemachineVirtualCamera component = transform.GetComponent<CinemachineVirtualCamera>();
-					if (component != null)
+					GameObject gameObject = transform.gameObject;
+					for (int i = 0; i < rigNames.Length; i++)
 					{
-						GameObject gameObject = transform.gameObject;
-						for (int i = 0; i < rigNames.Length; i++)
+						if (this.mOrbitals[i] == null && gameObject.name == rigNames[i])
 						{
-							if (this.mOrbitals[i] == null && gameObject.name == rigNames[i])
+							this.mOrbitals[i] = component.GetCinemachineComponent<CinemachineOrbitalTransposer>();
+							if (this.mOrbitals[i] == null && forceOrbital)
 							{
-								this.mOrbitals[i] = component.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-								if (this.mOrbitals[i] == null && forceOrbital)
+								this.mOrbitals[i] = component.AddCinemachineComponent<CinemachineOrbitalTransposer>();
+							}
+							if (this.mOrbitals[i] != null)
+							{
+								this.mOrbitals[i].m_HeadingIsSlave = true;
+								if (i == 0)
 								{
-									this.mOrbitals[i] = component.AddCinemachineComponent<CinemachineOrbitalTransposer>();
+									this.mOrbitals[i].HeadingUpdater = ((CinemachineOrbitalTransposer orbital, float deltaTime, Vector3 up) => orbital.UpdateHeading(deltaTime, up, ref this.m_XAxis));
 								}
-								if (this.mOrbitals[i] != null)
-								{
-									this.mOrbitals[i].m_HeadingIsSlave = true;
-									if (i == 0)
-									{
-										this.mOrbitals[i].HeadingUpdater = ((CinemachineOrbitalTransposer orbital, float deltaTime, Vector3 up) => orbital.UpdateHeading(deltaTime, up, ref this.m_XAxis));
-									}
-									this.m_Rigs[i] = component;
-									num++;
-								}
+								this.m_Rigs[i] = component;
+								num++;
 							}
 						}
 					}
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
 				}
 			}
 			return num;
@@ -508,7 +484,7 @@ namespace Cinemachine
 			@default.RawOrientation = base.transform.rotation;
 			@default.ReferenceUp = worldUp;
 			CinemachineBrain cinemachineBrain = CinemachineCore.Instance.FindPotentialTargetBrain(this);
-			this.m_Lens.Aspect = ((!(cinemachineBrain != null)) ? 1f : cinemachineBrain.OutputCamera.aspect);
+			this.m_Lens.Aspect = ((cinemachineBrain != null) ? cinemachineBrain.OutputCamera.aspect : 1f);
 			this.m_Lens.Orthographic = (cinemachineBrain != null && cinemachineBrain.OutputCamera.orthographic);
 			@default.Lens = this.m_Lens;
 			return @default;
@@ -560,20 +536,20 @@ namespace Cinemachine
 			}
 		}
 
-		[NoSaveDuringPlay]
 		[Tooltip("Object for the camera children to look at (the aim target).")]
+		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
-		[NoSaveDuringPlay]
 		[Tooltip("Object for the camera children wants to move with (the body target).")]
+		[NoSaveDuringPlay]
 		public Transform m_Follow;
 
 		[Tooltip("If enabled, this lens setting will apply to all three child rigs, otherwise the child rig lens settings will be used")]
 		[FormerlySerializedAs("m_UseCommonLensSetting")]
 		public bool m_CommonLens = true;
 
-		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active")]
 		[FormerlySerializedAs("m_LensAttributes")]
+		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active")]
 		[LensSettingsProperty]
 		public LensSettings m_Lens = LensSettings.Default;
 
@@ -594,9 +570,9 @@ namespace Cinemachine
 		[Tooltip("The coordinate space to use when interpreting the offset from the target.  This is also used to set the camera's Up vector, which will be maintained when aiming the camera.")]
 		public CinemachineTransposer.BindingMode m_BindingMode = CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp;
 
-		[FormerlySerializedAs("m_SplineTension")]
 		[Tooltip("Controls how taut is the line that connects the rigs' orbits, which determines final placement on the Y axis")]
 		[Range(0f, 1f)]
+		[FormerlySerializedAs("m_SplineTension")]
 		public float m_SplineCurvature = 0.2f;
 
 		[Tooltip("The radius and height of the three orbiting rigs.")]
@@ -607,9 +583,9 @@ namespace Cinemachine
 			new CinemachineFreeLook.Orbit(0.4f, 1.3f)
 		};
 
-		[FormerlySerializedAs("m_HeadingBias")]
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
+		[FormerlySerializedAs("m_HeadingBias")]
 		private float m_LegacyHeadingBias = float.MaxValue;
 
 		private bool mUseLegacyRigDefinitions;
@@ -618,9 +594,9 @@ namespace Cinemachine
 
 		private CameraState m_State = CameraState.Default;
 
+		[SerializeField]
 		[HideInInspector]
 		[NoSaveDuringPlay]
-		[SerializeField]
 		private CinemachineVirtualCamera[] m_Rigs = new CinemachineVirtualCamera[3];
 
 		private CinemachineOrbitalTransposer[] mOrbitals;

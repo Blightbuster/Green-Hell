@@ -6,9 +6,9 @@ namespace AIs
 {
 	public class HumanAISoundModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
 			this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.AI);
 			this.m_AudioSource.spatialBlend = 1f;
@@ -16,24 +16,19 @@ namespace AIs
 			this.m_AudioSource.minDistance = 2f;
 			this.m_AudioSource.maxDistance = 25f;
 			this.m_AudioSource.spatialize = true;
-			AI.SoundPreset soundPreset = this.m_AI.m_SoundPreset;
-			if (soundPreset != AI.SoundPreset.Tribe0)
+			this.m_AudioSource.priority = 50;
+			this.m_AudioSource.playOnAwake = false;
+			switch (this.m_AI.m_SoundPreset)
 			{
-				if (soundPreset != AI.SoundPreset.Tribe1)
-				{
-					if (soundPreset == AI.SoundPreset.Tribe2)
-					{
-						this.m_Sounds = AIManager.Get().m_Tribe2Sounds;
-					}
-				}
-				else
-				{
-					this.m_Sounds = AIManager.Get().m_Tribe1Sounds;
-				}
-			}
-			else
-			{
+			case AI.SoundPreset.Tribe0:
 				this.m_Sounds = AIManager.Get().m_Tribe0Sounds;
+				break;
+			case AI.SoundPreset.Tribe1:
+				this.m_Sounds = AIManager.Get().m_Tribe1Sounds;
+				break;
+			case AI.SoundPreset.Tribe2:
+				this.m_Sounds = AIManager.Get().m_Tribe2Sounds;
+				break;
 			}
 			this.m_HumanAI = (HumanAI)this.m_AI;
 		}

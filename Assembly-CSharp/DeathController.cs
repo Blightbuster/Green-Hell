@@ -14,7 +14,7 @@ public class DeathController : PlayerController
 	{
 		base.Awake();
 		DeathController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Death;
+		base.m_ControllerType = PlayerControllerType.Death;
 		this.m_ConditionModule = this.m_Player.GetComponent<PlayerConditionModule>();
 		this.m_InjuryModule = this.m_Player.GetComponent<PlayerInjuryModule>();
 	}
@@ -22,18 +22,11 @@ public class DeathController : PlayerController
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		if (this.m_Player.GetComponent<PlayerConditionModule>().IsOxygenCriticalLevel())
-		{
-			this.m_Animator.SetBool(this.m_IsDeadUnderwaterHash, true);
-		}
-		else
-		{
-			this.m_Animator.SetBool(this.m_IsDeadHash, true);
-		}
+		this.m_Animator.SetInteger(this.m_DeathTypeHash, (int)this.m_DeathType);
 		DialogsManager.Get().StopDialog();
 		CutscenesManager.Get().StopCutscene();
 		AIManager.Get().OnPlayerDie();
-		if (this.m_Player.ShouldSwim() && this.m_Player.GetComponent<SwimController>().m_State == SwimState.Dive)
+		if (this.m_DeathType == DeathController.DeathType.UnderWater)
 		{
 			PlayerAudioModule.Get().PlayUnderwaterDeathSound();
 		}
@@ -42,14 +35,16 @@ public class DeathController : PlayerController
 			PlayerAudioModule.Get().PlayDeathSound();
 		}
 		this.SetState(DeathController.DeathState.Dying);
+		this.m_DeathTime = new float?(Time.time);
 	}
 
 	protected override void OnDisable()
 	{
 		base.OnDisable();
-		this.m_Animator.SetBool(this.m_IsDeadHash, false);
-		this.m_Animator.SetBool(this.m_IsDeadUnderwaterHash, false);
+		this.ResetDeathType();
 		this.SetState(DeathController.DeathState.None);
+		this.m_DeathType = DeathController.DeathType.Normal;
+		this.m_DeathTime = null;
 	}
 
 	public bool IsState(DeathController.DeathState state)
@@ -74,45 +69,72 @@ public class DeathController : PlayerController
 			if (ChallengesManager.Get().IsChallengeActive())
 			{
 				ChallengesManager.Get().FailChallenge();
+				return;
 			}
-		}
-		else if (id == AnimEventID.DeathFall)
-		{
-			PlayerAudioModule.Get().PlayBodyFallSound();
 		}
 		else
 		{
+			if (id == AnimEventID.DeathFall)
+			{
+				PlayerAudioModule.Get().PlayBodyFallSound();
+				return;
+			}
 			base.OnAnimEvent(id);
 		}
 	}
 
 	public void StartRespawn()
 	{
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeOut(FadeType.All, new VDelegate(this.Respawn), 1.5f, null);
+		GreenHellGame.GetFadeSystem().FadeOut(FadeType.All, new VDelegate(this.Respawn), 1.5f, null);
 	}
 
 	public void Respawn()
 	{
 		this.m_InjuryModule.ResetInjuries();
 		this.m_ConditionModule.ResetParams();
-		SaveGame.Load();
-		this.m_Animator.SetBool(this.m_IsDeadHash, false);
-		this.m_Animator.SetBool(this.m_IsDeadUnderwaterHash, false);
+		if (ReplTools.IsPlayingAlone())
+		{
+			SaveGame.Load();
+		}
+		else
+		{
+			this.DropInventory();
+			this.SpawnOnLastSavePoint();
+		}
+		this.m_DeathTime = null;
+		this.ResetDeathType();
 		this.Stop();
-		FadeSystem fadeSystem = GreenHellGame.GetFadeSystem();
-		fadeSystem.FadeIn(FadeType.All, null, 1.5f);
+		GreenHellGame.GetFadeSystem().FadeIn(FadeType.All, null, 1.5f);
 	}
+
+	public void ResetDeathType()
+	{
+		this.m_Animator.SetInteger(this.m_DeathTypeHash, 0);
+	}
+
+	private void DropInventory()
+	{
+		InventoryBackpack.Get().DropAllItems();
+	}
+
+	private void SpawnOnLastSavePoint()
+	{
+		DebugUtils.Assert(Player.Get().m_RespawnPosition != Vector3.zero, true);
+		Player.Get().Reposition(Player.Get().m_RespawnPosition, null);
+	}
+
+	[HideInInspector]
+	public DeathController.DeathType m_DeathType = DeathController.DeathType.Normal;
 
 	private PlayerConditionModule m_ConditionModule;
 
 	private PlayerInjuryModule m_InjuryModule;
 
-	private int m_IsDeadHash = Animator.StringToHash("IsDead");
-
-	private int m_IsDeadUnderwaterHash = Animator.StringToHash("IsDeadUnderwater");
+	private int m_DeathTypeHash = Animator.StringToHash("DeathType");
 
 	private DeathController.DeathState m_State;
+
+	private float? m_DeathTime;
 
 	private static DeathController s_Instance;
 
@@ -121,5 +143,22 @@ public class DeathController : PlayerController
 		None,
 		Dying,
 		Death
+	}
+
+	public enum DeathType
+	{
+		Normal = 1,
+		UnderWater,
+		Caiman,
+		Predator,
+		Cut,
+		Fall,
+		Insects,
+		Melee,
+		Poison,
+		Thrust,
+		Infection,
+		Piranha,
+		OnWater
 	}
 }

@@ -40,10 +40,7 @@ namespace Pathfinding
 			if (this.endNode != null && this.endNode != this.startNode)
 			{
 				PathNode pathNode = this.pathHandler.GetPathNode(this.endNode);
-				PathNode pathNode2 = pathNode;
-				bool flag = false;
-				pathNode.flag2 = flag;
-				pathNode2.flag1 = flag;
+				pathNode.flag1 = (pathNode.flag2 = false);
 			}
 			this.endNode = target;
 			this.endPoint = (Vector3)target.position;

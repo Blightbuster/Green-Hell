@@ -1,26 +1,10 @@
 ﻿using System;
+using System.Linq;
 
 public class TokenBool : Token
 {
 	public TokenBool(ScriptParser parser) : base(parser)
 	{
-	}
-
-	public override bool Check()
-	{
-		if (!base.Check())
-		{
-			return false;
-		}
-		int num = this.m_Parser.Position;
-		string text = string.Empty;
-		while (ScriptParser.LETTERS.Contains(this.m_Parser.GetText()[num].ToString()))
-		{
-			text += this.m_Parser.GetText()[num].ToString();
-			num++;
-		}
-		text = text.ToLower();
-		return text == "true" || text == "false";
 	}
 
 	public override bool TryToGet()
@@ -29,11 +13,19 @@ public class TokenBool : Token
 		{
 			return false;
 		}
-		while (ScriptParser.LETTERS.Contains(this.m_Parser.GetText()[this.m_Parser.Position].ToString()))
+		int num = this.m_Parser.Position;
+		string text = string.Empty;
+		while (ScriptParser.LETTERS.Contains(this.m_Parser.GetText()[num]))
 		{
-			this.m_Value += this.m_Parser.GetText()[this.m_Parser.Position];
-			this.m_Parser.Position++;
+			num++;
 		}
-		return true;
+		text = this.m_Parser.GetText().Substring(this.m_Parser.Position, num - this.m_Parser.Position).ToLower();
+		if (text == "true" || text == "false")
+		{
+			this.m_Value = text;
+			this.m_Parser.Position = num;
+			return true;
+		}
+		return false;
 	}
 }

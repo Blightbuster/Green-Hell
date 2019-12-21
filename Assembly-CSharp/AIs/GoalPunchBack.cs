@@ -19,7 +19,7 @@ namespace AIs
 			Direction direction;
 			if (FistFightController.Get().IsActive())
 			{
-				direction = ((!FistFightController.Get().IsLeftPunch()) ? Direction.Left : Direction.Right);
+				direction = (FistFightController.Get().IsLeftPunch() ? Direction.Right : Direction.Left);
 			}
 			else if (WeaponMeleeController.Get().IsActive())
 			{
@@ -33,12 +33,12 @@ namespace AIs
 				}
 				else
 				{
-					direction = ((UnityEngine.Random.Range(0f, 1f) >= 0.5f) ? Direction.Left : Direction.Right);
+					direction = ((UnityEngine.Random.Range(0f, 1f) < 0.5f) ? Direction.Right : Direction.Left);
 				}
 			}
 			else
 			{
-				direction = ((UnityEngine.Random.Range(0f, 1f) >= 0.5f) ? Direction.Left : Direction.Right);
+				direction = ((UnityEngine.Random.Range(0f, 1f) < 0.5f) ? Direction.Right : Direction.Left);
 			}
 			this.m_PunchBack.SetDirection(direction);
 		}

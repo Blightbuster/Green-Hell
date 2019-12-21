@@ -14,8 +14,11 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			float num = this.m_AI.transform.position.Distance(Player.Get().transform.position);
-			if (num > this.m_AI.m_Params.m_AttackRange * 2f)
+			if (!this.m_AI.m_EnemyModule || !this.m_AI.m_EnemyModule.m_Enemy)
+			{
+				return false;
+			}
+			if (this.m_AI.transform.position.Distance(this.m_AI.m_EnemyModule.m_Enemy.transform.position) > this.m_AI.m_Params.m_AttackRange * 2f)
 			{
 				return false;
 			}
@@ -33,8 +36,7 @@ namespace AIs
 			{
 				Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 				Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-				float num = Vector3.Angle(normalized2D, normalized2D2);
-				if (num > 75f)
+				if (Vector3.Angle(normalized2D, normalized2D2) > 75f)
 				{
 					this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, true);
 					base.StartAction(this.m_RotateTo);

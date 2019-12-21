@@ -11,9 +11,8 @@ namespace UnityStandardAssets.SceneUtils
 			{
 				return;
 			}
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 			RaycastHit raycastHit;
-			if (!Physics.Raycast(ray, out raycastHit))
+			if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out raycastHit))
 			{
 				return;
 			}

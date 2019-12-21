@@ -13,6 +13,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 	private void Awake()
 	{
 		FoodProcessor.s_AllFoodProcessors.Add(this);
+		this.m_Firecamp = base.GetComponent<Firecamp>();
 	}
 
 	private void OnDestroy()
@@ -20,14 +21,21 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 		FoodProcessor.s_AllFoodProcessors.Remove(this);
 	}
 
-	protected void Start()
-	{
-		this.m_ItemsManager = ItemsManager.Get();
-		this.m_Firecamp = base.GetComponent<Firecamp>();
-	}
-
 	public void UpdateProcessing()
 	{
+		if (!ItemsManager.Get())
+		{
+			return;
+		}
+		float num = MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+		if (HUDSleeping.Get().GetState() == HUDSleepingState.Progress)
+		{
+			num = SleepController.Get().m_HoursDelta;
+		}
+		else if (ConsciousnessController.Get().IsUnconscious())
+		{
+			num = ConsciousnessController.Get().m_HoursDelta;
+		}
 		foreach (ItemSlot itemSlot in this.m_ActiveSlots)
 		{
 			Food food = (Food)itemSlot.m_Item;
@@ -37,7 +45,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 				{
 					if (food.m_ProcessDuration > 0f)
 					{
-						food.m_ProcessDuration -= MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+						food.m_ProcessDuration -= num;
 					}
 					else
 					{
@@ -50,6 +58,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 					if (!itemSlot.m_Item.enabled)
 					{
 						itemSlot.m_Item.enabled = true;
+						continue;
 					}
 					continue;
 				}
@@ -58,7 +67,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 			{
 				if (food.m_ProcessDuration > 0f)
 				{
-					food.m_ProcessDuration -= MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+					food.m_ProcessDuration -= num;
 				}
 				else
 				{
@@ -71,18 +80,19 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 				if (!itemSlot.m_Item.enabled)
 				{
 					itemSlot.m_Item.enabled = true;
+					continue;
 				}
 				continue;
 			}
 			if (this.m_Type == FoodProcessor.Type.Dryer)
 			{
-				if (!RainManager.Get().IsRain())
+				if (!RainManager.Get().IsRain() || RainManager.Get().IsInRainCutter(base.transform.position))
 				{
-					food.m_ProcessDuration += MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+					food.m_ProcessDuration += num;
 				}
 				else if (food.m_ProcessDuration > 0f)
 				{
-					food.m_ProcessDuration -= MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+					food.m_ProcessDuration -= num;
 				}
 				else
 				{
@@ -91,24 +101,13 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 			}
 			else
 			{
-				food.m_ProcessDuration += MainLevel.Instance.m_TODSky.Cycle.GameTimeDelta;
+				food.m_ProcessDuration += num;
 			}
 			FoodInfo foodInfo = (FoodInfo)itemSlot.m_Item.m_Info;
-			if (itemSlot.m_Item.enabled)
-			{
-				if (this.m_Type != FoodProcessor.Type.Dryer)
-				{
-					itemSlot.m_Item.enabled = !foodInfo.m_CanCook;
-				}
-				else
-				{
-					itemSlot.m_Item.enabled = !foodInfo.m_CanDry;
-				}
-			}
 			if (food.m_ProcessDuration >= this.GetProcessingTime(foodInfo) || this.m_DebugImmediate)
 			{
 				HUDProcess.Get().UnregisterProcess(itemSlot.m_Item);
-				Item item = this.m_ItemsManager.CreateItem(this.GetResultItemID(foodInfo), true, itemSlot.m_Item.transform.position, itemSlot.m_Item.transform.rotation);
+				Item item = ItemsManager.Get().CreateItem(this.GetResultItemID(foodInfo), true, itemSlot.m_Item.transform.position, itemSlot.m_Item.transform.rotation);
 				itemSlot.ReplaceItem(item);
 				if (!this.m_ProcessedSlots.Contains(itemSlot))
 				{
@@ -118,6 +117,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 				if (this.m_Type == FoodProcessor.Type.Fire && !foodInfo.m_CanCook)
 				{
 					food.m_Burned = true;
+					break;
 				}
 				break;
 			}
@@ -126,42 +126,44 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 
 	private ItemID GetResultItemID(FoodInfo info)
 	{
-		FoodProcessor.Type type = this.m_Type;
-		if (type == FoodProcessor.Type.Dryer)
+		switch (this.m_Type)
 		{
-			return info.m_DryingItemID;
-		}
-		if (type == FoodProcessor.Type.Smoker)
-		{
+		case FoodProcessor.Type.Smoker:
 			return info.m_SmokingItemID;
-		}
-		if (type != FoodProcessor.Type.Fire)
-		{
+		case FoodProcessor.Type.Dryer:
+			return info.m_DryingItemID;
+		case FoodProcessor.Type.Fire:
+			if (info.m_CanCook)
+			{
+				return info.m_CookingItemID;
+			}
+			if (!GreenHellGame.ROADSHOW_DEMO)
+			{
+				return info.m_BurningItemID;
+			}
+			return ItemID.None;
+		default:
 			return ItemID.None;
 		}
-		return (!info.m_CanCook) ? ((!GreenHellGame.ROADSHOW_DEMO) ? info.m_BurningItemID : ItemID.None) : info.m_CookingItemID;
 	}
 
 	private float GetProcessingTime(FoodInfo info)
 	{
-		FoodProcessor.Type type = this.m_Type;
-		if (type == FoodProcessor.Type.Dryer)
+		switch (this.m_Type)
 		{
-			return info.m_DryingLength;
-		}
-		if (type == FoodProcessor.Type.Smoker)
-		{
+		case FoodProcessor.Type.Smoker:
 			return info.m_SmokingLength;
-		}
-		if (type != FoodProcessor.Type.Fire)
-		{
+		case FoodProcessor.Type.Dryer:
+			return info.m_DryingLength;
+		case FoodProcessor.Type.Fire:
+			if (info.m_CanCook)
+			{
+				return info.m_CookingLength * Skill.Get<CookingSkill>().GetCookingDurationMul();
+			}
+			return info.m_BurningLength * Skill.Get<CookingSkill>().GetBurningDurationMul();
+		default:
 			return 0f;
 		}
-		if (info.m_CanCook)
-		{
-			return info.m_CookingLength * Skill.Get<CookingSkill>().GetCookingDurationMul();
-		}
-		return info.m_BurningLength * Skill.Get<CookingSkill>().GetBurningDurationMul();
 	}
 
 	public virtual bool CanInsertItem(Item item)
@@ -171,16 +173,17 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 			return false;
 		}
 		FoodInfo foodInfo = (FoodInfo)item.m_Info;
-		FoodProcessor.Type type = this.m_Type;
-		if (type == FoodProcessor.Type.Dryer)
+		switch (this.m_Type)
 		{
+		case FoodProcessor.Type.Smoker:
+			return foodInfo.m_CanSmoke;
+		case FoodProcessor.Type.Dryer:
 			return foodInfo.m_CanDry;
+		case FoodProcessor.Type.Fire:
+			return foodInfo.m_CanCook;
+		default:
+			return false;
 		}
-		if (type != FoodProcessor.Type.Smoker)
-		{
-			return type == FoodProcessor.Type.Fire && foodInfo.m_CanCook;
-		}
-		return foodInfo.m_CanSmoke;
 	}
 
 	public virtual void OnInsertItem(ItemSlot slot)
@@ -206,7 +209,7 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 		this.m_ActiveSlots.Add(slot);
 		if (foodInfo.m_CanCook || foodInfo.m_CanDry)
 		{
-			HUDProcess.Get().RegisterProcess(slot.m_Item, slot.m_Item.GetIconName(), this, false);
+			HUDProcess.Get().RegisterProcess(slot.m_Item, slot.m_Item.GetIconName(), this, true);
 		}
 	}
 
@@ -216,10 +219,9 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 		{
 			this.m_ActiveSlots.Remove(slot);
 		}
-		if ((this.m_Type == FoodProcessor.Type.Fire || this.m_Type == FoodProcessor.Type.Smoker) && this.m_ProcessedSlots.Contains(slot) && slot.m_Item)
+		if (this.m_ProcessedSlots.Contains(slot) && slot.m_Item)
 		{
-			Food food = (Food)slot.m_Item;
-			if (!food.m_Burned)
+			if (slot.m_Item.m_Info.IsFood() && !((Food)slot.m_Item).m_Burned)
 			{
 				Skill.Get<CookingSkill>().OnSkillAction();
 			}
@@ -232,11 +234,12 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 		}
 	}
 
-	public float GetProcessProgress(Item item)
+	public float GetProcessProgress(Trigger trigger)
 	{
+		Item y = (Item)trigger;
 		foreach (ItemSlot itemSlot in this.m_ActiveSlots)
 		{
-			if (itemSlot.m_Item == item)
+			if (itemSlot.m_Item == y)
 			{
 				Food food = (Food)itemSlot.m_Item;
 				FoodInfo info = (FoodInfo)itemSlot.m_Item.m_Info;
@@ -244,6 +247,32 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 			}
 		}
 		return 0f;
+	}
+
+	public void OnDestroyConstruction()
+	{
+		while (this.m_ActiveSlots.Count > 0)
+		{
+			if (this.m_ActiveSlots[0].m_Item)
+			{
+				this.m_ActiveSlots[0].RemoveItem();
+			}
+			else
+			{
+				this.m_ActiveSlots.RemoveAt(0);
+			}
+		}
+		while (this.m_ProcessedSlots.Count > 0)
+		{
+			if (this.m_ProcessedSlots[0].m_Item)
+			{
+				this.m_ProcessedSlots[0].RemoveItem();
+			}
+			else
+			{
+				this.m_ProcessedSlots.RemoveAt(0);
+			}
+		}
 	}
 
 	public FoodProcessor.Type m_Type;
@@ -256,8 +285,6 @@ public class FoodProcessor : MonoBehaviour, IItemSlotParent, IFirecampAttach, IP
 	public Firecamp m_ConnectedFirecamp;
 
 	private Firecamp m_Firecamp;
-
-	private ItemsManager m_ItemsManager;
 
 	public bool m_DebugImmediate;
 

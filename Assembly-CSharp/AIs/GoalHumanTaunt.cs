@@ -15,30 +15,26 @@ namespace AIs
 		protected override void Prepare()
 		{
 			base.Prepare();
-			Type type = this.m_AI.m_GoalsModule.m_CurrentAction.GetType();
-			if (type == typeof(CrouchIdle))
+			if (this.m_AI.m_GoalsModule.m_CurrentAction.GetType() == typeof(CrouchIdle))
 			{
 				base.StartAction(this.m_StopCrouch);
+				return;
 			}
-			else
-			{
-				this.SetupAction();
-			}
+			this.SetupAction();
 		}
 
 		private void SetupAction()
 		{
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
-			float num = Vector3.Angle(normalized2D, this.m_AI.transform.forward.GetNormalized2D());
-			if (num >= 10f)
-			{
-				HumanRotateTo humanRotateTo = base.CreateAction(typeof(HumanRotateTo)) as HumanRotateTo;
-				humanRotateTo.SetupParams(Player.Get().transform.position, 10f);
-				base.StartAction(humanRotateTo);
-			}
-			else
+			if (!this.m_AI.m_EnemyModule.m_Enemy)
 			{
 				base.StartAction(this.m_Taunt);
+				return;
+			}
+			if (Vector3.Angle((this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) >= 10f)
+			{
+				HumanRotateTo humanRotateTo = base.CreateAction(typeof(HumanRotateTo)) as HumanRotateTo;
+				humanRotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.transform.position, 10f);
+				base.StartAction(humanRotateTo);
 			}
 		}
 

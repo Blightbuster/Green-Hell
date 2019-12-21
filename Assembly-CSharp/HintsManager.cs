@@ -13,6 +13,8 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 	{
 		HintsManager.s_Instance = this;
 		this.ParseScript();
+		Sprite[] collection = Resources.LoadAll<Sprite>("HUD/Icon_Pad");
+		this.m_Icons = new List<Sprite>(collection);
 	}
 
 	private void Start()
@@ -23,6 +25,7 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 
 	private void ParseScript()
 	{
+		this.m_Hints.Clear();
 		ScriptParser scriptParser = new ScriptParser();
 		scriptParser.Parse("Hints/Hints", true);
 		for (int i = 0; i < scriptParser.GetKeysCount(); i++)
@@ -39,7 +42,9 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 					if (key2.GetName() == "Text")
 					{
 						hint.m_Text = key2.GetVariable(0).SValue;
-						hint.m_LocalizedText = GreenHellGame.Instance.GetLocalization().Get(hint.m_Text);
+						hint.m_LocalizedText = GreenHellGame.Instance.GetLocalization().Get(hint.m_Text, true);
+						string key3 = GreenHellGame.Instance.GetLocalization().Contains(hint.m_Text + "Pad") ? (hint.m_Text + "Pad") : hint.m_Text;
+						hint.m_LocalizedPadText = GreenHellGame.Instance.GetLocalization().Get(key3, false);
 					}
 					else if (key2.GetName() == "Duration")
 					{
@@ -49,6 +54,11 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 				this.m_Hints.Add(hint);
 			}
 		}
+	}
+
+	public void ReloadScript()
+	{
+		this.ParseScript();
 	}
 
 	public Hint FindHint(string hint_name)
@@ -97,6 +107,16 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 		this.m_HUDHint.HideHint(hint);
 	}
 
+	public void ShowAllHints()
+	{
+		for (int i = 0; i < this.m_Hints.Count; i++)
+		{
+			Hint hint = this.m_Hints[i];
+			hint.m_Duration = 5f;
+			this.m_HUDHint.ShowHint(hint);
+		}
+	}
+
 	public void HideAllHints()
 	{
 		for (int i = 0; i < this.m_Hints.Count; i++)
@@ -115,6 +135,7 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 
 	public void Load()
 	{
+		this.HideAllHints();
 		for (int i = 0; i < this.m_Hints.Count; i++)
 		{
 			int showedNTimes = 0;
@@ -126,6 +147,8 @@ public class HintsManager : MonoBehaviour, ISaveLoad
 	private List<Hint> m_Hints = new List<Hint>();
 
 	private HUDHint m_HUDHint;
+
+	private List<Sprite> m_Icons;
 
 	private static HintsManager s_Instance;
 }

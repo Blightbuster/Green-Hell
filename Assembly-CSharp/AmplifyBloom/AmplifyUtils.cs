@@ -119,23 +119,19 @@ namespace AmplifyBloom
 
 		public static void DebugLog(string value, LogType type)
 		{
-			if (type != LogType.Normal)
+			switch (type)
 			{
-				if (type != LogType.Warning)
-				{
-					if (type == LogType.Error)
-					{
-						Debug.LogError(AmplifyUtils.DebugStr + value);
-					}
-				}
-				else
-				{
-					Debug.LogWarning(AmplifyUtils.DebugStr + value);
-				}
-			}
-			else
-			{
+			case LogType.Normal:
 				Debug.Log(AmplifyUtils.DebugStr + value);
+				return;
+			case LogType.Warning:
+				Debug.LogWarning(AmplifyUtils.DebugStr + value);
+				return;
+			case LogType.Error:
+				Debug.LogError(AmplifyUtils.DebugStr + value);
+				return;
+			default:
+				return;
 			}
 		}
 
@@ -174,8 +170,9 @@ namespace AmplifyBloom
 				if (state && !mat.IsKeywordEnabled(keyword))
 				{
 					mat.EnableKeyword(keyword);
+					return;
 				}
-				else if (!state && mat.IsKeywordEnabled(keyword))
+				if (!state && mat.IsKeywordEnabled(keyword))
 				{
 					mat.DisableKeyword(keyword);
 				}

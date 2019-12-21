@@ -64,11 +64,9 @@ public class PhysicCullingSystem : MonoBehaviour
 		if (flag)
 		{
 			this.StopMovement();
+			return;
 		}
-		else
-		{
-			this.StartMovement();
-		}
+		this.StartMovement();
 	}
 
 	private void OnDisable()

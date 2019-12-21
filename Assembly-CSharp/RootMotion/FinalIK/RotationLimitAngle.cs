@@ -33,8 +33,7 @@ namespace RootMotion.FinalIK
 
 		protected override Quaternion LimitRotation(Quaternion rotation)
 		{
-			Quaternion rotation2 = this.LimitSwing(rotation);
-			return RotationLimit.LimitTwist(rotation2, this.axis, base.secondaryAxis, this.twistLimit);
+			return RotationLimit.LimitTwist(this.LimitSwing(rotation), this.axis, base.secondaryAxis, this.twistLimit);
 		}
 
 		private Quaternion LimitSwing(Quaternion rotation)
@@ -54,8 +53,7 @@ namespace RootMotion.FinalIK
 			Vector3 vector = rotation * this.axis;
 			Quaternion to = Quaternion.FromToRotation(this.axis, vector);
 			Quaternion rotation2 = Quaternion.RotateTowards(Quaternion.identity, to, this.limit);
-			Quaternion lhs = Quaternion.FromToRotation(vector, rotation2 * this.axis);
-			return lhs * rotation;
+			return Quaternion.FromToRotation(vector, rotation2 * this.axis) * rotation;
 		}
 
 		[Range(0f, 180f)]

@@ -7,7 +7,7 @@ namespace Pathfinding.Util
 	{
 		public static List<T> Claim()
 		{
-			object obj = ListPool<T>.pool;
+			List<List<T>> obj = ListPool<T>.pool;
 			List<T> result;
 			lock (obj)
 			{
@@ -50,7 +50,7 @@ namespace Pathfinding.Util
 
 		public static List<T> Claim(int capacity)
 		{
-			object obj = ListPool<T>.pool;
+			List<List<T>> obj = ListPool<T>.pool;
 			List<T> result;
 			lock (obj)
 			{
@@ -83,7 +83,7 @@ namespace Pathfinding.Util
 
 		public static void Warmup(int count, int size)
 		{
-			object obj = ListPool<T>.pool;
+			List<List<T>> obj = ListPool<T>.pool;
 			lock (obj)
 			{
 				List<T>[] array = new List<T>[count];
@@ -108,7 +108,7 @@ namespace Pathfinding.Util
 			{
 				list.Clear();
 			}
-			object obj = ListPool<T>.pool;
+			List<List<T>> obj = ListPool<T>.pool;
 			lock (obj)
 			{
 				if (list.Capacity > 5000)
@@ -128,7 +128,7 @@ namespace Pathfinding.Util
 
 		public static void Clear()
 		{
-			object obj = ListPool<T>.pool;
+			List<List<T>> obj = ListPool<T>.pool;
 			lock (obj)
 			{
 				ListPool<T>.pool.Clear();

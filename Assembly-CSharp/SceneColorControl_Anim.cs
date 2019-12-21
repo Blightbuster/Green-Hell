@@ -46,12 +46,10 @@ public class SceneColorControl_Anim : MonoBehaviour
 		if (this.customFogColor)
 		{
 			RenderSettings.fogColor = this.fogColor;
+			return;
 		}
-		else
-		{
-			this.fogColor = (color + this.horizonColor + this.groundColor) * 0.33f * this.skyIntensity;
-			RenderSettings.fogColor = this.fogColor;
-		}
+		this.fogColor = (color + this.horizonColor + this.groundColor) * 0.33f * this.skyIntensity;
+		RenderSettings.fogColor = this.fogColor;
 	}
 
 	public Material skyMaterial;

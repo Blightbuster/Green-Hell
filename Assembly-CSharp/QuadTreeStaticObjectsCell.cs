@@ -24,9 +24,9 @@ public class QuadTreeStaticObjectsCell
 
 	public int m_Y;
 
-	public Vector2 m_Pos = default(Vector2);
+	public Vector2 m_Pos;
 
-	public Vector2 m_Size = default(Vector2);
+	public Vector2 m_Size;
 
 	public List<StaticObjectClass> m_Objects = new List<StaticObjectClass>();
 }

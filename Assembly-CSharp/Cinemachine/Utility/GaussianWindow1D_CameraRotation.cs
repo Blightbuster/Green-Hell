@@ -15,16 +15,16 @@ namespace Cinemachine.Utility
 			Vector2 vector = this.mData[this.mCurrentPos];
 			for (int i = 0; i < base.KernelSize; i++)
 			{
-				Vector2 a2 = this.mData[windowPos] - vector;
-				if (a2.y > 180f)
+				Vector2 vector2 = this.mData[windowPos] - vector;
+				if (vector2.y > 180f)
 				{
-					a2.y -= 360f;
+					vector2.y -= 360f;
 				}
-				if (a2.y < -180f)
+				if (vector2.y < -180f)
 				{
-					a2.y += 360f;
+					vector2.y += 360f;
 				}
-				a += a2 * this.mKernel[i];
+				a += vector2 * this.mKernel[i];
 				if (++windowPos == base.KernelSize)
 				{
 					windowPos = 0;

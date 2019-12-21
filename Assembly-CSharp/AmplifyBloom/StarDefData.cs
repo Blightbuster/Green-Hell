@@ -10,6 +10,11 @@ namespace AmplifyBloom
 		{
 		}
 
+		public void Destroy()
+		{
+			this.m_starLinesArr = null;
+		}
+
 		public StarDefData(StarLibType starType, string starName, int starLinesCount, int passCount, float sampleLength, float attenuation, float inclination, float rotation, float longAttenuation = 0f, float customIncrement = -1f)
 		{
 			this.m_starType = starType;
@@ -25,11 +30,6 @@ namespace AmplifyBloom
 			this.CalculateStarData();
 		}
 
-		public void Destroy()
-		{
-			this.m_starLinesArr = null;
-		}
-
 		public void CalculateStarData()
 		{
 			if (this.m_starlinesCount == 0)
@@ -37,7 +37,7 @@ namespace AmplifyBloom
 				return;
 			}
 			this.m_starLinesArr = new StarLineData[this.m_starlinesCount];
-			float num = (this.m_customIncrement <= 0f) ? (180f / (float)this.m_starlinesCount) : this.m_customIncrement;
+			float num = (this.m_customIncrement > 0f) ? this.m_customIncrement : (180f / (float)this.m_starlinesCount);
 			num *= 0.0174532924f;
 			for (int i = 0; i < this.m_starlinesCount; i++)
 			{
@@ -46,7 +46,7 @@ namespace AmplifyBloom
 				this.m_starLinesArr[i].SampleLength = this.m_sampleLength;
 				if (this.m_longAttenuation > 0f)
 				{
-					this.m_starLinesArr[i].Attenuation = ((i % 2 != 0) ? this.m_attenuation : this.m_longAttenuation);
+					this.m_starLinesArr[i].Attenuation = ((i % 2 == 0) ? this.m_longAttenuation : this.m_attenuation);
 				}
 				else
 				{

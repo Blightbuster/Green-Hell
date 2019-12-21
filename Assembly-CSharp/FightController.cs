@@ -6,6 +6,12 @@ using UnityEngine;
 
 public class FightController : PlayerController
 {
+	protected override void Start()
+	{
+		base.Start();
+		PlayerConditionModule.Get().OnStaminaDecreasedEvent += this.OnStaminaDecreased;
+	}
+
 	protected override void OnEnable()
 	{
 		base.OnEnable();
@@ -37,26 +43,35 @@ public class FightController : PlayerController
 
 	private void UpdateBlock()
 	{
-		if (this.m_IsBlock != InputsManager.Get().IsActionActive(InputsManager.InputAction.Block))
+		bool flag = InputsManager.Get().IsActionActive(InputsManager.InputAction.Block);
+		if (this.m_IsBlock != flag && !Player.Get().m_Animator.GetBool(Player.Get().m_CleanUpHash))
 		{
 			this.SetBlock(!this.m_IsBlock);
 		}
+		if (!flag)
+		{
+			this.m_WasBlockBroken = false;
+		}
 		if (this.m_IsBlock)
 		{
+			this.m_LastBlockTime = Time.time;
 			PlayerConditionModule.Get().DecreaseStamina(PlayerConditionModule.Get().GetStaminaDecrease(StaminaDecreaseReason.Block) * Time.deltaTime);
-			if (PlayerConditionModule.Get().GetStamina() == 0f)
+			if (SwimController.Get().IsActive())
 			{
 				this.SetBlock(false);
+				return;
 			}
-			else if (SwimController.Get().IsActive())
+			if (Inventory3DManager.Get().gameObject.activeSelf)
 			{
 				this.SetBlock(false);
+				return;
 			}
-			else if (Inventory3DManager.Get().gameObject.activeSelf)
+			if (HUDReadableItem.Get().enabled)
 			{
 				this.SetBlock(false);
+				return;
 			}
-			else if (HUDReadableItem.Get().enabled)
+			if (Player.Get().m_Animator.GetBool(Player.Get().m_CleanUpHash))
 			{
 				this.SetBlock(false);
 			}
@@ -70,7 +85,7 @@ public class FightController : PlayerController
 
 	protected virtual bool CanBlock()
 	{
-		return !PlayerConditionModule.Get().IsStaminaCriticalLevel() && !SwimController.Get().IsActive() && !Inventory3DManager.Get().gameObject.activeSelf && !WatchController.Get().IsActive() && !MapController.Get().IsActive() && !TriggerController.Get().IsGrabInProgress() && !Player.Get().m_Aim;
+		return !FightController.s_BlockFight && !this.m_WasBlockBroken && !SwimController.Get().IsActive() && !Inventory3DManager.Get().gameObject.activeSelf && !WatchController.Get().IsActive() && !MapController.Get().IsActive() && !TriggerController.Get().IsGrabInProgress() && !Player.Get().m_Aim && !CraftingController.Get().IsActive() && !Player.Get().m_Animator.GetBool(TriggerController.Get().m_BDrinkWater) && this.m_LastBlockTime <= Time.time - (PlayerConditionModule.Get().IsLowStamina() ? 1f : 0.5f) && !ScenarioManager.Get().IsDream() && !ScenarioManager.Get().IsBoolVariableTrue("PlayerMechGameEnding");
 	}
 
 	public virtual void SetBlock(bool set)
@@ -86,6 +101,7 @@ public class FightController : PlayerController
 		}
 		if (set)
 		{
+			this.m_LastBlockTime = Time.time;
 			this.ResetAttack();
 			Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 			if (currentItem)
@@ -104,13 +120,43 @@ public class FightController : PlayerController
 		base.GetInputActions(ref actions);
 		if (this.CanBlock())
 		{
-			actions.Add(53);
+			actions.Add(56);
 		}
+	}
+
+	public void BlockFight()
+	{
+		FightController.s_BlockFight = true;
+	}
+
+	public void UnblockFight()
+	{
+		FightController.s_BlockFight = false;
+	}
+
+	protected void OnStaminaDecreased(StaminaDecreaseReason reason, float stamina_val)
+	{
+		if ((reason == StaminaDecreaseReason.PuchBlock || reason == StaminaDecreaseReason.PuchWeaponBlock) && stamina_val <= 0f && this.IsBlock())
+		{
+			this.SetBlock(false);
+			this.m_WasBlockBroken = true;
+		}
+	}
+
+	public override bool PlayUnequipAnimation()
+	{
+		return true;
 	}
 
 	private int m_BlockHash = Animator.StringToHash("Block");
 
 	private bool m_IsBlock;
 
-	public float m_BlockAttackStaminaLevel = 0.1f;
+	private bool m_WasBlockBroken;
+
+	private float m_LastBlockTime = float.MinValue;
+
+	protected int m_LowStaminaHash = Animator.StringToHash("LowStamina");
+
+	public static bool s_BlockFight;
 }

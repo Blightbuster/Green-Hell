@@ -12,7 +12,7 @@ public class HitReactionController : PlayerController
 	protected override void Awake()
 	{
 		base.Awake();
-		this.m_ControllerType = PlayerControllerType.HitReaction;
+		base.m_ControllerType = PlayerControllerType.HitReaction;
 		HitReactionController.s_Instance = this;
 	}
 
@@ -26,7 +26,7 @@ public class HitReactionController : PlayerController
 			if (runtimeAnimatorController.animationClips[i].name == "PL|ShakingOff")
 			{
 				this.m_Length = runtimeAnimatorController.animationClips[i].length / 2f;
-				break;
+				return;
 			}
 		}
 	}
@@ -34,7 +34,10 @@ public class HitReactionController : PlayerController
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		FistFightController.Get().PlayerFightPunchAttackEnd(FistFightController.Mode.Cancelled);
+		if (FistFightController.Get().enabled)
+		{
+			FistFightController.Get().PlayerFightPunchAttackEnd(FistFightController.Mode.Cancelled);
+		}
 		if (Player.Get().m_ActiveFightController)
 		{
 			Player.Get().m_ActiveFightController.ResetAttack();

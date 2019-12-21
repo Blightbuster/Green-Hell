@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using CJTools;
 using Enums;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace AIs
 {
 	public class TransformModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_AI.m_BoxCollider = this.m_AI.GetComponent<BoxCollider>();
 			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("NoCollisionWithPlayer"));
 			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("AI"));
@@ -17,31 +19,33 @@ namespace AIs
 			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("Player"));
 			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("Item"));
 			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("Water"));
+			this.m_LayerMasksToIgnore.Add(LayerMask.NameToLayer("CollisionsOnlyWithPlayer"));
 		}
 
 		private void OnAnimatorMove()
 		{
-			if (Time.deltaTime == 0f || !this.m_AI)
+			if (Time.deltaTime == 0f || !this.m_AI || (!this.m_AI.m_PathModule && !this.m_AI.IsKidRunner()))
 			{
 				return;
 			}
 			base.transform.rotation *= this.m_AI.m_Animator.deltaRotation;
 			Vector3 vector = this.m_AI.m_Animator.rootPosition;
-			if ((this.m_AI.m_Params.m_Human || this.m_AI.IsCat()) && this.m_AI.m_Animator.deltaPosition.magnitude > 0.01f)
+			if (!this.m_AI.IsKidRunner() && (this.m_AI.m_Params.m_Human || this.m_AI.IsCat()) && this.m_AI.m_Animator.deltaPosition.magnitude > 0.01f)
 			{
 				Vector3 vector2 = Player.Get().transform.TransformPoint(Player.Get().m_CharacterController.center);
 				Vector3 vector3 = vector;
 				vector3.y = vector2.y;
 				float num = this.m_AI.m_Radius + Player.Get().m_Radius + this.m_AdditionalDistToPlayer;
-				float num2 = vector3.Distance(vector2);
-				if (num2 <= num)
+				if (vector3.Distance(vector2) <= num)
 				{
-					Vector3 vector4 = vector3 - vector2;
-					vector = vector2 + vector4.normalized * num;
+					vector = vector2 + (vector3 - vector2).normalized * num;
 				}
 			}
 			base.transform.position = vector;
-			this.m_AI.m_PathModule.m_Agent.nextPosition = vector;
+			if (this.m_AI.m_PathModule)
+			{
+				this.m_AI.m_PathModule.m_Agent.nextPosition = vector;
+			}
 		}
 
 		public override void OnUpdate()
@@ -87,25 +91,109 @@ namespace AIs
 		public override void OnLateUpdate()
 		{
 			base.OnLateUpdate();
-			this.AllignToTerrain();
+			if (this.m_AI.IsSwimming())
+			{
+				this.UpdateSwimming();
+				if (this.m_AI.m_GoalsModule.m_ActiveGoal != null && this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type == AIGoalType.CaimanAttack)
+				{
+					Vector3 normalized = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).normalized;
+					Vector3 upwards = Vector3.Cross(normalized, this.m_AI.transform.right);
+					this.m_AI.transform.rotation = Quaternion.Slerp(this.m_LastRotation, Quaternion.LookRotation(normalized, upwards), 4f * Time.deltaTime);
+				}
+			}
+			else
+			{
+				this.AllignToTerrain(false);
+			}
+			this.m_LastPosition = base.transform.position;
+			this.m_LastRotation = base.transform.rotation;
 		}
 
-		private void AllignToTerrain()
+		private void UpdateSwimming()
 		{
-			Vector3 position = this.m_AI.transform.position;
-			this.GetRaycastHit(position + Vector3.up * this.m_AI.m_BoxCollider.size.y);
-			position.y = Mathf.Max(TransformModule.s_RaycastHit.point.y, MainLevel.GetTerrainY(position));
-			this.m_AI.transform.position = position;
-			if (this.m_AI.m_Params.m_Human)
+			this.m_SwimmingLastTime = Time.time;
+			this.AllignToWaterNavmesh(true);
+			this.AllignToTerrain(true);
+			Vector3 rhs = this.m_TempTerrainPosFront - (this.m_TempSwimmingPos + Vector3.up * 0.3f);
+			rhs.Normalize();
+			Vector3 forward = base.transform.forward;
+			forward.y = 0f;
+			forward.Normalize();
+			float b = Vector3.Dot(forward, rhs);
+			float num = CJTools.Math.GetProportionalClamp(0f, 1f, b, 1f, 0.96f);
+			if (this.m_TempTerrainPosFront.y < this.m_TempSwimmingPos.y)
+			{
+				num = 0f;
+			}
+			Vector3 tempSwimmingPos = this.m_TempSwimmingPos;
+			tempSwimmingPos.y += CJTools.Math.GetProportionalClamp(0f, -0.8f, num, 0f, 1f);
+			base.transform.position = tempSwimmingPos;
+			base.transform.rotation = Quaternion.Slerp(this.m_TempSwimmingRot, this.m_TempTerrainRot, num);
+		}
+
+		private void AllignToWaterNavmesh(bool use_temp_transform)
+		{
+			NavMeshHit navMeshHit;
+			if (!NavMesh.SamplePosition(this.m_AI.m_SwimmingPos, out navMeshHit, 1f, AIManager.s_WaterAreaMask))
 			{
 				return;
 			}
-			if (this.m_AI.m_Visible)
+			Vector3 normalized2D = (this.m_AI.m_PathModule.m_Agent.steeringTarget - this.m_AI.m_PathModule.m_Agent.nextPosition).GetNormalized2D();
+			if (use_temp_transform)
+			{
+				this.m_TempSwimmingRot = Quaternion.Slerp(this.m_LastRotation, Quaternion.LookRotation(normalized2D, Vector3.up), 2f * Time.deltaTime);
+			}
+			else
+			{
+				this.m_AI.transform.rotation = Quaternion.Slerp(this.m_LastRotation, Quaternion.LookRotation(normalized2D, Vector3.up), 2f * Time.deltaTime);
+			}
+			Vector3 vector = this.m_AI.transform.position;
+			float num = navMeshHit.position.y - this.m_AI.m_BoxCollider.size.y;
+			vector.y = this.m_LastPosition.y * 0.1f + num * 0.9f;
+			if (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.CaimanAttack)
+			{
+				vector += this.m_AI.transform.forward.GetNormalized2D() * 1.5f * Time.deltaTime;
+			}
+			if (use_temp_transform)
+			{
+				this.m_TempSwimmingPos = vector;
+				return;
+			}
+			this.m_AI.transform.position = vector;
+		}
+
+		private void AllignToTerrain(bool use_temp_transform)
+		{
+			Vector3 position = this.m_AI.transform.position;
+			bool autoSyncTransforms = Physics.autoSyncTransforms;
+			Physics.autoSyncTransforms = false;
+			this.GetRaycastHit(position + Vector3.up * this.m_AI.m_BoxCollider.size.y);
+			position.y = Mathf.Max(TransformModule.s_RaycastHit.point.y, MainLevel.GetTerrainY(position));
+			this.m_TempTerrainPos = position;
+			if (Time.time - this.m_SwimmingLastTime < 1f)
+			{
+				float num = (Time.time - this.m_SwimmingLastTime) / 1f;
+				this.m_AI.transform.position = this.m_LastPosition * (1f - num) + position * num;
+			}
+			else
+			{
+				this.m_AI.transform.position = position;
+			}
+			if (this.m_AI.m_Params.m_Human)
+			{
+				Physics.autoSyncTransforms = autoSyncTransforms;
+				return;
+			}
+			if (this.m_AI.IsVisible())
 			{
 				Vector3 normalized2D = this.m_AI.transform.forward.GetNormalized2D();
 				Vector3 vector = this.m_AI.m_BoxCollider.bounds.center + normalized2D * this.m_AI.m_BoxCollider.size.z + Vector3.up * this.m_AI.m_BoxCollider.size.y;
 				this.GetRaycastHit(vector);
 				vector = TransformModule.s_RaycastHit.point;
+				if (use_temp_transform)
+				{
+					this.m_TempTerrainPosFront = vector;
+				}
 				Vector3 vector2 = this.m_AI.m_BoxCollider.bounds.center - normalized2D * this.m_AI.m_BoxCollider.size.z + Vector3.up * this.m_AI.m_BoxCollider.size.y;
 				this.GetRaycastHit(vector2);
 				vector2 = TransformModule.s_RaycastHit.point;
@@ -129,31 +217,33 @@ namespace AIs
 				}
 				if (!vector3.IsZero())
 				{
-					this.m_AI.transform.rotation = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(lhs.normalized, vector3.normalized), 1f);
+					if (use_temp_transform)
+					{
+						this.m_TempTerrainRot = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(lhs.normalized, vector3.normalized), 1f);
+					}
+					else
+					{
+						this.m_AI.transform.rotation = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(lhs.normalized, vector3.normalized), 1f);
+					}
 				}
 			}
-			this.m_AI.m_BoxCollider.enabled = true;
+			Physics.autoSyncTransforms = autoSyncTransforms;
 		}
 
 		private void GetRaycastHit(Vector3 pos)
 		{
-			pos.y = Mathf.Max(pos.y, MainLevel.GetTerrainY(pos) + 0.1f);
-			int num = Physics.RaycastNonAlloc(pos, -Vector3.up, TransformModule.s_RaycastHitCache);
+			float terrainY = MainLevel.GetTerrainY(pos);
+			pos.y = Mathf.Max(pos.y, terrainY + 0.1f);
+			int num = Physics.RaycastNonAlloc(pos, -Vector3.up, TransformModule.s_RaycastHitCache, pos.y - terrainY + 0.1f);
 			this.m_RaycastOrig = pos;
 			Array.Sort<RaycastHit>(TransformModule.s_RaycastHitCache, 0, num, TransformModule.s_DistComparer);
 			for (int i = 0; i < num; i++)
 			{
 				RaycastHit raycastHit = TransformModule.s_RaycastHitCache[i];
-				if (!(raycastHit.collider.gameObject == base.gameObject))
+				if (!(raycastHit.collider.gameObject == base.gameObject) && !raycastHit.collider.isTrigger && !this.m_LayerMasksToIgnore.Contains(raycastHit.collider.gameObject.layer))
 				{
-					if (!raycastHit.collider.isTrigger)
-					{
-						if (!this.m_LayerMasksToIgnore.Contains(raycastHit.collider.gameObject.layer))
-						{
-							TransformModule.s_RaycastHit = raycastHit;
-							break;
-						}
-					}
+					TransformModule.s_RaycastHit = raycastHit;
+					return;
 				}
 			}
 		}
@@ -168,6 +258,22 @@ namespace AIs
 		private static CompareListByDist s_DistComparer = new CompareListByDist();
 
 		private float m_AdditionalDistToPlayer = 0.4f;
+
+		private Vector3 m_LastPosition = Vector3.zero;
+
+		private Quaternion m_LastRotation = Quaternion.identity;
+
+		public Vector3 m_TempTerrainPos = Vector3.zero;
+
+		private Vector3 m_TempTerrainPosFront = Vector3.zero;
+
+		private Quaternion m_TempTerrainRot = Quaternion.identity;
+
+		private Vector3 m_TempSwimmingPos = Vector3.zero;
+
+		private Quaternion m_TempSwimmingRot = Quaternion.identity;
+
+		private float m_SwimmingLastTime = float.MinValue;
 
 		private static RaycastHit s_RaycastHit = default(RaycastHit);
 

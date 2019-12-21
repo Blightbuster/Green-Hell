@@ -30,14 +30,6 @@ public class TrapsManager : MonoBehaviour
 		}
 	}
 
-	private void Update()
-	{
-		foreach (Trap trap in this.m_AllTraps)
-		{
-			trap.ConstantUpdate();
-		}
-	}
-
 	private List<Trap> m_AllTraps = new List<Trap>();
 
 	private static TrapsManager s_Instance;

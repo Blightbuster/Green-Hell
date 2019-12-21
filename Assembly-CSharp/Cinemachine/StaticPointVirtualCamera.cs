@@ -22,7 +22,7 @@ namespace Cinemachine
 		{
 			get
 			{
-				return string.Empty;
+				return "";
 			}
 		}
 

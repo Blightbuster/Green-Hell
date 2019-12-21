@@ -5,16 +5,26 @@ using UnityEngine;
 
 public class ItemHold : Item
 {
+	protected override void Awake()
+	{
+		base.Awake();
+		if (this.m_ReplaceInfoName != string.Empty)
+		{
+			this.m_ReplaceInfoID = EnumUtils<ItemID>.GetValue(this.m_ReplaceInfoName);
+		}
+		ItemHold.s_AllItemHolds.Add(this);
+	}
+
 	protected override void Start()
 	{
 		base.Start();
 		if (this.m_IgnoreCollisionWithPlayer)
 		{
-			UnityEngine.Object.Destroy(this.m_Collider);
+			UnityEngine.Object.Destroy(base.m_Collider);
 			MeshCollider meshCollider = base.gameObject.AddComponent<MeshCollider>();
 			meshCollider.convex = true;
-			this.m_Collider = meshCollider;
-			Physics.IgnoreCollision(this.m_Collider, Player.Get().m_Collider);
+			base.m_Collider = meshCollider;
+			Physics.IgnoreCollision(base.m_Collider, Player.Get().m_Collider);
 		}
 	}
 
@@ -29,7 +39,32 @@ public class ItemHold : Item
 		{
 			return;
 		}
-		actions.Add(TriggerAction.TYPE.TakeHold);
+		actions.Add(this.m_ActionType);
+	}
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+		ItemHold.s_AllItemHolds.Remove(this);
+	}
+
+	public static ItemHold FindByID(ItemID id)
+	{
+		foreach (ItemHold itemHold in ItemHold.s_AllItemHolds)
+		{
+			if (itemHold.m_Info != null)
+			{
+				if (itemHold.GetInfoID() == id)
+				{
+					return itemHold;
+				}
+			}
+			else if (EnumUtils<ItemID>.GetValue(itemHold.m_InfoName) == id)
+			{
+				return itemHold;
+			}
+		}
+		return null;
 	}
 
 	public override void GetInfoText(ref string result)
@@ -44,16 +79,16 @@ public class ItemHold : Item
 			return false;
 		}
 		Item item = ItemsManager.Get().CreateItem(this.m_ReplaceInfoName, false);
-		InventoryBackpack.InsertResult insertResult = InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true);
-		if (insertResult != InventoryBackpack.InsertResult.Ok)
+		if (InventoryBackpack.Get().InsertItem(item, null, null, true, true, true, true, true) != InsertResult.Ok)
 		{
-			UnityEngine.Object.Destroy(base.gameObject);
+			UnityEngine.Object.Destroy(item.gameObject);
 			return false;
 		}
+		this.UpdateChildrenItems();
 		EventsManager.OnEvent(Enums.Event.TakeItem, 1, (int)item.m_Info.m_ID);
-		if (this.m_CurrentSlot)
+		if (base.m_CurrentSlot)
 		{
-			this.m_CurrentSlot.RemoveItem();
+			base.m_CurrentSlot.RemoveItem();
 		}
 		Player.Get().GetComponent<PlayerAudioModule>().PlayItemSound(item.m_Info.m_GrabSound);
 		base.AddItemsCountMessage(item);
@@ -68,12 +103,32 @@ public class ItemHold : Item
 		return true;
 	}
 
-	public ItemInfo m_ReplaceItem;
+	private void UpdateChildrenItems()
+	{
+		if (this.m_Info.m_ID == ItemID.Bird_Nest_ToHoldHarvest)
+		{
+			Item[] componentsInChildren = base.GetComponentsInChildren<Item>();
+			for (int i = 0; i < componentsInChildren.Length; i++)
+			{
+				if (!(componentsInChildren[i] == null) && componentsInChildren[i].m_Info.m_ID != ItemID.Bird_Nest_ToHoldHarvest)
+				{
+					ItemsManager.Get().CreateItem(componentsInChildren[i].m_Info.m_ID, true, componentsInChildren[i].transform.position, componentsInChildren[i].transform.rotation);
+				}
+			}
+		}
+	}
 
 	public bool m_IsThisUnlimited;
 
 	[HideInInspector]
 	public string m_ReplaceInfoName = string.Empty;
 
+	[HideInInspector]
+	public ItemID m_ReplaceInfoID = ItemID.None;
+
 	public bool m_IgnoreCollisionWithPlayer;
+
+	public TriggerAction.TYPE m_ActionType = TriggerAction.TYPE.TakeHold;
+
+	public static HashSet<ItemHold> s_AllItemHolds = new HashSet<ItemHold>();
 }

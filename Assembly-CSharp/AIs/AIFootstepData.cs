@@ -8,6 +8,8 @@ namespace AIs
 	{
 		public List<string> m_FXNames = new List<string>();
 
-		public List<AudioClip> m_Sounds = new List<AudioClip>();
+		public List<AudioClip> m_WalkSounds = new List<AudioClip>();
+
+		public List<AudioClip> m_RunSounds = new List<AudioClip>();
 	}
 }

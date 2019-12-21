@@ -14,7 +14,7 @@ public class HeavyObjectController : PlayerController
 	{
 		base.Awake();
 		HeavyObjectController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.HeavyObject;
+		base.m_ControllerType = PlayerControllerType.HeavyObject;
 	}
 
 	protected override void OnEnable()
@@ -31,6 +31,8 @@ public class HeavyObjectController : PlayerController
 		}
 		this.SetState(HeavyObjectControllerState.Normal);
 		this.m_DropScheduled = false;
+		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
+		PlayerConditionModule.Get().GetDirtinessAdd(GetDirtyReason.HeavyObject, (HeavyObjectInfo)currentItem.m_Info);
 	}
 
 	protected override void OnDisable()
@@ -39,16 +41,15 @@ public class HeavyObjectController : PlayerController
 		this.m_Animator.SetInteger(this.m_IHeavyObjectState, 0);
 		this.SetState(HeavyObjectControllerState.None);
 		this.m_DropScheduled = false;
-		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
-		if (currentItem)
+		if (this.m_Player.GetCurrentItem(Hand.Right))
 		{
 			this.DropItem();
 		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if (action == InputsManager.InputAction.Drop)
+		if (action_data.m_Action == InputsManager.InputAction.Drop)
 		{
 			this.Drop();
 		}
@@ -64,6 +65,13 @@ public class HeavyObjectController : PlayerController
 		this.SetState(HeavyObjectControllerState.Leaving);
 		this.m_Animator.SetInteger(this.m_IHeavyObjectState, 2);
 		this.m_GhostSlot = slot;
+	}
+
+	public void InsertToGhostPart(GhostPart part)
+	{
+		this.SetState(HeavyObjectControllerState.Leaving);
+		this.m_Animator.SetInteger(this.m_IHeavyObjectState, 2);
+		this.m_GhostPart = part;
 	}
 
 	public override void ControllerUpdate()
@@ -83,7 +91,7 @@ public class HeavyObjectController : PlayerController
 				this.m_Animator.SetInteger(this.m_IHeavyObjectState, 1);
 			}
 		}
-		if (this.m_State == HeavyObjectControllerState.Leaving && ((currentAnimatorStateInfo.shortNameHash == this.m_IPostHeavyObjectState && currentAnimatorStateInfo.normalizedTime >= 0.5f) || (currentAnimatorStateInfo.shortNameHash == this.m_IInsertHeavyObjectToSlotState && currentAnimatorStateInfo.normalizedTime >= 0.6f)))
+		if (this.m_State == HeavyObjectControllerState.Leaving && ((currentAnimatorStateInfo.shortNameHash == this.m_IPostHeavyObjectState && currentAnimatorStateInfo.normalizedTime >= 0.9f) || (currentAnimatorStateInfo.shortNameHash == this.m_IInsertHeavyObjectToSlotState && currentAnimatorStateInfo.normalizedTime >= 0.9f) || currentAnimatorStateInfo.shortNameHash == this.m_UnarmedIdle))
 		{
 			Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
 			this.DropItem();
@@ -91,6 +99,12 @@ public class HeavyObjectController : PlayerController
 			{
 				this.m_GhostSlot.Fulfill(false);
 				this.m_GhostSlot = null;
+				UnityEngine.Object.Destroy(currentItem.gameObject);
+			}
+			if (this.m_GhostPart)
+			{
+				this.m_GhostPart.Fulfill(false);
+				this.m_GhostPart = null;
 				UnityEngine.Object.Destroy(currentItem.gameObject);
 			}
 		}
@@ -103,10 +117,17 @@ public class HeavyObjectController : PlayerController
 		if (currentItem)
 		{
 			currentItem.transform.rotation = Player.Get().transform.rotation;
-			Vector3 position = new Vector3(0.5f, 0.5f, 1.1f);
-			position.x = Math.Max(0.5f, position.x);
-			Vector3 position2 = Camera.main.ViewportToWorldPoint(position);
-			currentItem.transform.position = position2;
+			if (Camera.main)
+			{
+				Vector3 vector = new Vector3(0.5f, 0.5f, 1.1f);
+				vector.x = Math.Max(0.5f, vector.x);
+				Vector3 position = Camera.main.ViewportToWorldPoint(vector);
+				currentItem.transform.position = position;
+			}
+			else
+			{
+				currentItem.transform.position = Player.Get().transform.position + Vector3.up + Player.Get().transform.forward;
+			}
 		}
 		Player.Get().OnDropHeavyItem();
 	}
@@ -126,7 +147,7 @@ public class HeavyObjectController : PlayerController
 		{
 			return string.Empty;
 		}
-		return this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID.ToString();
+		return EnumUtils<ItemID>.GetName((int)this.m_Player.GetCurrentItem(Hand.Right).m_Info.m_ID);
 	}
 
 	private void SetState(HeavyObjectControllerState state)
@@ -142,9 +163,13 @@ public class HeavyObjectController : PlayerController
 
 	private int m_IInsertHeavyObjectToSlotState = Animator.StringToHash("InsertHeavyObjectToSlot");
 
+	private int m_UnarmedIdle = Animator.StringToHash("Unarmed_Idle");
+
 	private HeavyObjectControllerState m_State;
 
 	private GhostSlot m_GhostSlot;
+
+	private GhostPart m_GhostPart;
 
 	private bool m_DropScheduled;
 

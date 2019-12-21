@@ -12,18 +12,21 @@ public class ConstructionController : PlayerController
 	{
 		base.Awake();
 		ConstructionController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Construction;
+		base.m_ControllerType = PlayerControllerType.Construction;
 	}
 
 	protected override void OnEnable()
 	{
 		base.OnEnable();
 		this.CreateGhostItem();
+		this.m_GhostToRestore = this.m_Ghost.m_ResultItemID.ToString() + "Ghost";
 	}
 
 	protected override void OnDisable()
 	{
 		base.OnDisable();
+		this.m_GhostToReplace = string.Empty;
+		this.m_GhostToRestore = string.Empty;
 		if (this.m_Ghost && this.m_Ghost.m_State == ConstructionGhost.GhostState.Dragging)
 		{
 			UnityEngine.Object.Destroy(this.m_Ghost.gameObject);
@@ -40,18 +43,23 @@ public class ConstructionController : PlayerController
 		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
 		if (this.m_Player.GetRotationBlocked())
 		{
 			return;
 		}
-		if (action == InputsManager.InputAction.CreateConstruction && this.CanCreateConstruction())
+		if (action_data.m_Action == InputsManager.InputAction.CreateConstruction)
 		{
-			this.m_Ghost.SetState(ConstructionGhost.GhostState.Building);
-			this.Stop();
+			this.m_Ghost.UpdateProhibitionType();
+			if (this.CanCreateConstruction())
+			{
+				this.m_Ghost.SetState(ConstructionGhost.GhostState.Building);
+				base.Invoke("DelayedStop", 0.2f);
+				return;
+			}
 		}
-		else if (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit)
+		else if (action_data.m_Action == InputsManager.InputAction.Quit || action_data.m_Action == InputsManager.InputAction.AdditionalQuit)
 		{
 			if (!this.m_Ghost.m_IsBeingDestroyed)
 			{
@@ -59,6 +67,11 @@ public class ConstructionController : PlayerController
 			}
 			this.Stop();
 		}
+	}
+
+	private void DelayedStop()
+	{
+		this.Stop();
 	}
 
 	private void CreateGhostItem()
@@ -74,6 +87,14 @@ public class ConstructionController : PlayerController
 	{
 		base.ControllerUpdate();
 		this.UpdateGhostToReplace();
+	}
+
+	public void RestoreGhost()
+	{
+		if (this.m_Ghost.gameObject.name != this.m_GhostToRestore)
+		{
+			this.m_GhostToReplace = this.m_GhostToRestore;
+		}
 	}
 
 	public void ReplaceGhost(string new_ghost_name)
@@ -100,6 +121,8 @@ public class ConstructionController : PlayerController
 		UnityEngine.Object.Destroy(this.m_Ghost.gameObject);
 		this.m_Ghost = gameObject.GetComponent<ConstructionGhost>();
 		this.m_Ghost.SetState(ConstructionGhost.GhostState.Dragging);
+		this.m_Ghost.UpdateProhibitionType();
+		this.m_Ghost.UpdateState();
 		this.m_GhostToReplace = string.Empty;
 	}
 
@@ -118,6 +141,8 @@ public class ConstructionController : PlayerController
 	private GameObject m_GhostPrefab;
 
 	private string m_GhostToReplace = string.Empty;
+
+	private string m_GhostToRestore = string.Empty;
 
 	private static ConstructionController s_Instance;
 }

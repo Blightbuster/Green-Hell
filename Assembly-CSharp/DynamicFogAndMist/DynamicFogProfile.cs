@@ -77,7 +77,7 @@ namespace DynamicFogAndMist
 			{
 				t = 1f;
 			}
-			fog.enableDithering = ((t >= 0.5f) ? profile2.enableDithering : profile1.enableDithering);
+			fog.enableDithering = ((t < 0.5f) ? profile1.enableDithering : profile2.enableDithering);
 			fog.ditherStrength = profile1.ditherStrength * (1f - t) + profile2.ditherStrength * t;
 			fog.alpha = profile1.alpha * (1f - t) + profile2.alpha * t;
 			fog.noiseStrength = profile1.noiseStrength * (1f - t) + profile2.noiseStrength * t;
@@ -90,7 +90,7 @@ namespace DynamicFogAndMist
 			fog.maxHeight = profile1.maxHeight * (1f - t) + profile2.maxHeight * t;
 			fog.heightFallOff = profile1.heightFallOff * (1f - t) + profile2.heightFallOff * t;
 			fog.baselineHeight = profile1.baselineHeight * (1f - t) + profile2.baselineHeight * t;
-			fog.clipUnderBaseline = ((t >= 0.5f) ? profile2.clipUnderBaseline : profile1.clipUnderBaseline);
+			fog.clipUnderBaseline = ((t < 0.5f) ? profile1.clipUnderBaseline : profile2.clipUnderBaseline);
 			fog.turbulence = profile1.turbulence * (1f - t) + profile2.turbulence * t;
 			fog.speed = profile1.speed * (1f - t) + profile2.speed * t;
 			fog.color = profile1.color * (1f - t) + profile2.color * t;
@@ -99,7 +99,7 @@ namespace DynamicFogAndMist
 			fog.skySpeed = profile1.skySpeed * (1f - t) + profile2.skySpeed * t;
 			fog.skyNoiseStrength = profile1.skyNoiseStrength * (1f - t) + profile2.skyNoiseStrength * t;
 			fog.skyAlpha = profile1.skyAlpha * (1f - t) + profile2.skyAlpha * t;
-			fog.useXZDistance = ((t >= 0.5f) ? profile2.useXZDistance : profile1.useXZDistance);
+			fog.useXZDistance = ((t < 0.5f) ? profile1.useXZDistance : profile2.useXZDistance);
 			fog.scattering = profile1.scattering * (1f - t) + profile2.scattering * t;
 			fog.scatteringColor = profile1.scatteringColor * (1f - t) + profile2.scatteringColor * t;
 		}

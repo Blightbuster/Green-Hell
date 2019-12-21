@@ -17,11 +17,9 @@ namespace AIs
 			if (this.m_AI.m_GoalsModule.m_PreviousAction != null && this.m_AI.m_GoalsModule.m_PreviousAction.GetType() == typeof(CrouchIdle))
 			{
 				base.StartAction(this.m_StopCrouch);
+				return;
 			}
-			else
-			{
-				base.StartAction(this.m_LookAround);
-			}
+			base.StartAction(this.m_LookAround);
 		}
 
 		public override void OnStopAction(AIAction action)
@@ -30,8 +28,9 @@ namespace AIs
 			if (action.GetType() == typeof(StopCrouch))
 			{
 				base.StartAction(this.m_LookAround);
+				return;
 			}
-			else if (action.GetType() == typeof(LookAround))
+			if (action.GetType() == typeof(LookAround))
 			{
 				this.m_HumanAI.SetState(HumanAI.State.Rest);
 			}

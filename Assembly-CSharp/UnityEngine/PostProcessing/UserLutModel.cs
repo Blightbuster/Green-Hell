@@ -43,8 +43,8 @@ namespace UnityEngine.PostProcessing
 			[Tooltip("Custom lookup texture (strip format, e.g. 256x16).")]
 			public Texture2D lut;
 
-			[Tooltip("Blending factor.")]
 			[Range(0f, 1f)]
+			[Tooltip("Blending factor.")]
 			public float contribution;
 		}
 	}

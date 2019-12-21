@@ -44,9 +44,9 @@ namespace RootMotion
 				return true;
 			}
 			Transform[] componentsInChildren = transform.GetComponentsInChildren<Transform>();
-			foreach (Transform x in componentsInChildren)
+			for (int i = 0; i < componentsInChildren.Length; i++)
 			{
-				if (x == child)
+				if (componentsInChildren[i] == child)
 				{
 					return true;
 				}

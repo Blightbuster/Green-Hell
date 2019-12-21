@@ -67,9 +67,10 @@ namespace RootMotion.FinalIK
 				message = "IK chain has less than " + this.minBones + " Bones.";
 				return false;
 			}
-			foreach (IKSolver.Bone bone in this.bones)
+			IKSolver.Bone[] array = this.bones;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (bone.transform == null)
+				if (array[i].transform == null)
 				{
 					message = "One of the Bones is null.";
 					return false;
@@ -90,8 +91,7 @@ namespace RootMotion.FinalIK
 			{
 				for (int j = 0; j < this.bones.Length - 1; j++)
 				{
-					float magnitude = (this.bones[j].transform.position - this.bones[j + 1].transform.position).magnitude;
-					if (magnitude == 0f)
+					if ((this.bones[j].transform.position - this.bones[j + 1].transform.position).magnitude == 0f)
 					{
 						message = "Bone " + j + " length is zero.";
 						return false;
@@ -163,12 +163,9 @@ namespace RootMotion.FinalIK
 					this.bones[i].axis = Quaternion.Inverse(this.bones[i].transform.rotation) * (position - this.bones[i].transform.position);
 					if (this.bones[i].rotationLimit != null)
 					{
-						if (this.XY)
+						if (this.XY && !(this.bones[i].rotationLimit is RotationLimitHinge))
 						{
-							if (!(this.bones[i].rotationLimit is RotationLimitHinge))
-							{
-								Warning.Log("Only Hinge Rotation Limits should be used on 2D IK solvers.", this.bones[i].transform, false);
-							}
+							Warning.Log("Only Hinge Rotation Limits should be used on 2D IK solvers.", this.bones[i].transform, false);
 						}
 						this.bones[i].rotationLimit.Disable();
 					}
@@ -221,28 +218,7 @@ namespace RootMotion.FinalIK
 			Vector3 a2 = this.IKPosition - this.bones[0].transform.position;
 			float magnitude = a.magnitude;
 			float magnitude2 = a2.magnitude;
-			if (magnitude < magnitude2)
-			{
-				return false;
-			}
-			if (magnitude < this.chainLength - this.bones[this.bones.Length - 2].length * 0.1f)
-			{
-				return false;
-			}
-			if (magnitude == 0f)
-			{
-				return false;
-			}
-			if (magnitude2 == 0f)
-			{
-				return false;
-			}
-			if (magnitude2 > magnitude)
-			{
-				return false;
-			}
-			float num = Vector3.Dot(a / magnitude, a2 / magnitude2);
-			return num >= 0.999f;
+			return magnitude >= magnitude2 && magnitude >= this.chainLength - this.bones[this.bones.Length - 2].length * 0.1f && magnitude != 0f && magnitude2 != 0f && magnitude2 <= magnitude && Vector3.Dot(a / magnitude, a2 / magnitude2) >= 0.999f;
 		}
 
 		public Transform target;

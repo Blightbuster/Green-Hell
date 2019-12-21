@@ -40,6 +40,7 @@ namespace AIs
 		JumpBack,
 		PunchBack,
 		Hide,
+		Swim,
 		StalkerMoveAround,
 		StalkerRunAway,
 		HumanRest,
@@ -64,6 +65,10 @@ namespace AIs
 		HunterBowPostAttack,
 		HumanMoveToConstruction,
 		HumanAttackConstruction,
-		HumanPostAttackConstruction
+		HumanPostAttackConstruction,
+		HumanThrowerMoveToEnemy,
+		SpearmanStrafe,
+		SpearmanTaunt,
+		KidRunner
 	}
 }

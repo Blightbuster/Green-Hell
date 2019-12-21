@@ -23,132 +23,123 @@ public class MipTexMap : MonoBehaviour
 			texture2D.SetPixels(array, i);
 		}
 		texture2D.Apply(false, true);
-		if (size != 64)
+		if (size <= 256)
 		{
-			if (size != 128)
+			if (size == 64)
 			{
-				if (size != 256)
-				{
-					if (size != 512)
-					{
-						if (size != 1024)
-						{
-							if (size != 2048)
-							{
-								MipTexMap.mipFilterTex512 = texture2D;
-							}
-							else
-							{
-								MipTexMap.mipFilterTex2048 = texture2D;
-							}
-						}
-						else
-						{
-							MipTexMap.mipFilterTex1024 = texture2D;
-						}
-					}
-					else
-					{
-						MipTexMap.mipFilterTex512 = texture2D;
-					}
-				}
-				else
-				{
-					MipTexMap.mipFilterTex256 = texture2D;
-				}
+				MipTexMap.mipFilterTex64 = texture2D;
+				return;
 			}
-			else
+			if (size == 128)
 			{
 				MipTexMap.mipFilterTex128 = texture2D;
+				return;
+			}
+			if (size == 256)
+			{
+				MipTexMap.mipFilterTex256 = texture2D;
+				return;
 			}
 		}
 		else
 		{
-			MipTexMap.mipFilterTex64 = texture2D;
+			if (size == 512)
+			{
+				MipTexMap.mipFilterTex512 = texture2D;
+				return;
+			}
+			if (size == 1024)
+			{
+				MipTexMap.mipFilterTex1024 = texture2D;
+				return;
+			}
+			if (size == 2048)
+			{
+				MipTexMap.mipFilterTex2048 = texture2D;
+				return;
+			}
 		}
+		MipTexMap.mipFilterTex512 = texture2D;
 	}
 
 	public static Texture2D GetTex(int size)
 	{
 		size = Mathf.ClosestPowerOfTwo(size);
-		if (size != 64)
+		if (size <= 256)
 		{
-			if (size != 128)
+			if (size != 64)
 			{
-				if (size != 256)
+				if (size != 128)
 				{
-					if (size != 512)
+					if (size == 256)
 					{
-						if (size != 1024)
+						if (MipTexMap.mipFilterTex256)
 						{
-							if (size != 2048)
-							{
-								if (MipTexMap.mipFilterTex512)
-								{
-									return MipTexMap.mipFilterTex512;
-								}
-								MipTexMap.BuildMipFilterTex(size);
-								return MipTexMap.mipFilterTex512;
-							}
-							else
-							{
-								if (MipTexMap.mipFilterTex2048)
-								{
-									return MipTexMap.mipFilterTex2048;
-								}
-								MipTexMap.BuildMipFilterTex(size);
-								return MipTexMap.mipFilterTex2048;
-							}
-						}
-						else
-						{
-							if (MipTexMap.mipFilterTex1024)
-							{
-								return MipTexMap.mipFilterTex1024;
-							}
-							MipTexMap.BuildMipFilterTex(size);
-							return MipTexMap.mipFilterTex1024;
-						}
-					}
-					else
-					{
-						if (MipTexMap.mipFilterTex512)
-						{
-							return MipTexMap.mipFilterTex512;
+							return MipTexMap.mipFilterTex256;
 						}
 						MipTexMap.BuildMipFilterTex(size);
-						return MipTexMap.mipFilterTex512;
+						return MipTexMap.mipFilterTex256;
 					}
 				}
 				else
 				{
-					if (MipTexMap.mipFilterTex256)
+					if (MipTexMap.mipFilterTex128)
 					{
-						return MipTexMap.mipFilterTex256;
+						return MipTexMap.mipFilterTex128;
 					}
 					MipTexMap.BuildMipFilterTex(size);
-					return MipTexMap.mipFilterTex256;
+					return MipTexMap.mipFilterTex128;
 				}
 			}
 			else
 			{
-				if (MipTexMap.mipFilterTex128)
+				if (MipTexMap.mipFilterTex64)
 				{
-					return MipTexMap.mipFilterTex128;
+					return MipTexMap.mipFilterTex64;
 				}
 				MipTexMap.BuildMipFilterTex(size);
-				return MipTexMap.mipFilterTex128;
+				return MipTexMap.mipFilterTex64;
+			}
+		}
+		else if (size != 512)
+		{
+			if (size != 1024)
+			{
+				if (size == 2048)
+				{
+					if (MipTexMap.mipFilterTex2048)
+					{
+						return MipTexMap.mipFilterTex2048;
+					}
+					MipTexMap.BuildMipFilterTex(size);
+					return MipTexMap.mipFilterTex2048;
+				}
+			}
+			else
+			{
+				if (MipTexMap.mipFilterTex1024)
+				{
+					return MipTexMap.mipFilterTex1024;
+				}
+				MipTexMap.BuildMipFilterTex(size);
+				return MipTexMap.mipFilterTex1024;
 			}
 		}
 		else
 		{
-			if (MipTexMap.mipFilterTex64)
+			if (MipTexMap.mipFilterTex512)
 			{
-				return MipTexMap.mipFilterTex64;
+				return MipTexMap.mipFilterTex512;
 			}
 			MipTexMap.BuildMipFilterTex(size);
-			return MipTexMap.mipFilterTex64;
+			return MipTexMap.mipFilterTex512;
 		}
+		if (MipTexMap.mipFilterTex512)
+		{
+			return MipTexMap.mipFilterTex512;
+		}
+		MipTexMap.BuildMipFilterTex(size);
+		return MipTexMap.mipFilterTex512;
 	}
 
 	private static Texture2D mipFilterTex64;

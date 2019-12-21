@@ -8,9 +8,9 @@ namespace AIs
 		private void Start()
 		{
 			Renderer[] componentsInChildren = base.GetComponentsInChildren<Renderer>();
-			foreach (Renderer renderer in componentsInChildren)
+			for (int i = 0; i < componentsInChildren.Length; i++)
 			{
-				renderer.enabled = false;
+				componentsInChildren[i].enabled = false;
 			}
 		}
 

@@ -7,10 +7,10 @@ namespace Pathfinding.Util
 	{
 		public Guid(byte[] bytes)
 		{
-			ulong num = (ulong)bytes[0] << 0 | (ulong)bytes[1] << 8 | (ulong)bytes[2] << 16 | (ulong)bytes[3] << 24 | (ulong)bytes[4] << 32 | (ulong)bytes[5] << 40 | (ulong)bytes[6] << 48 | (ulong)bytes[7] << 56;
-			ulong num2 = (ulong)bytes[8] << 0 | (ulong)bytes[9] << 8 | (ulong)bytes[10] << 16 | (ulong)bytes[11] << 24 | (ulong)bytes[12] << 32 | (ulong)bytes[13] << 40 | (ulong)bytes[14] << 48 | (ulong)bytes[15] << 56;
-			this._a = ((!BitConverter.IsLittleEndian) ? Guid.SwapEndianness(num) : num);
-			this._b = ((!BitConverter.IsLittleEndian) ? Guid.SwapEndianness(num2) : num2);
+			ulong num = (ulong)bytes[0] | (ulong)bytes[1] << 8 | (ulong)bytes[2] << 16 | (ulong)bytes[3] << 24 | (ulong)bytes[4] << 32 | (ulong)bytes[5] << 40 | (ulong)bytes[6] << 48 | (ulong)bytes[7] << 56;
+			ulong num2 = (ulong)bytes[8] | (ulong)bytes[9] << 8 | (ulong)bytes[10] << 16 | (ulong)bytes[11] << 24 | (ulong)bytes[12] << 32 | (ulong)bytes[13] << 40 | (ulong)bytes[14] << 48 | (ulong)bytes[15] << 56;
+			this._a = (BitConverter.IsLittleEndian ? num : Guid.SwapEndianness(num));
+			this._b = (BitConverter.IsLittleEndian ? num2 : Guid.SwapEndianness(num2));
 		}
 
 		public Guid(string str)
@@ -36,7 +36,7 @@ namespace Pathfinding.Util
 					int num3 = "0123456789ABCDEF".IndexOf(char.ToUpperInvariant(c));
 					if (num3 == -1)
 					{
-						throw new FormatException("Invalid Guid format : " + c + " is not a hexadecimal character");
+						throw new FormatException("Invalid Guid format : " + c.ToString() + " is not a hexadecimal character");
 					}
 					this._a |= (ulong)((ulong)((long)num3) << num2);
 					num2 -= 4;
@@ -57,7 +57,7 @@ namespace Pathfinding.Util
 					int num4 = "0123456789ABCDEF".IndexOf(char.ToUpperInvariant(c2));
 					if (num4 == -1)
 					{
-						throw new FormatException("Invalid Guid format : " + c2 + " is not a hexadecimal character");
+						throw new FormatException("Invalid Guid format : " + c2.ToString() + " is not a hexadecimal character");
 					}
 					this._b |= (ulong)((ulong)((long)num4) << num2);
 					num2 -= 4;
@@ -74,7 +74,7 @@ namespace Pathfinding.Util
 
 		private static ulong SwapEndianness(ulong value)
 		{
-			ulong num = value >> 0 & 255UL;
+			ulong num = value & 255UL;
 			ulong num2 = value >> 8 & 255UL;
 			ulong num3 = value >> 16 & 255UL;
 			ulong num4 = value >> 24 & 255UL;
@@ -82,14 +82,14 @@ namespace Pathfinding.Util
 			ulong num6 = value >> 40 & 255UL;
 			ulong num7 = value >> 48 & 255UL;
 			ulong num8 = value >> 56 & 255UL;
-			return num << 56 | num2 << 48 | num3 << 40 | num4 << 32 | num5 << 24 | num6 << 16 | num7 << 8 | num8 << 0;
+			return num << 56 | num2 << 48 | num3 << 40 | num4 << 32 | num5 << 24 | num6 << 16 | num7 << 8 | num8;
 		}
 
 		public byte[] ToByteArray()
 		{
 			byte[] array = new byte[16];
-			byte[] bytes = BitConverter.GetBytes(BitConverter.IsLittleEndian ? this._a : Guid.SwapEndianness(this._a));
-			byte[] bytes2 = BitConverter.GetBytes(BitConverter.IsLittleEndian ? this._b : Guid.SwapEndianness(this._b));
+			byte[] bytes = BitConverter.GetBytes((!BitConverter.IsLittleEndian) ? Guid.SwapEndianness(this._a) : this._a);
+			byte[] bytes2 = BitConverter.GetBytes((!BitConverter.IsLittleEndian) ? Guid.SwapEndianness(this._b) : this._b);
 			for (int i = 0; i < 8; i++)
 			{
 				array[i] = bytes[i];
@@ -137,7 +137,7 @@ namespace Pathfinding.Util
 			{
 				Guid.text = new StringBuilder();
 			}
-			object obj = Guid.text;
+			StringBuilder obj = Guid.text;
 			string result;
 			lock (obj)
 			{
@@ -148,25 +148,17 @@ namespace Pathfinding.Util
 			return result;
 		}
 
-		static Guid()
-		{
-			// Note: this type is marked as 'beforefieldinit'.
-			Guid guid = new Guid(new byte[16]);
-			Guid.zeroString = guid.ToString();
-			Guid.random = new Random();
-		}
-
 		private const string hex = "0123456789ABCDEF";
 
 		public static readonly Guid zero = new Guid(new byte[16]);
 
-		public static readonly string zeroString;
+		public static readonly string zeroString = new Guid(new byte[16]).ToString();
 
 		private readonly ulong _a;
 
 		private readonly ulong _b;
 
-		private static Random random;
+		private static Random random = new Random();
 
 		private static StringBuilder text;
 	}

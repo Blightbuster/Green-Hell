@@ -19,46 +19,37 @@ public class DynamicBoneCollider : DynamicBoneColliderBase
 			if (this.m_Bound == DynamicBoneColliderBase.Bound.Outside)
 			{
 				DynamicBoneCollider.OutsideSphere(ref particlePosition, particleRadius, base.transform.TransformPoint(this.m_Center), num);
+				return;
 			}
-			else
-			{
-				DynamicBoneCollider.InsideSphere(ref particlePosition, particleRadius, base.transform.TransformPoint(this.m_Center), num);
-			}
+			DynamicBoneCollider.InsideSphere(ref particlePosition, particleRadius, base.transform.TransformPoint(this.m_Center), num);
+			return;
 		}
 		else
 		{
 			Vector3 center = this.m_Center;
 			Vector3 center2 = this.m_Center;
-			DynamicBoneColliderBase.Direction direction = this.m_Direction;
-			if (direction != DynamicBoneColliderBase.Direction.X)
+			switch (this.m_Direction)
 			{
-				if (direction != DynamicBoneColliderBase.Direction.Y)
-				{
-					if (direction == DynamicBoneColliderBase.Direction.Z)
-					{
-						center.z -= num2;
-						center2.z += num2;
-					}
-				}
-				else
-				{
-					center.y -= num2;
-					center2.y += num2;
-				}
-			}
-			else
-			{
+			case DynamicBoneColliderBase.Direction.X:
 				center.x -= num2;
 				center2.x += num2;
+				break;
+			case DynamicBoneColliderBase.Direction.Y:
+				center.y -= num2;
+				center2.y += num2;
+				break;
+			case DynamicBoneColliderBase.Direction.Z:
+				center.z -= num2;
+				center2.z += num2;
+				break;
 			}
 			if (this.m_Bound == DynamicBoneColliderBase.Bound.Outside)
 			{
 				DynamicBoneCollider.OutsideCapsule(ref particlePosition, particleRadius, base.transform.TransformPoint(center), base.transform.TransformPoint(center2), num);
+				return;
 			}
-			else
-			{
-				DynamicBoneCollider.InsideCapsule(ref particlePosition, particleRadius, base.transform.TransformPoint(center), base.transform.TransformPoint(center2), num);
-			}
+			DynamicBoneCollider.InsideCapsule(ref particlePosition, particleRadius, base.transform.TransformPoint(center), base.transform.TransformPoint(center2), num);
+			return;
 		}
 	}
 
@@ -102,6 +93,7 @@ public class DynamicBoneCollider : DynamicBoneColliderBase
 			{
 				float num4 = Mathf.Sqrt(sqrMagnitude);
 				particlePosition = capsuleP0 + vector2 * (num / num4);
+				return;
 			}
 		}
 		else
@@ -115,6 +107,7 @@ public class DynamicBoneCollider : DynamicBoneColliderBase
 				{
 					float num5 = Mathf.Sqrt(sqrMagnitude3);
 					particlePosition = capsuleP1 + vector2 * (num / num5);
+					return;
 				}
 			}
 			else if (sqrMagnitude2 > 0f)
@@ -145,6 +138,7 @@ public class DynamicBoneCollider : DynamicBoneColliderBase
 			{
 				float num4 = Mathf.Sqrt(sqrMagnitude);
 				particlePosition = capsuleP0 + vector2 * (num / num4);
+				return;
 			}
 		}
 		else
@@ -158,6 +152,7 @@ public class DynamicBoneCollider : DynamicBoneColliderBase
 				{
 					float num5 = Mathf.Sqrt(sqrMagnitude3);
 					particlePosition = capsuleP1 + vector2 * (num / num5);
+					return;
 				}
 			}
 			else if (sqrMagnitude2 > 0f)
@@ -193,36 +188,27 @@ public class DynamicBoneCollider : DynamicBoneColliderBase
 		if (num <= 0f)
 		{
 			Gizmos.DrawWireSphere(base.transform.TransformPoint(this.m_Center), radius);
+			return;
 		}
-		else
+		Vector3 center = this.m_Center;
+		Vector3 center2 = this.m_Center;
+		switch (this.m_Direction)
 		{
-			Vector3 center = this.m_Center;
-			Vector3 center2 = this.m_Center;
-			DynamicBoneColliderBase.Direction direction = this.m_Direction;
-			if (direction != DynamicBoneColliderBase.Direction.X)
-			{
-				if (direction != DynamicBoneColliderBase.Direction.Y)
-				{
-					if (direction == DynamicBoneColliderBase.Direction.Z)
-					{
-						center.z -= num;
-						center2.z += num;
-					}
-				}
-				else
-				{
-					center.y -= num;
-					center2.y += num;
-				}
-			}
-			else
-			{
-				center.x -= num;
-				center2.x += num;
-			}
-			Gizmos.DrawWireSphere(base.transform.TransformPoint(center), radius);
-			Gizmos.DrawWireSphere(base.transform.TransformPoint(center2), radius);
+		case DynamicBoneColliderBase.Direction.X:
+			center.x -= num;
+			center2.x += num;
+			break;
+		case DynamicBoneColliderBase.Direction.Y:
+			center.y -= num;
+			center2.y += num;
+			break;
+		case DynamicBoneColliderBase.Direction.Z:
+			center.z -= num;
+			center2.z += num;
+			break;
 		}
+		Gizmos.DrawWireSphere(base.transform.TransformPoint(center), radius);
+		Gizmos.DrawWireSphere(base.transform.TransformPoint(center2), radius);
 	}
 
 	public float m_Radius = 0.5f;

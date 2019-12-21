@@ -24,11 +24,11 @@ public class CutscenePlayer : Being
 			{
 				if (i == 48)
 				{
-					this.m_Animator.SetBool("Cutscene" + ((!key) ? "0" : "1") + (i - 48).ToString(), true);
+					this.m_Animator.SetBool("Cutscene" + (key ? "1" : "0") + (i - 48).ToString(), true);
 				}
 				else
 				{
-					this.m_Animator.SetTrigger("Cutscene" + ((!key) ? "0" : "1") + (i - 48).ToString());
+					this.m_Animator.SetTrigger("Cutscene" + (key ? "1" : "0") + (i - 48).ToString());
 				}
 			}
 			if (i == 48 && Input.GetKeyUp((KeyCode)i))

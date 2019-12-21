@@ -14,8 +14,11 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			float num = this.m_AI.transform.position.Distance(Player.Get().transform.position);
-			if (num > this.m_AI.m_Params.m_AttackRange * 2f)
+			if (!this.m_AI.m_EnemyModule.m_Enemy)
+			{
+				return false;
+			}
+			if (this.m_AI.transform.position.Distance(this.m_AI.m_EnemyModule.m_Enemy.transform.position) > this.m_AI.m_Params.m_AttackRange * 2f)
 			{
 				return false;
 			}
@@ -23,14 +26,13 @@ namespace AIs
 			{
 				return base.GetDuration() < this.m_Length;
 			}
-			Being enemy = this.m_AI.m_EnemyModule.m_Enemy;
-			return enemy && this.m_AI.m_GoalsModule.m_PrevGoal != null && this.m_AI.m_GoalsModule.m_PrevGoal.m_Type == AIGoalType.JumpBack;
+			return this.m_AI.m_GoalsModule.m_PrevGoal != null && this.m_AI.m_GoalsModule.m_PrevGoal.m_Type == AIGoalType.JumpBack;
 		}
 
 		protected override void Prepare()
 		{
 			base.Prepare();
-			this.m_Strafe.SetupParams(float.MaxValue, (UnityEngine.Random.Range(0, 2) != 0) ? Direction.Right : Direction.Left);
+			this.m_Strafe.SetupParams(float.MaxValue, (UnityEngine.Random.Range(0, 2) == 0) ? Direction.Left : Direction.Right);
 			base.AddToPlan(this.m_Strafe);
 			this.m_Length = UnityEngine.Random.Range(this.m_MinDuration, this.m_MaxDuration);
 		}

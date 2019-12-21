@@ -26,8 +26,8 @@ namespace AIs
 		{
 			base.Prepare();
 			this.m_Lenght = UnityEngine.Random.Range(3f, 8f);
-			this.m_Range = (this.m_AI.transform.position - Player.Get().transform.position).magnitude + this.ADD_RANGE;
-			this.m_Direction = ((UnityEngine.Random.Range(0f, 1f) <= 0.5f) ? Direction.Right : Direction.Left);
+			this.m_Range = (this.m_AI.transform.position - this.m_AI.m_EnemyModule.m_Enemy.transform.position).magnitude + this.ADD_RANGE;
+			this.m_Direction = ((UnityEngine.Random.Range(0f, 1f) > 0.5f) ? Direction.Left : Direction.Right);
 			this.m_MoveBack = (UnityEngine.Random.Range(0f, 1f) > 0.5f);
 			this.m_MovingBack = false;
 			if (!this.SetupPath())
@@ -47,7 +47,7 @@ namespace AIs
 		protected virtual bool SetupPath()
 		{
 			Vector3 a = Vector3.zero;
-			Vector3 normalized2D = (this.m_AI.transform.position - Player.Get().transform.position).GetNormalized2D();
+			Vector3 normalized2D = (this.m_AI.transform.position - this.m_AI.m_EnemyModule.m_Enemy.transform.position).GetNormalized2D();
 			if (this.m_Direction == Direction.Right)
 			{
 				a = Vector3.Cross(Vector3.up, normalized2D);
@@ -58,7 +58,7 @@ namespace AIs
 			}
 			for (int i = 0; i < 10; i++)
 			{
-				Vector3 vector = Player.Get().transform.position + normalized2D * this.m_Range + a * 5f;
+				Vector3 vector = this.m_AI.m_EnemyModule.m_Enemy.transform.position + normalized2D * this.m_Range + a * 5f;
 				vector.y = MainLevel.GetTerrainY(vector);
 				NavMeshHit navMeshHit;
 				if (NavMesh.SamplePosition(vector, out navMeshHit, 1f, AIManager.s_WalkableAreaMask) && NavMesh.CalculatePath(this.m_AI.m_PathModule.m_Agent.nextPosition, navMeshHit.position, AIManager.s_WalkableAreaMask, this.m_TempPath) && this.m_TempPath.status == NavMeshPathStatus.PathComplete)
@@ -96,6 +96,7 @@ namespace AIs
 						if (this.SetupPath())
 						{
 							this.SetupAction();
+							return;
 						}
 					}
 				}
@@ -105,17 +106,14 @@ namespace AIs
 					if (this.SetupPath())
 					{
 						this.SetupAction();
+						return;
 					}
 				}
-				else
+				else if (Vector3.Angle((this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) >= 10f)
 				{
-					Vector3 normalized2D = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
-					float num = Vector3.Angle(normalized2D, this.m_AI.transform.forward.GetNormalized2D());
-					if (num >= 10f)
-					{
-						this.m_HumanRotateTo.SetupParams(Player.Get().transform.position, 10f);
-						base.StartAction(this.m_HumanRotateTo);
-					}
+					this.m_HumanRotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.transform.position, 10f);
+					base.StartAction(this.m_HumanRotateTo);
+					return;
 				}
 			}
 			else if (action.GetType() == typeof(HumanRotateTo) && UnityEngine.Random.Range(0f, 1f) < 0.5f)

@@ -45,17 +45,17 @@ public class HUDAI3D : HUDBase
 		foreach (GameObject gameObject in this.m_AIs.Keys)
 		{
 			HUDAI3D.AIData aidata2 = this.m_AIs[gameObject];
-			Vector3 position = gameObject.transform.position;
-			position = Camera.main.WorldToViewportPoint(position);
-			position = Camera.main.ViewportToScreenPoint(position);
-			if (position.z <= 0f)
+			Vector3 vector = gameObject.transform.position;
+			vector = CameraManager.Get().m_MainCamera.WorldToViewportPoint(vector);
+			vector = CameraManager.Get().m_MainCamera.ViewportToScreenPoint(vector);
+			if (vector.z <= 0f)
 			{
 				aidata2.icon.gameObject.SetActive(false);
 			}
 			else
 			{
 				aidata2.icon.gameObject.SetActive(true);
-				aidata2.icon.transform.position = position;
+				aidata2.icon.transform.position = vector;
 				Color color = aidata2.icon.color;
 				float num = Vector3.Distance(gameObject.transform.position, Player.Get().transform.position);
 				color.a = CJTools.Math.GetProportionalClamp(0.6f, 1f, num, 10f, 0f);
@@ -77,15 +77,15 @@ public class HUDAI3D : HUDBase
 		{
 			return;
 		}
-		HUDAI3D.AIData value = default(HUDAI3D.AIData);
-		value.icon = UnityEngine.Object.Instantiate<GameObject>(this.m_IconPrefab, base.transform).GetComponent<RawImage>();
-		value.text = value.icon.transform.Find("Name").GetComponent<Text>();
-		value.text.text = text;
-		value.dist = value.icon.transform.Find("Dist").GetComponent<Text>();
-		value.dist.gameObject.SetActive(base.enabled);
-		value.icon.gameObject.SetActive(base.enabled);
-		value.text.gameObject.SetActive(base.enabled);
-		this.m_AIs.Add(obj, value);
+		HUDAI3D.AIData aidata = default(HUDAI3D.AIData);
+		aidata.icon = UnityEngine.Object.Instantiate<GameObject>(this.m_IconPrefab, base.transform).GetComponent<RawImage>();
+		aidata.text = aidata.icon.transform.Find("Name").GetComponent<Text>();
+		aidata.text.text = text;
+		aidata.dist = aidata.icon.transform.Find("Dist").GetComponent<Text>();
+		aidata.dist.gameObject.SetActive(base.enabled);
+		aidata.icon.gameObject.SetActive(base.enabled);
+		aidata.text.gameObject.SetActive(base.enabled);
+		this.m_AIs.Add(obj, aidata);
 	}
 
 	public void RemoveAI(GameObject obj)

@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MenuDebugAI : MenuScreen
+public class MenuDebugAI : MenuDebugScreen
 {
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.m_List.SetFocus(true);
@@ -24,11 +24,10 @@ public class MenuDebugAI : MenuScreen
 			return;
 		}
 		this.m_List.Clear();
-		for (int i = 0; i < 40; i++)
+		for (int i = 0; i < 44; i++)
 		{
 			AI.AIID aiid = (AI.AIID)i;
-			string text = aiid.ToString();
-			if (text.ToLower().Contains(this.m_LastField))
+			if (aiid.ToString().ToLower().Contains(this.m_LastField))
 			{
 				this.m_List.AddElement(aiid.ToString(), -1);
 			}
@@ -37,24 +36,22 @@ public class MenuDebugAI : MenuScreen
 		this.m_List.SetSelectionIndex(0);
 	}
 
-	protected override void OnHide()
+	public override void OnHide()
 	{
 		base.OnHide();
 		if (!ItemsManager.Get())
 		{
 			return;
 		}
-		if (this.m_List.GetSelectionIndex() < 0 || this.m_List.GetSelectionIndex() >= 40)
+		if (this.m_List.GetSelectionIndex() < 0 || this.m_List.GetSelectionIndex() >= 44)
 		{
 			AIManager.Get().m_DebugSpawnID = AI.AIID.None;
+			return;
 		}
-		else
+		string selectedElementText = this.m_List.GetSelectedElementText();
+		if (selectedElementText != string.Empty)
 		{
-			string selectedElementText = this.m_List.GetSelectedElementText();
-			if (selectedElementText != string.Empty)
-			{
-				AIManager.Get().m_DebugSpawnID = (AI.AIID)Enum.Parse(typeof(AI.AIID), selectedElementText);
-			}
+			AIManager.Get().m_DebugSpawnID = (AI.AIID)Enum.Parse(typeof(AI.AIID), selectedElementText);
 		}
 	}
 

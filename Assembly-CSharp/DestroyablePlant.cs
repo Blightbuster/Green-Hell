@@ -16,8 +16,7 @@ public class DestroyablePlant : MonoBehaviour
 		{
 			DestroyablePlant.m_Layer = LayerMask.NameToLayer("SmallPlant");
 		}
-		List<MeshCollider> list = new List<MeshCollider>();
-		Dictionary<ItemReplacer, ItemReplacer> dictionary = new Dictionary<ItemReplacer, ItemReplacer>();
+		new Dictionary<ItemReplacer, ItemReplacer>();
 		for (int i = 0; i < this.m_Chunks.Count; i++)
 		{
 			if (!(this.m_Chunks[i] == null) && this.m_Chunks[i].activeSelf)
@@ -26,45 +25,24 @@ public class DestroyablePlant : MonoBehaviour
 				if (component)
 				{
 					ItemID item_id = (ItemID)Enum.Parse(typeof(ItemID), component.m_InfoName);
-					ItemsManager.Get().CreateItem(item_id, true, this.m_Chunks[i].transform);
+					ItemsManager.Get().CreateItem(item_id, true, this.m_Chunks[i].transform.position + component.m_BoxCollider.center, this.m_Chunks[i].transform.rotation);
 				}
 				else
 				{
-					GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_Chunks[i], this.m_Chunks[i].transform.position, this.m_Chunks[i].transform.rotation);
-					if (!this.m_DontDestroy)
-					{
-						gameObject.AddComponent<TinyPhysicsObject>();
-					}
-					gameObject.AddComponent<Rigidbody>();
-					MeshCollider meshCollider = gameObject.AddComponent<MeshCollider>();
-					meshCollider.convex = true;
-					this.ReplaceShader(gameObject);
-					ObjectMaterial objectMaterial = gameObject.AddComponent<ObjectMaterial>();
-					objectMaterial.m_ObjectMaterial = EObjectMaterial.Bush;
-					gameObject.layer = DestroyablePlant.m_Layer;
-					list.Add(meshCollider);
-					if (this.m_CopyScripts)
-					{
-						this.CopyComponents(this.m_Chunks[i], gameObject);
-					}
 					ItemReplacer component2 = this.m_Chunks[i].GetComponent<ItemReplacer>();
-					ItemReplacer component3 = gameObject.GetComponent<ItemReplacer>();
-					if (component2 && component3)
+					if (component2)
 					{
-						dictionary[component2] = component3;
+						component2.m_FromPlant = true;
 					}
-					this.DisableCollisionWithPlayer(meshCollider);
+					DestroyablePlantChunk component3 = this.m_Chunks[i].GetComponent<DestroyablePlantChunk>();
+					if (component3 != null)
+					{
+						component3.Init(this.m_DontDestroy, this.m_ActivateScripts, DestroyablePlant.m_Layer);
+						component3.OnPlantDestroy();
+					}
 				}
 			}
 		}
-		for (int j = 0; j < list.Count; j++)
-		{
-			for (int k = j + 1; k < list.Count; k++)
-			{
-				Physics.IgnoreCollision(list[j], list[k], true);
-			}
-		}
-		this.SetupItemReplacer(dictionary);
 	}
 
 	private void DisableCollisionWithPlayer(Collider mc)
@@ -91,12 +69,7 @@ public class DestroyablePlant : MonoBehaviour
 		}
 		if (this.m_PlayerCollider == null)
 		{
-			this.m_TempListCollider.Clear();
-			Player.Get().GetComponents<Collider>(this.m_TempListCollider);
-			if (this.m_TempListCollider.Count > 0)
-			{
-				this.m_PlayerCollider = this.m_TempListCollider[0];
-			}
+			this.m_PlayerCollider = Player.Get().m_Collider;
 		}
 		if (this.m_PlayerCollider)
 		{
@@ -109,7 +82,10 @@ public class DestroyablePlant : MonoBehaviour
 		foreach (ItemReplacer itemReplacer in ir_map.Keys)
 		{
 			ItemReplacer itemReplacer2 = ir_map[itemReplacer];
-			itemReplacer2.m_DestroyOnReplace = new List<GameObject>();
+			if (itemReplacer2.m_DestroyOnReplace == null)
+			{
+				itemReplacer2.m_DestroyOnReplace = new List<GameObject>();
+			}
 			for (int i = 0; i < itemReplacer.m_DestroyOnReplace.Count; i++)
 			{
 				GameObject item = this.FindNewByName(itemReplacer.m_DestroyOnReplace[i].name, ir_map);
@@ -144,22 +120,29 @@ public class DestroyablePlant : MonoBehaviour
 
 	private void CopyComponents(GameObject source, GameObject destination)
 	{
-		MonoBehaviour[] components = destination.GetComponents<MonoBehaviour>();
-		foreach (MonoBehaviour obj in components)
+		foreach (MonoBehaviour monoBehaviour in destination.GetComponents<MonoBehaviour>())
 		{
-			UnityEngine.Object.Destroy(obj);
-		}
-		components = source.GetComponents<MonoBehaviour>();
-		foreach (MonoBehaviour original in components)
-		{
-			MonoBehaviour monoBehaviour = (MonoBehaviour)this.CopyComponent(original, destination);
-			if (this.m_ActivateScripts)
+			if (monoBehaviour.CanCopy())
 			{
-				monoBehaviour.enabled = true;
+				UnityEngine.Object.Destroy(monoBehaviour);
 			}
-			if (typeof(Trigger).IsAssignableFrom(monoBehaviour.GetType()))
+		}
+		foreach (MonoBehaviour monoBehaviour2 in source.GetComponents<MonoBehaviour>())
+		{
+			if (monoBehaviour2.CanCopy())
 			{
-				((Trigger)monoBehaviour).m_Collider = monoBehaviour.gameObject.GetComponent<Collider>();
+				MonoBehaviour monoBehaviour3 = (MonoBehaviour)this.CopyComponent(monoBehaviour2, destination);
+				if (!(monoBehaviour3 == null))
+				{
+					if (this.m_ActivateScripts)
+					{
+						monoBehaviour3.enabled = true;
+					}
+					if (typeof(Trigger).IsAssignableFrom(monoBehaviour3.GetType()))
+					{
+						((Trigger)monoBehaviour3).m_Collider = monoBehaviour3.gameObject.GetComponent<Collider>();
+					}
+				}
 			}
 		}
 	}
@@ -168,17 +151,19 @@ public class DestroyablePlant : MonoBehaviour
 	{
 		Type type = original.GetType();
 		Component component = destination.AddComponent(type);
-		FieldInfo[] fields = type.GetFields();
-		foreach (FieldInfo fieldInfo in fields)
+		if (component != null)
 		{
-			fieldInfo.SetValue(component, fieldInfo.GetValue(original));
+			foreach (FieldInfo fieldInfo in type.GetFields())
+			{
+				fieldInfo.SetValue(component, fieldInfo.GetValue(original));
+			}
 		}
 		return component;
 	}
 
 	public List<GameObject> m_Chunks = new List<GameObject>();
 
-	private static Shader s_StandardShader;
+	private static Shader s_StandardShader = null;
 
 	private static int m_Layer = -1;
 

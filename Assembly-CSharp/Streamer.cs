@@ -12,16 +12,37 @@ public class Streamer : MonoBehaviour
 	{
 		get
 		{
-			return (this.tilesToLoad <= 0) ? 1f : ((float)this.tilesLoaded / (float)this.tilesToLoad);
+			if (this.tilesToLoad <= 0)
+			{
+				return 1f;
+			}
+			return (float)this.tilesLoaded / (float)this.tilesToLoad;
 		}
 	}
 
 	private void Awake()
 	{
-		int qualityLevel = QualitySettings.GetQualityLevel();
+		this.SetQualitySettingsRanges(-1);
+		this.ParseDebugScript();
+		if (this.spawnedPlayer)
+		{
+			this.player = null;
+		}
+		this.xPos = int.MinValue;
+		this.yPos = int.MinValue;
+		this.zPos = int.MinValue;
+	}
+
+	public void SetQualitySettingsRanges(int ql = -1)
+	{
+		int num = QualitySettings.GetQualityLevel();
+		if (ql >= 0)
+		{
+			num = ql;
+		}
 		if (base.gameObject.name == "_Streamer_Major_medium")
 		{
-			switch (qualityLevel)
+			switch (num)
 			{
 			case 0:
 				this.loadingRange.Set(1f, 0f, 1f);
@@ -47,7 +68,7 @@ public class Streamer : MonoBehaviour
 		}
 		else if (base.gameObject.name == "_Streamer_Minor_big")
 		{
-			switch (qualityLevel)
+			switch (num)
 			{
 			case 0:
 				this.loadingRange.Set(1f, 0f, 1f);
@@ -73,7 +94,7 @@ public class Streamer : MonoBehaviour
 		}
 		else if (base.gameObject.name == "_Streamer_Minor_small")
 		{
-			switch (qualityLevel)
+			switch (num)
 			{
 			case 0:
 				this.loadingRange.Set(1f, 0f, 1f);
@@ -99,38 +120,37 @@ public class Streamer : MonoBehaviour
 		}
 		else if (base.gameObject.name == "_Streamer_Minor_horizon")
 		{
-			switch (qualityLevel)
+			switch (num)
 			{
 			case 0:
 				this.loadingRange.Set(1f, 0f, 1f);
 				this.deloadingRange.Set(1f, 0f, 1f);
 				break;
 			case 1:
-				this.loadingRange.Set(2f, 0f, 2f);
-				this.deloadingRange.Set(2f, 0f, 2f);
+				this.loadingRange.Set(1f, 0f, 1f);
+				this.deloadingRange.Set(1f, 0f, 1f);
 				break;
 			case 2:
-				this.loadingRange.Set(4f, 0f, 4f);
-				this.deloadingRange.Set(4f, 0f, 4f);
+				this.loadingRange.Set(1f, 0f, 1f);
+				this.deloadingRange.Set(1f, 0f, 1f);
 				break;
 			case 3:
-				this.loadingRange.Set(6f, 0f, 6f);
-				this.deloadingRange.Set(6f, 0f, 6f);
+				this.loadingRange.Set(1f, 0f, 1f);
+				this.deloadingRange.Set(1f, 0f, 1f);
 				break;
 			case 4:
-				this.loadingRange.Set(6f, 0f, 6f);
-				this.deloadingRange.Set(6f, 0f, 6f);
+				this.loadingRange.Set(1f, 0f, 1f);
+				this.deloadingRange.Set(1f, 0f, 1f);
 				break;
 			}
 		}
-		this.ParseDebugScript();
-		if (this.spawnedPlayer)
-		{
-			this.player = null;
-		}
-		this.xPos = int.MinValue;
-		this.yPos = int.MinValue;
-		this.zPos = int.MinValue;
+		Streamer.s_DistMul += 1f;
+	}
+
+	public void SetRanges(float loading, float deloading)
+	{
+		this.loadingRange.Set(loading, 0f, loading);
+		this.deloadingRange.Set(deloading, 0f, deloading);
 	}
 
 	private void ParseDebugScript()
@@ -176,11 +196,9 @@ public class Streamer : MonoBehaviour
 			this.zRange = this.zLimity + Mathf.Abs(this.zLimitx) + 1;
 			base.StartCoroutine(this.PositionChecker());
 			Streamer.canUnload = true;
+			return;
 		}
-		else
-		{
-			Debug.LogError("No scene collection in streamer");
-		}
+		Debug.LogError("No scene collection in streamer");
 	}
 
 	private int mod(int x, int m)
@@ -215,6 +233,10 @@ public class Streamer : MonoBehaviour
 
 	private void Update()
 	{
+		if (GreenHellGame.Instance.m_LoadState == GreenHellGame.LoadState.ReturnToMainMenuRequest || GreenHellGame.Instance.m_LoadState == GreenHellGame.LoadState.MenuLoading)
+		{
+			return;
+		}
 		this.LoadLevelAsyncManage();
 	}
 
@@ -230,8 +252,12 @@ public class Streamer : MonoBehaviour
 			{
 				this.sceneLoadFramesNextWaited = false;
 				this.sceneLoadFrameNext = this.sceneLoadWaitFrames;
-				while (this.currentlySceneLoading < this.maxParallelSceneLoading && this.scenesToLoad.Count > 0)
+				while (this.currentlySceneLoading < this.maxParallelSceneLoading)
 				{
+					if (this.scenesToLoad.Count <= 0)
+					{
+						return;
+					}
 					SceneSplit sceneSplit = this.scenesToLoad[0];
 					this.scenesToLoad.Remove(sceneSplit);
 					this.currentlySceneLoading++;
@@ -248,40 +274,34 @@ public class Streamer : MonoBehaviour
 
 	private IEnumerator PositionChecker()
 	{
-		for (;;)
-		{
-			if (this.spawnedPlayer && this.player == null && !string.IsNullOrEmpty(this.playerTag))
-			{
-				GameObject gameObject = GameObject.FindGameObjectWithTag(this.playerTag);
-				if (gameObject != null)
-				{
-					this.player = gameObject.transform;
-				}
-			}
-			if (this.streamerActive && this.player != null)
-			{
-				this.CheckPositionTiles();
-			}
-			else if (this.loadedScenes.Count > 0)
-			{
-				this.UnloadAllScenes();
-				this.xPos = int.MinValue;
-				this.yPos = int.MinValue;
-				this.zPos = int.MinValue;
-			}
-			yield return new WaitForSeconds(this.positionCheckTime);
-		}
-		yield break;
+		/*
+An exception occurred when decompiling this method (060028C1)
+
+ICSharpCode.Decompiler.DecompilerException: Error decompiling System.Collections.IEnumerator Streamer::PositionChecker()
+ ---> System.ArgumentOutOfRangeException: Der Index lag außerhalb des Bereichs. Er darf nicht negativ und kleiner als die Sammlung sein.
+Parametername: index
+   bei System.ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+   bei ICSharpCode.Decompiler.ILAst.StateRangeAnalysis.CreateLabelRangeMapping(List`1 body, Int32 pos, Int32 bodyLength, LabelRangeMapping result, Boolean onlyInitialLabels) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\StateRange.cs:Zeile 326.
+   bei ICSharpCode.Decompiler.ILAst.MicrosoftYieldReturnDecompiler.AnalyzeMoveNext() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\MicrosoftYieldReturnDecompiler.cs:Zeile 347.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 93.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, List`1 list_ILNode, Func`2 getILInlining, List`1 listExpr, List`1 listBlock, Dictionary`2 labelRefCount) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 69.
+   bei ICSharpCode.Decompiler.ILAst.ILAstOptimizer.Optimize(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, ILAstOptimizationStep abortBeforeStep) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\ILAstOptimizer.cs:Zeile 233.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(IEnumerable`1 parameters, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 118.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 88.
+   --- Ende der internen Ausnahmestapelüberwachung ---
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 92.
+   bei ICSharpCode.Decompiler.Ast.AstBuilder.CreateMethodBody(MethodDef method, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, MethodKind methodKind, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstBuilder.cs:Zeile 1427.
+*/;
 	}
 
 	public void CheckPositionTiles()
 	{
-		Vector3 a = this.player.position;
-		a -= this.currentMove;
-		int num = (this.sceneCollection.xSize == 0) ? 0 : Mathf.FloorToInt(a.x / (float)this.sceneCollection.xSize);
-		int num2 = (this.sceneCollection.ySize == 0) ? 0 : Mathf.FloorToInt(a.y / (float)this.sceneCollection.ySize);
-		int num3 = (this.sceneCollection.zSize == 0) ? 0 : Mathf.FloorToInt(a.z / (float)this.sceneCollection.zSize);
-		if (num != this.xPos || num2 != this.yPos || num3 != this.zPos)
+		Vector3 vector = this.player.position;
+		vector -= this.currentMove;
+		int num = (this.sceneCollection.xSize != 0) ? Mathf.FloorToInt(vector.x / (float)this.sceneCollection.xSize) : 0;
+		int num2 = (this.sceneCollection.ySize != 0) ? Mathf.FloorToInt(vector.y / (float)this.sceneCollection.ySize) : 0;
+		int num3 = (this.sceneCollection.zSize != 0) ? Mathf.FloorToInt(vector.z / (float)this.sceneCollection.zSize) : 0;
+		if (num != this.xPos || num2 != this.yPos || num3 != this.zPos || Streamer.s_DistMul != this.m_LastDistMul)
 		{
 			this.xPos = num;
 			this.yPos = num2;
@@ -293,6 +313,7 @@ public class Streamer : MonoBehaviour
 				this.worldMover.CheckMoverDistance(num, num2, num3);
 			}
 		}
+		this.m_LastDistMul = Streamer.s_DistMul;
 	}
 
 	private void SceneLoading()
@@ -530,31 +551,32 @@ public class Streamer : MonoBehaviour
 		{
 			Streamer.canUnload = false;
 			streamer.StartCoroutine(streamer.UnloadAssetsWait());
+			return;
 		}
-		else
-		{
-			Streamer.unloadNext = true;
-		}
+		Streamer.unloadNext = true;
 	}
 
 	public IEnumerator UnloadAssetsWait()
 	{
 		do
 		{
-			float time_to_next = Streamer.waitTillNextUnload;
-			if (this.CanUnload() && (MainLevel.Instance.m_UnusedAssetsAsyncOperation == null || MainLevel.Instance.m_UnusedAssetsAsyncOperation.isDone))
+			float seconds = Streamer.waitTillNextUnload;
+			if (this.CanUnload() && (MainLevel.Instance.m_UnusedAssetsAsyncOperation == null || MainLevel.Instance.m_UnusedAssetsAsyncOperation.isDone) && (this.IsUnloadConvenient() || Streamer.unloadDelay > Streamer.convenientUnloadDelayMax))
 			{
 				Streamer.unloadNext = false;
 				MainLevel.Instance.m_UnusedAssetsAsyncOperation = Resources.UnloadUnusedAssets();
+				Streamer.unloadDelay = 0f;
 			}
 			else
 			{
-				time_to_next = 1f;
+				Streamer.unloadDelay += 1f;
+				seconds = 1f;
 			}
-			yield return new WaitForSeconds(time_to_next);
+			yield return new WaitForSeconds(seconds);
 		}
 		while (Streamer.unloadNext);
 		Streamer.canUnload = true;
+		yield break;
 		yield break;
 	}
 
@@ -571,7 +593,7 @@ public class Streamer : MonoBehaviour
 			sceneSplit.posX = num;
 			sceneSplit.posY = num2;
 			sceneSplit.posZ = num3;
-			sceneSplit.sceneName = text.Replace(".unity", string.Empty);
+			sceneSplit.sceneName = text.Replace(".unity", "");
 			this.scenesArray.Add(new int[]
 			{
 				num,
@@ -586,23 +608,22 @@ public class Streamer : MonoBehaviour
 		posX = 0;
 		posY = 0;
 		posZ = 0;
-		string[] array = sceneName.Replace(sceneCollection.prefixScene, string.Empty).Replace(".unity", string.Empty).Split(new char[]
+		foreach (string text in sceneName.Replace(sceneCollection.prefixScene, "").Replace(".unity", "").Split(new char[]
 		{
 			'_'
-		}, StringSplitOptions.RemoveEmptyEntries);
-		foreach (string text in array)
+		}, StringSplitOptions.RemoveEmptyEntries))
 		{
 			if (text[0] == 'x')
 			{
-				posX = int.Parse(text.Replace("x", string.Empty));
+				posX = int.Parse(text.Replace("x", ""));
 			}
 			if (text[0] == 'y')
 			{
-				posY = int.Parse(text.Replace("y", string.Empty));
+				posY = int.Parse(text.Replace("y", ""));
 			}
 			if (text[0] == 'z')
 			{
-				posZ = int.Parse(text.Replace("z", string.Empty));
+				posZ = int.Parse(text.Replace("z", ""));
 			}
 		}
 	}
@@ -612,7 +633,7 @@ public class Streamer : MonoBehaviour
 		if (this.sceneCollection)
 		{
 			Gizmos.color = this.sceneCollection.color;
-			Vector3 vector = new Vector3((float)((this.sceneCollection.xSize != 0) ? this.sceneCollection.xSize : 2), (float)((this.sceneCollection.ySize != 0) ? this.sceneCollection.ySize : 2), (float)((this.sceneCollection.zSize != 0) ? this.sceneCollection.zSize : 2));
+			Vector3 vector = new Vector3((float)((this.sceneCollection.xSize == 0) ? 2 : this.sceneCollection.xSize), (float)((this.sceneCollection.ySize == 0) ? 2 : this.sceneCollection.ySize), (float)((this.sceneCollection.zSize == 0) ? 2 : this.sceneCollection.zSize));
 			for (int i = -(int)this.loadingRange.x + this.xPos; i <= (int)this.loadingRange.x + this.xPos; i++)
 			{
 				for (int j = -(int)this.loadingRange.y + this.yPos; j <= (int)this.loadingRange.y + this.yPos; j++)
@@ -644,6 +665,11 @@ public class Streamer : MonoBehaviour
 	private bool CanUnload()
 	{
 		return MainLevel.Instance.m_SceneAsyncOperation.Count == 0;
+	}
+
+	private bool IsUnloadConvenient()
+	{
+		return (MenuInGameManager.Get() && MenuInGameManager.Get().IsAnyScreenVisible()) || (Inventory3DManager.Get() && Inventory3DManager.Get().IsActive()) || (CraftingManager.Get() && CraftingManager.Get().IsActive()) || (HUDWheel.Get() && HUDWheel.Get().enabled) || (Player.Get() && Player.Get().GetRotationBlocked());
 	}
 
 	private bool CanLoad()
@@ -688,8 +714,8 @@ public class Streamer : MonoBehaviour
 	[Tooltip("Number of empty frames between loading actions.")]
 	public int sceneLoadWaitFrames = 2;
 
-	[Tooltip("If you want to fix small holes from LODs system at unity terrain borders, drag and drop object here from scene hierarchy that contains our \"Terrain Neighbours\" script.")]
 	[Space(10f)]
+	[Tooltip("If you want to fix small holes from LODs system at unity terrain borders, drag and drop object here from scene hierarchy that contains our \"Terrain Neighbours\" script.")]
 	public TerrainNeighbours terrainNeighbours;
 
 	[Space(10f)]
@@ -767,7 +793,15 @@ public class Streamer : MonoBehaviour
 
 	private static bool canUnload = true;
 
-	private static float waitTillNextUnload = 20f;
+	private static float waitTillNextUnload = 10f;
 
-	private static bool unloadNext;
+	private static bool unloadNext = false;
+
+	public static float s_DistMul = 1f;
+
+	private float m_LastDistMul = 1f;
+
+	private static readonly float convenientUnloadDelayMax = 20f;
+
+	private static float unloadDelay = 0f;
 }

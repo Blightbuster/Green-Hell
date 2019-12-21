@@ -56,19 +56,17 @@ public class CutscenePlayerLookController : CutscenePlayerController
 		{
 			vector.Normalize();
 			this.m_LookDev.x = Mathf.Acos(vector.z) * 57.29578f;
-			this.m_LookDev.x = this.m_LookDev.x + ((vector.x >= 0f) ? 0f : (180f - this.m_LookDev.x));
+			this.m_LookDev.x = this.m_LookDev.x + ((vector.x < 0f) ? (180f - this.m_LookDev.x) : 0f);
 		}
 		vector = dir;
 		vector.x = 0f;
 		if (vector.magnitude == 0f)
 		{
 			this.m_LookDev.y = 0f;
+			return;
 		}
-		else
-		{
-			vector.Normalize();
-			this.m_LookDev.y = Mathf.Asin(vector.y) * 57.29578f * Mathf.Sign(vector.y);
-		}
+		vector.Normalize();
+		this.m_LookDev.y = Mathf.Asin(vector.y) * 57.29578f * Mathf.Sign(vector.y);
 	}
 
 	private bool UpdateLookAtObject()
@@ -89,14 +87,13 @@ public class CutscenePlayerLookController : CutscenePlayerController
 		float num = Mathf.Sqrt(vector.x * vector.x + vector.z * vector.z);
 		if (num == 0f)
 		{
-			zero.y = ((vector.y <= 0f) ? -90f : 90f);
+			zero.y = ((vector.y > 0f) ? 90f : -90f);
 		}
 		else
 		{
 			zero.y = 57.29578f * Mathf.Atan(vector.y / num);
 		}
-		float num2 = Mathf.Abs(zero.x - this.m_LookDev.x);
-		if (num2 > 180f)
+		if (Mathf.Abs(zero.x - this.m_LookDev.x) > 180f)
 		{
 			if (zero.x > this.m_LookDev.x)
 			{
@@ -117,9 +114,9 @@ public class CutscenePlayerLookController : CutscenePlayerController
 		return true;
 	}
 
-	public Vector2 m_LookDev = default(Vector2);
+	public Vector2 m_LookDev;
 
-	public Vector2 m_WantedLookDev = default(Vector2);
+	public Vector2 m_WantedLookDev;
 
 	public float m_LookDevSpeed = 1f;
 

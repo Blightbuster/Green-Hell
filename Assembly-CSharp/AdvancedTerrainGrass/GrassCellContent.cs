@@ -39,7 +39,7 @@ namespace AdvancedTerrainGrass
 			this.matrixBuffer.SetData(this.v_matrices);
 			this.block.Clear();
 			this.block.SetBuffer(this.GrassMatrixBufferPID, this.matrixBuffer);
-			uint num = (!(this.v_mesh != null)) ? 0u : this.v_mesh.GetIndexCount(0);
+			uint num = (this.v_mesh != null) ? this.v_mesh.GetIndexCount(0) : 0u;
 			this.args[0] = num;
 			this.args[1] = (uint)this.v_matrices.Length;
 			this.argsBuffer.SetData(this.args);
@@ -51,6 +51,10 @@ namespace AdvancedTerrainGrass
 
 		public void DrawCellContent_Delegated(Camera CameraInWichGrassWillBeDrawn, int CameraLayer)
 		{
+			if (this.v_mesh == null)
+			{
+				return;
+			}
 			Graphics.DrawMeshInstancedIndirect(this.v_mesh, 0, this.v_mat, this.bounds, this.argsBuffer, 0, this.block, this.ShadowCastingMode, true, CameraLayer, CameraInWichGrassWillBeDrawn);
 		}
 
@@ -88,7 +92,7 @@ namespace AdvancedTerrainGrass
 
 		public uint[] args = new uint[5];
 
-		private Bounds bounds = default(Bounds);
+		private Bounds bounds;
 
 		public MaterialPropertyBlock block;
 	}

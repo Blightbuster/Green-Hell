@@ -24,10 +24,10 @@ public class BlockManager : VersionedMonoBehaviour
 		}
 		for (int i = 0; i < list.Count; i++)
 		{
-			SingleNodeBlocker objA = list[i];
+			SingleNodeBlocker singleNodeBlocker = list[i];
 			for (int j = 0; j < selector.Count; j++)
 			{
-				if (object.ReferenceEquals(objA, selector[j]))
+				if (singleNodeBlocker == selector[j])
 				{
 					return true;
 				}
@@ -45,11 +45,11 @@ public class BlockManager : VersionedMonoBehaviour
 		}
 		for (int i = 0; i < list.Count; i++)
 		{
-			SingleNodeBlocker objA = list[i];
+			SingleNodeBlocker singleNodeBlocker = list[i];
 			bool flag = false;
 			for (int j = 0; j < selector.Count; j++)
 			{
-				if (object.ReferenceEquals(objA, selector[j]))
+				if (singleNodeBlocker == selector[j])
 				{
 					flag = true;
 					break;
@@ -70,9 +70,7 @@ public class BlockManager : VersionedMonoBehaviour
 			List<SingleNodeBlocker> list;
 			if (!this.blocked.TryGetValue(node, out list))
 			{
-				List<SingleNodeBlocker> list2 = ListPool<SingleNodeBlocker>.Claim();
-				this.blocked[node] = list2;
-				list = list2;
+				list = (this.blocked[node] = ListPool<SingleNodeBlocker>.Claim());
 			}
 			list.Add(blocker);
 		}, null));
@@ -105,6 +103,8 @@ public class BlockManager : VersionedMonoBehaviour
 
 	public class TraversalProvider : ITraversalProvider
 	{
+		public BlockManager.BlockMode mode { get; private set; }
+
 		public TraversalProvider(BlockManager blockManager, BlockManager.BlockMode mode, List<SingleNodeBlocker> selector)
 		{
 			if (blockManager == null)
@@ -119,8 +119,6 @@ public class BlockManager : VersionedMonoBehaviour
 			this.mode = mode;
 			this.selector = selector;
 		}
-
-		public BlockManager.BlockMode mode { get; private set; }
 
 		public bool CanTraverse(Path path, GraphNode node)
 		{

@@ -4,13 +4,6 @@ namespace Pathfinding
 {
 	public class BinaryHeap
 	{
-		public BinaryHeap(int capacity)
-		{
-			capacity = BinaryHeap.RoundUpToNextMultipleMod1(capacity);
-			this.heap = new BinaryHeap.Tuple[capacity];
-			this.numberOfItems = 0;
-		}
-
 		public bool isEmpty
 		{
 			get
@@ -22,6 +15,13 @@ namespace Pathfinding
 		private static int RoundUpToNextMultipleMod1(int v)
 		{
 			return v + (4 - (v - 1) % 4) % 4;
+		}
+
+		public BinaryHeap(int capacity)
+		{
+			capacity = BinaryHeap.RoundUpToNextMultipleMod1(capacity);
+			this.heap = new BinaryHeap.Tuple[capacity];
+			this.numberOfItems = 0;
 		}
 
 		public void Clear()
@@ -41,8 +41,7 @@ namespace Pathfinding
 
 		private void Expand()
 		{
-			int num = Math.Max(this.heap.Length + 4, (int)Math.Round((double)((float)this.heap.Length * this.growthFactor)));
-			num = BinaryHeap.RoundUpToNextMultipleMod1(num);
+			int num = BinaryHeap.RoundUpToNextMultipleMod1(Math.Max(this.heap.Length + 4, (int)Math.Round((double)((float)this.heap.Length * this.growthFactor))));
 			if (num > 262144)
 			{
 				throw new Exception("Binary Heap Size really large (2^18). A heap size this large is probably the cause of pathfinding running in an infinite loop. \nRemove this check (in BinaryHeap.cs) if you are sure that it is not caused by a bug");
@@ -105,17 +104,17 @@ namespace Pathfinding
 						num3 = f;
 						num = num4;
 					}
-					if (num4 + 1 < this.numberOfItems && (f2 < num3 || (f2 == num3 && this.heap[num4 + 1].node.G < ((num != num2) ? this.heap[num].node.G : g))))
+					if (num4 + 1 < this.numberOfItems && (f2 < num3 || (f2 == num3 && this.heap[num4 + 1].node.G < ((num == num2) ? g : this.heap[num].node.G))))
 					{
 						num3 = f2;
 						num = num4 + 1;
 					}
-					if (num4 + 2 < this.numberOfItems && (f3 < num3 || (f3 == num3 && this.heap[num4 + 2].node.G < ((num != num2) ? this.heap[num].node.G : g))))
+					if (num4 + 2 < this.numberOfItems && (f3 < num3 || (f3 == num3 && this.heap[num4 + 2].node.G < ((num == num2) ? g : this.heap[num].node.G))))
 					{
 						num3 = f3;
 						num = num4 + 2;
 					}
-					if (num4 + 3 < this.numberOfItems && (f4 < num3 || (f4 == num3 && this.heap[num4 + 3].node.G < ((num != num2) ? this.heap[num].node.G : g))))
+					if (num4 + 3 < this.numberOfItems && (f4 < num3 || (f4 == num3 && this.heap[num4 + 3].node.G < ((num == num2) ? g : this.heap[num].node.G))))
 					{
 						num = num4 + 3;
 					}

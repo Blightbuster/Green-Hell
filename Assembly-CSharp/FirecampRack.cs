@@ -8,11 +8,12 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 	protected override void Awake()
 	{
 		base.Awake();
+		this.m_NameHash = Animator.StringToHash(base.name);
 		this.m_Slots = new List<ItemSlot>(base.GetComponentsInChildren<ItemSlot>());
-		this.m_Bowl = base.gameObject.GetComponentInChildren<Bowl>();
-		if (this.m_Bowl)
+		foreach (Bowl bowl in base.gameObject.GetComponentsInChildren<Bowl>())
 		{
-			this.m_Bowl.m_RackChild = true;
+			bowl.m_RackChild = true;
+			this.m_Bowls.Add(bowl);
 		}
 		FirecampRack.s_FirecampRacks.Add(this);
 	}
@@ -25,25 +26,29 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 
 	public void SetFirecamp(Firecamp firecmap)
 	{
+		if (firecmap != null && this.m_BlockFirecampGiveDamage)
+		{
+			firecmap.m_BlockGivingDamage = true;
+		}
 		if (this.m_Firecamp == firecmap)
 		{
 			return;
 		}
 		this.m_Firecamp = firecmap;
-		if (this.m_Bowl)
+		foreach (Bowl bowl in this.m_Bowls)
 		{
 			if (this.m_Firecamp)
 			{
-				this.m_Bowl.OnFirecampAdd(this.m_Firecamp);
+				bowl.OnFirecampAdd(this.m_Firecamp);
 			}
 			else
 			{
-				this.m_Bowl.OnFirecampRemove(this.m_Firecamp);
+				bowl.OnFirecampRemove(this.m_Firecamp);
 			}
 		}
 		if (this.m_Info.m_ID == ItemID.Stone_Ring)
 		{
-			firecmap.m_StoneRing = this;
+			firecmap.SetStoneRing(this);
 		}
 	}
 
@@ -51,9 +56,15 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 	{
 		if (item.m_Info.m_ID == ItemID.Bamboo_Bowl)
 		{
-			if (this.m_Bowl)
+			using (List<Bowl>.Enumerator enumerator = this.m_Bowls.GetEnumerator())
 			{
-				return false;
+				while (enumerator.MoveNext())
+				{
+					if (enumerator.Current.m_RackChild)
+					{
+						return false;
+					}
+				}
 			}
 			for (int i = 0; i < this.m_Slots.Count; i++)
 			{
@@ -62,18 +73,19 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 					return false;
 				}
 			}
+			return true;
 		}
 		return true;
 	}
 
 	public void OnInsertItem(ItemSlot slot)
 	{
-		Collider component = slot.m_Item.gameObject.GetComponent<Collider>();
-		component.isTrigger = true;
+		slot.m_Item.gameObject.GetComponent<Collider>().isTrigger = true;
 		if (slot.m_Item.m_Info.m_Type == ItemType.Bowl)
 		{
 			Bowl bowl = (Bowl)slot.m_Item;
 			bowl.OnFirecampAdd(this.m_Firecamp);
+			this.m_Bowls.Add(bowl);
 		}
 		if (slot.m_Item.m_Info.m_ID == ItemID.Bamboo_Bowl)
 		{
@@ -107,6 +119,45 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 		{
 			Bowl bowl = (Bowl)slot.m_Item;
 			bowl.OnFirecampRemove(this.m_Firecamp);
+			this.m_Bowls.Remove(bowl);
+		}
+	}
+
+	public bool IsBurning()
+	{
+		return this.m_Firecamp && this.m_Firecamp.IsBurning();
+	}
+
+	public void BurnoutFirecamp()
+	{
+		if (this.m_Firecamp)
+		{
+			this.m_Firecamp.BurnOut();
+		}
+	}
+
+	public void SetEndlessFire()
+	{
+		if (this.m_Firecamp)
+		{
+			this.m_Firecamp.m_EndlessFire = true;
+		}
+	}
+
+	public void ResetEndlessFire()
+	{
+		if (this.m_Firecamp)
+		{
+			this.m_Firecamp.m_EndlessFire = false;
+		}
+	}
+
+	public override void DestroyMe(bool check_connected = true)
+	{
+		base.DestroyMe(check_connected);
+		foreach (ItemSlot itemSlot in this.m_Slots)
+		{
+			itemSlot.RemoveItem();
 		}
 	}
 
@@ -117,5 +168,12 @@ public class FirecampRack : Construction, IItemSlotParent, IFirecampAttach
 
 	private List<ItemSlot> m_Slots;
 
-	private Bowl m_Bowl;
+	private List<Bowl> m_Bowls = new List<Bowl>();
+
+	public Transform m_FirecampDummy;
+
+	[HideInInspector]
+	public int m_NameHash;
+
+	public bool m_BlockFirecampGiveDamage;
 }

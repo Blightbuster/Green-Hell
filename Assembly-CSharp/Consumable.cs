@@ -8,10 +8,8 @@ public class Consumable : Item
 		if (((ConsumableInfo)this.m_Info).m_Disgusting)
 		{
 			PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.TakeItemBad);
+			return;
 		}
-		else
-		{
-			PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.TakeItemGood);
-		}
+		PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.TakeItemGood);
 	}
 }

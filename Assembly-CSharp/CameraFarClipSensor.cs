@@ -14,8 +14,7 @@ public class CameraFarClipSensor : SensorBase
 	protected override void OnExit()
 	{
 		base.OnExit();
-		Camera main = Camera.main;
-		main.farClipPlane = this.m_FarClipToRestore;
+		Camera.main.farClipPlane = this.m_FarClipToRestore;
 	}
 
 	public float m_FarClip = 300f;

@@ -2,7 +2,6 @@
 using Enums;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityStandardAssets.CrossPlatformInput;
 
 public class HUDFireMiniGame : HUDBase
 {
@@ -47,7 +46,7 @@ public class HUDFireMiniGame : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return this.m_State != HUDFireMiniGame.MiniGameState.None;
+		return this.m_State > HUDFireMiniGame.MiniGameState.None;
 	}
 
 	private void SetState(HUDFireMiniGame.MiniGameState state)
@@ -64,40 +63,36 @@ public class HUDFireMiniGame : HUDBase
 
 	private void UpdateState()
 	{
-		HUDFireMiniGame.MiniGameState state = this.m_State;
-		if (state != HUDFireMiniGame.MiniGameState.Begin)
+		switch (this.m_State)
 		{
-			if (state != HUDFireMiniGame.MiniGameState.Game)
-			{
-				if (state == HUDFireMiniGame.MiniGameState.Finish)
-				{
-					if (Time.time - this.m_StartStateTime >= this.m_FinishDuration)
-					{
-						this.Deactivate();
-					}
-				}
-			}
-			else
-			{
-				this.UpdateInputs();
-				this.UpdateMouseMoves();
-				this.UpdatePosition();
-				this.UpdateColor();
-				if (this.m_Shift >= this.m_MaxShift)
-				{
-					this.m_Firecamp.StartBurning();
-					this.m_Elems[0].color = Color.yellow;
-					this.m_Elems[1].color = Color.yellow;
-					this.SetState(HUDFireMiniGame.MiniGameState.Finish);
-				}
-			}
-		}
-		else
-		{
+		case HUDFireMiniGame.MiniGameState.Begin:
 			this.UpdatePosition();
 			Player.Get().BlockRotation();
 			Player.Get().BlockMoves();
 			this.SetState(HUDFireMiniGame.MiniGameState.Game);
+			return;
+		case HUDFireMiniGame.MiniGameState.Game:
+			this.UpdateInputs();
+			this.UpdateMouseMoves();
+			this.UpdatePosition();
+			this.UpdateColor();
+			if (this.m_Shift >= this.m_MaxShift)
+			{
+				this.m_Firecamp.Ignite();
+				this.m_Elems[0].color = Color.yellow;
+				this.m_Elems[1].color = Color.yellow;
+				this.SetState(HUDFireMiniGame.MiniGameState.Finish);
+				return;
+			}
+			break;
+		case HUDFireMiniGame.MiniGameState.Finish:
+			if (Time.time - this.m_StartStateTime >= this.m_FinishDuration)
+			{
+				this.Deactivate();
+			}
+			break;
+		default:
+			return;
 		}
 	}
 
@@ -111,30 +106,30 @@ public class HUDFireMiniGame : HUDBase
 
 	private void UpdateMouseMoves()
 	{
-		float num = CrossPlatformInputManager.GetAxis("Mouse X") * 10f;
-		this.m_MouseX += num;
+		float x = InputHelpers.GetLookInput(10f, 1f, 150f).x;
+		this.m_MouseX += x;
 		if (this.m_CurrentDirection == Direction.Left)
 		{
 			if (this.m_MouseX < -this.m_Shift)
 			{
-				float num2 = this.GetSinMul(this.m_CurrentDirection);
-				if (num2 < 0.8f)
+				float num = this.GetSinMul(this.m_CurrentDirection);
+				if (num < 0.8f)
 				{
-					num2 *= 0.3f;
+					num *= 0.3f;
 				}
-				this.m_Shift += this.m_ShiftIncrease * num2;
+				this.m_Shift += this.m_ShiftIncrease * num;
 				this.m_CurrentDirection = Direction.Right;
 				this.m_RightSinStartTime = Time.time;
 			}
 		}
 		else if (this.m_CurrentDirection == Direction.Right && this.m_MouseX > this.m_Shift)
 		{
-			float num3 = this.GetSinMul(this.m_CurrentDirection);
-			if (num3 < 0.8f)
+			float num2 = this.GetSinMul(this.m_CurrentDirection);
+			if (num2 < 0.8f)
 			{
-				num3 *= 0.3f;
+				num2 *= 0.3f;
 			}
-			this.m_Shift += this.m_ShiftIncrease * num3;
+			this.m_Shift += this.m_ShiftIncrease * num2;
 			this.m_CurrentDirection = Direction.Left;
 			this.m_LeftSinStartTime = Time.time;
 		}
@@ -165,8 +160,8 @@ public class HUDFireMiniGame : HUDBase
 		float num = 1f - this.GetSinMul(this.m_CurrentDirection);
 		white.r = num;
 		white.b = num;
-		this.m_Elems[0].color = ((this.m_CurrentDirection != Direction.Left) ? Color.white : white);
-		this.m_Elems[1].color = ((this.m_CurrentDirection != Direction.Right) ? Color.white : white);
+		this.m_Elems[0].color = ((this.m_CurrentDirection == Direction.Left) ? white : Color.white);
+		this.m_Elems[1].color = ((this.m_CurrentDirection == Direction.Right) ? white : Color.white);
 	}
 
 	private float GetSinMul(Direction dir)

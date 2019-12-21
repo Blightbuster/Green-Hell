@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AmplifyMotion;
@@ -7,8 +6,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
-[AddComponentMenu("")]
 [RequireComponent(typeof(Camera))]
+[AddComponentMenu("")]
 public class AmplifyMotionEffectBase : MonoBehaviour
 {
 	[Obsolete("workerThreads is deprecated, please use WorkerThreads instead.")]
@@ -156,16 +155,14 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		if (this.ForceCPUOnly)
 		{
 			this.m_canUseGPU = false;
+			return;
 		}
-		else
-		{
-			bool flag = SystemInfo.graphicsShaderLevel >= 30;
-			bool flag2 = SystemInfo.SupportsTextureFormat(TextureFormat.RHalf);
-			bool flag3 = SystemInfo.SupportsTextureFormat(TextureFormat.RGHalf);
-			bool flag4 = SystemInfo.SupportsTextureFormat(TextureFormat.RGBAHalf);
-			bool flag5 = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat);
-			this.m_canUseGPU = (flag && flag2 && flag3 && flag4 && flag5);
-		}
+		bool flag = SystemInfo.graphicsShaderLevel >= 30;
+		bool flag2 = SystemInfo.SupportsTextureFormat(TextureFormat.RHalf);
+		bool flag3 = SystemInfo.SupportsTextureFormat(TextureFormat.RGHalf);
+		bool flag4 = SystemInfo.SupportsTextureFormat(TextureFormat.RGBAHalf);
+		bool flag5 = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat);
+		this.m_canUseGPU = (flag && flag2 && flag3 && flag4 && flag5);
 	}
 
 	internal void ResetObjectId()
@@ -228,7 +225,7 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 	private bool CreateMaterials()
 	{
 		this.DestroyMaterials();
-		int num = (SystemInfo.graphicsShaderLevel < 30) ? 2 : 3;
+		int num = (SystemInfo.graphicsShaderLevel >= 30) ? 3 : 2;
 		string name = "Hidden/Amplify Motion/MotionBlurSM" + num;
 		string name2 = "Hidden/Amplify Motion/SolidVectors";
 		string name3 = "Hidden/Amplify Motion/SkinnedVectors";
@@ -280,15 +277,7 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		catch (Exception)
 		{
 		}
-		bool flag = this.CheckMaterialAndShader(this.m_blurMaterial, name);
-		flag = (flag && this.CheckMaterialAndShader(this.m_solidVectorsMaterial, name2));
-		flag = (flag && this.CheckMaterialAndShader(this.m_skinnedVectorsMaterial, name3));
-		flag = (flag && this.CheckMaterialAndShader(this.m_clothVectorsMaterial, name4));
-		flag = (flag && this.CheckMaterialAndShader(this.m_reprojectionMaterial, name5));
-		flag = (flag && this.CheckMaterialAndShader(this.m_combineMaterial, name6));
-		flag = (flag && this.CheckMaterialAndShader(this.m_dilationMaterial, name7));
-		flag = (flag && this.CheckMaterialAndShader(this.m_depthMaterial, name8));
-		return flag && this.CheckMaterialAndShader(this.m_debugMaterial, name9);
+		return this.CheckMaterialAndShader(this.m_blurMaterial, name) && this.CheckMaterialAndShader(this.m_solidVectorsMaterial, name2) && this.CheckMaterialAndShader(this.m_skinnedVectorsMaterial, name3) && this.CheckMaterialAndShader(this.m_clothVectorsMaterial, name4) && this.CheckMaterialAndShader(this.m_reprojectionMaterial, name5) && this.CheckMaterialAndShader(this.m_combineMaterial, name6) && this.CheckMaterialAndShader(this.m_dilationMaterial, name7) && this.CheckMaterialAndShader(this.m_depthMaterial, name8) && this.CheckMaterialAndShader(this.m_debugMaterial, name9);
 	}
 
 	private RenderTexture CreateRenderTexture(string name, int depth, RenderTextureFormat fmt, RenderTextureReadWrite rw, FilterMode fm)
@@ -464,8 +453,7 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		AmplifyMotionCamera[] array = this.m_linkedCameras.Values.ToArray<AmplifyMotionCamera>();
-		foreach (AmplifyMotionCamera amplifyMotionCamera in array)
+		foreach (AmplifyMotionCamera amplifyMotionCamera in this.m_linkedCameras.Values.ToArray<AmplifyMotionCamera>())
 		{
 			if (amplifyMotionCamera != null && amplifyMotionCamera.gameObject != base.gameObject)
 			{
@@ -490,26 +478,13 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		}
 		else
 		{
-			IEnumerator enumerator = obj.transform.GetEnumerator();
-			try
+			foreach (object obj2 in obj.transform)
 			{
-				while (enumerator.MoveNext())
+				Transform transform = (Transform)obj2;
+				gameObject = this.RecursiveFindCamera(transform.gameObject, auxCameraName);
+				if (gameObject != null)
 				{
-					object obj2 = enumerator.Current;
-					Transform transform = (Transform)obj2;
-					gameObject = this.RecursiveFindCamera(transform.gameObject, auxCameraName);
-					if (gameObject != null)
-					{
-						break;
-					}
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
+					break;
 				}
 			}
 		}
@@ -708,23 +683,10 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		{
 			AmplifyMotionEffectBase.TryRegister(gameObj, false);
 		}
-		IEnumerator enumerator = gameObj.transform.GetEnumerator();
-		try
+		foreach (object obj in gameObj.transform)
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj = enumerator.Current;
-				Transform transform = (Transform)obj;
-				this.RegisterRecursively(transform.gameObject);
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			Transform transform = (Transform)obj;
+			this.RegisterRecursively(transform.gameObject);
 		}
 	}
 
@@ -734,23 +696,9 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		{
 			AmplifyMotionEffectBase.TryRegister(gameObj, false);
 		}
-		IEnumerator enumerator = gameObj.transform.GetEnumerator();
-		try
+		foreach (object obj in gameObj.transform)
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj = enumerator.Current;
-				Transform transform = (Transform)obj;
-				AmplifyMotionEffectBase.RegisterRecursivelyS(transform.gameObject);
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			AmplifyMotionEffectBase.RegisterRecursivelyS(((Transform)obj).gameObject);
 		}
 	}
 
@@ -776,23 +724,10 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		{
 			AmplifyMotionEffectBase.TryUnregister(gameObj);
 		}
-		IEnumerator enumerator = gameObj.transform.GetEnumerator();
-		try
+		foreach (object obj in gameObj.transform)
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj = enumerator.Current;
-				Transform transform = (Transform)obj;
-				this.UnregisterRecursively(transform.gameObject);
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			Transform transform = (Transform)obj;
+			this.UnregisterRecursively(transform.gameObject);
 		}
 	}
 
@@ -802,23 +737,9 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		{
 			AmplifyMotionEffectBase.TryUnregister(gameObj);
 		}
-		IEnumerator enumerator = gameObj.transform.GetEnumerator();
-		try
+		foreach (object obj in gameObj.transform)
 		{
-			while (enumerator.MoveNext())
-			{
-				object obj = enumerator.Current;
-				Transform transform = (Transform)obj;
-				AmplifyMotionEffectBase.UnregisterRecursivelyS(transform.gameObject);
-			}
-		}
-		finally
-		{
-			IDisposable disposable;
-			if ((disposable = (enumerator as IDisposable)) != null)
-			{
-				disposable.Dispose();
-			}
+			AmplifyMotionEffectBase.UnregisterRecursivelyS(((Transform)obj).gameObject);
 		}
 	}
 
@@ -846,7 +767,7 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		if (this.m_currentPostProcess == null && camera != null && camera != this.m_camera)
 		{
 			AmplifyMotionPostProcess[] components = base.gameObject.GetComponents<AmplifyMotionPostProcess>();
-			if (components != null && components.Length > 0)
+			if (components != null && components.Length != 0)
 			{
 				for (int j = 0; j < components.Length; j++)
 				{
@@ -862,10 +783,10 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 	{
 		if (this.m_baseCamera.AutoStep)
 		{
-			float num = (!Application.isPlaying) ? Time.fixedDeltaTime : Time.unscaledDeltaTime;
+			float num = Application.isPlaying ? Time.unscaledDeltaTime : Time.fixedDeltaTime;
 			float fixedDeltaTime = Time.fixedDeltaTime;
-			this.m_deltaTime = ((num <= float.Epsilon) ? this.m_deltaTime : num);
-			this.m_fixedDeltaTime = ((num <= float.Epsilon) ? this.m_fixedDeltaTime : fixedDeltaTime);
+			this.m_deltaTime = ((num > float.Epsilon) ? num : this.m_deltaTime);
+			this.m_fixedDeltaTime = ((num > float.Epsilon) ? fixedDeltaTime : this.m_fixedDeltaTime);
 		}
 		this.QualitySteps = Mathf.Clamp(this.QualitySteps, 0, 16);
 		this.MotionScale = Mathf.Max(this.MotionScale, 0f);
@@ -966,11 +887,11 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		this.ResetObjectId();
 		bool flag = this.CameraMotionMult > float.Epsilon;
 		bool clearColor = !flag || this.m_starting;
-		float num = (this.DepthThreshold <= float.Epsilon) ? float.MaxValue : (1f / this.DepthThreshold);
-		this.m_motionScaleNorm = ((this.m_deltaTime < float.Epsilon) ? 0f : (this.MotionScale * (1f / this.m_deltaTime)));
-		this.m_fixedMotionScaleNorm = ((this.m_fixedDeltaTime < float.Epsilon) ? 0f : (this.MotionScale * (1f / this.m_fixedDeltaTime)));
-		float scale = this.m_starting ? 0f : this.m_motionScaleNorm;
-		float fixedScale = this.m_starting ? 0f : this.m_fixedMotionScaleNorm;
+		float num = (this.DepthThreshold > float.Epsilon) ? (1f / this.DepthThreshold) : float.MaxValue;
+		this.m_motionScaleNorm = ((this.m_deltaTime >= float.Epsilon) ? (this.MotionScale * (1f / this.m_deltaTime)) : 0f);
+		this.m_fixedMotionScaleNorm = ((this.m_fixedDeltaTime >= float.Epsilon) ? (this.MotionScale * (1f / this.m_fixedDeltaTime)) : 0f);
+		float scale = (!this.m_starting) ? this.m_motionScaleNorm : 0f;
+		float fixedScale = (!this.m_starting) ? this.m_fixedMotionScaleNorm : 0f;
 		Shader.SetGlobalFloat("_AM_MIN_VELOCITY", this.MinVelocity);
 		Shader.SetGlobalFloat("_AM_MAX_VELOCITY", this.MaxVelocity);
 		Shader.SetGlobalFloat("_AM_RCP_TOTAL_VELOCITY", 1f / (this.MaxVelocity - this.MinVelocity));
@@ -988,8 +909,8 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		}
 		if (flag)
 		{
-			float num2 = (this.m_deltaTime < float.Epsilon) ? 0f : (this.MotionScale * this.CameraMotionMult * (1f / this.m_deltaTime));
-			float scale2 = this.m_starting ? 0f : num2;
+			float num2 = (this.m_deltaTime >= float.Epsilon) ? (this.MotionScale * this.CameraMotionMult * (1f / this.m_deltaTime)) : 0f;
+			float scale2 = (!this.m_starting) ? num2 : 0f;
 			this.m_motionRT.DiscardContents();
 			this.m_baseCamera.RenderReprojectionVectors(this.m_motionRT, scale2);
 		}
@@ -1008,7 +929,7 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 	private void ApplyMotionBlur(RenderTexture source, RenderTexture destination, Vector4 blurStep)
 	{
 		bool flag = this.QualityLevel == Quality.Mobile;
-		int pass = (int)(this.QualityLevel + ((!this.Noise) ? 0 : 4));
+		int pass = (int)(this.QualityLevel + (this.Noise ? 4 : 0));
 		RenderTexture renderTexture = null;
 		if (flag)
 		{
@@ -1085,11 +1006,9 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 		if (this.m_currentPostProcess == null)
 		{
 			this.PostProcess(source, destination);
+			return;
 		}
-		else
-		{
-			Graphics.Blit(source, destination);
-		}
+		Graphics.Blit(source, destination);
 	}
 
 	public void PostProcess(RenderTexture source, RenderTexture destination)
@@ -1155,8 +1074,8 @@ public class AmplifyMotionEffectBase : MonoBehaviour
 
 	public int ResetFrameDelay = 1;
 
-	[FormerlySerializedAs("workerThreads")]
 	[Header("Low-Level")]
+	[FormerlySerializedAs("workerThreads")]
 	public int WorkerThreads;
 
 	public bool SystemThreadPool;

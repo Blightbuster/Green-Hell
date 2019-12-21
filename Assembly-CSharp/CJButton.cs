@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class CJButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IEventSystemHandler
+public class CJButton : MonoBehaviour, IPointerEnterHandler, IEventSystemHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 {
 	private void Awake()
 	{
@@ -47,5 +47,6 @@ public class CJButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
 	private Image m_Image;
 
-	private bool m_IsOver;
+	[HideInInspector]
+	public bool m_IsOver;
 }

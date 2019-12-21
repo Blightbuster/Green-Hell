@@ -8,6 +8,11 @@ using UnityEngine.UI;
 
 public class HUDEnergy : HUDBase
 {
+	public static HUDEnergy Get()
+	{
+		return HUDEnergy.s_Instance;
+	}
+
 	public override void SetupGroups()
 	{
 		base.SetupGroups();
@@ -18,9 +23,15 @@ public class HUDEnergy : HUDBase
 	protected override void Awake()
 	{
 		base.Awake();
+		HUDEnergy.s_Instance = this;
 		this.m_OxygenBar.gameObject.SetActive(false);
 		this.m_OxygenBarBG.gameObject.SetActive(false);
 		this.m_StaminaColor = this.m_Stamina.color;
+		for (int i = 0; i < 4; i++)
+		{
+			this.m_BlinkArmorRedbackgroundActive[i] = false;
+			this.m_BlinkArmorRedBackgroundStartTime[i] = float.MinValue;
+		}
 	}
 
 	protected override void Start()
@@ -33,17 +44,28 @@ public class HUDEnergy : HUDBase
 		this.m_FoodPoisonIconStartScale = this.m_EnergyFoodPoisonIcon.transform.localScale;
 		this.m_PoisonIconStartScale = this.m_EnergyFoodPoisonIcon.transform.localScale;
 		this.m_FeverIconStartScale = this.m_EnergyFeverIcon.transform.localScale;
+		this.m_DamagedArmorIconStartScale = this.m_EnergyArmorDamagedIcon.transform.localScale;
 		this.m_HealingWoundDummy = base.transform.FindDeepChild("HUDHealingWoundDummy");
-		this.m_SwimController = Player.Get().GetComponent<SwimController>();
 		this.ScrollerInitialize();
 		this.m_PIM = PlayerInjuryModule.Get();
 		this.m_PDM = Player.Get().GetComponent<PlayerDiseasesModule>();
+		this.m_PAM = PlayerArmorModule.Get();
 		this.m_HealthRed.enabled = false;
 	}
 
 	protected override bool ShouldShow()
 	{
 		return !Cheats.m_GodMode && !Player.Get().m_DreamActive && !HUDReadableItem.Get().isActiveAndEnabled && !CutscenesManager.Get().IsCutscenePlaying();
+	}
+
+	protected override void OnShow()
+	{
+		base.OnShow();
+		this.UpdateEnergyBars();
+		this.UpdateHealthBar();
+		this.UpdateOxygenBar();
+		this.UpdateIcons();
+		this.UpdateHealingWoundIndicators();
 	}
 
 	protected override void Update()
@@ -64,27 +86,42 @@ public class HUDEnergy : HUDBase
 
 	private void UpdateEnergyBar()
 	{
+		if (this.m_ConditionModule == null)
+		{
+			this.m_ConditionModule = Player.Get().GetComponent<PlayerConditionModule>();
+		}
+		if (this.m_ConditionModule == null)
+		{
+			return;
+		}
 		float num = this.m_ConditionModule.GetEnergy() / this.m_ConditionModule.GetMaxEnergy();
 		this.m_Energy.fillAmount = num;
 		if (num > 0.1f)
 		{
 			this.m_Energy.color = Color.white;
+			return;
 		}
-		else
-		{
-			this.m_Energy.color = this.m_RedColor;
-		}
+		this.m_Energy.color = this.m_RedColor;
 	}
 
 	private void UpdateStaminaBar()
 	{
+		if (this.m_ConditionModule == null)
+		{
+			this.m_ConditionModule = Player.Get().GetComponent<PlayerConditionModule>();
+		}
+		if (this.m_ConditionModule == null)
+		{
+			return;
+		}
 		float fillAmount = this.m_ConditionModule.GetStamina() / this.m_ConditionModule.GetMaxEnergy();
 		this.m_Stamina.fillAmount = fillAmount;
-		if (PlayerConditionModule.Get().IsStaminaCriticalLevel() && this.m_Stamina.color != this.m_StaminaCriticalLevelColor)
+		if (PlayerConditionModule.Get().IsLowStamina() && this.m_Stamina.color != this.m_StaminaCriticalLevelColor)
 		{
 			this.m_Stamina.color = Color.Lerp(this.m_Stamina.color, this.m_StaminaCriticalLevelColor, Time.deltaTime * 5f);
+			return;
 		}
-		else if (this.m_Stamina.color != this.m_StaminaColor)
+		if (this.m_Stamina.color != this.m_StaminaColor)
 		{
 			this.m_Stamina.color = Color.Lerp(this.m_Stamina.color, this.m_StaminaColor, Time.deltaTime * 5f);
 		}
@@ -92,6 +129,14 @@ public class HUDEnergy : HUDBase
 
 	private void UpdateHealthBar()
 	{
+		if (this.m_ConditionModule == null)
+		{
+			this.m_ConditionModule = Player.Get().GetComponent<PlayerConditionModule>();
+		}
+		if (this.m_ConditionModule == null)
+		{
+			return;
+		}
 		float num = this.m_ConditionModule.GetHP() / 100f;
 		this.m_Health.fillAmount = num;
 		if (num > 0.1f)
@@ -102,8 +147,7 @@ public class HUDEnergy : HUDBase
 		{
 			this.m_Health.color = this.m_RedColor;
 		}
-		float num2 = this.m_HealthLastFrame - this.m_ConditionModule.GetHP();
-		if (num2 > this.m_HPBlinkMinDiff && !this.m_BlinkRedbackgroundActive)
+		if (this.m_HealthLastFrame - this.m_ConditionModule.GetHP() > this.m_HPBlinkMinDiff && !this.m_BlinkRedbackgroundActive)
 		{
 			this.StartBlinkRedBackground(num);
 		}
@@ -176,6 +220,31 @@ public class HUDEnergy : HUDBase
 			this.m_IsIconParasiteSicknessEnabled = false;
 			this.m_EnergyParasiteSicknessLevel.enabled = false;
 		}
+		disease = this.m_PDM.GetDisease(ConsumeEffect.Insomnia);
+		if (disease.IsActive())
+		{
+			int level3 = disease.m_Level;
+			this.m_IsIconInsomniaEnabled = true;
+			one.x = this.m_InsomniaIconStartScale.x * num;
+			one.y = this.m_InsomniaIconStartScale.y * num;
+			one.z = this.m_InsomniaIconStartScale.z * 1f;
+			this.m_EnergyInsomniaIcon.transform.localScale = one;
+			this.m_EnergyInsomniaRadial.fillAmount = ((Insomnia)disease).m_InsomniaLevel % 1f;
+			if (level3 > 0)
+			{
+				this.m_EnergyInsomniaLevel.enabled = true;
+				this.m_EnergyInsomniaLevel.text = level3.ToString();
+			}
+			else
+			{
+				this.m_EnergyInsomniaLevel.enabled = false;
+			}
+		}
+		else
+		{
+			this.m_IsIconInsomniaEnabled = false;
+			this.m_EnergyInsomniaLevel.enabled = false;
+		}
 		int num2 = 0;
 		bool flag2 = false;
 		Injury injury = null;
@@ -225,17 +294,17 @@ public class HUDEnergy : HUDBase
 		disease = this.m_PDM.GetDisease(ConsumeEffect.FoodPoisoning);
 		if (disease.IsActive())
 		{
-			int level3 = disease.m_Level;
+			int level4 = disease.m_Level;
 			this.m_isIconFoodPoisonEnabled = true;
 			one.x = this.m_FoodPoisonIconStartScale.x * num;
 			one.y = this.m_FoodPoisonIconStartScale.y * num;
 			one.z = this.m_FoodPoisonIconStartScale.z * 1f;
 			this.m_EnergyFoodPoisonIcon.transform.localScale = one;
 			this.m_EnergyFoodPoisonRadial.fillAmount = 1f - (currentTimeMinutes - disease.m_StartTime) / disease.m_AutoHealTime;
-			if (level3 > 0)
+			if (level4 > 0)
 			{
 				this.m_EnergyFoodPoisonLevel.enabled = true;
-				this.m_EnergyFoodPoisonLevel.text = level3.ToString();
+				this.m_EnergyFoodPoisonLevel.text = level4.ToString();
 			}
 			else
 			{
@@ -275,6 +344,41 @@ public class HUDEnergy : HUDBase
 		else
 		{
 			this.m_isIconWoundsEnabled = false;
+		}
+		if (this.m_PAM.IsAnyArmorDamaged())
+		{
+			this.m_IsIconDamagedArmorEnabled = true;
+			one.x = this.m_DamagedArmorIconStartScale.x * num;
+			one.y = this.m_DamagedArmorIconStartScale.y * num;
+			one.z = this.m_DamagedArmorIconStartScale.z * 1f;
+			this.m_EnergyArmorDamagedIcon.transform.localScale = one;
+		}
+		else
+		{
+			this.m_IsIconDamagedArmorEnabled = false;
+		}
+		disease = this.m_PDM.GetDisease(ConsumeEffect.DirtSickness);
+		if (disease.IsActive())
+		{
+			this.m_IsIconDirtinessEnabled = true;
+			one.x = this.m_DirtinessIconStartScale.x * num;
+			one.y = this.m_DirtinessIconStartScale.y * num;
+			one.z = this.m_DirtinessIconStartScale.z * 1f;
+			this.m_EnergyArmorDamagedIcon.transform.localScale = one;
+			this.m_EnergyDirtinessRadial.fillAmount = this.m_ConditionModule.m_Dirtiness % 100f / 100f;
+			if (disease.m_Level > 0)
+			{
+				this.m_EnergyDirtinessLevel.enabled = true;
+				this.m_EnergyDirtinessLevel.text = disease.m_Level.ToString();
+			}
+			else
+			{
+				this.m_EnergyDirtinessLevel.enabled = false;
+			}
+		}
+		else
+		{
+			this.m_IsIconDirtinessEnabled = false;
 		}
 		this.m_HealthArrowDown.enabled = flag;
 		if (flag)
@@ -375,24 +479,34 @@ public class HUDEnergy : HUDBase
 
 	private void UpdateOxygenBar()
 	{
-		bool flag = GreenHellGame.s_GameVersion <= GreenHellGame.s_GameVersionEarlyAccessUpdate4;
-		if (flag)
-		{
-			this.m_OxygenBar.gameObject.SetActive(false);
-			this.m_OxygenBarBG.gameObject.SetActive(false);
-			return;
-		}
-		if (this.m_SwimController.IsActive() && this.m_SwimController.m_State == SwimState.Dive)
+		if (SwimController.Get() && SwimController.Get().IsActive() && SwimController.Get().m_State == SwimState.Dive)
 		{
 			this.m_OxygenBar.gameObject.SetActive(true);
 			this.m_OxygenBarBG.gameObject.SetActive(true);
 			this.m_OxygenBar.fillAmount = this.m_ConditionModule.m_Oxygen / this.m_ConditionModule.m_MaxOxygen;
+			Color color = this.m_OxygenBar.color;
+			if (Player.Get().m_InfinityDiving)
+			{
+				color.a = 0.35f;
+				if (!this.m_InfiniteDivingIcon.gameObject.activeSelf)
+				{
+					this.m_InfiniteDivingIcon.gameObject.SetActive(true);
+				}
+			}
+			else
+			{
+				color.a = 1f;
+				if (this.m_InfiniteDivingIcon.gameObject.activeSelf)
+				{
+					this.m_InfiniteDivingIcon.gameObject.SetActive(false);
+				}
+			}
+			this.m_OxygenBar.color = color;
+			return;
 		}
-		else
-		{
-			this.m_OxygenBar.gameObject.SetActive(false);
-			this.m_OxygenBarBG.gameObject.SetActive(false);
-		}
+		this.m_OxygenBar.gameObject.SetActive(false);
+		this.m_OxygenBarBG.gameObject.SetActive(false);
+		this.m_InfiniteDivingIcon.gameObject.SetActive(false);
 	}
 
 	private void ScrollerInitialize()
@@ -400,8 +514,8 @@ public class HUDEnergy : HUDBase
 		this.m_IconScroller = new IconScroller();
 		foreach (RawImage im in this.m_EnergyIconsGroup.GetComponentsInChildren<RawImage>(true))
 		{
-			this.m_tempIcon = new EnergyIcon(im);
-			this.m_IconScroller.m_EnergyIconList.Add(this.m_tempIcon);
+			this.m_TempIcon = new EnergyIcon(im);
+			this.m_IconScroller.m_EnergyIconList.Add(this.m_TempIcon);
 		}
 		for (int j = 0; j < this.m_IconScroller.m_EnergyIconList.Count; j++)
 		{
@@ -422,14 +536,12 @@ public class HUDEnergy : HUDBase
 		{
 			this.m_IconScroller.m_ActiveEnergyIconList.Add(this.m_IconScroller.m_EnergyIconList[icon]);
 			this.m_IconScroller.m_ActiveEnergyIconList[this.m_IconScroller.m_ActiveEnergyIconList.Count - 1].m_IconTransform.localPosition = this.m_IconScroller.m_PositionsList[this.m_IconScroller.m_ActiveEnergyIconList.Count - 1];
+			return;
 		}
-		else
+		this.m_IconScroller.m_ActiveEnergyIconList.Remove(this.m_IconScroller.m_EnergyIconList[icon]);
+		foreach (EnergyIcon energyIcon in this.m_IconScroller.m_ActiveEnergyIconList)
 		{
-			this.m_IconScroller.m_ActiveEnergyIconList.Remove(this.m_IconScroller.m_EnergyIconList[icon]);
-			foreach (EnergyIcon energyIcon in this.m_IconScroller.m_ActiveEnergyIconList)
-			{
-				base.StartCoroutine(this.AnimateIcon(energyIcon, this.m_IconScroller.m_PositionsList[this.m_IconScroller.m_ActiveEnergyIconList.IndexOf(energyIcon)]));
-			}
+			base.StartCoroutine(this.AnimateIcon(energyIcon, this.m_IconScroller.m_PositionsList[this.m_IconScroller.m_ActiveEnergyIconList.IndexOf(energyIcon)]));
 		}
 	}
 
@@ -459,12 +571,27 @@ public class HUDEnergy : HUDBase
 		{
 			this.IconToggle(5, this.m_IsIconParasiteSicknessEnabled);
 		}
+		if (this.m_IsIconInsomniaEnabled != this.m_isIconInsomniaEnabledLastFrame)
+		{
+			this.IconToggle(6, this.m_IsIconInsomniaEnabled);
+		}
+		if (this.m_IsIconDamagedArmorEnabled != this.m_isIconDamagedArmorEnabledLastFrame)
+		{
+			this.IconToggle(7, this.m_IsIconDamagedArmorEnabled);
+		}
+		if (this.m_IsIconDirtinessEnabled != this.m_isIconDirtinessEnabledLastFrame)
+		{
+			this.IconToggle(8, this.m_IsIconDirtinessEnabled);
+		}
 		this.m_isIconWoundsEnabledLastFrame = this.m_isIconWoundsEnabled;
 		this.m_isIconNutritionEnabledLastFrame = this.m_isIconNutritionEnabled;
 		this.m_isIconFoodPoisonEnabledLastFrame = this.m_isIconFoodPoisonEnabled;
 		this.m_isIconPoisonEnabledLastFrame = this.m_isIconPoisonEnabled;
 		this.m_isIconFeverEnabledLastFrame = this.m_isIconFeverEnabled;
 		this.m_isIconParasiteSicknessEnabledLastFrame = this.m_IsIconParasiteSicknessEnabled;
+		this.m_isIconInsomniaEnabledLastFrame = this.m_IsIconInsomniaEnabled;
+		this.m_isIconDamagedArmorEnabledLastFrame = this.m_IsIconDamagedArmorEnabled;
+		this.m_isIconDirtinessEnabledLastFrame = this.m_IsIconDirtinessEnabled;
 	}
 
 	private IEnumerator AnimateIcon(EnergyIcon icon, Vector3 newpos)
@@ -477,6 +604,7 @@ public class HUDEnergy : HUDBase
 			yield return null;
 		}
 		icon.m_IconTransform.localPosition = newpos;
+		yield break;
 		yield break;
 	}
 
@@ -525,7 +653,7 @@ public class HUDEnergy : HUDBase
 
 	private PlayerDiseasesModule m_PDM;
 
-	private SwimController m_SwimController;
+	private PlayerArmorModule m_PAM;
 
 	public Image m_Energy;
 
@@ -562,6 +690,20 @@ public class HUDEnergy : HUDBase
 	public RawImage m_EnergyParasiteSicknessIcon;
 
 	public Text m_EnergyParasiteSicknessLevel;
+
+	public RawImage m_EnergyInsomniaIcon;
+
+	public Text m_EnergyInsomniaLevel;
+
+	public Image m_EnergyInsomniaRadial;
+
+	public RawImage m_EnergyArmorDamagedIcon;
+
+	public RawImage m_EnergyDirtinessIcon;
+
+	public Text m_EnergyDirtinessLevel;
+
+	public Image m_EnergyDirtinessRadial;
 
 	public Image m_Stamina;
 
@@ -610,7 +752,13 @@ public class HUDEnergy : HUDBase
 
 	private Vector3 m_ParasiteSicknessIconStartScale = Vector3.one;
 
+	private Vector3 m_InsomniaIconStartScale = Vector3.one;
+
+	private Vector3 m_DamagedArmorIconStartScale = Vector3.one;
+
 	private Vector3 m_WoundIconOffset = new Vector3(0f, -42f, 0f);
+
+	private Vector3 m_DirtinessIconStartScale = Vector3.one;
 
 	private List<HUHealingWoundIndicator> m_HealingWounds = new List<HUHealingWoundIndicator>();
 
@@ -620,9 +768,11 @@ public class HUDEnergy : HUDBase
 
 	public Image m_OxygenBar;
 
+	public RawImage m_InfiniteDivingIcon;
+
 	public IconScroller m_IconScroller;
 
-	private EnergyIcon m_tempIcon;
+	private EnergyIcon m_TempIcon;
 
 	private bool m_isIconWoundsEnabled;
 
@@ -636,6 +786,12 @@ public class HUDEnergy : HUDBase
 
 	private bool m_IsIconParasiteSicknessEnabled;
 
+	private bool m_IsIconInsomniaEnabled;
+
+	private bool m_IsIconDamagedArmorEnabled;
+
+	private bool m_IsIconDirtinessEnabled;
+
 	private bool m_isIconWoundsEnabledLastFrame;
 
 	private bool m_isIconNutritionEnabledLastFrame;
@@ -648,9 +804,25 @@ public class HUDEnergy : HUDBase
 
 	private bool m_isIconParasiteSicknessEnabledLastFrame;
 
+	private bool m_isIconInsomniaEnabledLastFrame;
+
+	private bool m_isIconDamagedArmorEnabledLastFrame;
+
+	private bool m_isIconDirtinessEnabledLastFrame;
+
 	public float m_HPBlinkMinDiff = 1f;
+
+	private static HUDEnergy s_Instance;
 
 	private bool m_BlinkRedbackgroundActive;
 
 	private float m_BlinkRedBackgroundStartTime = float.MinValue;
+
+	private bool[] m_BlinkArmorRedbackgroundActive = new bool[4];
+
+	private float[] m_BlinkArmorRedBackgroundStartTime = new float[4];
+
+	private List<RectTransform> m_RectTransformList = new List<RectTransform>(2);
+
+	private float[] m_ArmorHealtLastFrame = new float[4];
 }

@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[ExecuteInEditMode]
 	[DocumentationSorting(19f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("Cinemachine/CinemachineTargetGroup")]
+	[SaveDuringPlay]
+	[ExecuteInEditMode]
 	public class CinemachineTargetGroup : MonoBehaviour
 	{
 		public Bounds BoundingBox
@@ -213,12 +213,9 @@ namespace Cinemachine
 				base.transform.position = this.BoundingBox.center;
 			}
 			CinemachineTargetGroup.RotationMode rotationMode = this.m_RotationMode;
-			if (rotationMode != CinemachineTargetGroup.RotationMode.Manual)
+			if (rotationMode != CinemachineTargetGroup.RotationMode.Manual && rotationMode == CinemachineTargetGroup.RotationMode.GroupAverage)
 			{
-				if (rotationMode == CinemachineTargetGroup.RotationMode.GroupAverage)
-				{
-					base.transform.rotation = this.CalculateAverageOrientation();
-				}
+				base.transform.rotation = this.CalculateAverageOrientation();
 			}
 		}
 
@@ -231,8 +228,8 @@ namespace Cinemachine
 		[Tooltip("When to update the group's transform based on the position of the group members")]
 		public CinemachineTargetGroup.UpdateMethod m_UpdateMethod = CinemachineTargetGroup.UpdateMethod.LateUpdate;
 
-		[Tooltip("The target objects, together with their weights and radii, that will contribute to the group's average position, orientation, and size.")]
 		[NoSaveDuringPlay]
+		[Tooltip("The target objects, together with their weights and radii, that will contribute to the group's average position, orientation, and size.")]
 		public CinemachineTargetGroup.Target[] m_Targets = new CinemachineTargetGroup.Target[0];
 
 		private float m_lastRadius;

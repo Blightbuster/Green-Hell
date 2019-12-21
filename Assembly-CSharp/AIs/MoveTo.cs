@@ -61,16 +61,7 @@ namespace AIs
 
 		protected override bool ShouldFinish()
 		{
-			if (this.m_AI.m_PathModule.m_Agent.pathPending)
-			{
-				return false;
-			}
-			if (this.m_AI.m_PathModule.m_Agent.pathStatus == NavMeshPathStatus.PathInvalid)
-			{
-				return true;
-			}
-			Vector3 normalized2D = (this.m_AI.m_PathModule.m_Agent.steeringTarget - this.m_AI.transform.position).GetNormalized2D();
-			return Vector3.Dot(normalized2D, this.m_AI.transform.forward.GetNormalized2D()) < 0f || this.m_AI.m_PathModule.m_Agent.remainingDistance <= this.m_AI.GetPathPassDistance();
+			return !this.m_AI.m_PathModule.m_Agent.pathPending && (this.m_AI.m_PathModule.m_Agent.pathStatus == NavMeshPathStatus.PathInvalid || this.m_AI.m_PathModule.m_Agent.remainingDistance <= this.m_AI.GetPathPassDistance());
 		}
 
 		private GoalMove m_Goal;

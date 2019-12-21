@@ -5,8 +5,9 @@ using UnityEngine.UI;
 
 public class SkillsTab : NotepadTab
 {
-	private void Awake()
+	public override void Init()
 	{
+		base.Init();
 		for (int i = 0; i < base.gameObject.transform.childCount; i++)
 		{
 			GameObject gameObject = base.gameObject.transform.GetChild(i).gameObject;
@@ -34,7 +35,7 @@ public class SkillsTab : NotepadTab
 	{
 		foreach (Skill skill in SkillsManager.Get().m_Skills)
 		{
-			SkillsTab.SkillData value = default(SkillsTab.SkillData);
+			SkillsTab.SkillData skillData = default(SkillsTab.SkillData);
 			Transform transform = base.transform.Find(skill.m_Name);
 			if (!transform)
 			{
@@ -42,9 +43,9 @@ public class SkillsTab : NotepadTab
 			}
 			else
 			{
-				value.parent = transform.gameObject;
-				value.text = value.parent.transform.Find("Text").GetComponent<Text>();
-				this.m_SkillDatas.Add(skill, value);
+				skillData.parent = transform.gameObject;
+				skillData.text = skillData.parent.transform.Find("Text").GetComponent<Text>();
+				this.m_SkillDatas.Add(skill, skillData);
 			}
 		}
 	}
@@ -74,8 +75,7 @@ public class SkillsTab : NotepadTab
 		int num = 0;
 		for (int i = 0; i < this.m_SkillsElement.Count; i++)
 		{
-			PageNum component = this.m_SkillsElement[i].GetComponent<PageNum>();
-			if (component.m_PageNum == this.m_CurrentPage)
+			if (this.m_SkillsElement[i].GetComponent<PageNum>().m_PageNum == this.m_CurrentPage)
 			{
 				this.m_SkillsElement[i].SetActive(true);
 				num++;

@@ -34,8 +34,8 @@ namespace Cinemachine
 		[Tooltip("These are the noise channels for the virtual camera's position. Convincing noise setups typically mix low, medium and high frequencies together, so start with a size of 3")]
 		private NoiseSettings.TransformNoiseParams[] m_Position = new NoiseSettings.TransformNoiseParams[0];
 
-		[Tooltip("These are the noise channels for the virtual camera's orientation. Convincing noise setups typically mix low, medium and high frequencies together, so start with a size of 3")]
 		[SerializeField]
+		[Tooltip("These are the noise channels for the virtual camera's orientation. Convincing noise setups typically mix low, medium and high frequencies together, so start with a size of 3")]
 		private NoiseSettings.TransformNoiseParams[] m_Orientation = new NoiseSettings.TransformNoiseParams[0];
 
 		[DocumentationSorting(9.1f, DocumentationSortingAttribute.Level.UserRef)]

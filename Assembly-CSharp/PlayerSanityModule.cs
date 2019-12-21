@@ -2,10 +2,27 @@
 using System.Collections.Generic;
 using AIs;
 using CJTools;
+using Enums;
 using UnityEngine;
 
 public class PlayerSanityModule : PlayerModule
 {
+	public int m_Sanity
+	{
+		get
+		{
+			if (ScenarioManager.Get().IsDreamOrPreDream())
+			{
+				return 100;
+			}
+			return this.m_SanityProp;
+		}
+		set
+		{
+			this.m_SanityProp = value;
+		}
+	}
+
 	public static PlayerSanityModule Get()
 	{
 		return PlayerSanityModule.s_Instance;
@@ -16,10 +33,10 @@ public class PlayerSanityModule : PlayerModule
 		PlayerSanityModule.s_Instance = this;
 	}
 
-	public override void Initialize()
+	public override void Initialize(Being being)
 	{
-		base.Initialize();
-		for (int i = 0; i < 24; i++)
+		base.Initialize(being);
+		for (int i = 0; i < 26; i++)
 		{
 			this.m_EventsMap.Add(i, new SanityEventData());
 		}
@@ -246,19 +263,17 @@ public class PlayerSanityModule : PlayerModule
 
 	public float GetEventInterval(PlayerSanityModule.SanityEventType evn)
 	{
-		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
-		return sanityEventData.m_Interval[(int)GreenHellGame.Instance.m_GameDifficulty];
+		return this.m_EventsMap[(int)evn].m_Interval[(int)DifficultySettings.ActivePreset.m_BaseDifficulty];
 	}
 
 	public void ResetEventCooldown(PlayerSanityModule.SanityEventType evn)
 	{
-		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
-		sanityEventData.m_LastEventTime = Time.time;
+		this.m_EventsMap[(int)evn].m_LastEventTime = Time.time;
 	}
 
 	public void OnConsume(int sanity_change)
 	{
-		if (MainLevel.Instance.m_Tutorial)
+		if (MainLevel.Instance.m_Tutorial || !DifficultySettings.ActivePreset.m_Sanity)
 		{
 			this.m_Sanity = 100;
 			return;
@@ -274,12 +289,12 @@ public class PlayerSanityModule : PlayerModule
 			return;
 		}
 		this.m_Sanity = num;
-		this.OnChangeSanity((float)num2, string.Empty);
+		this.OnChangeSanity((float)num2, string.Empty, true);
 	}
 
 	public void OnEvent(PlayerSanityModule.SanityEventType evn, int mul = 1)
 	{
-		if (MainLevel.Instance.m_Tutorial)
+		if (MainLevel.Instance.m_Tutorial || !DifficultySettings.ActivePreset.m_Sanity)
 		{
 			this.m_Sanity = 100;
 			return;
@@ -289,7 +304,7 @@ public class PlayerSanityModule : PlayerModule
 			return;
 		}
 		SanityEventData sanityEventData = this.m_EventsMap[(int)evn];
-		if (sanityEventData.m_LastEventTime == 0f || Time.time - sanityEventData.m_LastEventTime >= sanityEventData.m_Interval[(int)GreenHellGame.Instance.m_GameDifficulty])
+		if (sanityEventData.m_LastEventTime == 0f || Time.time - sanityEventData.m_LastEventTime >= sanityEventData.m_Interval[(int)DifficultySettings.ActivePreset.m_BaseDifficulty])
 		{
 			int num = Mathf.Clamp(this.m_Sanity + sanityEventData.m_SanityChange * mul, 0, 100);
 			int num2 = num - this.m_Sanity;
@@ -299,19 +314,22 @@ public class PlayerSanityModule : PlayerModule
 			}
 			this.m_Sanity = num;
 			sanityEventData.m_LastEventTime = Time.time;
-			this.OnChangeSanity((float)num2, sanityEventData.m_TextID);
+			this.OnChangeSanity((float)num2, sanityEventData.m_TextID, true);
 		}
 	}
 
-	private void OnChangeSanity(float diff, string text_id)
+	private void OnChangeSanity(float diff, string text_id, bool show_msg = true)
 	{
-		HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
-		string text = GreenHellGame.Instance.GetLocalization().Get("HUD_Sanity") + ((diff <= 0f) ? string.Empty : "+") + diff.ToString();
-		hudmessages.AddMessage(text, null, HUDMessageIcon.None, string.Empty);
-		if (text_id != string.Empty)
+		if (show_msg)
 		{
-			text = GreenHellGame.Instance.GetLocalization().Get(text_id);
-			hudmessages.AddMessage(text, null, HUDMessageIcon.None, string.Empty);
+			HUDMessages hudmessages = (HUDMessages)HUDManager.Get().GetHUD(typeof(HUDMessages));
+			string text = GreenHellGame.Instance.GetLocalization().Get("HUD_Sanity", true) + ((diff > 0f) ? "+" : "") + diff.ToString();
+			hudmessages.AddMessage(text, null, HUDMessageIcon.None, "", null);
+			if (text_id != string.Empty)
+			{
+				text = GreenHellGame.Instance.GetLocalization().Get(text_id, true);
+				hudmessages.AddMessage(text, null, HUDMessageIcon.None, "", null);
+			}
 		}
 		if (this.m_Sanity <= this.m_SanityLevelToPlaySounds)
 		{
@@ -327,6 +345,7 @@ public class PlayerSanityModule : PlayerModule
 		{
 			return;
 		}
+		this.UpdateFever();
 		this.UpdateEffects();
 		this.UpdateHeartBeatSound();
 		this.UpdateAIHallucinations();
@@ -336,16 +355,42 @@ public class PlayerSanityModule : PlayerModule
 		this.UpdateAudio();
 	}
 
+	private void UpdateFever()
+	{
+		if (Time.time - this.m_LastFeverSanityLossTime < 1f)
+		{
+			return;
+		}
+		int num = 2;
+		Disease disease = PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.Fever);
+		if (disease.IsActive() && this.m_FeverSanityLoss < this.m_MaxFeverSanityLoss)
+		{
+			num = Mathf.Clamp(this.m_Sanity - num, 0, 100) - this.m_Sanity;
+			this.m_FeverSanityLoss -= num;
+			this.m_Sanity += num;
+			this.OnChangeSanity((float)num, string.Empty, false);
+		}
+		else if (!disease.IsActive() && this.m_FeverSanityLoss > 0)
+		{
+			num = Mathf.Clamp(this.m_Sanity + num, 0, 100) - this.m_Sanity;
+			this.m_FeverSanityLoss -= num;
+			this.m_Sanity += num;
+			this.OnChangeSanity((float)num, string.Empty, false);
+		}
+		this.m_LastFeverSanityLossTime = Time.time;
+	}
+
 	private void UpdateAudio()
 	{
-		if ((float)this.m_Sanity < 10f)
+		if ((float)this.m_Sanity < 10f && LoadingScreen.Get().m_State == LoadingScreenState.None)
 		{
-			if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.LowSanity && !SleepController.Get().IsActive())
+			if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.LowSanity && !SleepController.Get().IsActive() && (!SwimController.Get().IsActive() || SwimController.Get().GetState() != SwimState.Dive))
 			{
 				GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.LowSanity, 0.5f);
+				return;
 			}
 		}
-		else if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.Default && !SleepController.Get().IsActive())
+		else if (GreenHellGame.Instance.GetCurrentSnapshot() != AudioMixerSnapshotGame.Default && !SleepController.Get().IsActive() && (!SwimController.Get().IsActive() || SwimController.Get().GetState() != SwimState.Dive))
 		{
 			GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.Default, 0.5f);
 		}
@@ -409,7 +454,7 @@ public class PlayerSanityModule : PlayerModule
 	private void SpawnAIHallucination()
 	{
 		int count = Mathf.FloorToInt(CJTools.Math.GetProportionalClamp((float)this.m_AIHallucinationsMinCount, (float)this.m_AIHallucinationsMaxCount, (float)this.m_Sanity, (float)this.m_AIHallucinationsSanityLevel, 1f));
-		this.m_CurrentHallucination = AIWavesManager.Get().SpawnWave(count, true);
+		this.m_CurrentHallucination = EnemyAISpawnManager.Get().SpawnWave(count, true, null);
 		this.m_LastAIHallucinationTime = Time.time;
 	}
 
@@ -511,9 +556,14 @@ public class PlayerSanityModule : PlayerModule
 		this.OnWhispersEvent(PlayerSanityModule.WhisperType.Random);
 	}
 
+	public bool IsWhispersLevel()
+	{
+		return this.m_Sanity <= this.m_WhispersSanityLevel;
+	}
+
 	public void OnWhispersEvent(PlayerSanityModule.WhisperType type)
 	{
-		if (this.m_Sanity > this.m_WhispersSanityLevel)
+		if (!this.IsWhispersLevel())
 		{
 			return;
 		}
@@ -549,8 +599,7 @@ public class PlayerSanityModule : PlayerModule
 		{
 			return;
 		}
-		AudioSource audioSource = this.m_WhispersQueue[0];
-		audioSource.Play();
+		this.m_WhispersQueue[0].Play();
 		this.m_WhispersQueue.RemoveAt(0);
 		if (this.m_WhispersQueue.Count > 0)
 		{
@@ -558,10 +607,14 @@ public class PlayerSanityModule : PlayerModule
 		}
 	}
 
+	public float GetAIHallucinationsSanityLevel()
+	{
+		return (float)this.m_AIHallucinationsSanityLevel;
+	}
+
 	public const int MAX_SANITY = 100;
 
-	[Range(0f, 100f)]
-	public int m_Sanity = 100;
+	private int m_SanityProp = 100;
 
 	private Dictionary<int, SanityEventData> m_EventsMap = new Dictionary<int, SanityEventData>();
 
@@ -651,6 +704,13 @@ public class PlayerSanityModule : PlayerModule
 
 	private static PlayerSanityModule s_Instance;
 
+	[HideInInspector]
+	public int m_FeverSanityLoss;
+
+	private int m_MaxFeverSanityLoss = 20;
+
+	private float m_LastFeverSanityLossTime;
+
 	public enum SanityEventType
 	{
 		None,
@@ -675,6 +735,8 @@ public class PlayerSanityModule : PlayerModule
 		VenomBite,
 		SnakeBite,
 		PlannedAction,
+		Insomnia,
+		Deworm,
 		DebugPositive,
 		DebugNegative,
 		Count

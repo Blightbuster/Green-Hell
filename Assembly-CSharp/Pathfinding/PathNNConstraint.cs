@@ -20,11 +20,9 @@ namespace Pathfinding
 			if (node != null)
 			{
 				this.area = (int)node.Area;
+				return;
 			}
-			else
-			{
-				this.constrainArea = false;
-			}
+			this.constrainArea = false;
 		}
 	}
 }

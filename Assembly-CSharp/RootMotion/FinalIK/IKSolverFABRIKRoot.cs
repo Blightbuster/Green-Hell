@@ -13,9 +13,10 @@ namespace RootMotion.FinalIK
 				message = "IKSolverFABRIKRoot contains no chains.";
 				return false;
 			}
-			foreach (FABRIKChain fabrikchain in this.chains)
+			FABRIKChain[] array = this.chains;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (!fabrikchain.IsValid(ref message))
+				if (!array[i].IsValid(ref message))
 				{
 					return false;
 				}

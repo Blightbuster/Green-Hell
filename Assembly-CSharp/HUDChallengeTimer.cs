@@ -42,7 +42,7 @@ public class HUDChallengeTimer : HUDBase
 
 	private void SetupTimeLimit(Challenge challenge)
 	{
-		this.m_TimerText.text = GreenHellGame.Instance.GetLocalization().Get("HUDChallenge_TimeLimit");
+		this.m_TimerText.text = GreenHellGame.Instance.GetLocalization().Get("HUDChallenge_TimeLimit", true);
 		Text timerText = this.m_TimerText;
 		timerText.text += " ";
 		Text timerText2 = this.m_TimerText;
@@ -67,14 +67,14 @@ public class HUDChallengeTimer : HUDBase
 				{
 					this.m_Blink = true;
 					this.m_StartBlinkTime = Time.time;
+					return;
 				}
 			}
 			else
 			{
 				float t = Mathf.Abs(Mathf.Sin((Time.time - this.m_StartBlinkTime) * 5f));
 				this.m_TimerText.color = Color.Lerp(this.m_Color, this.m_RedColor, t);
-				float num2 = Time.time - this.m_StartBlinkTime;
-				if (num2 >= 1.25f)
+				if (Time.time - this.m_StartBlinkTime >= 1.25f)
 				{
 					this.m_Blink = false;
 					this.m_TimerText.color = this.m_Color;

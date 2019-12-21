@@ -14,24 +14,14 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			if (this.m_Active)
-			{
-				return true;
-			}
-			if (!this.m_HumanAI.m_SelectedConstruction)
-			{
-				return false;
-			}
-			float num = this.m_HumanAI.m_SelectedConstruction.transform.position.Distance(this.m_AI.transform.position);
-			return num <= this.m_AI.m_Params.m_AttackRange + 0.5f;
+			return this.m_HumanAI.m_SelectedConstruction && this.m_HumanAI.m_SelectedConstruction.transform.position.Distance(this.m_AI.transform.position) <= this.m_AI.m_Params.m_AttackRange + 0.5f;
 		}
 
 		protected override void Prepare()
 		{
 			base.Prepare();
 			Vector3 normalized2D = (this.m_HumanAI.m_SelectedConstruction.transform.position - this.m_HumanAI.transform.position).GetNormalized2D();
-			float f = this.m_HumanAI.transform.forward.GetNormalized2D().AngleSigned(normalized2D, Vector3.up);
-			if (Mathf.Abs(f) >= 35f)
+			if (Mathf.Abs(this.m_HumanAI.transform.forward.GetNormalized2D().AngleSigned(normalized2D, Vector3.up)) >= 35f)
 			{
 				this.m_RotateTo.SetupParams(this.m_HumanAI.m_SelectedConstruction.gameObject.transform.position, 10f);
 				base.StartAction(this.m_RotateTo);

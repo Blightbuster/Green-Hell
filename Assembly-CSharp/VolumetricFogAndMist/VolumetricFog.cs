@@ -5,8 +5,8 @@ using UnityEngine.XR;
 
 namespace VolumetricFogAndMist
 {
-	[AddComponentMenu("Image Effects/Rendering/Volumetric Fog & Mist")]
 	[ExecuteInEditMode]
+	[AddComponentMenu("Image Effects/Rendering/Volumetric Fog & Mist")]
 	[HelpURL("http://kronnect.com/taptapgo")]
 	public class VolumetricFog : MonoBehaviour
 	{
@@ -22,9 +22,10 @@ namespace VolumetricFogAndMist
 					}
 					if (VolumetricFog._fog == null)
 					{
-						foreach (Camera camera in Camera.allCameras)
+						Camera[] allCameras = Camera.allCameras;
+						for (int i = 0; i < allCameras.Length; i++)
 						{
-							VolumetricFog._fog = camera.GetComponent<VolumetricFog>();
+							VolumetricFog._fog = allCameras[i].GetComponent<VolumetricFog>();
 							if (VolumetricFog._fog != null)
 							{
 								break;
@@ -1997,8 +1998,7 @@ namespace VolumetricFogAndMist
 			if (this.fogRenderer.sun != null)
 			{
 				Vector3 forward = this.fogRenderer.sun.transform.forward;
-				bool flag = !Application.isPlaying || (this.updatingTextureSlice < 0 && Time.time - this.lastTextureUpdate >= 0.2f);
-				if (flag)
+				if (!Application.isPlaying || (this.updatingTextureSlice < 0 && Time.time - this.lastTextureUpdate >= 0.2f))
 				{
 					if (forward != this._lightDirection)
 					{
@@ -2234,17 +2234,13 @@ namespace VolumetricFogAndMist
 				if (count > 1)
 				{
 					Vector3 position = this.mainCamera.transform.position;
-					bool flag2 = !Application.isPlaying || Time.time - this.lastTimeSortInstances >= 2f;
-					if (!flag2)
+					bool flag = !Application.isPlaying || Time.time - this.lastTimeSortInstances >= 2f;
+					if (!flag && (position.x - this.lastCamPos.x) * (position.x - this.lastCamPos.x) + (position.y - this.lastCamPos.y) * (position.y - this.lastCamPos.y) + (position.z - this.lastCamPos.z) * (position.z - this.lastCamPos.z) > 625f)
 					{
-						float num2 = (position.x - this.lastCamPos.x) * (position.x - this.lastCamPos.x) + (position.y - this.lastCamPos.y) * (position.y - this.lastCamPos.y) + (position.z - this.lastCamPos.z) * (position.z - this.lastCamPos.z);
-						if (num2 > 625f)
-						{
-							this.lastCamPos = position;
-							flag2 = true;
-						}
+						this.lastCamPos = position;
+						flag = true;
 					}
-					if (flag2)
+					if (flag)
 					{
 						this.lastTimeSortInstances = Time.time;
 						float x2 = position.x;
@@ -2257,15 +2253,15 @@ namespace VolumetricFogAndMist
 							{
 								Vector3 position2 = volumetricFog.transform.position;
 								position2.y = volumetricFog.currentFogAltitude;
-								float num3 = x2 - position2.x;
-								float num4 = y2 - position2.y;
-								float num5 = num4 * num4;
-								float num6 = y2 - (position2.y + volumetricFog.height);
-								float num7 = num6 * num6;
-								volumetricFog.distanceToCameraYAxis = ((num5 >= num7) ? num7 : num5);
-								float num8 = z - position2.z;
-								float num9 = num3 * num3 + num4 * num4 + num8 * num8;
-								volumetricFog.distanceToCamera = num9;
+								float num2 = x2 - position2.x;
+								float num3 = y2 - position2.y;
+								float num4 = num3 * num3;
+								float num5 = y2 - (position2.y + volumetricFog.height);
+								float num6 = num5 * num5;
+								volumetricFog.distanceToCameraYAxis = ((num4 < num6) ? num4 : num6);
+								float num7 = z - position2.z;
+								float num8 = num2 * num2 + num3 * num3 + num7 * num7;
+								volumetricFog.distanceToCamera = num8;
 								Vector3 position3 = position2 - volumetricFog.transform.localScale * 0.5f;
 								Vector3 position4 = position2 + volumetricFog.transform.localScale * 0.5f;
 								volumetricFog.distanceToCameraMin = this.mainCamera.WorldToScreenPoint(position3).z;
@@ -2397,17 +2393,16 @@ namespace VolumetricFogAndMist
 			{
 				this.AssignRenderComponent<VolumetricFogPreT>();
 				this.DestroyRenderComponent<VolumetricFogPosT>();
+				return;
 			}
-			else if (this._transparencyBlendMode == TRANSPARENT_MODE.Blend)
+			if (this._transparencyBlendMode == TRANSPARENT_MODE.Blend)
 			{
 				this.AssignRenderComponent<VolumetricFogPreT>();
 				this.AssignRenderComponent<VolumetricFogPosT>();
+				return;
 			}
-			else
-			{
-				this.AssignRenderComponent<VolumetricFogPosT>();
-				this.DestroyRenderComponent<VolumetricFogPreT>();
-			}
+			this.AssignRenderComponent<VolumetricFogPosT>();
+			this.DestroyRenderComponent<VolumetricFogPreT>();
 		}
 
 		private void DestroyRenderComponent<T>() where T : IVolumetricFogRenderComponent
@@ -2439,13 +2434,10 @@ namespace VolumetricFogAndMist
 			}
 			if (num < 0)
 			{
-				T t = base.gameObject.AddComponent<T>();
-				t.fog = this;
+				base.gameObject.AddComponent<T>().fog = this;
+				return;
 			}
-			else
-			{
-				componentsInChildren[num].fog = this;
-			}
+			componentsInChildren[num].fog = this;
 		}
 
 		private void RegisterFogArea(VolumetricFog fog)
@@ -2503,44 +2495,42 @@ namespace VolumetricFogAndMist
 			if (this._renderingInstancesCount == 1)
 			{
 				this.fogRenderInstances[0].DoOnRenderImageInstance(source, destination);
+				return;
 			}
-			else
+			RenderTexture temporary = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+			this.fogRenderInstances[0].DoOnRenderImageInstance(source, temporary);
+			if (this._renderingInstancesCount == 2)
 			{
-				RenderTexture temporary = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
-				this.fogRenderInstances[0].DoOnRenderImageInstance(source, temporary);
-				if (this._renderingInstancesCount == 2)
-				{
-					this.fogRenderInstances[1].DoOnRenderImageInstance(temporary, destination);
-				}
-				if (this._renderingInstancesCount >= 3)
-				{
-					RenderTexture temporary2 = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
-					RenderTexture source2 = temporary;
-					RenderTexture renderTexture = temporary2;
-					int num = this._renderingInstancesCount - 1;
-					for (int j = 1; j < num; j++)
-					{
-						if (j > 1)
-						{
-							renderTexture.DiscardContents();
-						}
-						this.fogRenderInstances[j].DoOnRenderImageInstance(source2, renderTexture);
-						if (renderTexture == temporary2)
-						{
-							source2 = temporary2;
-							renderTexture = temporary;
-						}
-						else
-						{
-							source2 = temporary;
-							renderTexture = temporary2;
-						}
-					}
-					this.fogRenderInstances[num].DoOnRenderImageInstance(source2, destination);
-					RenderTexture.ReleaseTemporary(temporary2);
-				}
-				RenderTexture.ReleaseTemporary(temporary);
+				this.fogRenderInstances[1].DoOnRenderImageInstance(temporary, destination);
 			}
+			if (this._renderingInstancesCount >= 3)
+			{
+				RenderTexture temporary2 = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+				RenderTexture source2 = temporary;
+				RenderTexture renderTexture = temporary2;
+				int num = this._renderingInstancesCount - 1;
+				for (int j = 1; j < num; j++)
+				{
+					if (j > 1)
+					{
+						renderTexture.DiscardContents();
+					}
+					this.fogRenderInstances[j].DoOnRenderImageInstance(source2, renderTexture);
+					if (renderTexture == temporary2)
+					{
+						source2 = temporary2;
+						renderTexture = temporary;
+					}
+					else
+					{
+						source2 = temporary;
+						renderTexture = temporary2;
+					}
+				}
+				this.fogRenderInstances[num].DoOnRenderImageInstance(source2, destination);
+				RenderTexture.ReleaseTemporary(temporary2);
+			}
+			RenderTexture.ReleaseTemporary(temporary);
 		}
 
 		internal void DoOnRenderImageInstance(RenderTexture source, RenderTexture destination)
@@ -2642,7 +2632,7 @@ namespace VolumetricFogAndMist
 				int scaledSize = this.GetScaledSize(source.width, (float)this._downsampling);
 				int scaledSize2 = this.GetScaledSize(source.width, (float)this._downsampling);
 				this.reducedDestination = RenderTexture.GetTemporary(scaledSize, scaledSize2, 0, RenderTextureFormat.ARGB32);
-				RenderTextureFormat format = (!SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RFloat)) ? RenderTextureFormat.ARGBFloat : RenderTextureFormat.RFloat;
+				RenderTextureFormat format = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RFloat) ? RenderTextureFormat.RFloat : RenderTextureFormat.ARGBFloat;
 				RenderTexture temporary = RenderTexture.GetTemporary(scaledSize, scaledSize2, 0, format);
 				if (this._fogBlur)
 				{
@@ -2676,18 +2666,16 @@ namespace VolumetricFogAndMist
 				Graphics.Blit(source, destination, this.fogMat, 2);
 				RenderTexture.ReleaseTemporary(temporary);
 				RenderTexture.ReleaseTemporary(this.reducedDestination);
+				return;
 			}
-			else
+			if (this._fogBlur)
 			{
-				if (this._fogBlur)
-				{
-					RenderTexture temporary3 = RenderTexture.GetTemporary(256, 256, 0, RenderTextureFormat.ARGB32);
-					Graphics.Blit(source, temporary3);
-					this.SetBlurTexture(temporary3);
-					RenderTexture.ReleaseTemporary(temporary3);
-				}
-				Graphics.Blit(source, destination, this.fogMat, 0);
+				RenderTexture temporary3 = RenderTexture.GetTemporary(256, 256, 0, RenderTextureFormat.ARGB32);
+				Graphics.Blit(source, temporary3);
+				this.SetBlurTexture(temporary3);
+				RenderTexture.ReleaseTemporary(temporary3);
 			}
+			Graphics.Blit(source, destination, this.fogMat, 0);
 		}
 
 		private int GetScaledSize(int size, float factor)
@@ -2928,130 +2916,148 @@ namespace VolumetricFogAndMist
 		private void UpdatePreset()
 		{
 			FOG_PRESET preset = this._preset;
-			switch (preset)
+			if (preset <= FOG_PRESET.SeaClouds)
 			{
-			case FOG_PRESET.SandStorm1:
-				this._skySpeed = 0.35f;
-				this._skyHaze = 388f;
-				this._skyNoiseStrength = 0.847f;
-				this._skyAlpha = 1f;
-				this._density = 0.487f;
-				this._noiseStrength = 0.758f;
-				this._noiseScale = 1.71f;
-				this._noiseSparse = 0f;
-				this._distance = 0f;
-				this._distanceFallOff = 0f;
-				this._height = 16f;
-				this._stepping = 6f;
-				this._steppingNear = 0f;
-				this._alpha = 1f;
-				this._color = new Color(0.505f, 0.505f, 0.505f, 1f);
-				this._skyColor = this._color;
-				this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-				this._specularIntensity = 0f;
-				this._specularThreshold = 0.6f;
-				this._lightColor = Color.white;
-				this._lightIntensity = 0f;
-				this._speed = 0.3f;
-				this._windDirection = Vector3.right;
-				this._downsampling = 1;
-				this._baselineRelativeToCamera = false;
-				this.CheckWaterLevel(false);
-				this._fogVoidRadius = 0f;
-				this.CopyTransitionValues();
-				break;
-			case FOG_PRESET.Smoke:
-				this._skySpeed = 0.109f;
-				this._skyHaze = 10f;
-				this._skyNoiseStrength = 0.119f;
-				this._skyAlpha = 1f;
-				this._density = 1f;
-				this._noiseStrength = 0.767f;
-				this._noiseScale = 1.6f;
-				this._noiseSparse = 0f;
-				this._distance = 0f;
-				this._distanceFallOff = 0f;
-				this._height = 8f;
-				this._stepping = 12f;
-				this._steppingNear = 25f;
-				this._alpha = 1f;
-				this._color = new Color(0.125f, 0.125f, 0.125f, 1f);
-				this._skyColor = this._color;
-				this._specularColor = new Color(1f, 1f, 1f, 1f);
-				this._specularIntensity = 0.575f;
-				this._specularThreshold = 0.6f;
-				this._lightColor = Color.white;
-				this._lightIntensity = 1f;
-				this._speed = 0.075f;
-				this._windDirection = Vector3.right;
-				this._downsampling = 1;
-				this._baselineRelativeToCamera = false;
-				this.CheckWaterLevel(false);
-				this._baselineHeight += 8f;
-				this._fogVoidRadius = 0f;
-				this.CopyTransitionValues();
-				break;
-			case FOG_PRESET.ToxicSwamp:
-				this._skySpeed = 0.062f;
-				this._skyHaze = 22f;
-				this._skyNoiseStrength = 0.694f;
-				this._skyAlpha = 1f;
-				this._density = 1f;
-				this._noiseStrength = 1f;
-				this._noiseScale = 1f;
-				this._noiseSparse = 0f;
-				this._distance = 0f;
-				this._distanceFallOff = 0f;
-				this._height = 2.5f;
-				this._stepping = 20f;
-				this._steppingNear = 50f;
-				this._alpha = 0.95f;
-				this._color = new Color(0.0238f, 0.175f, 0.109f, 1f);
-				this._skyColor = this._color;
-				this._specularColor = new Color(0.593f, 0.625f, 0.207f, 1f);
-				this._specularIntensity = 0.735f;
-				this._specularThreshold = 0.6f;
-				this._lightColor = new Color(0.73f, 0.746f, 0.511f, 1f);
-				this._lightIntensity = 0.492f;
-				this._speed = 0.0003f;
-				this._windDirection = Vector3.right;
-				this._downsampling = 1;
-				this._baselineRelativeToCamera = false;
-				this.CheckWaterLevel(false);
-				this._fogVoidRadius = 0f;
-				this.CopyTransitionValues();
-				break;
-			case FOG_PRESET.SandStorm2:
-				this._skySpeed = 0f;
-				this._skyHaze = 0f;
-				this._skyNoiseStrength = 0.729f;
-				this._skyAlpha = 0.55f;
-				this._density = 0.545f;
-				this._noiseStrength = 1f;
-				this._noiseScale = 3f;
-				this._noiseSparse = 0f;
-				this._distance = 0f;
-				this._distanceFallOff = 0f;
-				this._height = 12f;
-				this._stepping = 5f;
-				this._steppingNear = 19.6f;
-				this._alpha = 0.96f;
-				this._color = new Color(0.609f, 0.609f, 0.609f, 1f);
-				this._skyColor = this._color;
-				this._specularColor = new Color(0.589f, 0.621f, 0.207f, 1f);
-				this._specularIntensity = 0.505f;
-				this._specularThreshold = 0.6f;
-				this._lightColor = new Color(0.726f, 0.742f, 0.507f, 1f);
-				this._lightIntensity = 0.581f;
-				this._speed = 0.168f;
-				this._windDirection = Vector3.right;
-				this._downsampling = 1;
-				this._baselineRelativeToCamera = false;
-				this.CheckWaterLevel(false);
-				this._fogVoidRadius = 0f;
-				this.CopyTransitionValues();
-				break;
-			default:
+				if (preset <= FOG_PRESET.Mist)
+				{
+					if (preset != FOG_PRESET.Clear)
+					{
+						if (preset == FOG_PRESET.Mist)
+						{
+							this._skySpeed = 0.3f;
+							this._skyHaze = 15f;
+							this._skyNoiseStrength = 0.1f;
+							this._skyAlpha = 0.8f;
+							this._density = 0.3f;
+							this._noiseStrength = 0.6f;
+							this._noiseScale = 1f;
+							this._noiseSparse = 0f;
+							this._distance = 0f;
+							this._distanceFallOff = 0f;
+							this._height = 6f;
+							this._stepping = 8f;
+							this._steppingNear = 0f;
+							this._alpha = 1f;
+							this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
+							this._skyColor = this._color;
+							this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+							this._specularIntensity = 0.1f;
+							this._specularThreshold = 0.6f;
+							this._lightColor = Color.white;
+							this._lightIntensity = 0.12f;
+							this._speed = 0.01f;
+							this._downsampling = 1;
+							this._baselineRelativeToCamera = false;
+							this.CheckWaterLevel(false);
+							this._fogVoidRadius = 0f;
+							this.CopyTransitionValues();
+						}
+					}
+					else
+					{
+						this._density = 0f;
+						this._fogOfWarEnabled = false;
+						this._fogVoidRadius = 0f;
+					}
+				}
+				else if (preset != FOG_PRESET.WindyMist)
+				{
+					if (preset != FOG_PRESET.LowClouds)
+					{
+						if (preset == FOG_PRESET.SeaClouds)
+						{
+							this._skySpeed = 0.3f;
+							this._skyHaze = 60f;
+							this._skyNoiseStrength = 1f;
+							this._skyAlpha = 0.96f;
+							this._density = 1f;
+							this._noiseStrength = 1f;
+							this._noiseScale = 1.5f;
+							this._noiseSparse = 0f;
+							this._distance = 0f;
+							this._distanceFallOff = 0f;
+							this._height = 12.4f;
+							this._stepping = 6f;
+							this._alpha = 0.98f;
+							this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
+							this._skyColor = this._color;
+							this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+							this._specularIntensity = 0.259f;
+							this._specularThreshold = 0.6f;
+							this._lightColor = Color.white;
+							this._lightIntensity = 0.15f;
+							this._speed = 0.008f;
+							this._downsampling = 1;
+							this._baselineRelativeToCamera = false;
+							this.CheckWaterLevel(false);
+							this._fogVoidRadius = 0f;
+							this.CopyTransitionValues();
+						}
+					}
+					else
+					{
+						this._skySpeed = 0.3f;
+						this._skyHaze = 60f;
+						this._skyNoiseStrength = 1f;
+						this._skyAlpha = 0.96f;
+						this._density = 1f;
+						this._noiseStrength = 0.7f;
+						this._noiseScale = 1f;
+						this._noiseSparse = 0f;
+						this._distance = 0f;
+						this._distanceFallOff = 0f;
+						this._height = 4f;
+						this._stepping = 12f;
+						this._steppingNear = 0f;
+						this._alpha = 0.98f;
+						this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
+						this._skyColor = this._color;
+						this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+						this._specularIntensity = 0.15f;
+						this._specularThreshold = 0.6f;
+						this._lightColor = Color.white;
+						this._lightIntensity = 0.15f;
+						this._speed = 0.008f;
+						this._downsampling = 1;
+						this._baselineRelativeToCamera = false;
+						this.CheckWaterLevel(false);
+						this._fogVoidRadius = 0f;
+						this.CopyTransitionValues();
+					}
+				}
+				else
+				{
+					this._skySpeed = 0.3f;
+					this._skyHaze = 25f;
+					this._skyNoiseStrength = 0.1f;
+					this._skyAlpha = 0.85f;
+					this._density = 0.3f;
+					this._noiseStrength = 0.5f;
+					this._noiseScale = 1.15f;
+					this._noiseSparse = 0f;
+					this._distance = 0f;
+					this._distanceFallOff = 0f;
+					this._height = 6.5f;
+					this._stepping = 10f;
+					this._steppingNear = 0f;
+					this._alpha = 1f;
+					this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
+					this._skyColor = this._color;
+					this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+					this._specularIntensity = 0.1f;
+					this._specularThreshold = 0.6f;
+					this._lightColor = Color.white;
+					this._lightIntensity = 0f;
+					this._speed = 0.15f;
+					this._downsampling = 1;
+					this._baselineRelativeToCamera = false;
+					this.CheckWaterLevel(false);
+					this._fogVoidRadius = 0f;
+					this.CopyTransitionValues();
+				}
+			}
+			else if (preset <= FOG_PRESET.Fog)
+			{
 				switch (preset)
 				{
 				case FOG_PRESET.GroundFog:
@@ -3142,255 +3148,30 @@ namespace VolumetricFogAndMist
 					this.CopyTransitionValues();
 					break;
 				default:
-					if (preset != FOG_PRESET.Mist)
-					{
-						if (preset != FOG_PRESET.WindyMist)
-						{
-							if (preset != FOG_PRESET.LowClouds)
-							{
-								if (preset != FOG_PRESET.SeaClouds)
-								{
-									if (preset != FOG_PRESET.Fog)
-									{
-										if (preset != FOG_PRESET.HeavyFog)
-										{
-											if (preset != FOG_PRESET.Clear)
-											{
-												if (preset == FOG_PRESET.WorldEdge)
-												{
-													this._skySpeed = 0.3f;
-													this._skyHaze = 60f;
-													this._skyNoiseStrength = 1f;
-													this._skyAlpha = 0.96f;
-													this._density = 1f;
-													this._noiseStrength = 1f;
-													this._noiseScale = 3f;
-													this._noiseSparse = 0f;
-													this._distance = 0f;
-													this._distanceFallOff = 0f;
-													this._height = 20f;
-													this._stepping = 6f;
-													this._alpha = 0.98f;
-													this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
-													this._skyColor = this._color;
-													this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-													this._specularIntensity = 0.259f;
-													this._specularThreshold = 0.6f;
-													this._lightColor = Color.white;
-													this._lightIntensity = 0.15f;
-													this._speed = 0.03f;
-													this._downsampling = 2;
-													this._baselineRelativeToCamera = false;
-													this.CheckWaterLevel(false);
-													Terrain activeTerrain = VolumetricFog.GetActiveTerrain();
-													if (activeTerrain != null)
-													{
-														this._fogVoidPosition = activeTerrain.transform.position + activeTerrain.terrainData.size * 0.5f;
-														this._fogVoidRadius = activeTerrain.terrainData.size.x * 0.45f;
-														this._fogVoidHeight = activeTerrain.terrainData.size.y;
-														this._fogVoidDepth = activeTerrain.terrainData.size.z * 0.45f;
-														this._fogVoidFallOff = 6f;
-														this._fogAreaRadius = 0f;
-														this._character = null;
-														this._fogAreaCenter = null;
-														float x = activeTerrain.terrainData.size.x;
-														if (this.mainCamera.farClipPlane < x)
-														{
-															this.mainCamera.farClipPlane = x;
-														}
-														if (this._maxFogLength < x * 0.6f)
-														{
-															this._maxFogLength = x * 0.6f;
-														}
-													}
-													this.CopyTransitionValues();
-												}
-											}
-											else
-											{
-												this._density = 0f;
-												this._fogOfWarEnabled = false;
-												this._fogVoidRadius = 0f;
-											}
-										}
-										else
-										{
-											this._skySpeed = 0.05f;
-											this._skyHaze = 500f;
-											this._skyNoiseStrength = 0.96f;
-											this._skyAlpha = 1f;
-											this._density = 0.35f;
-											this._noiseStrength = 0.1f;
-											this._noiseScale = 1f;
-											this._noiseSparse = 0f;
-											this._distance = 20f;
-											this._distanceFallOff = 0.8f;
-											this._height = 18f;
-											this._stepping = 6f;
-											this._steppingNear = 0f;
-											this._alpha = 1f;
-											this._color = new Color(0.91f, 0.91f, 0.91f, 1f);
-											this._skyColor = this._color;
-											this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-											this._specularIntensity = 0f;
-											this._specularThreshold = 0.6f;
-											this._lightColor = Color.white;
-											this._lightIntensity = 0f;
-											this._speed = 0.015f;
-											this._downsampling = 1;
-											this._baselineRelativeToCamera = false;
-											this.CheckWaterLevel(false);
-											this._fogVoidRadius = 0f;
-											this.CopyTransitionValues();
-										}
-									}
-									else
-									{
-										this._skySpeed = 0.3f;
-										this._skyHaze = 144f;
-										this._skyNoiseStrength = 0.7f;
-										this._skyAlpha = 0.9f;
-										this._density = 0.35f;
-										this._noiseStrength = 0.3f;
-										this._noiseScale = 1f;
-										this._noiseSparse = 0f;
-										this._distance = 20f;
-										this._distanceFallOff = 0.7f;
-										this._height = 8f;
-										this._stepping = 8f;
-										this._steppingNear = 0f;
-										this._alpha = 0.97f;
-										this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
-										this._skyColor = this._color;
-										this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-										this._specularIntensity = 0f;
-										this._specularThreshold = 0.6f;
-										this._lightColor = Color.white;
-										this._lightIntensity = 0f;
-										this._speed = 0.05f;
-										this._downsampling = 1;
-										this._baselineRelativeToCamera = false;
-										this.CheckWaterLevel(false);
-										this._fogVoidRadius = 0f;
-										this.CopyTransitionValues();
-									}
-								}
-								else
-								{
-									this._skySpeed = 0.3f;
-									this._skyHaze = 60f;
-									this._skyNoiseStrength = 1f;
-									this._skyAlpha = 0.96f;
-									this._density = 1f;
-									this._noiseStrength = 1f;
-									this._noiseScale = 1.5f;
-									this._noiseSparse = 0f;
-									this._distance = 0f;
-									this._distanceFallOff = 0f;
-									this._height = 12.4f;
-									this._stepping = 6f;
-									this._alpha = 0.98f;
-									this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
-									this._skyColor = this._color;
-									this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-									this._specularIntensity = 0.259f;
-									this._specularThreshold = 0.6f;
-									this._lightColor = Color.white;
-									this._lightIntensity = 0.15f;
-									this._speed = 0.008f;
-									this._downsampling = 1;
-									this._baselineRelativeToCamera = false;
-									this.CheckWaterLevel(false);
-									this._fogVoidRadius = 0f;
-									this.CopyTransitionValues();
-								}
-							}
-							else
-							{
-								this._skySpeed = 0.3f;
-								this._skyHaze = 60f;
-								this._skyNoiseStrength = 1f;
-								this._skyAlpha = 0.96f;
-								this._density = 1f;
-								this._noiseStrength = 0.7f;
-								this._noiseScale = 1f;
-								this._noiseSparse = 0f;
-								this._distance = 0f;
-								this._distanceFallOff = 0f;
-								this._height = 4f;
-								this._stepping = 12f;
-								this._steppingNear = 0f;
-								this._alpha = 0.98f;
-								this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
-								this._skyColor = this._color;
-								this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-								this._specularIntensity = 0.15f;
-								this._specularThreshold = 0.6f;
-								this._lightColor = Color.white;
-								this._lightIntensity = 0.15f;
-								this._speed = 0.008f;
-								this._downsampling = 1;
-								this._baselineRelativeToCamera = false;
-								this.CheckWaterLevel(false);
-								this._fogVoidRadius = 0f;
-								this.CopyTransitionValues();
-							}
-						}
-						else
-						{
-							this._skySpeed = 0.3f;
-							this._skyHaze = 25f;
-							this._skyNoiseStrength = 0.1f;
-							this._skyAlpha = 0.85f;
-							this._density = 0.3f;
-							this._noiseStrength = 0.5f;
-							this._noiseScale = 1.15f;
-							this._noiseSparse = 0f;
-							this._distance = 0f;
-							this._distanceFallOff = 0f;
-							this._height = 6.5f;
-							this._stepping = 10f;
-							this._steppingNear = 0f;
-							this._alpha = 1f;
-							this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
-							this._skyColor = this._color;
-							this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-							this._specularIntensity = 0.1f;
-							this._specularThreshold = 0.6f;
-							this._lightColor = Color.white;
-							this._lightIntensity = 0f;
-							this._speed = 0.15f;
-							this._downsampling = 1;
-							this._baselineRelativeToCamera = false;
-							this.CheckWaterLevel(false);
-							this._fogVoidRadius = 0f;
-							this.CopyTransitionValues();
-						}
-					}
-					else
+					if (preset == FOG_PRESET.Fog)
 					{
 						this._skySpeed = 0.3f;
-						this._skyHaze = 15f;
-						this._skyNoiseStrength = 0.1f;
-						this._skyAlpha = 0.8f;
-						this._density = 0.3f;
-						this._noiseStrength = 0.6f;
+						this._skyHaze = 144f;
+						this._skyNoiseStrength = 0.7f;
+						this._skyAlpha = 0.9f;
+						this._density = 0.35f;
+						this._noiseStrength = 0.3f;
 						this._noiseScale = 1f;
 						this._noiseSparse = 0f;
-						this._distance = 0f;
-						this._distanceFallOff = 0f;
-						this._height = 6f;
+						this._distance = 20f;
+						this._distanceFallOff = 0.7f;
+						this._height = 8f;
 						this._stepping = 8f;
 						this._steppingNear = 0f;
-						this._alpha = 1f;
+						this._alpha = 0.97f;
 						this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
 						this._skyColor = this._color;
 						this._specularColor = new Color(1f, 1f, 0.8f, 1f);
-						this._specularIntensity = 0.1f;
+						this._specularIntensity = 0f;
 						this._specularThreshold = 0.6f;
 						this._lightColor = Color.white;
-						this._lightIntensity = 0.12f;
-						this._speed = 0.01f;
+						this._lightIntensity = 0f;
+						this._speed = 0.05f;
 						this._downsampling = 1;
 						this._baselineRelativeToCamera = false;
 						this.CheckWaterLevel(false);
@@ -3399,7 +3180,214 @@ namespace VolumetricFogAndMist
 					}
 					break;
 				}
-				break;
+			}
+			else if (preset != FOG_PRESET.HeavyFog)
+			{
+				switch (preset)
+				{
+				case FOG_PRESET.SandStorm1:
+					this._skySpeed = 0.35f;
+					this._skyHaze = 388f;
+					this._skyNoiseStrength = 0.847f;
+					this._skyAlpha = 1f;
+					this._density = 0.487f;
+					this._noiseStrength = 0.758f;
+					this._noiseScale = 1.71f;
+					this._noiseSparse = 0f;
+					this._distance = 0f;
+					this._distanceFallOff = 0f;
+					this._height = 16f;
+					this._stepping = 6f;
+					this._steppingNear = 0f;
+					this._alpha = 1f;
+					this._color = new Color(0.505f, 0.505f, 0.505f, 1f);
+					this._skyColor = this._color;
+					this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+					this._specularIntensity = 0f;
+					this._specularThreshold = 0.6f;
+					this._lightColor = Color.white;
+					this._lightIntensity = 0f;
+					this._speed = 0.3f;
+					this._windDirection = Vector3.right;
+					this._downsampling = 1;
+					this._baselineRelativeToCamera = false;
+					this.CheckWaterLevel(false);
+					this._fogVoidRadius = 0f;
+					this.CopyTransitionValues();
+					break;
+				case FOG_PRESET.Smoke:
+					this._skySpeed = 0.109f;
+					this._skyHaze = 10f;
+					this._skyNoiseStrength = 0.119f;
+					this._skyAlpha = 1f;
+					this._density = 1f;
+					this._noiseStrength = 0.767f;
+					this._noiseScale = 1.6f;
+					this._noiseSparse = 0f;
+					this._distance = 0f;
+					this._distanceFallOff = 0f;
+					this._height = 8f;
+					this._stepping = 12f;
+					this._steppingNear = 25f;
+					this._alpha = 1f;
+					this._color = new Color(0.125f, 0.125f, 0.125f, 1f);
+					this._skyColor = this._color;
+					this._specularColor = new Color(1f, 1f, 1f, 1f);
+					this._specularIntensity = 0.575f;
+					this._specularThreshold = 0.6f;
+					this._lightColor = Color.white;
+					this._lightIntensity = 1f;
+					this._speed = 0.075f;
+					this._windDirection = Vector3.right;
+					this._downsampling = 1;
+					this._baselineRelativeToCamera = false;
+					this.CheckWaterLevel(false);
+					this._baselineHeight += 8f;
+					this._fogVoidRadius = 0f;
+					this.CopyTransitionValues();
+					break;
+				case FOG_PRESET.ToxicSwamp:
+					this._skySpeed = 0.062f;
+					this._skyHaze = 22f;
+					this._skyNoiseStrength = 0.694f;
+					this._skyAlpha = 1f;
+					this._density = 1f;
+					this._noiseStrength = 1f;
+					this._noiseScale = 1f;
+					this._noiseSparse = 0f;
+					this._distance = 0f;
+					this._distanceFallOff = 0f;
+					this._height = 2.5f;
+					this._stepping = 20f;
+					this._steppingNear = 50f;
+					this._alpha = 0.95f;
+					this._color = new Color(0.0238f, 0.175f, 0.109f, 1f);
+					this._skyColor = this._color;
+					this._specularColor = new Color(0.593f, 0.625f, 0.207f, 1f);
+					this._specularIntensity = 0.735f;
+					this._specularThreshold = 0.6f;
+					this._lightColor = new Color(0.73f, 0.746f, 0.511f, 1f);
+					this._lightIntensity = 0.492f;
+					this._speed = 0.0003f;
+					this._windDirection = Vector3.right;
+					this._downsampling = 1;
+					this._baselineRelativeToCamera = false;
+					this.CheckWaterLevel(false);
+					this._fogVoidRadius = 0f;
+					this.CopyTransitionValues();
+					break;
+				case FOG_PRESET.SandStorm2:
+					this._skySpeed = 0f;
+					this._skyHaze = 0f;
+					this._skyNoiseStrength = 0.729f;
+					this._skyAlpha = 0.55f;
+					this._density = 0.545f;
+					this._noiseStrength = 1f;
+					this._noiseScale = 3f;
+					this._noiseSparse = 0f;
+					this._distance = 0f;
+					this._distanceFallOff = 0f;
+					this._height = 12f;
+					this._stepping = 5f;
+					this._steppingNear = 19.6f;
+					this._alpha = 0.96f;
+					this._color = new Color(0.609f, 0.609f, 0.609f, 1f);
+					this._skyColor = this._color;
+					this._specularColor = new Color(0.589f, 0.621f, 0.207f, 1f);
+					this._specularIntensity = 0.505f;
+					this._specularThreshold = 0.6f;
+					this._lightColor = new Color(0.726f, 0.742f, 0.507f, 1f);
+					this._lightIntensity = 0.581f;
+					this._speed = 0.168f;
+					this._windDirection = Vector3.right;
+					this._downsampling = 1;
+					this._baselineRelativeToCamera = false;
+					this.CheckWaterLevel(false);
+					this._fogVoidRadius = 0f;
+					this.CopyTransitionValues();
+					break;
+				default:
+					if (preset == FOG_PRESET.WorldEdge)
+					{
+						this._skySpeed = 0.3f;
+						this._skyHaze = 60f;
+						this._skyNoiseStrength = 1f;
+						this._skyAlpha = 0.96f;
+						this._density = 1f;
+						this._noiseStrength = 1f;
+						this._noiseScale = 3f;
+						this._noiseSparse = 0f;
+						this._distance = 0f;
+						this._distanceFallOff = 0f;
+						this._height = 20f;
+						this._stepping = 6f;
+						this._alpha = 0.98f;
+						this._color = new Color(0.89f, 0.89f, 0.89f, 1f);
+						this._skyColor = this._color;
+						this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+						this._specularIntensity = 0.259f;
+						this._specularThreshold = 0.6f;
+						this._lightColor = Color.white;
+						this._lightIntensity = 0.15f;
+						this._speed = 0.03f;
+						this._downsampling = 2;
+						this._baselineRelativeToCamera = false;
+						this.CheckWaterLevel(false);
+						Terrain activeTerrain = VolumetricFog.GetActiveTerrain();
+						if (activeTerrain != null)
+						{
+							this._fogVoidPosition = activeTerrain.transform.position + activeTerrain.terrainData.size * 0.5f;
+							this._fogVoidRadius = activeTerrain.terrainData.size.x * 0.45f;
+							this._fogVoidHeight = activeTerrain.terrainData.size.y;
+							this._fogVoidDepth = activeTerrain.terrainData.size.z * 0.45f;
+							this._fogVoidFallOff = 6f;
+							this._fogAreaRadius = 0f;
+							this._character = null;
+							this._fogAreaCenter = null;
+							float x = activeTerrain.terrainData.size.x;
+							if (this.mainCamera.farClipPlane < x)
+							{
+								this.mainCamera.farClipPlane = x;
+							}
+							if (this._maxFogLength < x * 0.6f)
+							{
+								this._maxFogLength = x * 0.6f;
+							}
+						}
+						this.CopyTransitionValues();
+					}
+					break;
+				}
+			}
+			else
+			{
+				this._skySpeed = 0.05f;
+				this._skyHaze = 500f;
+				this._skyNoiseStrength = 0.96f;
+				this._skyAlpha = 1f;
+				this._density = 0.35f;
+				this._noiseStrength = 0.1f;
+				this._noiseScale = 1f;
+				this._noiseSparse = 0f;
+				this._distance = 20f;
+				this._distanceFallOff = 0.8f;
+				this._height = 18f;
+				this._stepping = 6f;
+				this._steppingNear = 0f;
+				this._alpha = 1f;
+				this._color = new Color(0.91f, 0.91f, 0.91f, 1f);
+				this._skyColor = this._color;
+				this._specularColor = new Color(1f, 1f, 0.8f, 1f);
+				this._specularIntensity = 0f;
+				this._specularThreshold = 0.6f;
+				this._lightColor = Color.white;
+				this._lightIntensity = 0f;
+				this._speed = 0.015f;
+				this._downsampling = 1;
+				this._baselineRelativeToCamera = false;
+				this.CheckWaterLevel(false);
+				this._fogVoidRadius = 0f;
+				this.CopyTransitionValues();
 			}
 			this.FogOfWarUpdateTexture();
 			this.UpdateMaterialProperties();
@@ -3507,7 +3495,7 @@ namespace VolumetricFogAndMist
 			}
 			this.shouldUpdateMaterialProperties = false;
 			this.UpdateSkyColor(this._skyAlpha);
-			Vector4 value = new Vector4(1f / (this._stepping + 1f), 1f / (1f + this._steppingNear), this._edgeThreshold, (!this._dithering) ? 0f : (this._ditherStrength * 0.1f));
+			Vector4 value = new Vector4(1f / (this._stepping + 1f), 1f / (1f + this._steppingNear), this._edgeThreshold, this._dithering ? (this._ditherStrength * 0.1f) : 0f);
 			this.fogMat.SetFloat("_Jitter", this._jitterStrength);
 			if (!this._edgeImprove)
 			{
@@ -3682,12 +3670,13 @@ namespace VolumetricFogAndMist
 					this.fogMat.EnableKeyword("FOG_SCATTERING_ON");
 				}
 				float num2 = this._lightScatteringExposure * this.sunFade;
-				this.fogMat.SetVector("_FogScatteringData", new Vector4(this._lightScatteringSpread / (float)this._lightScatteringSamples, (float)((num2 <= 0f) ? 0 : this._lightScatteringSamples), num2, this._lightScatteringWeight / (float)this._lightScatteringSamples));
-				this.fogMat.SetVector("_FogScatteringData2", new Vector4(this._lightScatteringIllumination, this._lightScatteringDecay, this._lightScatteringJittering, (!this._lightScatteringEnabled) ? 0f : (1.2f * this._lightScatteringDiffusion * num * this.sunLightIntensity)));
+				this.fogMat.SetVector("_FogScatteringData", new Vector4(this._lightScatteringSpread / (float)this._lightScatteringSamples, (float)((num2 > 0f) ? this._lightScatteringSamples : 0), num2, this._lightScatteringWeight / (float)this._lightScatteringSamples));
+				this.fogMat.SetVector("_FogScatteringData2", new Vector4(this._lightScatteringIllumination, this._lightScatteringDecay, this._lightScatteringJittering, this._lightScatteringEnabled ? (1.2f * this._lightScatteringDiffusion * num * this.sunLightIntensity) : 0f));
 				this.fogMat.SetVector("_SunDir", -this._lightDirection);
 				this.fogMat.SetColor("_SunColor", this._lightColor);
+				return;
 			}
-			else if (this.fogMat.IsKeywordEnabled("FOG_SCATTERING_ON"))
+			if (this.fogMat.IsKeywordEnabled("FOG_SCATTERING_ON"))
 			{
 				this.fogMat.DisableKeyword("FOG_SCATTERING_ON");
 			}
@@ -3698,11 +3687,9 @@ namespace VolumetricFogAndMist
 			if (this.fogRenderer.sun != null)
 			{
 				this.sunLight = this.fogRenderer.sun.GetComponent<Light>();
+				return;
 			}
-			else
-			{
-				this.sunLight = null;
-			}
+			this.sunLight = null;
 		}
 
 		private void UpdateSkyColor(float alpha)
@@ -3814,27 +3801,25 @@ namespace VolumetricFogAndMist
 		{
 			float num = 1.0001f - this._specularThreshold;
 			int width = this.adjustedTexture.width;
-			Vector3 vector = new Vector3(-this._lightDirection.x, 0f, -this._lightDirection.z);
-			Vector3 vector2 = vector.normalized * 0.3f;
-			vector2.y = ((this._lightDirection.y <= 0f) ? (1f - Mathf.Clamp01(-this._lightDirection.y)) : Mathf.Clamp01(1f - this._lightDirection.y));
-			int num2 = Mathf.FloorToInt(vector2.z * (float)width) * width;
-			int num3 = (int)((float)num2 + vector2.x * (float)width) + colors.Length;
-			float num4 = vector2.y / num;
+			Vector3 vector = new Vector3(-this._lightDirection.x, 0f, -this._lightDirection.z).normalized * 0.3f;
+			vector.y = ((this._lightDirection.y > 0f) ? Mathf.Clamp01(1f - this._lightDirection.y) : (1f - Mathf.Clamp01(-this._lightDirection.y)));
+			int num2 = (int)((float)(Mathf.FloorToInt(vector.z * (float)width) * width) + vector.x * (float)width) + colors.Length;
+			float num3 = vector.y / num;
 			Color color = this.currentFogSpecularColor * (1f + this._specularIntensity) * this._specularIntensity;
 			bool flag = false;
 			if (this.updatingTextureSlice >= 1 || forceUpdateEntireTexture)
 			{
 				flag = true;
 			}
-			float num5 = this.updatingTextureLightColor.r * 0.5f;
-			float num6 = this.updatingTextureLightColor.g * 0.5f;
-			float num7 = this.updatingTextureLightColor.b * 0.5f;
-			float num8 = color.r * 0.5f;
-			float num9 = color.g * 0.5f;
-			float num10 = color.b * 0.5f;
-			int num11 = colors.Length;
-			int num12 = 0;
-			int num13 = num11;
+			float num4 = this.updatingTextureLightColor.r * 0.5f;
+			float num5 = this.updatingTextureLightColor.g * 0.5f;
+			float num6 = this.updatingTextureLightColor.b * 0.5f;
+			float num7 = color.r * 0.5f;
+			float num8 = color.g * 0.5f;
+			float num9 = color.b * 0.5f;
+			int num10 = colors.Length;
+			int num11 = 0;
+			int num12 = num10;
 			if (this.updatingTextureSlice >= 0)
 			{
 				if (this.updatingTextureSlice > this._updateTextureSpread)
@@ -3843,31 +3828,30 @@ namespace VolumetricFogAndMist
 					this.needUpdateTexture = true;
 					return;
 				}
-				num12 = num11 * this.updatingTextureSlice / this._updateTextureSpread;
-				num13 = num11 * (this.updatingTextureSlice + 1) / this._updateTextureSpread;
+				num11 = num10 * this.updatingTextureSlice / this._updateTextureSpread;
+				num12 = num10 * (this.updatingTextureSlice + 1) / this._updateTextureSpread;
 			}
-			int num14 = 0;
-			for (int i = num12; i < num13; i++)
+			int num13 = 0;
+			for (int i = num11; i < num12; i++)
 			{
-				int num15 = (i + num3) % num11;
-				float a = colors[i].a;
-				float num16 = (a - colors[num15].a) * num4;
-				if (num16 < 0f)
+				int num14 = (i + num2) % num10;
+				float num15 = (colors[i].a - colors[num14].a) * num3;
+				if (num15 < 0f)
 				{
-					num16 = 0f;
+					num15 = 0f;
 				}
-				else if (num16 > 1f)
+				else if (num15 > 1f)
 				{
-					num16 = 1f;
+					num15 = 1f;
 				}
-				float num17 = num5 + num8 * num16;
-				float num18 = num6 + num9 * num16;
-				float num19 = num7 + num10 * num16;
+				float num16 = num4 + num7 * num15;
+				float num17 = num5 + num8 * num15;
+				float num18 = num6 + num9 * num15;
 				if (!flag)
 				{
-					if (num14++ < 100)
+					if (num13++ < 100)
 					{
-						if (num17 != colors[i].r || num18 != colors[i].g || num19 != colors[i].b)
+						if (num16 != colors[i].r || num17 != colors[i].g || num18 != colors[i].b)
 						{
 							flag = true;
 						}
@@ -3877,9 +3861,9 @@ namespace VolumetricFogAndMist
 						break;
 					}
 				}
-				colors[i].r = num17;
-				colors[i].g = num18;
-				colors[i].b = num19;
+				colors[i].r = num16;
+				colors[i].g = num17;
+				colors[i].b = num18;
 			}
 			bool flag2 = forceUpdateEntireTexture;
 			if (flag)
@@ -4304,8 +4288,7 @@ namespace VolumetricFogAndMist
 
 		private static VolumetricFog CreateFogAreaPlaceholder(bool spherical, Vector3 position, float radius, float height, float depth)
 		{
-			GameObject original = (!spherical) ? Resources.Load<GameObject>("Prefabs/FogBoxArea") : Resources.Load<GameObject>("Prefabs/FogSphereArea");
-			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original);
+			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(spherical ? Resources.Load<GameObject>("Prefabs/FogSphereArea") : Resources.Load<GameObject>("Prefabs/FogBoxArea"));
 			gameObject.transform.position = position;
 			gameObject.transform.localScale = new Vector3(radius, height, depth);
 			return gameObject.GetComponent<VolumetricFog>();
@@ -4335,22 +4318,22 @@ namespace VolumetricFogAndMist
 			}
 			Vector3 extents = this.mr.bounds.extents;
 			FOG_AREA_TOPOLOGY fogAreaTopology = this._fogAreaTopology;
-			if (fogAreaTopology != FOG_AREA_TOPOLOGY.Box)
+			if (fogAreaTopology != FOG_AREA_TOPOLOGY.Sphere)
 			{
-				if (fogAreaTopology == FOG_AREA_TOPOLOGY.Sphere)
+				if (fogAreaTopology == FOG_AREA_TOPOLOGY.Box)
 				{
 					this.fogAreaRadius = extents.x;
-					if (base.transform.localScale.z != base.transform.localScale.x)
-					{
-						base.transform.localScale = new Vector3(base.transform.localScale.x, base.transform.localScale.y, base.transform.localScale.x);
-					}
+					this.fogAreaHeight = extents.y;
+					this.fogAreaDepth = extents.z;
 				}
 			}
 			else
 			{
 				this.fogAreaRadius = extents.x;
-				this.fogAreaHeight = extents.y;
-				this.fogAreaDepth = extents.z;
+				if (base.transform.localScale.z != base.transform.localScale.x)
+				{
+					base.transform.localScale = new Vector3(base.transform.localScale.x, base.transform.localScale.y, base.transform.localScale.x);
+				}
 			}
 			if (this._fogAreaCenter != null)
 			{
@@ -4504,7 +4487,7 @@ namespace VolumetricFogAndMist
 					float num = Time.time - fogOfWarTransition.startTime - fogOfWarTransition.startDelay;
 					if (num > 0f)
 					{
-						float num2 = (fogOfWarTransition.duration > 0f) ? (num / fogOfWarTransition.duration) : 1f;
+						float num2 = (fogOfWarTransition.duration <= 0f) ? 1f : (num / fogOfWarTransition.duration);
 						num2 = Mathf.Clamp01(num2);
 						byte a = (byte)Mathf.Lerp((float)fogOfWarTransition.initialAlpha, (float)fogOfWarTransition.targetAlpha, num2);
 						int num3 = fogOfWarTransition.y * width + fogOfWarTransition.x;
@@ -4626,17 +4609,13 @@ namespace VolumetricFogAndMist
 				{
 					for (int j = num3 - num7; j <= num3 + num7; j++)
 					{
-						if (j > 0 && j < width - 1)
+						if (j > 0 && j < width - 1 && Mathf.FloorToInt(Mathf.Sqrt((float)((num4 - i) * (num4 - i) + (num3 - j) * (num3 - j)))) <= num7)
 						{
-							int num8 = Mathf.FloorToInt(Mathf.Sqrt((float)((num4 - i) * (num4 - i) + (num3 - j) * (num3 - j))));
-							if (num8 <= num7)
-							{
-								num5 = i * width + j;
-								Color32 color = this.fogOfWarColorBuffer[num5];
-								color.a = byte.MaxValue;
-								this.fogOfWarColorBuffer[num5] = color;
-								this.fogOfWarTexture.SetPixel(j, i, color);
-							}
+							num5 = i * width + j;
+							Color32 color = this.fogOfWarColorBuffer[num5];
+							color.a = byte.MaxValue;
+							this.fogOfWarColorBuffer[num5] = color;
+							this.fogOfWarTexture.SetPixel(j, i, color);
 						}
 					}
 				}

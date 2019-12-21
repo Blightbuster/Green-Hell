@@ -24,26 +24,25 @@ namespace AIs
 			}
 			this.m_SpecificAngleAnim = "turn_";
 			Vector3 normalized2D = (wantedTargetPos - this.m_AI.transform.position).GetNormalized2D();
-			Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-			float num = normalized2D2.AngleSigned(normalized2D, Vector3.up);
-			this.m_SpecificAngleAnim += ((num < 0f) ? "left_" : "right_");
+			float num = this.m_AI.transform.forward.GetNormalized2D().AngleSigned(normalized2D, Vector3.up);
+			this.m_SpecificAngleAnim += ((num >= 0f) ? "right_" : "left_");
 			float num2 = Mathf.Abs(num);
 			if (num2 <= 45f)
 			{
 				this.m_SpecificAngleAnim += "45";
+				return;
 			}
-			else if (num2 <= 90f)
+			if (num2 <= 90f)
 			{
 				this.m_SpecificAngleAnim += "90";
+				return;
 			}
-			else if (num2 <= 135f)
+			if (num2 <= 135f)
 			{
 				this.m_SpecificAngleAnim += "135";
+				return;
 			}
-			else
-			{
-				this.m_SpecificAngleAnim += "180";
-			}
+			this.m_SpecificAngleAnim += "180";
 		}
 
 		public void SetupParams(GameObject target, bool specific_angle = false)
@@ -67,7 +66,8 @@ namespace AIs
 			}
 			Vector3 normalized2D = (wantedTargetPos - this.m_AI.transform.position).GetNormalized2D();
 			Vector3 normalized2D2 = this.m_AI.transform.forward.GetNormalized2D();
-			this.m_Direction = ((Vector3.Cross(normalized2D, normalized2D2).y >= 0f) ? Direction.Left : Direction.Right);
+			Vector3 vector = Vector3.Cross(normalized2D, normalized2D2);
+			this.m_Direction = ((vector.y < 0f) ? Direction.Right : Direction.Left);
 		}
 
 		protected override bool ShouldFail()
@@ -81,20 +81,22 @@ namespace AIs
 			{
 				return base.IsAnimFinishing() && Time.time - this.m_StartTime > 0.4f;
 			}
-			Vector3 wantedTargetPos = this.GetWantedTargetPos();
-			Vector3 from = wantedTargetPos - this.m_AI.transform.position;
+			Vector3 from = this.GetWantedTargetPos() - this.m_AI.transform.position;
 			from.y = 0f;
 			from.Normalize();
 			Vector3 forward = this.m_AI.transform.forward;
 			forward.y = 0f;
 			forward.Normalize();
-			float num = Vector3.Angle(from, forward);
-			return num <= RotateTo.MAX_ANGLE;
+			return Vector3.Angle(from, forward) <= RotateTo.MAX_ANGLE;
 		}
 
 		private Vector3 GetWantedTargetPos()
 		{
-			return (!(this.m_TargetObj != null)) ? this.m_TargetPos : this.m_TargetObj.transform.position;
+			if (!(this.m_TargetObj != null))
+			{
+				return this.m_TargetPos;
+			}
+			return this.m_TargetObj.transform.position;
 		}
 
 		private Vector3 m_TargetPos = Vector3.zero;

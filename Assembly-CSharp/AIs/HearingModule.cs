@@ -33,8 +33,9 @@ namespace AIs
 			if (sqrMagnitude <= num2)
 			{
 				this.m_Noise = noise;
+				return;
 			}
-			else if (sqrMagnitude <= num2 * 1.5f)
+			if (sqrMagnitude <= num2 * 1.5f)
 			{
 				this.m_LowNoise = noise;
 			}
@@ -54,11 +55,9 @@ namespace AIs
 			if (this.m_Noise == null && this.m_LowNoise == null)
 			{
 				this.m_NoNoiseDuration += Time.deltaTime;
+				return;
 			}
-			else
-			{
-				this.m_NoNoiseDuration = 0f;
-			}
+			this.m_NoNoiseDuration = 0f;
 		}
 
 		public Noise m_Noise;

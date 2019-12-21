@@ -87,8 +87,7 @@ namespace Pathfinding
 					vector += linkClip.velocity * 1f * linkClip.clip.length;
 					animation[linkClip.clip.name].normalizedTime = 1f;
 					animation.Sample();
-					Vector3 vector3 = transform.position - base.transform.position;
-					a = vector3;
+					a = transform.position - base.transform.position;
 				}
 				animation[linkClip.clip.name].enabled = false;
 				animation[linkClip.clip.name].weight = 0f;
@@ -130,7 +129,11 @@ namespace Pathfinding
 			{
 				get
 				{
-					return (!(this.clip != null)) ? string.Empty : this.clip.name;
+					if (!(this.clip != null))
+					{
+						return "";
+					}
+					return this.clip.name;
 				}
 			}
 

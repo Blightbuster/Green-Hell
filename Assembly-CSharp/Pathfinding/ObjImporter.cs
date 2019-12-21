@@ -75,35 +75,32 @@ namespace Pathfinding
 					{
 						text = text.Trim();
 						string[] array = text.Split(separator, 50);
-						string text2 = array[0];
-						if (text2 != null)
+						string a = array[0];
+						if (!(a == "v"))
 						{
-							if (!(text2 == "v"))
+							if (!(a == "vt"))
 							{
-								if (!(text2 == "vt"))
+								if (!(a == "vn"))
 								{
-									if (!(text2 == "vn"))
+									if (a == "f")
 									{
-										if (text2 == "f")
-										{
-											num5 = num5 + array.Length - 1;
-											num += 3 * (array.Length - 2);
-										}
-									}
-									else
-									{
-										num4++;
+										num5 = num5 + array.Length - 1;
+										num += 3 * (array.Length - 2);
 									}
 								}
 								else
 								{
-									num3++;
+									num4++;
 								}
 							}
 							else
 							{
-								num2++;
+								num3++;
 							}
+						}
+						else
+						{
+							num2++;
 						}
 						text = stringReader.ReadLine();
 						if (text != null)
@@ -159,63 +156,122 @@ namespace Pathfinding
 						text = text.Trim();
 						string[] array = text.Split(separator, 50);
 						string text2 = array[0];
-						switch (text2)
+						uint num8 = <PrivateImplementationDetails>.ComputeStringHash(text2);
+						if (num8 <= 1179241374u)
 						{
-						case "v":
-							mesh.vertices[num3] = new Vector3(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]), Convert.ToSingle(array[3]));
-							num3++;
-							break;
-						case "vt":
-							mesh.uv[num5] = new Vector2(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]));
-							num5++;
-							break;
-						case "vt1":
-							mesh.uv[num6] = new Vector2(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]));
-							num6++;
-							break;
-						case "vt2":
-							mesh.uv[num7] = new Vector2(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]));
-							num7++;
-							break;
-						case "vn":
-							mesh.normals[num4] = new Vector3(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]), Convert.ToSingle(array[3]));
-							num4++;
-							break;
-						case "f":
-						{
-							int num9 = 1;
-							List<int> list = new List<int>();
-							while (num9 < array.Length && (string.Empty + array[num9]).Length > 0)
+							if (num8 <= 1128908517u)
 							{
-								Vector3 vector = default(Vector3);
-								string[] array2 = array[num9].Split(separator2, 3);
-								vector.x = (float)Convert.ToInt32(array2[0]);
-								if (array2.Length > 1)
+								if (num8 != 990293175u)
 								{
-									if (array2[1] != string.Empty)
+									if (num8 == 1128908517u)
 									{
-										vector.y = (float)Convert.ToInt32(array2[1]);
+										if (text2 == "vn")
+										{
+											mesh.normals[num4] = new Vector3(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]), Convert.ToSingle(array[3]));
+											num4++;
+										}
 									}
-									vector.z = (float)Convert.ToInt32(array2[2]);
 								}
-								num9++;
-								mesh.faceData[num2] = vector;
-								list.Add(num2);
-								num2++;
+								else if (!(text2 == "mtllib"))
+								{
+								}
 							}
-							num9 = 1;
-							while (num9 + 2 < array.Length)
+							else if (num8 != 1146808303u)
 							{
-								mesh.triangles[num] = list[0];
-								num++;
-								mesh.triangles[num] = list[num9];
-								num++;
-								mesh.triangles[num] = list[num9 + 1];
-								num++;
-								num9++;
+								if (num8 != 1163585922u)
+								{
+									if (num8 == 1179241374u)
+									{
+										if (!(text2 == "vc"))
+										{
+										}
+									}
+								}
+								else if (text2 == "vt1")
+								{
+									mesh.uv[num6] = new Vector2(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]));
+									num6++;
+								}
 							}
-							break;
+							else if (text2 == "vt2")
+							{
+								mesh.uv[num7] = new Vector2(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]));
+								num7++;
+							}
 						}
+						else if (num8 <= 1498016135u)
+						{
+							if (num8 != 1297068826u)
+							{
+								if (num8 != 1328799683u)
+								{
+									if (num8 == 1498016135u)
+									{
+										if (text2 == "vt")
+										{
+											mesh.uv[num5] = new Vector2(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]));
+											num5++;
+										}
+									}
+								}
+								else if (!(text2 == "usemtl"))
+								{
+								}
+							}
+							else if (!(text2 == "usemap"))
+							{
+							}
+						}
+						else if (num8 != 3792446982u)
+						{
+							if (num8 != 3809224601u)
+							{
+								if (num8 == 4077666505u)
+								{
+									if (text2 == "v")
+									{
+										mesh.vertices[num3] = new Vector3(Convert.ToSingle(array[1]), Convert.ToSingle(array[2]), Convert.ToSingle(array[3]));
+										num3++;
+									}
+								}
+							}
+							else if (text2 == "f")
+							{
+								int num9 = 1;
+								List<int> list = new List<int>();
+								while (num9 < array.Length && (array[num9] ?? "").Length > 0)
+								{
+									Vector3 vector = default(Vector3);
+									string[] array2 = array[num9].Split(separator2, 3);
+									vector.x = (float)Convert.ToInt32(array2[0]);
+									if (array2.Length > 1)
+									{
+										if (array2[1] != "")
+										{
+											vector.y = (float)Convert.ToInt32(array2[1]);
+										}
+										vector.z = (float)Convert.ToInt32(array2[2]);
+									}
+									num9++;
+									mesh.faceData[num2] = vector;
+									list.Add(num2);
+									num2++;
+								}
+								num9 = 1;
+								while (num9 + 2 < array.Length)
+								{
+									mesh.triangles[num] = list[0];
+									num++;
+									mesh.triangles[num] = list[num9];
+									num++;
+									mesh.triangles[num] = list[num9 + 1];
+									num++;
+									num9++;
+								}
+							}
+						}
+						else if (!(text2 == "g"))
+						{
 						}
 						text = stringReader.ReadLine();
 						if (text != null)

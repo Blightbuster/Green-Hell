@@ -114,8 +114,7 @@ namespace RootMotion
 
 		public static Transform GetBone(Transform[] transforms, BipedNaming.BoneType boneType, BipedNaming.BoneSide boneSide = BipedNaming.BoneSide.Center, params string[][] namings)
 		{
-			Transform[] bonesOfTypeAndSide = BipedNaming.GetBonesOfTypeAndSide(boneType, boneSide, transforms);
-			return BipedNaming.GetNamingMatch(bonesOfTypeAndSide, namings);
+			return BipedNaming.GetNamingMatch(BipedNaming.GetBonesOfTypeAndSide(boneType, boneSide, transforms), namings);
 		}
 
 		private static bool isLeft(string boneName)
@@ -205,8 +204,7 @@ namespace RootMotion
 
 		private static bool LastLetterIs(string boneName, string letter)
 		{
-			string a = boneName.Substring(boneName.Length - 1, 1);
-			return a == letter;
+			return boneName.Substring(boneName.Length - 1, 1) == letter;
 		}
 
 		private static string firstLetter(string boneName)
@@ -215,7 +213,7 @@ namespace RootMotion
 			{
 				return boneName.Substring(0, 1);
 			}
-			return string.Empty;
+			return "";
 		}
 
 		private static string lastLetter(string boneName)
@@ -224,7 +222,7 @@ namespace RootMotion
 			{
 				return boneName.Substring(boneName.Length - 1, 1);
 			}
-			return string.Empty;
+			return "";
 		}
 
 		public static string[] typeLeft = new string[]

@@ -5,10 +5,9 @@ using UnityEngine.Timeline;
 
 namespace Cinemachine.Timeline
 {
+	[TrackClipType(typeof(CinemachineShot))]
 	[TrackBindingType(typeof(CinemachineBrain))]
 	[TrackColor(0.53f, 0f, 0.08f)]
-	[TrackClipType(typeof(CinemachineShot))]
-	[TrackMediaType(TimelineAsset.MediaType.Script)]
 	[Serializable]
 	public class CinemachineTrack : TrackAsset
 	{
@@ -16,8 +15,7 @@ namespace Cinemachine.Timeline
 		{
 			foreach (TimelineClip timelineClip in base.GetClips())
 			{
-				CinemachineShot cinemachineShot = (CinemachineShot)timelineClip.asset;
-				CinemachineVirtualCameraBase cinemachineVirtualCameraBase = cinemachineShot.VirtualCamera.Resolve(graph.GetResolver());
+				CinemachineVirtualCameraBase cinemachineVirtualCameraBase = ((CinemachineShot)timelineClip.asset).VirtualCamera.Resolve(graph.GetResolver());
 				if (cinemachineVirtualCameraBase != null)
 				{
 					timelineClip.displayName = cinemachineVirtualCameraBase.Name;

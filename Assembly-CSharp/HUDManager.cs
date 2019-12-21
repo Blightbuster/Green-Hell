@@ -13,6 +13,11 @@ public class HUDManager : MonoBehaviour
 		HUDManager.s_Instance = this;
 	}
 
+	private void OnDestroy()
+	{
+		HUDManager.s_Instance = null;
+	}
+
 	private void Init()
 	{
 		this.m_CanvasGameObject = GameObject.Find("HUD");
@@ -21,11 +26,10 @@ public class HUDManager : MonoBehaviour
 		this.m_HUDList = new HUDBase[this.m_CanvasGameObject.transform.childCount];
 		for (int i = 0; i < this.m_CanvasGameObject.transform.childCount; i++)
 		{
-			GameObject gameObject = this.m_CanvasGameObject.transform.GetChild(i).gameObject;
-			HUDBase component = gameObject.GetComponent<HUDBase>();
+			HUDBase component = this.m_CanvasGameObject.transform.GetChild(i).gameObject.GetComponent<HUDBase>();
 			this.m_HUDList[i] = component;
 		}
-		DebugUtils.Assert(this.m_HUDList.Length > 0, true);
+		DebugUtils.Assert(this.m_HUDList.Length != 0, true);
 		this.m_Initialized = true;
 		this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
 		this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
@@ -44,6 +48,7 @@ public class HUDManager : MonoBehaviour
 			if (component2 != null)
 			{
 				ObjectivesManager.Get().RegisterObserver(component2);
+				StoryObjectivesManager.Get().RegisterObserver(component2);
 			}
 		}
 	}
@@ -71,6 +76,10 @@ public class HUDManager : MonoBehaviour
 		{
 			return;
 		}
+		if (!this.m_CanvasGameObject.activeSelf)
+		{
+			return;
+		}
 		foreach (HUDBase hudbase in this.m_HUDList)
 		{
 			if (hudbase.gameObject.activeSelf)
@@ -93,14 +102,12 @@ public class HUDManager : MonoBehaviour
 
 	private void LateUpdate()
 	{
-		if ((LoadingScreen.Get() != null && LoadingScreen.Get().m_Active) || this.m_DebugHideHUD)
+		if ((LoadingScreen.Get() != null && LoadingScreen.Get().m_Active) || this.m_DebugHideHUD || this.m_ScenarioHideHUD)
 		{
 			this.ShowHUD(false);
+			return;
 		}
-		else
-		{
-			this.ShowHUD(true);
-		}
+		this.ShowHUD(true);
 	}
 
 	public void UpdateAfterCamera()
@@ -128,6 +135,11 @@ public class HUDManager : MonoBehaviour
 		this.m_CanvasGameObject.SetActive(this.m_Active);
 	}
 
+	public void ShowCredits()
+	{
+		this.SetActiveGroup(HUDManager.HUDGroup.Credits);
+	}
+
 	public void SetActiveGroup(HUDManager.HUDGroup group)
 	{
 		if (!this.m_Initialized)
@@ -140,6 +152,7 @@ public class HUDManager : MonoBehaviour
 			hudbase.gameObject.SetActive(flag);
 			hudbase.OnSetGroup(flag);
 		}
+		this.m_ActiveGroup = group;
 	}
 
 	public void ShowDemoEnd()
@@ -177,11 +190,31 @@ public class HUDManager : MonoBehaviour
 		}
 	}
 
+	public void ScenarioHideHUD()
+	{
+		this.m_ScenarioHideHUD = true;
+	}
+
+	public void ScenarioShowHUD()
+	{
+		this.m_ScenarioHideHUD = false;
+	}
+
+	public void SetuController()
+	{
+		HUDBase[] hudlist = this.m_HUDList;
+		for (int i = 0; i < hudlist.Length; i++)
+		{
+			hudlist[i].SetupController();
+		}
+	}
+
 	private bool m_Active = true;
 
 	public GameObject m_CanvasGameObject;
 
-	private HUDBase[] m_HUDList;
+	[HideInInspector]
+	public HUDBase[] m_HUDList;
 
 	private bool m_Initialized;
 
@@ -191,6 +224,11 @@ public class HUDManager : MonoBehaviour
 	public bool m_DebugHideHUD;
 
 	private AudioSource m_AudioSource;
+
+	private bool m_ScenarioHideHUD;
+
+	[HideInInspector]
+	public HUDManager.HUDGroup m_ActiveGroup;
 
 	public enum HUDGroup
 	{
@@ -204,6 +242,7 @@ public class HUDManager : MonoBehaviour
 		InspectionMinigame = 64,
 		TwitchDemo = 128,
 		Movie = 256,
+		Credits = 512,
 		All = 2147483647
 	}
 }

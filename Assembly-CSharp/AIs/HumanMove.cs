@@ -19,22 +19,24 @@ namespace AIs
 			{
 			case AIMoveStyle.Walk:
 				this.m_Animation = "Walk";
-				break;
+				return;
 			case AIMoveStyle.Run:
 				this.m_Animation = "Run";
-				break;
+				return;
 			case AIMoveStyle.Sneak:
 				this.m_Animation = "Sneak";
-				break;
+				return;
 			case AIMoveStyle.Swim:
 				this.m_Animation = "Swim";
-				break;
+				return;
 			case AIMoveStyle.Trot:
 				this.m_Animation = "Trot";
-				break;
+				return;
 			case AIMoveStyle.Jump:
 				this.m_Animation = "Jump";
-				break;
+				return;
+			default:
+				return;
 			}
 		}
 

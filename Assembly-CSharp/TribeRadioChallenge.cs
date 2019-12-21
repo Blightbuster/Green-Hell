@@ -34,7 +34,7 @@ public class TribeRadioChallenge : Challenge
 		if (!this.m_Group.m_Active)
 		{
 			float num = 0f;
-			HumanAI closestMember = this.m_Group.GetClosestMember(out num);
+			this.m_Group.GetClosestMember(out num);
 			if (num <= 50f)
 			{
 				this.m_Group.Activate();
@@ -48,16 +48,14 @@ public class TribeRadioChallenge : Challenge
 
 	public override string GetLocalizedInfo()
 	{
-		Localization localization = GreenHellGame.Instance.GetLocalization();
-		string text = localization.Get("HUDTribeRadioChallenge_Radio");
+		string text = GreenHellGame.Instance.GetLocalization().Get("HUDTribeRadioChallenge_Radio", true);
 		text += " ";
 		int num = 0;
 		int num2 = 0;
 		Player.Get().GetGPSCoordinates(this.m_Radio.transform.position, out num, out num2);
-		string text2 = text;
 		text = string.Concat(new string[]
 		{
-			text2,
+			text,
 			num.ToString(),
 			"'W ",
 			num2.ToString(),

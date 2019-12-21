@@ -1,17 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using CJTools;
+using Enums;
 using UnityEngine;
 
 public class InventoryCellsGroup
 {
+	public InventoryCellsGroup(BackpackPocket pocket)
+	{
+		this.m_Pocked = pocket;
+	}
+
 	public bool IsFree()
 	{
-		foreach (InventoryCell inventoryCell in this.m_Cells)
+		using (List<InventoryCell>.Enumerator enumerator = this.m_Cells.GetEnumerator())
 		{
-			if (inventoryCell.IsOccupied())
+			while (enumerator.MoveNext())
 			{
-				return false;
+				if (enumerator.Current.IsOccupied())
+				{
+					return false;
+				}
 			}
 		}
 		return true;
@@ -29,7 +38,10 @@ public class InventoryCellsGroup
 		}
 		item.m_PrevSlot = null;
 		item.m_Info.m_InventoryCellsGroup = this;
-		this.SetupTansform(item, grid);
+		if (grid)
+		{
+			this.SetupTansform(item, grid);
+		}
 	}
 
 	public void SetupTansform(Item item, GameObject grid)
@@ -54,12 +66,10 @@ public class InventoryCellsGroup
 			{
 				Vector3 b = item.transform.InverseTransformPoint(item.m_Pivot.transform.position);
 				item.gameObject.transform.position = this.m_CenterWorld - b;
+				return;
 			}
-			else
-			{
-				Vector3 b2 = item.m_BoxCollider.bounds.center - vector * item.m_BoxCollider.size.y * item.transform.localScale.y * 0.5f;
-				item.transform.position = this.m_CenterWorld + (item.transform.position - b2);
-			}
+			Vector3 b2 = item.m_BoxCollider.bounds.center - vector * item.m_BoxCollider.size.y * item.transform.localScale.y * 0.5f;
+			item.transform.position = this.m_CenterWorld + (item.transform.position - b2);
 		}
 	}
 
@@ -90,6 +100,10 @@ public class InventoryCellsGroup
 		if (this.m_Cells.Count == 0)
 		{
 			return;
+		}
+		if (this.m_Cells[0] == null || !this.m_Cells[0].m_Renderer)
+		{
+			Debug.Log("");
 		}
 		Vector3 position = this.m_Cells[0].m_Renderer.transform.position;
 		Vector3 position2 = this.m_Cells[0].m_Renderer.transform.position;
@@ -127,4 +141,6 @@ public class InventoryCellsGroup
 	public List<InventoryCell> m_Cells = new List<InventoryCell>();
 
 	public Vector3 m_CenterWorld;
+
+	public BackpackPocket m_Pocked = BackpackPocket.None;
 }

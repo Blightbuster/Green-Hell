@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding.Legacy
 {
-	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy AIPath (3D)")]
 	[RequireComponent(typeof(Seeker))]
+	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy AIPath (3D)")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_a_i_path.php")]
 	public class LegacyAIPath : AIPath
 	{
@@ -17,11 +17,9 @@ namespace Pathfinding.Legacy
 				if (this.rvoController is LegacyRVOController)
 				{
 					(this.rvoController as LegacyRVOController).enableRotation = false;
+					return;
 				}
-				else
-				{
-					Debug.LogError("The LegacyAIPath component only works with the legacy RVOController, not the latest one. Please upgrade this component", this);
-				}
+				Debug.LogError("The LegacyAIPath component only works with the legacy RVOController, not the latest one. Please upgrade this component", this);
 			}
 		}
 
@@ -48,9 +46,8 @@ namespace Pathfinding.Legacy
 			base.TargetReached = false;
 			if (this.closestOnPathCheck)
 			{
-				Vector3 vector = (Time.time - this.lastFoundWaypointTime >= 0.3f) ? abpath.originalStartPoint : this.lastFoundWaypointPosition;
-				Vector3 feetPosition = this.GetFeetPosition();
-				Vector3 vector2 = feetPosition - vector;
+				Vector3 vector = (Time.time - this.lastFoundWaypointTime < 0.3f) ? this.lastFoundWaypointPosition : abpath.originalStartPoint;
+				Vector3 vector2 = this.GetFeetPosition() - vector;
 				float magnitude = vector2.magnitude;
 				vector2 /= magnitude;
 				int num = (int)(magnitude / this.pickNextWaypointDist);
@@ -73,19 +70,19 @@ namespace Pathfinding.Legacy
 			if (this.rvoController != null)
 			{
 				this.rvoController.Move(vector);
+				return;
 			}
-			else if (this.controller != null)
+			if (this.controller != null)
 			{
 				this.controller.SimpleMove(vector);
+				return;
 			}
-			else if (this.rigid != null)
+			if (this.rigid != null)
 			{
 				this.rigid.AddForce(vector);
+				return;
 			}
-			else
-			{
-				this.tr.Translate(vector * Time.deltaTime, Space.World);
-			}
+			this.tr.Translate(vector * Time.deltaTime, Space.World);
 		}
 
 		protected float XZSqrMagnitude(Vector3 a, Vector3 b)
@@ -114,46 +111,37 @@ namespace Pathfinding.Legacy
 			{
 				this.currentWaypointIndex = 1;
 			}
-			while (this.currentWaypointIndex < vectorPath.Count - 1)
+			while (this.currentWaypointIndex < vectorPath.Count - 1 && this.XZSqrMagnitude(vectorPath[this.currentWaypointIndex], currentPosition) < this.pickNextWaypointDist * this.pickNextWaypointDist)
 			{
-				float num = this.XZSqrMagnitude(vectorPath[this.currentWaypointIndex], currentPosition);
-				if (num < this.pickNextWaypointDist * this.pickNextWaypointDist)
-				{
-					this.lastFoundWaypointPosition = currentPosition;
-					this.lastFoundWaypointTime = Time.time;
-					this.currentWaypointIndex++;
-				}
-				else
-				{
-					IL_FB:
-					Vector3 vector = vectorPath[this.currentWaypointIndex] - vectorPath[this.currentWaypointIndex - 1];
-					Vector3 vector2 = this.CalculateTargetPoint(currentPosition, vectorPath[this.currentWaypointIndex - 1], vectorPath[this.currentWaypointIndex]);
-					vector = vector2 - currentPosition;
-					vector.y = 0f;
-					float magnitude = vector.magnitude;
-					float num2 = Mathf.Clamp01(magnitude / this.slowdownDistance);
-					this.targetDirection = vector;
-					this.targetPoint = vector2;
-					if (this.currentWaypointIndex == vectorPath.Count - 1 && magnitude <= this.endReachedDistance)
-					{
-						if (!base.TargetReached)
-						{
-							base.TargetReached = true;
-							this.OnTargetReached();
-						}
-						return Vector3.zero;
-					}
-					Vector3 forward = this.tr.forward;
-					float a = Vector3.Dot(vector.normalized, forward);
-					float num3 = this.speed * Mathf.Max(a, this.minMoveScale) * num2;
-					if (Time.deltaTime > 0f)
-					{
-						num3 = Mathf.Clamp(num3, 0f, magnitude / (Time.deltaTime * 2f));
-					}
-					return forward * num3;
-				}
+				this.lastFoundWaypointPosition = currentPosition;
+				this.lastFoundWaypointTime = Time.time;
+				this.currentWaypointIndex++;
 			}
-			goto IL_FB;
+			Vector3 vector = vectorPath[this.currentWaypointIndex] - vectorPath[this.currentWaypointIndex - 1];
+			Vector3 vector2 = this.CalculateTargetPoint(currentPosition, vectorPath[this.currentWaypointIndex - 1], vectorPath[this.currentWaypointIndex]);
+			vector = vector2 - currentPosition;
+			vector.y = 0f;
+			float magnitude = vector.magnitude;
+			float num = Mathf.Clamp01(magnitude / this.slowdownDistance);
+			this.targetDirection = vector;
+			this.targetPoint = vector2;
+			if (this.currentWaypointIndex == vectorPath.Count - 1 && magnitude <= this.endReachedDistance)
+			{
+				if (!base.TargetReached)
+				{
+					base.TargetReached = true;
+					this.OnTargetReached();
+				}
+				return Vector3.zero;
+			}
+			Vector3 forward = this.tr.forward;
+			float a = Vector3.Dot(vector.normalized, forward);
+			float num2 = this.speed * Mathf.Max(a, this.minMoveScale) * num;
+			if (Time.deltaTime > 0f)
+			{
+				num2 = Mathf.Clamp(num2, 0f, magnitude / (Time.deltaTime * 2f));
+			}
+			return forward * num2;
 		}
 
 		protected void RotateTowards(Vector3 dir)
@@ -181,12 +169,10 @@ namespace Pathfinding.Legacy
 				return a;
 			}
 			float num = Mathf.Clamp01(VectorMath.ClosestPointOnLineFactor(a, b, p));
-			Vector3 a2 = (b - a) * num + a;
-			float magnitude2 = (a2 - p).magnitude;
-			float num2 = Mathf.Clamp(this.forwardLook - magnitude2, 0f, this.forwardLook);
-			float num3 = num2 / magnitude;
-			num3 = Mathf.Clamp(num3 + num, 0f, 1f);
-			return (b - a) * num3 + a;
+			float magnitude2 = ((b - a) * num + a - p).magnitude;
+			float num2 = Mathf.Clamp(this.forwardLook - magnitude2, 0f, this.forwardLook) / magnitude;
+			num2 = Mathf.Clamp(num2 + num, 0f, 1f);
+			return (b - a) * num2 + a;
 		}
 
 		public float forwardLook = 1f;

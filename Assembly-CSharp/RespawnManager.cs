@@ -5,14 +5,14 @@ using UnityEngine;
 
 public class RespawnManager : MonoBehaviour
 {
-	private RespawnManager()
-	{
-		RespawnManager.s_Instance = this;
-	}
-
 	public static RespawnManager Get()
 	{
 		return RespawnManager.s_Instance;
+	}
+
+	private RespawnManager()
+	{
+		RespawnManager.s_Instance = this;
 	}
 
 	public void RegisterRespawnPoint(RespawnPoint point)
@@ -42,7 +42,11 @@ public class RespawnManager : MonoBehaviour
 				respawnPoint = this.m_RespawnPoints[i];
 			}
 		}
-		return (!respawnPoint) ? this.m_RespawnPoints[UnityEngine.Random.Range(0, this.m_RespawnPoints.Count)] : respawnPoint;
+		if (!respawnPoint)
+		{
+			return this.m_RespawnPoints[UnityEngine.Random.Range(0, this.m_RespawnPoints.Count)];
+		}
+		return respawnPoint;
 	}
 
 	public void Respawn(Being obj)
@@ -57,9 +61,9 @@ public class RespawnManager : MonoBehaviour
 		{
 			obj.transform.position = bestRespawnPoint.transform.position;
 		}
-		Collider componentDeepChild = General.GetComponentDeepChild<Collider>(obj.gameObject);
+		Collider collider = obj.IsPlayer() ? Player.Get().m_Collider : General.GetComponentDeepChild<Collider>(obj.gameObject);
 		Vector3 position = obj.transform.position;
-		position.y += ((!componentDeepChild) ? 0f : componentDeepChild.bounds.size.y);
+		position.y += (collider ? collider.bounds.size.y : 0f);
 		RaycastHit raycastHit;
 		if (Physics.Raycast(position, Vector3.down, out raycastHit))
 		{
@@ -67,7 +71,7 @@ public class RespawnManager : MonoBehaviour
 		}
 		if (obj.IsPlayer())
 		{
-			Vector3 vector = (!bestRespawnPoint) ? Vector3.forward : bestRespawnPoint.transform.forward;
+			Vector3 vector = bestRespawnPoint ? bestRespawnPoint.transform.forward : Vector3.forward;
 			vector.y = 0f;
 			float num = Vector3.Angle(vector, Vector3.forward);
 			Vector2 zero = Vector2.zero;
@@ -76,10 +80,9 @@ public class RespawnManager : MonoBehaviour
 				num *= -1f;
 			}
 			zero.x = num;
-			FPPController fppcontroller = Player.Get().m_FPPController;
-			fppcontroller.SetLookDev(zero);
+			Player.Get().m_FPPController.SetLookDev(zero);
 			Vector3 position2 = obj.transform.position;
-			position2.y += Player.Get().GetComponent<CharacterController>().height * 0.5f;
+			position2.y += Player.Get().GetComponent<CharacterControllerProxy>().height * 0.5f;
 			obj.transform.position = position2;
 		}
 	}

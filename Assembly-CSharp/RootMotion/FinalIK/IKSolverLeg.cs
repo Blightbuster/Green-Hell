@@ -13,14 +13,15 @@ namespace RootMotion.FinalIK
 				message = "Please assign all bone slots of the Leg IK solver.";
 				return false;
 			}
-			Transform transform = (Transform)Hierarchy.ContainsDuplicate(new Transform[]
+			UnityEngine.Object[] objects = new Transform[]
 			{
 				this.pelvis.transform,
 				this.thigh.transform,
 				this.calf.transform,
 				this.foot.transform,
 				this.toe.transform
-			});
+			};
+			Transform transform = (Transform)Hierarchy.ContainsDuplicate(objects);
 			if (transform != null)
 			{
 				message = transform.name + " is represented multiple times in the LegIK.";

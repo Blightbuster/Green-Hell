@@ -8,7 +8,7 @@ public class SimpleGridCell
 
 	public int m_Y;
 
-	public Vector2 m_Pos = default(Vector2);
+	public Vector2 m_Pos;
 
 	public float m_Size;
 

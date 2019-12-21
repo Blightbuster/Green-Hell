@@ -30,7 +30,7 @@ public class transparency : MonoBehaviour
 
 	private Transform cl5;
 
-	public static float darkness;
+	public static float darkness = 0f;
 
 	public static float density = 1f;
 }

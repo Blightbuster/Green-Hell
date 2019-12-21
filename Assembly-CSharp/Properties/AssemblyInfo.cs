@@ -6,6 +6,7 @@ using System.Security;
 using System.Security.Permissions;
 
 [assembly: AssemblyVersion("0.0.0.0")]
-[assembly: Debuggable(DebuggableAttribute.DebuggingModes.IgnoreSymbolStoreSequencePoints)]
+[assembly: CompilationRelaxations(8)]
 [assembly: RuntimeCompatibility(WrapNonExceptionThrows = true)]
+[assembly: Debuggable(DebuggableAttribute.DebuggingModes.IgnoreSymbolStoreSequencePoints)]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]

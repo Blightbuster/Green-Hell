@@ -5,16 +5,6 @@ namespace Pathfinding
 {
 	public class RandomPath : ABPath
 	{
-		public RandomPath()
-		{
-		}
-
-		[Obsolete("This constructor is obsolete. Please use the pooling API and the Construct methods")]
-		public RandomPath(Vector3 start, int length, OnPathDelegate callback = null)
-		{
-			throw new Exception("This constructor is obsolete. Please use the pooling API and the Setup methods");
-		}
-
 		internal override bool FloodingPath
 		{
 			get
@@ -42,6 +32,16 @@ namespace Pathfinding
 			this.maxGScore = 0;
 			this.aim = Vector3.zero;
 			this.nodesEvaluatedRep = 0;
+		}
+
+		public RandomPath()
+		{
+		}
+
+		[Obsolete("This constructor is obsolete. Please use the pooling API and the Construct methods")]
+		public RandomPath(Vector3 start, int length, OnPathDelegate callback = null)
+		{
+			throw new Exception("This constructor is obsolete. Please use the pooling API and the Setup methods");
 		}
 
 		public static RandomPath Construct(Vector3 start, int length, OnPathDelegate callback = null)
@@ -163,33 +163,35 @@ namespace Pathfinding
 					if (this.chosenNodeR != null)
 					{
 						base.CompleteState = PathCompleteState.Complete;
+						break;
 					}
-					else if (this.maxGScoreNodeR != null)
+					if (this.maxGScoreNodeR != null)
 					{
 						this.chosenNodeR = this.maxGScoreNodeR;
 						base.CompleteState = PathCompleteState.Complete;
+						break;
 					}
-					else
-					{
-						base.LogError("Not a single node found to search");
-						base.Error();
-					}
+					base.LogError("Not a single node found to search");
+					base.Error();
 					break;
 				}
-				this.currentR = this.pathHandler.heap.Remove();
-				if (num > 500)
+				else
 				{
-					if (DateTime.UtcNow.Ticks >= targetTick)
+					this.currentR = this.pathHandler.heap.Remove();
+					if (num > 500)
 					{
-						return;
+						if (DateTime.UtcNow.Ticks >= targetTick)
+						{
+							return;
+						}
+						num = 0;
+						if (this.searchedNodes > 1000000)
+						{
+							throw new Exception("Probable infinite loop. Over 1,000,000 nodes searched");
+						}
 					}
-					num = 0;
-					if (this.searchedNodes > 1000000)
-					{
-						throw new Exception("Probable infinite loop. Over 1,000,000 nodes searched");
-					}
+					num++;
 				}
-				num++;
 			}
 			if (base.CompleteState == PathCompleteState.Complete)
 			{

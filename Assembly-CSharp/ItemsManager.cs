@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
+using CJTools;
 using Enums;
 using UnityEngine;
 
@@ -28,9 +28,10 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			stringToItemIDMap.Add(itemID.ToString(), i);
 			Dictionary<int, string> itemIDToStringMap = this.m_ItemIDToStringMap;
 			int key = i;
-			ItemID itemID2 = (ItemID)i;
-			itemIDToStringMap.Add(key, itemID2.ToString());
+			itemID = (ItemID)i;
+			itemIDToStringMap.Add(key, itemID.ToString());
 		}
+		ItemIDHelpers.Initialize();
 	}
 
 	public int StringToItemID(string item_name)
@@ -100,10 +101,11 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		for (int i = 0; i < textAssetParser.GetKeysCount(); i++)
 		{
 			Key key = textAssetParser.GetKey(i);
-			Type type = Type.GetType(key.GetVariable(1).SValue + "Info");
+			string svalue = key.GetVariable(1).SValue;
+			Type type = Type.GetType(svalue + "Info");
 			if (type == null)
 			{
-				DebugUtils.Assert(DebugUtils.AssertType.Info);
+				DebugUtils.Assert(false, "Can't find type - " + svalue + "Info", true, DebugUtils.AssertType.Info);
 			}
 			else
 			{
@@ -128,9 +130,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			Terrain terrain = array[i];
 			if (i == 0)
 			{
-				Vector3 position = terrain.GetPosition();
-				bounds.max = position;
-				bounds.min = position;
+				bounds.min = (bounds.max = terrain.GetPosition());
 			}
 			else
 			{
@@ -138,7 +138,19 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			}
 			bounds.Encapsulate(terrain.terrainData.size);
 		}
-		this.m_QuadTree = new QuadTree(bounds.min.x, bounds.min.z, bounds.size.x, bounds.size.z, 100, 100);
+		if (array.Length != 0)
+		{
+			this.m_QuadTree = new QuadTree(bounds.min.x, bounds.min.z, bounds.size.x, bounds.size.z, 100, 100);
+			this.m_QuadTreeInitialized = true;
+			for (int j = 0; j < this.m_ItemsToRegister.Count; j++)
+			{
+				if (this.m_ItemsToRegister[j].item != null)
+				{
+					this.RegisterItem(this.m_ItemsToRegister[j].item, this.m_ItemsToRegister[j].update_activity);
+				}
+			}
+			this.m_ItemsToRegister.Clear();
+		}
 	}
 
 	private void InitCraftingData()
@@ -154,36 +166,76 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	public void RegisterItem(Item item, bool update_activity = false)
 	{
+		if (RelevanceSystem.ENABLED)
+		{
+			return;
+		}
+		if (!this.m_QuadTreeInitialized)
+		{
+			ItemsManager.ItemsToRegister item2;
+			item2.item = item;
+			item2.update_activity = update_activity;
+			this.m_ItemsToRegister.Add(item2);
+			return;
+		}
 		this.m_QuadTree.InsertObject(item.gameObject, false);
 		if (item.m_FallenObject)
 		{
 			this.m_FallenObjects.Add(item);
 		}
-		if (update_activity)
+		if (!update_activity)
 		{
-			Vector3 cameraPosition = this.GetCameraPosition();
-			float num = item.transform.position.Distance(cameraPosition);
-			if (num < this.m_DeactivateDist)
+			if (item.gameObject.activeSelf && !this.m_ActiveObjects.Contains(item.gameObject))
 			{
-				item.gameObject.SetActive(true);
 				this.m_ActiveObjects.Add(item.gameObject);
 			}
-			else
-			{
-				item.gameObject.SetActive(false);
-				this.m_ActiveObjects.Remove(item.gameObject);
-			}
+			return;
 		}
-		else if (item.gameObject.activeSelf && !this.m_ActiveObjects.Contains(item.gameObject))
+		Vector3 cameraPosition = this.GetCameraPosition();
+		if (item.transform.position.Distance(cameraPosition) < this.m_DeactivateDist)
 		{
-			this.m_ActiveObjects.Add(item.gameObject);
+			this.ActivateItem(item);
+			return;
 		}
+		this.DeactivateItem(item);
 	}
 
 	public void UnregisterItem(Item item)
 	{
+		if (RelevanceSystem.ENABLED)
+		{
+			return;
+		}
 		this.m_ActiveObjects.Remove(item.gameObject);
+		if (this.m_QuadTree == null)
+		{
+			int i = 0;
+			while (i < this.m_ItemsToRegister.Count)
+			{
+				if (this.m_ItemsToRegister[i].item == item)
+				{
+					this.m_ItemsToRegister.RemoveAt(i);
+				}
+				else
+				{
+					i++;
+				}
+			}
+			return;
+		}
 		this.m_QuadTree.RemoveObject(item.gameObject);
+	}
+
+	public void ActivateItem(Item item)
+	{
+		item.gameObject.SetActive(true);
+		this.m_ActiveObjects.Add(item.gameObject);
+	}
+
+	public void DeactivateItem(Item item)
+	{
+		item.gameObject.SetActive(false);
+		this.m_ActiveObjects.Remove(item.gameObject);
 	}
 
 	public Dictionary<int, ItemInfo> GetAllInfos()
@@ -227,6 +279,12 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		return this.CreateItem(item_id, im_register, Vector3.zero, Quaternion.identity);
 	}
 
+	public Item CreateItem(string item_name, bool im_register, Transform transform)
+	{
+		ItemID item_id = (ItemID)Enum.Parse(typeof(ItemID), item_name);
+		return this.CreateItem(item_id, im_register, transform.position, transform.rotation);
+	}
+
 	public Item CreateItem(ItemID item_id, bool im_register, Transform transform)
 	{
 		return this.CreateItem(item_id, im_register, transform.position, transform.rotation);
@@ -261,25 +319,23 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	public ItemInfo CreateItemInfo(Item item)
 	{
+		if (item.m_Info != null)
+		{
+			return item.m_Info;
+		}
 		if (item.m_InfoName == string.Empty)
 		{
 			DebugUtils.Assert("[ItemsManager:CreateItemInfo] ERROR - Missing InfoName of item " + item.name + ". Deafult Banana item created!", true, DebugUtils.AssertType.Info);
 			item.m_InfoName = "Banana";
 		}
-		ItemID id = (ItemID)Enum.Parse(typeof(ItemID), item.m_InfoName);
-		ItemInfo info = this.GetInfo(id);
+		ItemID value = EnumUtils<ItemID>.GetValue(item.m_InfoName);
+		ItemInfo info = this.GetInfo(value);
 		if (info == null)
 		{
-			DebugUtils.Assert("[ItemsManager::CreateItemInfo] Can't create iteminfo - " + id.ToString(), true, DebugUtils.AssertType.Info);
+			DebugUtils.Assert("[ItemsManager::CreateItemInfo] Can't create iteminfo - " + value.ToString(), true, DebugUtils.AssertType.Info);
 			return null;
 		}
-		Type type = info.GetType();
-		ItemInfo itemInfo = Activator.CreateInstance(type) as ItemInfo;
-		PropertyInfo[] properties = type.GetProperties();
-		foreach (PropertyInfo propertyInfo in properties)
-		{
-			propertyInfo.SetValue(itemInfo, propertyInfo.GetValue(info, null), null);
-		}
+		ItemInfo itemInfo = info.ShallowCopy();
 		itemInfo.m_CreationTime = MainLevel.Instance.m_TODSky.Cycle.GameTime;
 		item.m_Info = itemInfo;
 		itemInfo.m_Item = item;
@@ -289,41 +345,35 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 	public void Save()
 	{
 		SaveGame.SaveVal("UniqueID", ItemsManager.s_ItemUniqueID);
-		for (int i = 0; i < Item.s_AllItems.Count; i++)
+		using (HashSet<Item>.Enumerator enumerator = Item.s_AllItems.GetEnumerator())
 		{
-			if (Item.s_AllItems[i].m_Info == null)
+			while (enumerator.MoveNext())
 			{
-				DebugUtils.Assert("Item is created and added to s_AllItems but has no item info set up", true, DebugUtils.AssertType.Info);
+				if (enumerator.Current.m_Info == null)
+				{
+					DebugUtils.Assert("Item is created and added to s_AllItems but has no item info set up", true, DebugUtils.AssertType.Info);
+				}
 			}
 		}
 		int num = 0;
-		for (int j = 0; j < Item.s_AllItems.Count; j++)
+		foreach (Item item in Item.s_AllItems)
 		{
-			if (Item.s_AllItems[j].m_CanSave || Item.s_AllItems[j].WasTriggered())
+			if ((!item.m_ScenarioItem || item.WasTriggered()) && !item.m_CantSave && (item.m_CanSaveNotTriggered || item.WasTriggered()) && (!item.m_Info.IsArrow() || item.WasTriggered()) && item.GetInfoID() != ItemID.Liane_ToHoldHarvest && ((!item.m_FallenObject && !item.m_IsFallen) || item.WasTriggered()) && !(item.gameObject.GetComponent<AcreRespawnFruits>() != null) && (!item.m_CurrentSlot || !item.m_CurrentSlot.IsBIWoundSlot()) && (SaveGame.m_State != SaveGame.State.SaveCoop || item.m_InInventory) && (!item.m_InInventory || item.ReplIsOwner()))
 			{
-				if (Item.s_AllItems[j].GetInfoID() != ItemID.Liane_ToHoldHarvest)
-				{
-					if ((!Item.s_AllItems[j].m_FallenObject && !Item.s_AllItems[j].m_IsFallen) || Item.s_AllItems[j].WasTriggered())
-					{
-						if (!Item.s_AllItems[j].m_CurrentSlot || !Item.s_AllItems[j].m_CurrentSlot.IsBIWoundSlot())
-						{
-							SaveGame.SaveVal("ItemID" + num, (int)Item.s_AllItems[j].GetInfoID());
-							SaveGame.SaveVal("ItemIMReg" + num, Item.s_AllItems[j].m_Registered);
-							Item.s_AllItems[j].Save(num);
-							num++;
-						}
-					}
-				}
+				SaveGame.SaveVal("ItemID" + num, (int)item.GetInfoID());
+				SaveGame.SaveVal("ItemIMReg" + num, item.m_Registered);
+				item.Save(num);
+				num++;
 			}
 		}
 		SaveGame.SaveVal("ItemsCount", num);
 		SaveGame.SaveVal("ItemCreationData", this.m_CreationsData.Count);
 		int num2 = 0;
-		using (Dictionary<int, int>.KeyCollection.Enumerator enumerator = this.m_CreationsData.Keys.GetEnumerator())
+		using (Dictionary<int, int>.KeyCollection.Enumerator enumerator2 = this.m_CreationsData.Keys.GetEnumerator())
 		{
-			while (enumerator.MoveNext())
+			while (enumerator2.MoveNext())
 			{
-				ItemID itemID = (ItemID)enumerator.Current;
+				ItemID itemID = (ItemID)enumerator2.Current;
 				SaveGame.SaveVal("ItemCreationDataID" + num2, (int)itemID);
 				SaveGame.SaveVal("ItemCreationDataCount" + num2, this.m_CreationsData[(int)itemID]);
 				num2++;
@@ -337,114 +387,242 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			num2++;
 		}
 		SaveGame.SaveVal("ItemWasConsumed", this.m_WasConsumedData.Count);
-		for (int k = 0; k < this.m_WasConsumedData.Count; k++)
+		for (int i = 0; i < this.m_WasConsumedData.Count; i++)
 		{
-			SaveGame.SaveVal("ItemWasConsumedID" + k, (int)this.m_WasConsumedData[k]);
+			SaveGame.SaveVal("ItemWasConsumedID" + i, (int)this.m_WasConsumedData[i]);
 		}
 		SaveGame.SaveVal("ItemWasCollected", this.m_WasCollectedData.Count);
-		for (int l = 0; l < this.m_WasCollectedData.Count; l++)
+		for (int j = 0; j < this.m_WasCollectedData.Count; j++)
 		{
-			SaveGame.SaveVal("ItemWasCollectedID" + l, (int)this.m_WasCollectedData[l]);
+			SaveGame.SaveVal("ItemWasCollectedID" + j, (int)this.m_WasCollectedData[j]);
 		}
 		SaveGame.SaveVal("ItemWasCrafted", this.m_WasCraftedData.Count);
-		for (int m = 0; m < this.m_WasCraftedData.Count; m++)
+		for (int k = 0; k < this.m_WasCraftedData.Count; k++)
 		{
-			SaveGame.SaveVal("ItemWasCraftedID" + m, (int)this.m_WasCraftedData[m]);
+			SaveGame.SaveVal("ItemWasCraftedID" + k, (int)this.m_WasCraftedData[k]);
 		}
 		SaveGame.SaveVal("WasLiquidBoiled", this.m_WasLiquidBoiledData.Count);
-		for (int n = 0; n < this.m_WasLiquidBoiledData.Count; n++)
+		for (int l = 0; l < this.m_WasLiquidBoiledData.Count; l++)
 		{
-			SaveGame.SaveVal("WasLiquidBoiledID" + n, (int)this.m_WasLiquidBoiledData[n]);
+			SaveGame.SaveVal("WasLiquidBoiledID" + l, (int)this.m_WasLiquidBoiledData[l]);
 		}
 		SaveGame.SaveVal("UnlockedInNotepadItems", this.m_UnlockedInNotepadItems.Count);
-		for (int num3 = 0; num3 < this.m_UnlockedInNotepadItems.Count; num3++)
+		for (int m = 0; m < this.m_UnlockedInNotepadItems.Count; m++)
 		{
-			SaveGame.SaveVal("UnlockedInNotepadItemID" + num3, (int)this.m_UnlockedInNotepadItems[num3]);
+			SaveGame.SaveVal("UnlockedInNotepadItemID" + m, (int)this.m_UnlockedInNotepadItems[m]);
 		}
 		SaveGame.SaveVal("WasConstructionDestroyed", this.m_WasConstructionDestroyed);
+		SaveGame.SaveVal("ItemWasPlanted", this.m_WasPlantedData.Count);
+		for (int n = 0; n < this.m_WasPlantedData.Count; n++)
+		{
+			SaveGame.SaveVal("ItemWasPlantedID" + n, (int)this.m_WasPlantedData[n]);
+		}
+		foreach (Generator generator in Generator.s_AllGenerators)
+		{
+			generator.SaveGenerator();
+		}
+		num2 = 0;
+		foreach (ItemReplacer itemReplacer in ItemReplacer.s_AllReplacers)
+		{
+			if (itemReplacer && itemReplacer.m_ReplaceInfo != null && itemReplacer.m_FromPlant && itemReplacer.m_Acre == null)
+			{
+				SaveGame.SaveVal("ItemReplacerID" + num2, (int)itemReplacer.m_ReplaceInfo.m_ID);
+				SaveGame.SaveVal("ItemReplacerPos" + num2, itemReplacer.transform.position);
+				SaveGame.SaveVal("ItemReplacerRot" + num2, itemReplacer.transform.rotation);
+				num2++;
+			}
+		}
+		SaveGame.SaveVal("ItemReplacersCount", num2);
+		for (int num3 = 0; num3 < LootBox.s_AllLootBoxes.Count; num3++)
+		{
+			LootBox.s_AllLootBoxes[num3].Save();
+		}
 	}
 
-	public void Load()
+	private bool IsChildOfItem(Transform trans)
 	{
+		return trans.parent && (trans.parent.GetComponent<Item>() || this.IsChildOfItem(trans.parent));
+	}
+
+	public void Preload()
+	{
+		PlayerArmorModule.Get().ResetArmor();
+		InventoryBackpack.Get().m_EquippedItemSlot.RemoveItem();
+		BalanceSystem20.Get().InitializeDisabledSpawnersQuadTree();
 		while (InventoryBackpack.Get().m_Items.Count > 0)
 		{
 			InventoryBackpack.Get().RemoveItem(InventoryBackpack.Get().m_Items[0], false);
 		}
-		int i = 0;
-		while (i < Item.s_AllItems.Count)
+		for (int i = 0; i < Storage.s_AllStorages.Count; i++)
 		{
-			if (Item.s_AllItems[i] == null)
+			while (Storage.s_AllStorages[i].m_Items.Count > 0)
 			{
-				Item.s_AllItems.RemoveAt(i);
+				Storage.s_AllStorages[i].RemoveItem(Storage.s_AllStorages[i].m_Items[0], false);
+			}
+		}
+		List<Item> list = null;
+		foreach (Item item in Item.s_AllItems)
+		{
+			if (item != null && (item.GetInfoID() != ItemID.Liane_ToHoldHarvest || item.transform.parent == null) && !this.IsChildOfItem(item.transform))
+			{
+				if (!(SaveGame.m_SaveGameVersion < item.m_GameVersion) || GameVersion.NoVersion(item.m_GameVersion))
+				{
+					if (item.m_BoxCollider)
+					{
+						item.m_BoxCollider.enabled = false;
+					}
+					if (item.transform.parent)
+					{
+						item.transform.parent = null;
+					}
+					UnityEngine.Object.Destroy(item.gameObject);
+					if (list == null)
+					{
+						list = new List<Item>();
+					}
+					list.Add(item);
+				}
 			}
 			else
 			{
-				if (Item.s_AllItems[i].GetInfoID() != ItemID.Liane_ToHoldHarvest)
+				if (list == null)
 				{
-					UnityEngine.Object.Destroy(Item.s_AllItems[i].gameObject);
+					list = new List<Item>();
 				}
-				i++;
+				list.Add(item);
 			}
 		}
-		Item.s_AllItems.Clear();
+		if (list != null)
+		{
+			foreach (Item item2 in list)
+			{
+				Item.s_AllItems.Remove(item2);
+			}
+		}
+		foreach (ItemReplacer itemReplacer in ItemReplacer.s_AllReplacers)
+		{
+			if (itemReplacer && itemReplacer.m_FromPlant)
+			{
+				UnityEngine.Object.Destroy(itemReplacer.gameObject);
+			}
+		}
+	}
+
+	public void Load()
+	{
+		bool flag = false;
+		Vector3 zero = Vector3.zero;
+		zero.Set(468.3327f, 106.7012f, 1399.993f);
+		Quaternion identity = Quaternion.identity;
+		identity.Set(0f, 0.40191f, 0f, 0.91568f);
+		bool flag2 = false;
+		Inventory3DManager.Get().ResetGrids();
 		this.m_ItemsToSetupAfterLoad.Clear();
 		int num = SaveGame.LoadIVal("ItemsCount");
-		for (int j = 0; j < num; j++)
+		for (int i = 0; i < num; i++)
 		{
-			ItemID item_id = (ItemID)SaveGame.LoadIVal("ItemID" + j);
-			bool flag = SaveGame.LoadBVal("ItemIMReg" + j);
+			ItemID item_id = (ItemID)SaveGame.LoadIVal("ItemID" + i);
+			bool flag3 = SaveGame.LoadBVal("ItemIMReg" + i);
 			Item item = this.CreateItem(item_id, false, Vector3.zero, Quaternion.identity);
-			item.Load(j);
-			if (flag)
+			item.Load(i);
+			if (MainLevel.Instance.m_SceneItems.ContainsKey(item.m_InfoName))
 			{
-				item.ItemsManagerRegister(false);
+				using (List<Vector3>.Enumerator enumerator = MainLevel.Instance.m_SceneItems[item.m_InfoName].GetEnumerator())
+				{
+					while (enumerator.MoveNext())
+					{
+						if ((enumerator.Current - item.transform.position).sqrMagnitude < 0.1f)
+						{
+							item.m_SceneObject = true;
+							break;
+						}
+					}
+				}
 			}
-			this.m_ItemsToSetupAfterLoad.Add(item);
-			ScenarioAction.OnItemCreated(item.gameObject);
-			ScenarioCndTF.OnItemCreated(item.gameObject);
+			if (!item.IsStorage() && !item.m_Info.IsConstruction() && (item.m_Info.m_ID == ItemID.Coconut_Green_Destroyable || (!item.m_InStorage && !item.m_InInventory && !item.m_OnCraftingTable && MainLevel.GetTerrainY(item.transform.position) > item.transform.position.y + 1f) || (EnumTools.IsItemSpoiled(item_id) && !item.m_InStorage && !item.m_InInventory && !item.m_OnCraftingTable && !item.m_SceneObject)))
+			{
+				UnityEngine.Object.Destroy(item.gameObject);
+			}
+			else
+			{
+				if (item.gameObject.name == "Lina_do_Tutoriala_Fall")
+				{
+					if (flag2)
+					{
+						UnityEngine.Object.Destroy(item.gameObject);
+						goto IL_29E;
+					}
+					flag2 = true;
+				}
+				if (item.m_Info.IsReadableItem())
+				{
+					flag3 = false;
+				}
+				if (item.IsLadder() && !item.IsFreeHandsLadder())
+				{
+					flag3 = false;
+				}
+				if (flag3)
+				{
+					item.ItemsManagerRegister(false);
+				}
+				this.m_ItemsToSetupAfterLoad.Add(item, i);
+				ScenarioManager.Get().OnItemCreated(item.gameObject);
+				if (item.m_Info.m_ID == ItemID.Dryer && !flag && zero.Distance(item.transform.position) <= 0.1f)
+				{
+					flag = true;
+				}
+			}
+			IL_29E:;
 		}
 		InventoryBackpack.Get().OnInventoryChanged();
 		this.m_CreationsData.Clear();
 		int num2 = SaveGame.LoadIVal("ItemCreationData");
-		for (int k = 0; k < num2; k++)
+		for (int j = 0; j < num2; j++)
 		{
-			ItemID key = (ItemID)SaveGame.LoadIVal("ItemCreationDataID" + k);
-			int value = SaveGame.LoadIVal("ItemCreationDataCount" + k);
+			ItemID key = (ItemID)SaveGame.LoadIVal("ItemCreationDataID" + j);
+			int value = SaveGame.LoadIVal("ItemCreationDataCount" + j);
 			this.m_CreationsData.Add((int)key, value);
 		}
 		this.InitCraftingData();
 		this.m_CraftingLockedItems.Clear();
 		int num3 = SaveGame.LoadIVal("CraftingLockedItems");
-		for (int l = 0; l < num3; l++)
+		for (int k = 0; k < num3; k++)
 		{
-			ItemID item2 = (ItemID)SaveGame.LoadIVal("CraftingLockedItem" + l);
+			ItemID item2 = (ItemID)SaveGame.LoadIVal("CraftingLockedItem" + k);
 			this.m_CraftingLockedItems.Add(item2);
 		}
 		this.m_WasConsumedData.Clear();
 		num2 = SaveGame.LoadIVal("ItemWasConsumed");
-		for (int m = 0; m < num2; m++)
+		for (int l = 0; l < num2; l++)
 		{
-			this.m_WasConsumedData.Add((ItemID)SaveGame.LoadIVal("ItemWasConsumedID" + m));
+			this.m_WasConsumedData.Add((ItemID)SaveGame.LoadIVal("ItemWasConsumedID" + l));
 		}
 		this.m_WasCollectedData.Clear();
 		num2 = SaveGame.LoadIVal("ItemWasCollected");
-		for (int n = 0; n < num2; n++)
+		for (int m = 0; m < num2; m++)
 		{
-			this.m_WasCollectedData.Add((ItemID)SaveGame.LoadIVal("ItemWasCollectedID" + n));
+			this.m_WasCollectedData.Add((ItemID)SaveGame.LoadIVal("ItemWasCollectedID" + m));
 		}
 		this.m_WasCraftedData.Clear();
 		num2 = SaveGame.LoadIVal("ItemWasCrafted");
-		for (int num4 = 0; num4 < num2; num4++)
+		for (int n = 0; n < num2; n++)
 		{
-			this.m_WasCraftedData.Add((ItemID)SaveGame.LoadIVal("ItemWasCraftedID" + num4));
+			this.m_WasCraftedData.Add((ItemID)SaveGame.LoadIVal("ItemWasCraftedID" + n));
 		}
 		this.m_WasLiquidBoiledData.Clear();
 		num2 = SaveGame.LoadIVal("WasLiquidBoiled");
-		for (int num5 = 0; num5 < num2; num5++)
+		for (int num4 = 0; num4 < num2; num4++)
 		{
-			this.m_WasLiquidBoiledData.Add((LiquidType)SaveGame.LoadIVal("WasLiquidBoiledID" + num5));
+			this.m_WasLiquidBoiledData.Add((LiquidType)SaveGame.LoadIVal("WasLiquidBoiledID" + num4));
 		}
 		ItemsManager.s_ItemUniqueID = SaveGame.LoadIVal("UniqueID");
+		this.m_WasPlantedData.Clear();
+		num2 = SaveGame.LoadIVal("ItemWasPlanted");
+		for (int num5 = 0; num5 < num2; num5++)
+		{
+			this.m_WasPlantedData.Add((ItemID)SaveGame.LoadIVal("ItemWasPlantedID" + num5));
+		}
 		this.m_UnlockedInNotepadItems.Clear();
 		int num6 = SaveGame.LoadIVal("UnlockedInNotepadItems");
 		for (int num7 = 0; num7 < num6; num7++)
@@ -452,9 +630,35 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			ItemID id = (ItemID)SaveGame.LoadIVal("UnlockedInNotepadItemID" + num7);
 			this.UnlockItemInNotepad(id);
 		}
-		if (GreenHellGame.s_GameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate4)
+		if (!flag && !this.m_UnlockedInNotepadItems.Contains(ItemID.Dryer))
+		{
+			Item item3 = this.CreateItem(ItemID.Dryer, false, zero, identity);
+			item3.ItemsManagerRegister(false);
+			this.m_ItemsToSetupAfterLoad.Add(item3, this.m_ItemsToSetupAfterLoad.Count);
+			ScenarioManager.Get().OnItemCreated(item3.gameObject);
+		}
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate4)
 		{
 			this.m_WasConstructionDestroyed = SaveGame.LoadBVal("WasConstructionDestroyed");
+		}
+		foreach (Generator generator in Generator.s_AllGenerators)
+		{
+			generator.LoadGenerator();
+		}
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionReleaseCandidate)
+		{
+			int num8 = SaveGame.LoadIVal("ItemReplacersCount");
+			for (int num9 = 0; num9 < num8; num9++)
+			{
+				ItemID item_id2 = (ItemID)SaveGame.LoadIVal("ItemReplacerID" + num9);
+				Vector3 position = SaveGame.LoadV3Val("ItemReplacerPos" + num9);
+				Quaternion rotation = SaveGame.LoadQVal("ItemReplacerRot" + num9);
+				this.CreateItem(item_id2, true, position, rotation);
+			}
+		}
+		for (int num10 = 0; num10 < LootBox.s_AllLootBoxes.Count; num10++)
+		{
+			LootBox.s_AllLootBoxes[num10].Load();
 		}
 	}
 
@@ -469,26 +673,148 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		{
 			return;
 		}
-		if (this.m_ItemsToSetupAfterLoad.Count > 0)
+		if (!this.m_QuadTreeInitialized)
+		{
+			this.CreateQuadTree();
+			return;
+		}
+		if (this.m_ItemsToSetupAfterLoad.Count > 0 && !ScenarioManager.Get().IsSceneLoading())
 		{
 			this.m_SetupAfterLoad = true;
-			for (int i = 0; i < this.m_ItemsToSetupAfterLoad.Count; i++)
+			this.m_Duplicated.Clear();
+			int num = 0;
+			foreach (Item item in this.m_ItemsToSetupAfterLoad.Keys)
 			{
-				this.m_ItemsToSetupAfterLoad[i].SetupAfterLoad(i);
+				if (item != null && !item.m_IsBeingDestroyed)
+				{
+					item.SetupAfterLoad(this.m_ItemsToSetupAfterLoad[item]);
+					if (item.m_Info != null && !item.m_InStorage && !item.m_InInventory && !item.m_CurrentSlot)
+					{
+						if (!this.m_Duplicated.ContainsKey(item.transform.position))
+						{
+							this.m_Duplicated.Add(item.transform.position, new Dictionary<int, List<Item>>());
+						}
+						if (!this.m_Duplicated[item.transform.position].ContainsKey((int)item.m_Info.m_ID))
+						{
+							this.m_Duplicated[item.transform.position].Add((int)item.m_Info.m_ID, new List<Item>());
+						}
+						this.m_Duplicated[item.transform.position][(int)item.m_Info.m_ID].Add(item);
+					}
+				}
+				Debug.Log(num);
+				num++;
 			}
 			this.m_ItemsToSetupAfterLoad.Clear();
+			ConstructionGhostManager.Get().SetupAfterLoad();
+			List<Item> list = new List<Item>();
+			foreach (Dictionary<int, List<Item>> dictionary in this.m_Duplicated.Values)
+			{
+				foreach (List<Item> list2 in dictionary.Values)
+				{
+					if (list2.Count > 1)
+					{
+						if (list2[0].IsStorage())
+						{
+							Storage storage = (Storage)list2[0];
+							for (int i = 1; i < list2.Count; i++)
+							{
+								Storage storage2 = (Storage)list2[i];
+								for (int j = 0; j < storage2.m_Items.Count; j++)
+								{
+									Item item2 = storage2.m_Items[j];
+									storage2.RemoveItem(item2, false);
+									storage.InsertItem(item2, null, null, false, true);
+								}
+							}
+							for (int k = 1; k < list2.Count; k++)
+							{
+								list.Add(list2[k]);
+							}
+						}
+						else if (list2[0].m_Info.IsStand())
+						{
+							Stand stand = (Stand)list2[0];
+							for (int l = 1; l < list2.Count; l++)
+							{
+								Stand stand2 = (Stand)list2[l];
+								if (stand2.m_NumItems != 0)
+								{
+									int num2 = Mathf.Min(stand.m_NumItems + stand2.m_NumItems, stand.m_Vis.Count);
+									int num3 = num2 - stand.m_NumItems;
+									stand.m_NumItems = num2;
+									stand.UpdateVis();
+									stand2.m_NumItems -= num3;
+									stand2.RemoveItems();
+								}
+							}
+						}
+						if (list2[0].m_Info.IsConstruction())
+						{
+							ItemSlot[] componentsInChildren = list2[0].gameObject.GetComponentsInChildren<ItemSlot>();
+							for (int m = 1; m < list2.Count; m++)
+							{
+								foreach (ItemSlot itemSlot in list2[m].gameObject.GetComponentsInChildren<ItemSlot>())
+								{
+									if (itemSlot.m_Item)
+									{
+										Item item3 = itemSlot.m_Item;
+										itemSlot.RemoveItem();
+										foreach (ItemSlot itemSlot2 in componentsInChildren)
+										{
+											if (itemSlot2.transform.position == itemSlot.transform.position)
+											{
+												itemSlot2.InsertItem(item3);
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
+						for (int num5 = 1; num5 < list2.Count; num5++)
+						{
+							list.Add(list2[num5]);
+						}
+					}
+				}
+			}
+			foreach (Construction construction in Construction.s_AllConstructions)
+			{
+				int num6 = 0;
+				while (num6 < construction.m_ConnectedConstructions.Count)
+				{
+					if (list.Contains(construction.m_ConnectedConstructions[num6]))
+					{
+						construction.m_ConnectedConstructions.RemoveAt(num6);
+					}
+					else
+					{
+						num6++;
+					}
+				}
+			}
+			foreach (Item item4 in list)
+			{
+				UnityEngine.Object.Destroy(item4.gameObject);
+			}
 			this.m_SetupAfterLoad = false;
+		}
+		Item.s_ItemUpdatesThisFrame = 0;
+		if (this.m_QuestItemKey && !this.m_QuestItemKey.gameObject.activeSelf && !Player.Get().HaveItem(ItemID.QuestItem_Key))
+		{
+			this.m_QuestItemKey.gameObject.SetActive(true);
 		}
 		this.UpdateItemsActivity();
 		this.UpdateItemSlots();
 		this.UpdateFoodProcessors();
-		this.UpdateFirecamps();
+		this.UpdateConstantUpdates();
+		this.UpdateItemsToDestroy();
 		this.UpdateDebug();
 	}
 
 	private void UpdateItemsActivity()
 	{
-		if (Inventory3DManager.Get().gameObject.activeSelf)
+		if (RelevanceSystem.ENABLED)
 		{
 			return;
 		}
@@ -504,39 +830,71 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		for (int i = 0; i < objectsInRadius.Count; i++)
 		{
 			GameObject gameObject = objectsInRadius[i];
+			gameObject.hideFlags = HideFlags.NotEditable;
 			if ((!currentItem || !(currentItem.gameObject == gameObject)) && (!currentItem2 || !(currentItem2.gameObject == gameObject)))
 			{
-				if (!this.m_ActiveObjects.Contains(gameObject))
+				if (ScenarioManager.Get().IsPreDream())
+				{
+					if (gameObject.activeSelf)
+					{
+						gameObject.SetActive(false);
+					}
+				}
+				else if (!gameObject.activeSelf)
 				{
 					this.m_ActiveObjects.Add(gameObject);
 					gameObject.SetActive(true);
 				}
 			}
 		}
-		int j = 0;
-		while (j < this.m_ActiveObjects.Count)
+		foreach (GameObject gameObject2 in this.m_ActiveObjects)
 		{
-			GameObject gameObject2 = this.m_ActiveObjects[j];
 			if (gameObject2 == null)
 			{
-				this.m_ActiveObjects.RemoveAt(j);
+				this.m_ObjectsToRemoveTmp.Add(gameObject2);
 			}
-			else if (!objectsInRadius.Contains(gameObject2))
+			else if (ScenarioManager.Get().IsPreDream())
 			{
-				this.m_ActiveObjects.RemoveAt(j);
+				gameObject2.SetActive(false);
+				this.m_ObjectsToRemoveTmp.Add(gameObject2);
+			}
+			else if (gameObject2.hideFlags == HideFlags.None)
+			{
 				Item component = gameObject2.GetComponent<Item>();
-				if (component != null && component.m_Info != null && component.m_Info.m_DestroyByItemsManager)
+				if (!(Inventory3DManager.Get().m_CarriedItem == component) && !Inventory3DManager.Get().m_StackItems.Contains(component) && (!(component != null) || (!component.m_OnCraftingTable && !component.m_InStorage && !component.m_InInventory)))
 				{
-					UnityEngine.Object.Destroy(gameObject2);
-				}
-				else
-				{
-					gameObject2.SetActive(false);
+					this.m_ObjectsToRemoveTmp.Add(gameObject2);
+					if (component != null && component.m_Info != null && component.m_Info.m_DestroyByItemsManager && !component.m_Info.m_UsedForCrafting)
+					{
+						UnityEngine.Object.Destroy(gameObject2);
+					}
+					else
+					{
+						gameObject2.SetActive(false);
+					}
 				}
 			}
-			else
+		}
+		if (this.m_ObjectsToRemoveTmp.Count > 0)
+		{
+			foreach (GameObject item in this.m_ObjectsToRemoveTmp)
 			{
-				j++;
+				this.m_ActiveObjects.Remove(item);
+			}
+			this.m_ObjectsToRemoveTmp.Clear();
+		}
+		for (int j = 0; j < objectsInRadius.Count; j++)
+		{
+			objectsInRadius[j].hideFlags = HideFlags.None;
+		}
+		if (ScenarioManager.Get().IsPreDream())
+		{
+			foreach (Construction construction in Construction.s_AllConstructions)
+			{
+				if (construction && construction.gameObject.activeSelf && construction.GetInfoID() != ItemID.ayuhasca_rack && construction.GetInfoID() != ItemID.campfire_ayuhasca)
+				{
+					construction.gameObject.SetActive(false);
+				}
 			}
 		}
 		this.UpdateFallenDestroy();
@@ -568,13 +926,22 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		this.m_FallenCurrentIdx++;
 	}
 
+	public void ClearFallenObjects()
+	{
+		for (int i = 0; i < this.m_FallenObjects.Count; i++)
+		{
+			UnityEngine.Object.Destroy(this.m_FallenObjects[i]);
+		}
+		this.m_FallenObjects.Clear();
+	}
+
 	private Vector3 GetCameraPosition()
 	{
-		Camera main = Camera.main;
+		Camera mainCamera = CameraManager.Get().m_MainCamera;
 		Vector3 result = Vector3.zero;
-		if (main)
+		if (mainCamera)
 		{
-			result = main.transform.position;
+			result = mainCamera.transform.position;
 		}
 		else
 		{
@@ -611,15 +978,21 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	private void UpdateFirecamps()
+	public void RegisterConstantUpdateItem(Item item)
 	{
-		if (Firecamp.s_Firecamps == null)
+		this.s_ConstantUpdateItems.Add(item);
+	}
+
+	public void UnregisterConstantUpdateItem(Item item)
+	{
+		this.s_ConstantUpdateItems.Remove(item);
+	}
+
+	private void UpdateConstantUpdates()
+	{
+		foreach (Item item in this.s_ConstantUpdateItems)
 		{
-			return;
-		}
-		foreach (Firecamp firecamp in Firecamp.s_Firecamps)
-		{
-			firecamp.ConstantUpdate();
+			item.ConstantUpdate();
 		}
 	}
 
@@ -627,12 +1000,14 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 	{
 		if (this.m_CreationsData.ContainsKey((int)id))
 		{
-			Dictionary<int, int> creationsData;
-			int key;
-			(creationsData = this.m_CreationsData)[key = (int)id] = creationsData[key] + 1;
+			Dictionary<int, int> creationsData = this.m_CreationsData;
+			int key = (int)id;
+			int value = creationsData[key] + 1;
+			creationsData[key] = value;
 			if (id == ItemID.Stone_Blade && this.m_CreationsData[(int)id] == 2)
 			{
 				HintsManager.Get().ShowHint("Crafting_Proggresion", 10f);
+				return;
 			}
 		}
 		else
@@ -655,7 +1030,11 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		}
 		if (this.m_DebugSpawnID != ItemID.None && Input.GetKeyDown(KeyCode.I))
 		{
-			this.CreateItem(this.m_DebugSpawnID, true, Player.Get().transform.position + Player.Get().transform.forward * 4f, Player.Get().transform.rotation);
+			Vector3 forward = Player.Get().GetHeadTransform().forward;
+			Vector3 vector = Player.Get().GetHeadTransform().position + 0.5f * forward;
+			RaycastHit raycastHit;
+			vector = (Physics.Raycast(vector, forward, out raycastHit, 3f) ? raycastHit.point : (vector + forward * 2f));
+			this.CreateItem(this.m_DebugSpawnID, true, vector - forward * 0.2f, Player.Get().transform.rotation);
 		}
 		if (Input.GetKey(KeyCode.U) && Input.GetKey(KeyCode.LeftControl))
 		{
@@ -672,6 +1051,12 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			this.UnlockAllBoiledData();
 			this.UnlockAllCollected();
 			this.UnlockAllItemInfos();
+			MapTab mapTab = (MapTab)MenuNotepad.Get().m_Tabs[MenuNotepad.MenuNotepadTab.MapTab];
+			if (mapTab == null)
+			{
+				return;
+			}
+			mapTab.UnlockAll();
 		}
 	}
 
@@ -712,6 +1097,12 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
+	public void UnlockPlantInNotepadScenario(string id)
+	{
+		ItemID item_id = (ItemID)Enum.Parse(typeof(ItemID), id);
+		this.OnTaken(item_id);
+	}
+
 	public void LockItemInNotepad(ItemID id)
 	{
 		if (this.m_UnlockedInNotepadItems.Contains(id))
@@ -728,8 +1119,8 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			return;
 		}
 		HUDInfoLog hudinfoLog = (HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog));
-		string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry");
-		string text = GreenHellGame.Instance.GetLocalization().Get(id.ToString());
+		string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry", true);
+		string text = GreenHellGame.Instance.GetLocalization().Get(id.ToString(), true);
 		if (id == ItemID.Small_Fire || id == ItemID.Campfire || id == ItemID.Campfire_Rack || id == ItemID.Smoker || id == ItemID.Stone_Ring)
 		{
 			MenuNotepad.Get().SetActiveTab(MenuNotepad.MenuNotepadTab.FirecampTab, true);
@@ -738,7 +1129,7 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		{
 			MenuNotepad.Get().SetActiveTab(MenuNotepad.MenuNotepadTab.ConstructionsTab, true);
 		}
-		else if (id == ItemID.Cage_Trap || id == ItemID.Fish_Rod_Trap || id == ItemID.Killer_Trap || id == ItemID.Snare_Trap || id == ItemID.Stick_Fish_Trap || id == ItemID.Stone_Trap)
+		else if (ItemInfo.IsTrap(id))
 		{
 			MenuNotepad.Get().SetActiveTab(MenuNotepad.MenuNotepadTab.TrapsTab, true);
 		}
@@ -753,9 +1144,12 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		MenuNotepad.Get().SetCurrentPageToItem(id);
 		if (show_msg)
 		{
-			hudinfoLog.AddInfo(title, text);
+			hudinfoLog.AddInfo(title, text, HUDInfoLogTextureType.Notepad);
 		}
-		PlayerAudioModule.Get().PlayNotepadEntrySound();
+		if (!ScenarioManager.Get().IsDreamOrPreDream())
+		{
+			PlayerAudioModule.Get().PlayNotepadEntrySound();
+		}
 	}
 
 	public void UnlockAllItemsInNotepad()
@@ -860,6 +1254,21 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		return component.m_WasReaded;
 	}
 
+	public bool WasReadedAndOff(GameObject item_obj)
+	{
+		if (!item_obj)
+		{
+			return false;
+		}
+		ReadableItem component = item_obj.GetComponent<ReadableItem>();
+		if (!component)
+		{
+			DebugUtils.Assert("Object " + item_obj.name + " is not ReadableItem!", true, DebugUtils.AssertType.Info);
+			return false;
+		}
+		return component.m_WasReadedAndOff;
+	}
+
 	public bool IsSlotFilled(GameObject slot)
 	{
 		if (!slot)
@@ -880,6 +1289,14 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		if (!this.m_WasConsumedData.Contains(info.m_ID))
 		{
 			this.m_WasConsumedData.Add(info.m_ID);
+		}
+	}
+
+	public void OnPlant(ItemID id)
+	{
+		if (!this.m_WasPlantedData.Contains(id))
+		{
+			this.m_WasPlantedData.Add(id);
 		}
 	}
 
@@ -964,6 +1381,11 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		return this.m_WasConsumedData.Contains(id);
 	}
 
+	public bool WasPlanted(ItemID id)
+	{
+		return this.m_WasPlantedData.Contains(id);
+	}
+
 	public bool WasCollected(ItemID id)
 	{
 		return this.m_WasCollectedData.Contains(id);
@@ -989,11 +1411,20 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	public void ScenarioDeleteAllFirecamps()
 	{
-		for (int i = 0; i < Firecamp.s_Firecamps.Count; i++)
+		int i = 0;
+		while (i < Firecamp.s_Firecamps.Count)
 		{
-			UnityEngine.Object.Destroy(Firecamp.s_Firecamps[i].gameObject);
+			GameObject gameObject = Firecamp.s_Firecamps[i].gameObject;
+			if (gameObject.name == "Campfire" && gameObject.transform.parent && (gameObject.transform.parent.name == "refugees_items" || gameObject.transform.parent.name == "SideCamp_01"))
+			{
+				i++;
+			}
+			else
+			{
+				UnityEngine.Object.Destroy(gameObject);
+				Firecamp.s_Firecamps.RemoveAt(i);
+			}
 		}
-		Firecamp.s_Firecamps.Clear();
 	}
 
 	private void InitDestroyableFallingSound()
@@ -1003,13 +1434,13 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			if (keyValuePair.Value.m_DestroyableFallSound.Length > 2)
 			{
 				Dictionary<int, ItemInfo>.Enumerator enumerator;
-				KeyValuePair<int, ItemInfo> keyValuePair2 = enumerator.Current;
-				int key = Animator.StringToHash(keyValuePair2.Value.m_DestroyableFallSound);
+				keyValuePair = enumerator.Current;
+				int key = Animator.StringToHash(keyValuePair.Value.m_DestroyableFallSound);
 				if (!this.m_DestroyableFallingSounds.ContainsKey(key))
 				{
 					string str = "Sounds/Destroyable/";
-					KeyValuePair<int, ItemInfo> keyValuePair3 = enumerator.Current;
-					AudioClip audioClip = Resources.Load(str + keyValuePair3.Value.m_DestroyableFallSound) as AudioClip;
+					keyValuePair = enumerator.Current;
+					AudioClip audioClip = Resources.Load(str + keyValuePair.Value.m_DestroyableFallSound) as AudioClip;
 					if (audioClip)
 					{
 						this.m_DestroyableFallingSounds.Add(key, audioClip);
@@ -1026,13 +1457,13 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 			if (keyValuePair.Value.m_DestroyableDestroySound.Length > 2)
 			{
 				Dictionary<int, ItemInfo>.Enumerator enumerator;
-				KeyValuePair<int, ItemInfo> keyValuePair2 = enumerator.Current;
-				int key = Animator.StringToHash(keyValuePair2.Value.m_DestroyableDestroySound);
+				keyValuePair = enumerator.Current;
+				int key = Animator.StringToHash(keyValuePair.Value.m_DestroyableDestroySound);
 				if (!this.m_DestroyableDestroySounds.ContainsKey(key))
 				{
 					string str = "Sounds/Destroyable/";
-					KeyValuePair<int, ItemInfo> keyValuePair3 = enumerator.Current;
-					AudioClip audioClip = Resources.Load(str + keyValuePair3.Value.m_DestroyableDestroySound) as AudioClip;
+					keyValuePair = enumerator.Current;
+					AudioClip audioClip = Resources.Load(str + keyValuePair.Value.m_DestroyableDestroySound) as AudioClip;
 					if (audioClip)
 					{
 						this.m_DestroyableDestroySounds.Add(key, audioClip);
@@ -1061,16 +1492,88 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 		ItemInfo info = this.GetInfo(item_id);
 		if (info == null)
 		{
-			DebugUtils.Assert(DebugUtils.AssertType.Info);
+			DebugUtils.Assert(item_id.ToString(), true, DebugUtils.AssertType.Info);
+			return false;
 		}
 		return info.IsHeavyObject();
+	}
+
+	public void AddItemToDestroy(Item item)
+	{
+		if (item != null)
+		{
+			this.m_ToDestroy.Add(item);
+		}
+	}
+
+	private void UpdateItemsToDestroy()
+	{
+		int i = 0;
+		while (i < this.m_ToDestroy.Count)
+		{
+			if (this.m_ToDestroy[i] != null)
+			{
+				UnityEngine.Object.Destroy(this.m_ToDestroy[i].gameObject);
+				this.m_ToDestroy.RemoveAt(i);
+			}
+			else
+			{
+				this.m_ToDestroy.RemoveAt(i);
+			}
+		}
+	}
+
+	public bool IsRackBurning(string rack_name)
+	{
+		int num = Animator.StringToHash(rack_name);
+		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+		{
+			if (firecampRack.m_NameHash == num)
+			{
+				return firecampRack.IsBurning();
+			}
+		}
+		return false;
+	}
+
+	public void BurnoutRack(string rack_name)
+	{
+		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+		{
+			if (firecampRack.name == rack_name)
+			{
+				firecampRack.BurnoutFirecamp();
+			}
+		}
+	}
+
+	public void SetRackEndlessFire(string rack_name)
+	{
+		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+		{
+			if (firecampRack.name == rack_name)
+			{
+				firecampRack.SetEndlessFire();
+			}
+		}
+	}
+
+	public void ResetRackEndlessFire(string rack_name)
+	{
+		foreach (FirecampRack firecampRack in FirecampRack.s_FirecampRacks)
+		{
+			if (firecampRack.name == rack_name)
+			{
+				firecampRack.ResetEndlessFire();
+			}
+		}
 	}
 
 	private Dictionary<int, ItemInfo> m_ItemInfos;
 
 	private QuadTree m_QuadTree;
 
-	private List<GameObject> m_ActiveObjects = new List<GameObject>();
+	private HashSet<GameObject> m_ActiveObjects = new HashSet<GameObject>();
 
 	public float m_DeactivateDist = 40f;
 
@@ -1103,6 +1606,8 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	private List<ItemID> m_WasConsumedData = new List<ItemID>();
 
+	private List<ItemID> m_WasPlantedData = new List<ItemID>();
+
 	private List<ItemID> m_WasCollectedData = new List<ItemID>();
 
 	private List<ItemID> m_WasCraftedData = new List<ItemID>();
@@ -1122,15 +1627,37 @@ public class ItemsManager : MonoBehaviour, ISaveLoad
 
 	private Dictionary<int, string> m_ItemIDToStringMap = new Dictionary<int, string>();
 
+	[HideInInspector]
+	public Item m_QuestItemKey;
+
+	private List<Item> s_ConstantUpdateItems = new List<Item>();
+
+	private bool m_QuadTreeInitialized;
+
 	private List<Item> m_FallenObjects = new List<Item>(1000);
+
+	private List<ItemsManager.ItemsToRegister> m_ItemsToRegister = new List<ItemsManager.ItemsToRegister>();
 
 	public bool m_SetupAfterLoad;
 
-	private List<Item> m_ItemsToSetupAfterLoad = new List<Item>();
+	public Dictionary<Item, int> m_ItemsToSetupAfterLoad = new Dictionary<Item, int>();
+
+	private Dictionary<Vector3, Dictionary<int, List<Item>>> m_Duplicated = new Dictionary<Vector3, Dictionary<int, List<Item>>>();
+
+	private List<GameObject> m_ObjectsToRemoveTmp = new List<GameObject>(10);
 
 	private int m_FallenCurrentIdx;
 
 	private Dictionary<int, AudioClip> m_DestroyableFallingSounds = new Dictionary<int, AudioClip>();
 
 	private Dictionary<int, AudioClip> m_DestroyableDestroySounds = new Dictionary<int, AudioClip>();
+
+	public List<Item> m_ToDestroy = new List<Item>(100);
+
+	private struct ItemsToRegister
+	{
+		public Item item;
+
+		public bool update_activity;
+	}
 }

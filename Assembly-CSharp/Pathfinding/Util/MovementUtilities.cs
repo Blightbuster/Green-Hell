@@ -11,17 +11,16 @@ namespace Pathfinding.Util
 			if (slowWhenNotFacingTarget && (forward.x != 0f || forward.y != 0f))
 			{
 				float num2;
-				Vector2 lhs = VectorMath.Normalize(velocity, out num2);
-				float num3 = Vector2.Dot(lhs, forward);
+				Vector2 vector = VectorMath.Normalize(velocity, out num2);
+				float num3 = Vector2.Dot(vector, forward);
 				float num4 = Mathf.Clamp(num3 + 0.707f, 0.2f, 1f);
 				num *= num4;
 				num2 = Mathf.Min(num2, num);
-				float num5 = Mathf.Acos(Mathf.Clamp(num3, -1f, 1f));
-				num5 = Mathf.Min(num5, (20f + 180f * Mathf.Clamp01(1f - slowdownFactor)) * 0.0174532924f);
-				float num6 = Mathf.Sin(num5);
-				float num7 = Mathf.Cos(num5);
-				num6 *= Mathf.Sign(lhs.x * forward.y - lhs.y * forward.x);
-				return new Vector2(forward.x * num7 + forward.y * num6, forward.y * num7 - forward.x * num6) * num2;
+				float f = Mathf.Min(Mathf.Acos(Mathf.Clamp(num3, -1f, 1f)), (20f + 180f * Mathf.Clamp01(1f - slowdownFactor)) * 0.0174532924f);
+				float num5 = Mathf.Sin(f);
+				float num6 = Mathf.Cos(f);
+				num5 *= Mathf.Sign(vector.x * forward.y - vector.y * forward.x);
+				return new Vector2(forward.x * num6 + forward.y * num5, forward.y * num6 - forward.x * num5) * num2;
 			}
 			return Vector2.ClampMagnitude(velocity, num);
 		}

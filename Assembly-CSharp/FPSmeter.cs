@@ -13,7 +13,7 @@ public class FPSmeter : MonoBehaviour
 	{
 		if (this.showFPS)
 		{
-			GUI.Label(new Rect(10f, 10f, 100f, 20f), string.Empty + Mathf.Round(FPSmeter.fps * 100f) / 100f);
+			GUI.Label(new Rect(10f, 10f, 100f, 20f), string.Concat(Mathf.Round(FPSmeter.fps * 100f) / 100f));
 		}
 	}
 

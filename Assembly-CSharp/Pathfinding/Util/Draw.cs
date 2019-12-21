@@ -19,11 +19,9 @@ namespace Pathfinding.Util
 			if (this.gizmos)
 			{
 				UnityEngine.Gizmos.DrawLine(this.matrix.MultiplyPoint3x4(a), this.matrix.MultiplyPoint3x4(b));
+				return;
 			}
-			else
-			{
-				UnityEngine.Debug.DrawLine(this.matrix.MultiplyPoint3x4(a), this.matrix.MultiplyPoint3x4(b), color);
-			}
+			UnityEngine.Debug.DrawLine(this.matrix.MultiplyPoint3x4(a), this.matrix.MultiplyPoint3x4(b), color);
 		}
 
 		public void CircleXZ(Vector3 center, float radius, Color color, float startAngle = 0f, float endAngle = 6.28318548f, int steps = 40)

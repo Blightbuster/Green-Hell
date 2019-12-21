@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AIs
 {
@@ -12,21 +13,24 @@ namespace AIs
 
 		private void OnDisable()
 		{
-			this.m_Enemy = null;
+			this.m_Enemies.Clear();
 		}
 
 		private void UpdateEnemy()
 		{
-			if (Player.Get().transform.position.Distance(this.m_AI.transform.position) < this.m_AI.m_Params.m_EnemySenseRange)
+			this.m_Enemies.Clear();
+			for (int i = 0; i < ReplicatedLogicalPlayer.s_AllLogicalPlayers.Count; i++)
 			{
-				this.m_Enemy = Player.Get();
-			}
-			else
-			{
-				this.m_Enemy = null;
+				Being component = ReplicatedLogicalPlayer.s_AllLogicalPlayers[i].GetComponent<Being>();
+				if (base.transform.position.Distance(component.transform.position) < this.m_AI.m_Params.m_EnemySenseRange)
+				{
+					this.m_Enemies.Add(component);
+				}
 			}
 		}
 
-		public Player m_Enemy;
+		public List<Being> m_Enemies = new List<Being>();
+
+		private List<Being> m_TempEnemyList = new List<Being>();
 	}
 }

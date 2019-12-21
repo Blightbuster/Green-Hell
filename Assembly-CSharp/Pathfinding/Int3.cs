@@ -5,6 +5,14 @@ namespace Pathfinding
 {
 	public struct Int3 : IEquatable<Int3>
 	{
+		public static Int3 zero
+		{
+			get
+			{
+				return default(Int3);
+			}
+		}
+
 		public Int3(Vector3 position)
 		{
 			this.x = (int)Math.Round((double)(position.x * 1000f));
@@ -17,14 +25,6 @@ namespace Pathfinding
 			this.x = _x;
 			this.y = _y;
 			this.z = _z;
-		}
-
-		public static Int3 zero
-		{
-			get
-			{
-				return default(Int3);
-			}
 		}
 
 		public static bool operator ==(Int3 lhs, Int3 rhs)
@@ -107,29 +107,36 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (i != 0) ? ((i != 1) ? this.z : this.y) : this.x;
+				if (i == 0)
+				{
+					return this.x;
+				}
+				if (i != 1)
+				{
+					return this.z;
+				}
+				return this.y;
 			}
 			set
 			{
 				if (i == 0)
 				{
 					this.x = value;
+					return;
 				}
-				else if (i == 1)
+				if (i == 1)
 				{
 					this.y = value;
+					return;
 				}
-				else
-				{
-					this.z = value;
-				}
+				this.z = value;
 			}
 		}
 
 		public static float Angle(Int3 lhs, Int3 rhs)
 		{
 			double num = (double)Int3.Dot(lhs, rhs) / ((double)lhs.magnitude * (double)rhs.magnitude);
-			num = ((num >= -1.0) ? ((num <= 1.0) ? num : 1.0) : -1.0);
+			num = ((num < -1.0) ? -1.0 : ((num > 1.0) ? 1.0 : num));
 			return (float)Math.Acos(num);
 		}
 

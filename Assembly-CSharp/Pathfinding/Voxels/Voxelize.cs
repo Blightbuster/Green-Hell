@@ -7,24 +7,12 @@ namespace Pathfinding.Voxels
 {
 	public class Voxelize
 	{
-		public Voxelize(float ch, float cs, float walkableClimb, float walkableHeight, float maxSlope, float maxEdgeLength)
-		{
-			this.cellSize = cs;
-			this.cellHeight = ch;
-			this.maxSlope = maxSlope;
-			this.cellScale = new Vector3(this.cellSize, this.cellHeight, this.cellSize);
-			this.voxelWalkableHeight = (uint)(walkableHeight / this.cellHeight);
-			this.voxelWalkableClimb = Mathf.RoundToInt(walkableClimb / this.cellHeight);
-			this.maxEdgeLength = maxEdgeLength;
-		}
-
 		public void BuildContours(float maxError, int maxEdgeLength, VoxelContourSet cset, int buildFlags)
 		{
 			int num = this.voxelArea.width;
 			int num2 = this.voxelArea.depth;
 			int num3 = num * num2;
-			int capacity = Mathf.Max(8, 8);
-			List<VoxelContour> list = new List<VoxelContour>(capacity);
+			List<VoxelContour> list = new List<VoxelContour>(Mathf.Max(8, 8));
 			ushort[] array = this.voxelArea.tmpUShortArr;
 			if (array.Length < this.voxelArea.compactSpanCount)
 			{
@@ -94,16 +82,16 @@ namespace Pathfinding.Voxels
 								this.WalkContour(n, m, num10, array, list2);
 								this.SimplifyContour(list2, list3, maxError, maxEdgeLength, buildFlags);
 								this.RemoveDegenerateSegments(list3);
-								VoxelContour item = default(VoxelContour);
-								item.verts = ArrayPool<int>.Claim(list3.Count);
+								VoxelContour voxelContour = default(VoxelContour);
+								voxelContour.verts = ArrayPool<int>.Claim(list3.Count);
 								for (int num12 = 0; num12 < list3.Count; num12++)
 								{
-									item.verts[num12] = list3[num12];
+									voxelContour.verts[num12] = list3[num12];
 								}
-								item.nverts = list3.Count / 4;
-								item.reg = reg;
-								item.area = area;
-								list.Add(item);
+								voxelContour.nverts = list3.Count / 4;
+								voxelContour.reg = reg;
+								voxelContour.area = area;
+								list.Add(voxelContour);
 							}
 						}
 						num10++;
@@ -114,19 +102,16 @@ namespace Pathfinding.Voxels
 			ListPool<int>.Release(list3);
 			for (int num13 = 0; num13 < list.Count; num13++)
 			{
-				VoxelContour value = list[num13];
-				if (this.CalcAreaOfPolygon2D(value.verts, value.nverts) < 0)
+				VoxelContour voxelContour2 = list[num13];
+				if (this.CalcAreaOfPolygon2D(voxelContour2.verts, voxelContour2.nverts) < 0)
 				{
 					int num14 = -1;
 					for (int num15 = 0; num15 < list.Count; num15++)
 					{
-						if (num13 != num15)
+						if (num13 != num15 && list[num15].nverts > 0 && list[num15].reg == voxelContour2.reg && this.CalcAreaOfPolygon2D(list[num15].verts, list[num15].nverts) > 0)
 						{
-							if (list[num15].nverts > 0 && list[num15].reg == value.reg && this.CalcAreaOfPolygon2D(list[num15].verts, list[num15].nverts) > 0)
-							{
-								num14 = num15;
-								break;
-							}
+							num14 = num15;
+							break;
 						}
 					}
 					if (num14 == -1)
@@ -135,10 +120,10 @@ namespace Pathfinding.Voxels
 					}
 					else
 					{
-						VoxelContour value2 = list[num14];
+						VoxelContour voxelContour3 = list[num14];
 						int num16 = 0;
 						int num17 = 0;
-						this.GetClosestIndices(value2.verts, value2.nverts, value.verts, value.nverts, ref num16, ref num17);
+						this.GetClosestIndices(voxelContour3.verts, voxelContour3.nverts, voxelContour2.verts, voxelContour2.nverts, ref num16, ref num17);
 						if (num16 == -1 || num17 == -1)
 						{
 							Debug.LogWarning(string.Concat(new object[]
@@ -150,7 +135,7 @@ namespace Pathfinding.Voxels
 								"."
 							}));
 						}
-						else if (!Voxelize.MergeContours(ref value2, ref value, num16, num17))
+						else if (!Voxelize.MergeContours(ref voxelContour3, ref voxelContour2, num16, num17))
 						{
 							Debug.LogWarning(string.Concat(new object[]
 							{
@@ -163,8 +148,8 @@ namespace Pathfinding.Voxels
 						}
 						else
 						{
-							list[num14] = value2;
-							list[num13] = value;
+							list[num14] = voxelContour3;
+							list[num13] = voxelContour2;
 						}
 					}
 				}
@@ -216,33 +201,32 @@ namespace Pathfinding.Voxels
 
 		public static bool MergeContours(ref VoxelContour ca, ref VoxelContour cb, int ia, int ib)
 		{
-			int num = ca.nverts + cb.nverts + 2;
-			int[] array = ArrayPool<int>.Claim(num * 4);
-			int num2 = 0;
+			int[] array = ArrayPool<int>.Claim((ca.nverts + cb.nverts + 2) * 4);
+			int num = 0;
 			for (int i = 0; i <= ca.nverts; i++)
 			{
-				int num3 = num2 * 4;
-				int num4 = (ia + i) % ca.nverts * 4;
-				array[num3] = ca.verts[num4];
-				array[num3 + 1] = ca.verts[num4 + 1];
-				array[num3 + 2] = ca.verts[num4 + 2];
-				array[num3 + 3] = ca.verts[num4 + 3];
-				num2++;
+				int num2 = num * 4;
+				int num3 = (ia + i) % ca.nverts * 4;
+				array[num2] = ca.verts[num3];
+				array[num2 + 1] = ca.verts[num3 + 1];
+				array[num2 + 2] = ca.verts[num3 + 2];
+				array[num2 + 3] = ca.verts[num3 + 3];
+				num++;
 			}
 			for (int j = 0; j <= cb.nverts; j++)
 			{
-				int num5 = num2 * 4;
-				int num6 = (ib + j) % cb.nverts * 4;
-				array[num5] = cb.verts[num6];
-				array[num5 + 1] = cb.verts[num6 + 1];
-				array[num5 + 2] = cb.verts[num6 + 2];
-				array[num5 + 3] = cb.verts[num6 + 3];
-				num2++;
+				int num4 = num * 4;
+				int num5 = (ib + j) % cb.nverts * 4;
+				array[num4] = cb.verts[num5];
+				array[num4 + 1] = cb.verts[num5 + 1];
+				array[num4 + 2] = cb.verts[num5 + 2];
+				array[num4 + 3] = cb.verts[num5 + 3];
+				num++;
 			}
 			ArrayPool<int>.Release(ref ca.verts, false);
 			ArrayPool<int>.Release(ref cb.verts, false);
 			ca.verts = array;
-			ca.nverts = num2;
+			ca.nverts = num;
 			cb.verts = ArrayPool<int>.Claim(0);
 			cb.nverts = 0;
 			return true;
@@ -348,27 +332,31 @@ namespace Pathfinding.Voxels
 					Utility.Swap(ref num12, ref num15);
 					Utility.Swap(ref num13, ref num16);
 				}
-				if ((verts[num21 * 4 + 3] & 65535) == 0 || (verts[num21 * 4 + 3] & 131072) == 131072)
+				if ((verts[num21 * 4 + 3] & 65535) != 0)
 				{
-					while (num21 != num22)
+					if ((verts[num21 * 4 + 3] & 131072) != 131072)
 					{
-						float num23 = VectorMath.SqrDistancePointSegmentApproximate(verts[num21 * 4], verts[num21 * 4 + 2] / this.voxelArea.width, num12, num13 / this.voxelArea.width, num15, num16 / this.voxelArea.width);
-						if (num23 > num18)
-						{
-							num18 = num23;
-							num19 = num21;
-						}
-						num21 = (num21 + num20) % num10;
+						goto IL_34F;
 					}
 				}
+				while (num21 != num22)
+				{
+					float num23 = VectorMath.SqrDistancePointSegmentApproximate(verts[num21 * 4], verts[num21 * 4 + 2] / this.voxelArea.width, num12, num13 / this.voxelArea.width, num15, num16 / this.voxelArea.width);
+					if (num23 > num18)
+					{
+						num18 = num23;
+						num19 = num21;
+					}
+					num21 = (num21 + num20) % num10;
+				}
+				IL_34F:
 				if (num19 != -1 && num18 > maxError)
 				{
 					simplified.Add(0);
 					simplified.Add(0);
 					simplified.Add(0);
 					simplified.Add(0);
-					int num24 = simplified.Count / 4;
-					for (int m = num24 - 1; m > l; m--)
+					for (int m = simplified.Count / 4 - 1; m > l; m--)
 					{
 						simplified[m * 4] = simplified[(m - 1) * 4];
 						simplified[m * 4 + 1] = simplified[(m - 1) * 4 + 1];
@@ -385,20 +373,16 @@ namespace Pathfinding.Voxels
 					l++;
 				}
 			}
-			float num25 = this.maxEdgeLength / this.cellSize;
-			if (num25 > 0f && (buildFlags & 7) != 0)
+			float num24 = this.maxEdgeLength / this.cellSize;
+			if (num24 > 0f && (buildFlags & 7) != 0)
 			{
-				int n = 0;
-				while (n < simplified.Count / 4)
+				int num25 = 0;
+				while (num25 < simplified.Count / 4 && simplified.Count / 4 <= 200)
 				{
-					if (simplified.Count / 4 > 200)
-					{
-						break;
-					}
-					int num26 = (n + 1) % (simplified.Count / 4);
-					int num27 = simplified[n * 4];
-					int num28 = simplified[n * 4 + 2];
-					int num29 = simplified[n * 4 + 3];
+					int num26 = (num25 + 1) % (simplified.Count / 4);
+					int num27 = simplified[num25 * 4];
+					int num28 = simplified[num25 * 4 + 2];
+					int num29 = simplified[num25 * 4 + 3];
 					int num30 = simplified[num26 * 4];
 					int num31 = simplified[num26 * 4 + 2];
 					int num32 = simplified[num26 * 4 + 3];
@@ -421,9 +405,9 @@ namespace Pathfinding.Voxels
 					{
 						int num35 = num30 - num27;
 						int num36 = num31 / this.voxelArea.width - num28 / this.voxelArea.width;
-						if ((float)(num35 * num35 + num36 * num36) > num25 * num25)
+						if ((float)(num35 * num35 + num36 * num36) > num24 * num24)
 						{
-							int num37 = (num32 >= num29) ? (num32 - num29) : (num32 + num10 - num29);
+							int num37 = (num32 < num29) ? (num32 + num10 - num29) : (num32 - num29);
 							if (num37 > 1)
 							{
 								if (num30 > num27 || (num30 == num27 && num31 > num28))
@@ -440,30 +424,29 @@ namespace Pathfinding.Voxels
 					if (num33 != -1)
 					{
 						simplified.AddRange(new int[4]);
-						int num38 = simplified.Count / 4;
-						for (int num39 = num38 - 1; num39 > n; num39--)
+						for (int n = simplified.Count / 4 - 1; n > num25; n--)
 						{
-							simplified[num39 * 4] = simplified[(num39 - 1) * 4];
-							simplified[num39 * 4 + 1] = simplified[(num39 - 1) * 4 + 1];
-							simplified[num39 * 4 + 2] = simplified[(num39 - 1) * 4 + 2];
-							simplified[num39 * 4 + 3] = simplified[(num39 - 1) * 4 + 3];
+							simplified[n * 4] = simplified[(n - 1) * 4];
+							simplified[n * 4 + 1] = simplified[(n - 1) * 4 + 1];
+							simplified[n * 4 + 2] = simplified[(n - 1) * 4 + 2];
+							simplified[n * 4 + 3] = simplified[(n - 1) * 4 + 3];
 						}
-						simplified[(n + 1) * 4] = verts[num33 * 4];
-						simplified[(n + 1) * 4 + 1] = verts[num33 * 4 + 1];
-						simplified[(n + 1) * 4 + 2] = verts[num33 * 4 + 2];
-						simplified[(n + 1) * 4 + 3] = num33;
+						simplified[(num25 + 1) * 4] = verts[num33 * 4];
+						simplified[(num25 + 1) * 4 + 1] = verts[num33 * 4 + 1];
+						simplified[(num25 + 1) * 4 + 2] = verts[num33 * 4 + 2];
+						simplified[(num25 + 1) * 4 + 3] = num33;
 					}
 					else
 					{
-						n++;
+						num25++;
 					}
 				}
 			}
-			for (int num40 = 0; num40 < simplified.Count / 4; num40++)
+			for (int num38 = 0; num38 < simplified.Count / 4; num38++)
 			{
-				int num41 = (simplified[num40 * 4 + 3] + 1) % num10;
-				int num42 = simplified[num40 * 4 + 3];
-				simplified[num40 * 4 + 3] = ((verts[num41 * 4 + 3] & 65535) | (verts[num42 * 4 + 3] & 65536));
+				int num39 = (simplified[num38 * 4 + 3] + 1) % num10;
+				int num40 = simplified[num38 * 4 + 3];
+				simplified[num38 * 4 + 3] = ((verts[num39 * 4 + 3] & 65535) | (verts[num40 * 4 + 3] & 65536));
 			}
 		}
 
@@ -487,24 +470,18 @@ namespace Pathfinding.Voxels
 					int num6 = x;
 					int cornerHeight = this.GetCornerHeight(x, z, i, num, ref flag);
 					int num7 = z;
-					if (num != 0)
+					switch (num)
 					{
-						if (num != 1)
-						{
-							if (num == 2)
-							{
-								num6++;
-							}
-						}
-						else
-						{
-							num6++;
-							num7 += this.voxelArea.width;
-						}
-					}
-					else
-					{
+					case 0:
 						num7 += this.voxelArea.width;
+						break;
+					case 1:
+						num6++;
+						num7 += this.voxelArea.width;
+						break;
+					case 2:
+						num6++;
+						break;
 					}
 					int num8 = 0;
 					CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[i];
@@ -542,8 +519,7 @@ namespace Pathfinding.Voxels
 					CompactVoxelSpan compactVoxelSpan2 = this.voxelArea.compactSpans[i];
 					if ((long)compactVoxelSpan2.GetConnection(num) != 63L)
 					{
-						CompactVoxelCell compactVoxelCell = this.voxelArea.compactCells[num13 + num14];
-						num12 = (int)(compactVoxelCell.index + (uint)compactVoxelSpan2.GetConnection(num));
+						num12 = (int)(this.voxelArea.compactCells[num13 + num14].index + (uint)compactVoxelSpan2.GetConnection(num));
 					}
 					if (num12 == -1)
 					{
@@ -614,7 +590,7 @@ namespace Pathfinding.Voxels
 				bool flag = (array[num15] & array[num16] & 32768u) != 0u && array[num15] == array[num16];
 				bool flag2 = ((array[num17] | array[num18]) & 32768u) == 0u;
 				bool flag3 = array[num17] >> 16 == array[num18] >> 16;
-				bool flag4 = array[num15] != 0u && array[num16] != 0u && array[num17] != 0u && array[num18] != 0u;
+				bool flag4 = array[num15] != 0u && array[num16] != 0u && array[num17] != 0u && array[num18] > 0u;
 				if (flag && flag2 && flag3 && flag4)
 				{
 					isBorderVertex = true;
@@ -709,12 +685,9 @@ namespace Pathfinding.Voxels
 				{
 					int num3 = (indices[k] & 268435455) * 4;
 					int num4 = (indices[num2] & 268435455) * 4;
-					if (!Voxelize.Vequal(a, num3, verts) && !Voxelize.Vequal(num, num3, verts) && !Voxelize.Vequal(a, num4, verts) && !Voxelize.Vequal(num, num4, verts))
+					if (!Voxelize.Vequal(a, num3, verts) && !Voxelize.Vequal(num, num3, verts) && !Voxelize.Vequal(a, num4, verts) && !Voxelize.Vequal(num, num4, verts) && Voxelize.Intersect(a, num, num3, num4, verts))
 					{
-						if (Voxelize.Intersect(a, num, num3, num4, verts))
-						{
-							return false;
-						}
+						return false;
 					}
 				}
 			}
@@ -756,12 +729,20 @@ namespace Pathfinding.Voxels
 
 		public static int Prev(int i, int n)
 		{
-			return (i - 1 < 0) ? (n - 1) : (i - 1);
+			if (i - 1 < 0)
+			{
+				return n - 1;
+			}
+			return i - 1;
 		}
 
 		public static int Next(int i, int n)
 		{
-			return (i + 1 >= n) ? 0 : (i + 1);
+			if (i + 1 >= n)
+			{
+				return 0;
+			}
+			return i + 1;
 		}
 
 		public void BuildPolyMesh(VoxelContourSet cset, int nvp, out VoxelMesh mesh)
@@ -930,16 +911,25 @@ namespace Pathfinding.Voxels
 			z = Mathf.RoundToInt(p.z / this.cellSize - 0.5f);
 		}
 
+		public Voxelize(float ch, float cs, float walkableClimb, float walkableHeight, float maxSlope, float maxEdgeLength)
+		{
+			this.cellSize = cs;
+			this.cellHeight = ch;
+			this.maxSlope = maxSlope;
+			this.cellScale = new Vector3(this.cellSize, this.cellHeight, this.cellSize);
+			this.voxelWalkableHeight = (uint)(walkableHeight / this.cellHeight);
+			this.voxelWalkableClimb = Mathf.RoundToInt(walkableClimb / this.cellHeight);
+			this.maxEdgeLength = maxEdgeLength;
+		}
+
 		public void Init()
 		{
 			if (this.voxelArea == null || this.voxelArea.width != this.width || this.voxelArea.depth != this.depth)
 			{
 				this.voxelArea = new VoxelArea(this.width, this.depth);
+				return;
 			}
-			else
-			{
-				this.voxelArea.Reset();
-			}
+			this.voxelArea.Reset();
 		}
 
 		public void VoxelizeInput(GraphTransform graphTransform, Bounds graphSpaceBounds)
@@ -998,9 +988,8 @@ namespace Pathfinding.Voxels
 					num7 = Mathf.Clamp(num7, 0, this.voxelArea.depth - 1);
 					if (num4 < this.voxelArea.width && num5 < this.voxelArea.depth && num6 > 0 && num7 > 0)
 					{
-						float num8 = Vector3.Dot(Vector3.Cross(vector2 - vector, vector3 - vector).normalized, Vector3.up);
 						int area2;
-						if (num8 < num2)
+						if (Vector3.Dot(Vector3.Cross(vector2 - vector, vector3 - vector).normalized, Vector3.up) < num2)
 						{
 							area2 = 0;
 						}
@@ -1013,44 +1002,44 @@ namespace Pathfinding.Voxels
 						Utility.CopyVector(array, 6, vector3);
 						for (int m = num4; m <= num6; m++)
 						{
-							int num9 = this.clipper.ClipPolygon(array, 3, array2, 1f, (float)(-(float)m) + 0.5f, 0);
-							if (num9 >= 3)
+							int num8 = this.clipper.ClipPolygon(array, 3, array2, 1f, (float)(-(float)m) + 0.5f, 0);
+							if (num8 >= 3)
 							{
-								num9 = this.clipper.ClipPolygon(array2, num9, array3, -1f, (float)m + 0.5f, 0);
-								if (num9 >= 3)
+								num8 = this.clipper.ClipPolygon(array2, num8, array3, -1f, (float)m + 0.5f, 0);
+								if (num8 >= 3)
 								{
+									float num9 = array3[2];
 									float num10 = array3[2];
-									float num11 = array3[2];
-									for (int n = 1; n < num9; n++)
+									for (int n = 1; n < num8; n++)
 									{
 										float val = array3[n * 3 + 2];
-										num10 = Math.Min(num10, val);
-										num11 = Math.Max(num11, val);
+										num9 = Math.Min(num9, val);
+										num10 = Math.Max(num10, val);
 									}
+									int num11 = Mathf.Clamp((int)Math.Round((double)num9), 0, this.voxelArea.depth - 1);
 									int num12 = Mathf.Clamp((int)Math.Round((double)num10), 0, this.voxelArea.depth - 1);
-									int num13 = Mathf.Clamp((int)Math.Round((double)num11), 0, this.voxelArea.depth - 1);
-									for (int num14 = num12; num14 <= num13; num14++)
+									for (int num13 = num11; num13 <= num12; num13++)
 									{
-										int num15 = this.clipper.ClipPolygon(array3, num9, array4, 1f, (float)(-(float)num14) + 0.5f, 2);
-										if (num15 >= 3)
+										int num14 = this.clipper.ClipPolygon(array3, num8, array4, 1f, (float)(-(float)num13) + 0.5f, 2);
+										if (num14 >= 3)
 										{
-											num15 = this.clipper.ClipPolygonY(array4, num15, array5, -1f, (float)num14 + 0.5f, 2);
-											if (num15 >= 3)
+											num14 = this.clipper.ClipPolygonY(array4, num14, array5, -1f, (float)num13 + 0.5f, 2);
+											if (num14 >= 3)
 											{
+												float num15 = array5[1];
 												float num16 = array5[1];
-												float num17 = array5[1];
-												for (int num18 = 1; num18 < num15; num18++)
+												for (int num17 = 1; num17 < num14; num17++)
 												{
-													float val2 = array5[num18 * 3 + 1];
-													num16 = Math.Min(num16, val2);
-													num17 = Math.Max(num17, val2);
+													float val2 = array5[num17 * 3 + 1];
+													num15 = Math.Min(num15, val2);
+													num16 = Math.Max(num16, val2);
 												}
-												int num19 = (int)Math.Ceiling((double)num17);
-												if (num19 >= 0 && num16 <= (float)num)
+												int num18 = (int)Math.Ceiling((double)num16);
+												if (num18 >= 0 && num15 <= (float)num)
 												{
-													int num20 = Math.Max(0, (int)num16);
-													num19 = Math.Max(num20 + 1, num19);
-													this.voxelArea.AddLinkedSpan(num14 * this.voxelArea.width + m, (uint)num20, (uint)num19, area2, this.voxelWalkableClimb);
+													int num19 = Math.Max(0, (int)num15);
+													num18 = Math.Max(num19 + 1, num18);
+													this.voxelArea.AddLinkedSpan(num13 * this.voxelArea.width + m, (uint)num19, (uint)num18, area2, this.voxelWalkableClimb);
 												}
 											}
 										}
@@ -1078,15 +1067,14 @@ namespace Pathfinding.Voxels
 					while (num3 != -1 && linkedSpans[num3].bottom != 4294967295u)
 					{
 						uint top = linkedSpans[num3].top;
-						uint num4 = (linkedSpans[num3].next == -1) ? 65536u : linkedSpans[linkedSpans[num3].next].bottom;
+						uint num4 = (linkedSpans[num3].next != -1) ? linkedSpans[linkedSpans[num3].next].bottom : 65536u;
 						if (top > num4)
 						{
 							Debug.Log(top + " " + num4);
 							Debug.DrawLine(new Vector3((float)j * this.cellSize, top * this.cellHeight, (float)num2 * this.cellSize) + min, new Vector3((float)j * this.cellSize, num4 * this.cellHeight, (float)num2 * this.cellSize) + min, Color.yellow, 1f);
 						}
-						if (num4 - top < this.voxelWalkableHeight)
-						{
-						}
+						uint num5 = num4 - top;
+						uint num6 = this.voxelWalkableHeight;
 						num3 = linkedSpans[num3].next;
 					}
 				}
@@ -1134,9 +1122,9 @@ namespace Pathfinding.Voxels
 							{
 								int top = (int)linkedSpans[num6].top;
 								int next = linkedSpans[num6].next;
-								int num8 = (int)((next == -1) ? 65536u : linkedSpans[next].bottom);
-								this.voxelArea.compactSpans[(int)((UIntPtr)num)] = new CompactVoxelSpan((ushort)((top <= 65535) ? top : 65535), (uint)((num8 - top <= 65535) ? (num8 - top) : 65535));
-								this.voxelArea.areaTypes[(int)((UIntPtr)num)] = linkedSpans[num6].area;
+								int num8 = (int)((next != -1) ? linkedSpans[next].bottom : 65536u);
+								this.voxelArea.compactSpans[(int)num] = new CompactVoxelSpan((ushort)((top > 65535) ? 65535 : top), (uint)((num8 - top > 65535) ? 65535 : (num8 - top)));
+								this.voxelArea.areaTypes[(int)num] = linkedSpans[num6].area;
 								num += 1u;
 								num7 += 1u;
 							}
@@ -1181,13 +1169,12 @@ namespace Pathfinding.Voxels
 								{
 									CompactVoxelSpan compactVoxelSpan2 = compactSpans[m];
 									int num7 = (int)Math.Max(compactVoxelSpan.y, compactVoxelSpan2.y);
-									int num8 = Math.Min((int)((uint)compactVoxelSpan.y + compactVoxelSpan.h), (int)((uint)compactVoxelSpan2.y + compactVoxelSpan2.h));
-									if ((long)(num8 - num7) >= (long)((ulong)this.voxelWalkableHeight) && Math.Abs((int)(compactVoxelSpan2.y - compactVoxelSpan.y)) <= this.voxelWalkableClimb)
+									if ((long)(Math.Min((int)((uint)compactVoxelSpan.y + compactVoxelSpan.h), (int)((uint)compactVoxelSpan2.y + compactVoxelSpan2.h)) - num7) >= (long)((ulong)this.voxelWalkableHeight) && Math.Abs((int)(compactVoxelSpan2.y - compactVoxelSpan.y)) <= this.voxelWalkableClimb)
 									{
-										uint num9 = (uint)(m - (int)compactVoxelCell2.index);
-										if (num9 <= 65535u)
+										uint num8 = (uint)(m - (int)compactVoxelCell2.index);
+										if (num8 <= 65535u)
 										{
-											compactSpans[k].SetConnection(l, num9);
+											compactSpans[k].SetConnection(l, num8);
 											break;
 										}
 										Debug.LogError("Too many layers");
@@ -1218,9 +1205,9 @@ namespace Pathfinding.Voxels
 
 		public Int3 VoxelToWorldInt3(Int3 voxelPosition)
 		{
-			Int3 lhs = voxelPosition * 1000;
-			lhs = new Int3(Mathf.RoundToInt((float)lhs.x * this.cellScale.x), Mathf.RoundToInt((float)lhs.y * this.cellScale.y), Mathf.RoundToInt((float)lhs.z * this.cellScale.z));
-			return lhs + (Int3)this.voxelOffset;
+			Int3 @int = voxelPosition * 1000;
+			@int = new Int3(Mathf.RoundToInt((float)@int.x * this.cellScale.x), Mathf.RoundToInt((float)@int.y * this.cellScale.y), Mathf.RoundToInt((float)@int.z * this.cellScale.z));
+			return @int + (Int3)this.voxelOffset;
 		}
 
 		private Vector3 ConvertPosWithoutOffset(int x, int y, int z)
@@ -1329,8 +1316,7 @@ namespace Pathfinding.Voxels
 					while (num3 != -1 && linkedSpans[num3].bottom != 4294967295u)
 					{
 						uint top = linkedSpans[num3].top;
-						uint num4 = (linkedSpans[num3].next == -1) ? 65536u : linkedSpans[linkedSpans[num3].next].bottom;
-						if (num4 - top < voxelWalkableHeight)
+						if (((linkedSpans[num3].next != -1) ? linkedSpans[linkedSpans[num3].next].bottom : 65536u) - top < voxelWalkableHeight)
 						{
 							linkedSpans[num3].area = 0;
 						}
@@ -1362,7 +1348,7 @@ namespace Pathfinding.Voxels
 							if (linkedSpans[num4].area != 0)
 							{
 								int top = (int)linkedSpans[num4].top;
-								int val = (int)((linkedSpans[num4].next == -1) ? 65536u : linkedSpans[linkedSpans[num4].next].bottom);
+								int val = (int)((linkedSpans[num4].next != -1) ? linkedSpans[linkedSpans[num4].next].bottom : 65536u);
 								int num5 = 65536;
 								int num6 = (int)linkedSpans[num4].top;
 								int num7 = num6;
@@ -1377,7 +1363,7 @@ namespace Pathfinding.Voxels
 									}
 									int num10 = num8 + num9;
 									int num11 = -voxelWalkableClimb;
-									int val2 = (int)((linkedSpans[num10].bottom == uint.MaxValue) ? 65536u : linkedSpans[num10].bottom);
+									int val2 = (int)((linkedSpans[num10].bottom != uint.MaxValue) ? linkedSpans[num10].bottom : 65536u);
 									if ((long)(Math.Min(val, val2) - Math.Max(top, num11)) > (long)((ulong)voxelWalkableHeight))
 									{
 										num5 = Math.Min(num5, num11 - top);
@@ -1387,7 +1373,7 @@ namespace Pathfinding.Voxels
 										for (int num12 = num10; num12 != -1; num12 = linkedSpans[num12].next)
 										{
 											num11 = (int)linkedSpans[num12].top;
-											val2 = (int)((linkedSpans[num12].next == -1) ? 65536u : linkedSpans[linkedSpans[num12].next].bottom);
+											val2 = (int)((linkedSpans[num12].next != -1) ? linkedSpans[linkedSpans[num12].next].bottom : 65536u);
 											if ((long)(Math.Min(val, val2) - Math.Max(top, num11)) > (long)((ulong)voxelWalkableHeight))
 											{
 												num5 = Math.Min(num5, num11 - top);
@@ -1457,60 +1443,55 @@ namespace Pathfinding.Voxels
 					int num7 = 0;
 					Buffer.BlockCopy(srcReg, 0, dstReg, 0, srcReg.Length * 2);
 					Buffer.BlockCopy(srcDist, 0, dstDist, 0, dstDist.Length * 2);
-					for (int l = 0; l < count; l += 3)
+					int num8 = 0;
+					while (num8 < count && num8 < count)
 					{
-						if (l >= count)
-						{
-							break;
-						}
-						int num8 = stack[l];
-						int num9 = stack[l + 1];
-						int num10 = stack[l + 2];
-						if (num10 < 0)
+						int num9 = stack[num8];
+						int num10 = stack[num8 + 1];
+						int num11 = stack[num8 + 2];
+						if (num11 < 0)
 						{
 							num7++;
 						}
 						else
 						{
-							ushort num11 = srcReg[num10];
-							ushort num12 = ushort.MaxValue;
-							CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[num10];
-							int num13 = this.voxelArea.areaTypes[num10];
-							for (int m = 0; m < 4; m++)
+							ushort num12 = srcReg[num11];
+							ushort num13 = ushort.MaxValue;
+							CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[num11];
+							int num14 = this.voxelArea.areaTypes[num11];
+							for (int l = 0; l < 4; l++)
 							{
-								if ((long)compactVoxelSpan.GetConnection(m) != 63L)
+								if ((long)compactVoxelSpan.GetConnection(l) != 63L)
 								{
-									int num14 = num8 + this.voxelArea.DirectionX[m];
-									int num15 = num9 + this.voxelArea.DirectionZ[m];
-									int num16 = (int)(this.voxelArea.compactCells[num14 + num15].index + (uint)compactVoxelSpan.GetConnection(m));
-									if (num13 == this.voxelArea.areaTypes[num16])
+									int num15 = num9 + this.voxelArea.DirectionX[l];
+									int num16 = num10 + this.voxelArea.DirectionZ[l];
+									int num17 = (int)(this.voxelArea.compactCells[num15 + num16].index + (uint)compactVoxelSpan.GetConnection(l));
+									if (num14 == this.voxelArea.areaTypes[num17] && srcReg[num17] > 0 && (srcReg[num17] & 32768) == 0 && srcDist[num17] + 2 < num13)
 									{
-										if (srcReg[num16] > 0 && (srcReg[num16] & 32768) == 0 && srcDist[num16] + 2 < num12)
-										{
-											num11 = srcReg[num16];
-											num12 = srcDist[num16] + 2;
-										}
+										num12 = srcReg[num17];
+										num13 = srcDist[num17] + 2;
 									}
 								}
 							}
-							if (num11 != 0)
+							if (num12 != 0)
 							{
-								stack[l + 2] = -1;
-								dstReg[num10] = num11;
-								dstDist[num10] = num12;
+								stack[num8 + 2] = -1;
+								dstReg[num11] = num12;
+								dstDist[num11] = num13;
 							}
 							else
 							{
 								num7++;
 							}
 						}
+						num8 += 3;
 					}
 					ushort[] array = srcReg;
 					srcReg = dstReg;
 					dstReg = array;
-					array = srcDist;
+					ushort[] array2 = srcDist;
 					srcDist = dstDist;
-					dstDist = array;
+					dstDist = array2;
 					if (num7 * 3 >= count)
 					{
 						break;
@@ -1537,7 +1518,7 @@ namespace Pathfinding.Voxels
 			stack.Add(i);
 			srcReg[i] = r;
 			srcDist[i] = 0;
-			int num2 = (int)((level < 2u) ? 0u : (level - 2u));
+			int num2 = (int)((level >= 2u) ? (level - 2u) : 0u);
 			int num3 = 0;
 			while (stack.Count > 0)
 			{
@@ -1601,16 +1582,13 @@ namespace Pathfinding.Voxels
 							int num17 = num6 + this.voxelArea.DirectionX[k];
 							int num18 = num5 + this.voxelArea.DirectionZ[k];
 							int num19 = (int)(this.voxelArea.compactCells[num17 + num18].index + (uint)compactVoxelSpan.GetConnection(k));
-							if (this.voxelArea.areaTypes[num19] == num)
+							if (this.voxelArea.areaTypes[num19] == num && (int)this.voxelArea.dist[num19] >= num2 && srcReg[num19] == 0)
 							{
-								if ((int)this.voxelArea.dist[num19] >= num2 && srcReg[num19] == 0)
-								{
-									srcReg[num19] = r;
-									srcDist[num19] = 0;
-									stack.Add(num17);
-									stack.Add(num18);
-									stack.Add(num19);
-								}
+								srcReg[num19] = r;
+								srcDist[num19] = 0;
+								stack.Add(num17);
+								stack.Add(num18);
+								stack.Add(num19);
 							}
 						}
 					}
@@ -1655,13 +1633,11 @@ namespace Pathfinding.Voxels
 					{
 						CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[k];
 						int num3 = 0;
-						for (int l = 0; l < 4; l++)
+						int num4 = 0;
+						while (num4 < 4 && (long)compactVoxelSpan.GetConnection(num4) != 63L)
 						{
-							if ((long)compactVoxelSpan.GetConnection(l) == 63L)
-							{
-								break;
-							}
 							num3++;
+							num4++;
 						}
 						if (num3 != 4)
 						{
@@ -1671,24 +1647,24 @@ namespace Pathfinding.Voxels
 					}
 				}
 			}
-			for (int m = 0; m < num; m += this.voxelArea.width)
+			for (int l = 0; l < num; l += this.voxelArea.width)
 			{
-				for (int n = 0; n < this.voxelArea.width; n++)
+				for (int m = 0; m < this.voxelArea.width; m++)
 				{
-					CompactVoxelCell compactVoxelCell2 = this.voxelArea.compactCells[n + m];
-					int num4 = (int)compactVoxelCell2.index;
+					CompactVoxelCell compactVoxelCell2 = this.voxelArea.compactCells[m + l];
+					int n = (int)compactVoxelCell2.index;
 					int num5 = (int)(compactVoxelCell2.index + compactVoxelCell2.count);
-					while (num4 < num5)
+					while (n < num5)
 					{
-						CompactVoxelSpan compactVoxelSpan2 = this.voxelArea.compactSpans[num4];
+						CompactVoxelSpan compactVoxelSpan2 = this.voxelArea.compactSpans[n];
 						if ((long)compactVoxelSpan2.GetConnection(0) != 63L)
 						{
-							int num6 = n + this.voxelArea.DirectionX[0];
-							int num7 = m + this.voxelArea.DirectionZ[0];
+							int num6 = m + this.voxelArea.DirectionX[0];
+							int num7 = l + this.voxelArea.DirectionZ[0];
 							int num8 = (int)((ulong)this.voxelArea.compactCells[num6 + num7].index + (ulong)((long)compactVoxelSpan2.GetConnection(0)));
-							if (src[num8] + 2 < src[num4])
+							if (src[num8] + 2 < src[n])
 							{
-								src[num4] = src[num8] + 2;
+								src[n] = src[num8] + 2;
 							}
 							CompactVoxelSpan compactVoxelSpan3 = this.voxelArea.compactSpans[num8];
 							if ((long)compactVoxelSpan3.GetConnection(3) != 63L)
@@ -1696,20 +1672,20 @@ namespace Pathfinding.Voxels
 								int num9 = num6 + this.voxelArea.DirectionX[3];
 								int num10 = num7 + this.voxelArea.DirectionZ[3];
 								int num11 = (int)((ulong)this.voxelArea.compactCells[num9 + num10].index + (ulong)((long)compactVoxelSpan3.GetConnection(3)));
-								if (src[num11] + 3 < src[num4])
+								if (src[num11] + 3 < src[n])
 								{
-									src[num4] = src[num11] + 3;
+									src[n] = src[num11] + 3;
 								}
 							}
 						}
 						if ((long)compactVoxelSpan2.GetConnection(3) != 63L)
 						{
-							int num12 = n + this.voxelArea.DirectionX[3];
-							int num13 = m + this.voxelArea.DirectionZ[3];
+							int num12 = m + this.voxelArea.DirectionX[3];
+							int num13 = l + this.voxelArea.DirectionZ[3];
 							int num14 = (int)((ulong)this.voxelArea.compactCells[num12 + num13].index + (ulong)((long)compactVoxelSpan2.GetConnection(3)));
-							if (src[num14] + 2 < src[num4])
+							if (src[num14] + 2 < src[n])
 							{
-								src[num4] = src[num14] + 2;
+								src[n] = src[num14] + 2;
 							}
 							CompactVoxelSpan compactVoxelSpan4 = this.voxelArea.compactSpans[num14];
 							if ((long)compactVoxelSpan4.GetConnection(2) != 63L)
@@ -1717,13 +1693,13 @@ namespace Pathfinding.Voxels
 								int num15 = num12 + this.voxelArea.DirectionX[2];
 								int num16 = num13 + this.voxelArea.DirectionZ[2];
 								int num17 = (int)((ulong)this.voxelArea.compactCells[num15 + num16].index + (ulong)((long)compactVoxelSpan4.GetConnection(2)));
-								if (src[num17] + 3 < src[num4])
+								if (src[num17] + 3 < src[n])
 								{
-									src[num4] = src[num17] + 3;
+									src[n] = src[num17] + 3;
 								}
 							}
 						}
-						num4++;
+						n++;
 					}
 				}
 			}
@@ -1794,53 +1770,52 @@ namespace Pathfinding.Voxels
 		public ushort[] BoxBlur(ushort[] src, ushort[] dst)
 		{
 			ushort num = 20;
-			int num2 = this.voxelArea.width * this.voxelArea.depth;
-			for (int i = num2 - this.voxelArea.width; i >= 0; i -= this.voxelArea.width)
+			for (int i = this.voxelArea.width * this.voxelArea.depth - this.voxelArea.width; i >= 0; i -= this.voxelArea.width)
 			{
 				for (int j = this.voxelArea.width - 1; j >= 0; j--)
 				{
 					CompactVoxelCell compactVoxelCell = this.voxelArea.compactCells[j + i];
 					int k = (int)compactVoxelCell.index;
-					int num3 = (int)(compactVoxelCell.index + compactVoxelCell.count);
-					while (k < num3)
+					int num2 = (int)(compactVoxelCell.index + compactVoxelCell.count);
+					while (k < num2)
 					{
 						CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[k];
-						ushort num4 = src[k];
-						if (num4 < num)
+						ushort num3 = src[k];
+						if (num3 < num)
 						{
-							dst[k] = num4;
+							dst[k] = num3;
 						}
 						else
 						{
-							int num5 = (int)num4;
+							int num4 = (int)num3;
 							for (int l = 0; l < 4; l++)
 							{
 								if ((long)compactVoxelSpan.GetConnection(l) != 63L)
 								{
-									int num6 = j + this.voxelArea.DirectionX[l];
-									int num7 = i + this.voxelArea.DirectionZ[l];
-									int num8 = (int)((ulong)this.voxelArea.compactCells[num6 + num7].index + (ulong)((long)compactVoxelSpan.GetConnection(l)));
-									num5 += (int)src[num8];
-									CompactVoxelSpan compactVoxelSpan2 = this.voxelArea.compactSpans[num8];
-									int num9 = l + 1 & 3;
-									if ((long)compactVoxelSpan2.GetConnection(num9) != 63L)
+									int num5 = j + this.voxelArea.DirectionX[l];
+									int num6 = i + this.voxelArea.DirectionZ[l];
+									int num7 = (int)((ulong)this.voxelArea.compactCells[num5 + num6].index + (ulong)((long)compactVoxelSpan.GetConnection(l)));
+									num4 += (int)src[num7];
+									CompactVoxelSpan compactVoxelSpan2 = this.voxelArea.compactSpans[num7];
+									int num8 = l + 1 & 3;
+									if ((long)compactVoxelSpan2.GetConnection(num8) != 63L)
 									{
-										int num10 = num6 + this.voxelArea.DirectionX[num9];
-										int num11 = num7 + this.voxelArea.DirectionZ[num9];
-										int num12 = (int)((ulong)this.voxelArea.compactCells[num10 + num11].index + (ulong)((long)compactVoxelSpan2.GetConnection(num9)));
-										num5 += (int)src[num12];
+										int num9 = num5 + this.voxelArea.DirectionX[num8];
+										int num10 = num6 + this.voxelArea.DirectionZ[num8];
+										int num11 = (int)((ulong)this.voxelArea.compactCells[num9 + num10].index + (ulong)((long)compactVoxelSpan2.GetConnection(num8)));
+										num4 += (int)src[num11];
 									}
 									else
 									{
-										num5 += (int)num4;
+										num4 += (int)num3;
 									}
 								}
 								else
 								{
-									num5 += (int)(num4 * 2);
+									num4 += (int)(num3 * 2);
 								}
 							}
-							dst[k] = (ushort)((float)(num5 + 5) / 9f);
+							dst[k] = (ushort)((float)(num4 + 5) / 9f);
 						}
 						k++;
 					}
@@ -1866,13 +1841,10 @@ namespace Pathfinding.Voxels
 						int num2 = x + this.voxelArea.DirectionX[j];
 						int num3 = z + this.voxelArea.DirectionZ[j];
 						int num4 = (int)(this.voxelArea.compactCells[num2 + num3].index + (uint)compactVoxelSpan.GetConnection(j));
-						if (num == this.voxelArea.areaTypes[num4])
+						if (num == this.voxelArea.areaTypes[num4] && regs[num4] == 1)
 						{
-							if (regs[num4] == 1)
-							{
-								regs[num4] = reg;
-								st1.Add(new Int3(num2, num4, num3));
-							}
+							regs[num4] = reg;
+							st1.Add(new Int3(num2, num4, num3));
 						}
 					}
 				}
@@ -1904,15 +1876,15 @@ namespace Pathfinding.Voxels
 			int num7 = 0;
 			while (num6 > 0u)
 			{
-				num6 = ((num6 < 2u) ? 0u : (num6 - 2u));
+				num6 = ((num6 >= 2u) ? (num6 - 2u) : 0u);
 				if (this.ExpandRegions(num4, num6, array, array2, array3, array4, list) != array)
 				{
 					ushort[] array5 = array;
 					array = array3;
 					array3 = array5;
-					array5 = array2;
+					ushort[] array6 = array2;
 					array2 = array4;
-					array4 = array5;
+					array4 = array6;
 				}
 				int i = 0;
 				int num8 = 0;
@@ -1925,12 +1897,9 @@ namespace Pathfinding.Voxels
 						int num9 = (int)(compactVoxelCell.index + compactVoxelCell.count);
 						while (k < num9)
 						{
-							if ((uint)this.voxelArea.dist[k] >= num6 && array[k] == 0 && this.voxelArea.areaTypes[k] != 0)
+							if ((uint)this.voxelArea.dist[k] >= num6 && array[k] == 0 && this.voxelArea.areaTypes[k] != 0 && this.FloodRegion(j, i, k, num6, num5, array, array2, list))
 							{
-								if (this.FloodRegion(j, i, k, num6, num5, array, array2, list))
-								{
-									num5 += 1;
-								}
+								num5 += 1;
 							}
 							k++;
 						}
@@ -1983,7 +1952,7 @@ namespace Pathfinding.Voxels
 		public void FilterSmallRegions(ushort[] reg, int minRegionSize, int maxRegions)
 		{
 			RelevantGraphSurface relevantGraphSurface = RelevantGraphSurface.Root;
-			bool flag = !object.ReferenceEquals(relevantGraphSurface, null) && this.relevantGraphSurfaceMode != RecastGraph.RelevantGraphSurfaceMode.DoNotRequire;
+			bool flag = relevantGraphSurface != null && this.relevantGraphSurfaceMode > RecastGraph.RelevantGraphSurfaceMode.DoNotRequire;
 			if (!flag && minRegionSize <= 0)
 			{
 				return;
@@ -1998,10 +1967,10 @@ namespace Pathfinding.Voxels
 			Memory.MemSet<ushort>(array2, 0, maxRegions, 2);
 			int num = array.Length;
 			int num2 = this.voxelArea.width * this.voxelArea.depth;
-			int num3 = 2 | ((this.relevantGraphSurfaceMode != RecastGraph.RelevantGraphSurfaceMode.OnlyForCompletelyInsideTile) ? 0 : 1);
+			int num3 = 2 | ((this.relevantGraphSurfaceMode == RecastGraph.RelevantGraphSurfaceMode.OnlyForCompletelyInsideTile) ? 1 : 0);
 			if (flag)
 			{
-				while (!object.ReferenceEquals(relevantGraphSurface, null))
+				while (relevantGraphSurface != null)
 				{
 					int num4;
 					int num5;
@@ -2018,8 +1987,7 @@ namespace Pathfinding.Voxels
 						int num8 = (int)compactVoxelCell.index;
 						while ((long)num8 < (long)((ulong)(compactVoxelCell.index + compactVoxelCell.count)))
 						{
-							CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[num8];
-							if (Math.Abs((int)compactVoxelSpan.y - num6) <= num7 && reg[num8] != 0)
+							if (Math.Abs((int)this.voxelArea.compactSpans[num8].y - num6) <= num7 && reg[num8] != 0)
 							{
 								ushort[] array3 = array2;
 								int num9 = Voxelize.union_find_find(array, (int)reg[num8] & -32769);
@@ -2041,7 +2009,7 @@ namespace Pathfinding.Voxels
 					int num11 = (int)compactVoxelCell2.index;
 					while ((long)num11 < (long)((ulong)(compactVoxelCell2.index + compactVoxelCell2.count)))
 					{
-						CompactVoxelSpan compactVoxelSpan2 = this.voxelArea.compactSpans[num11];
+						CompactVoxelSpan compactVoxelSpan = this.voxelArea.compactSpans[num11];
 						int num12 = (int)reg[num11];
 						if ((num12 & -32769) != 0)
 						{
@@ -2057,11 +2025,11 @@ namespace Pathfinding.Voxels
 								array[num14]--;
 								for (int k = 0; k < 4; k++)
 								{
-									if ((long)compactVoxelSpan2.GetConnection(k) != 63L)
+									if ((long)compactVoxelSpan.GetConnection(k) != 63L)
 									{
 										int num15 = j + this.voxelArea.DirectionX[k];
 										int num16 = i + this.voxelArea.DirectionZ[k];
-										int num17 = (int)(this.voxelArea.compactCells[num15 + num16].index + (uint)compactVoxelSpan2.GetConnection(k));
+										int num17 = (int)(this.voxelArea.compactCells[num15 + num16].index + (uint)compactVoxelSpan.GetConnection(k));
 										int num18 = (int)reg[num17];
 										if (num12 != num18 && (num18 & -32769) != 0)
 										{
@@ -2107,12 +2075,9 @@ namespace Pathfinding.Voxels
 			for (int n = 0; n < this.voxelArea.compactSpanCount; n++)
 			{
 				int num22 = (int)reg[n];
-				if (num22 < num)
+				if (num22 < num && array[Voxelize.union_find_find(array, num22)] >= -minRegionSize - 1)
 				{
-					if (array[Voxelize.union_find_find(array, num22)] >= -minRegionSize - 1)
-					{
-						reg[n] = 0;
-					}
+					reg[n] = 0;
 				}
 			}
 		}

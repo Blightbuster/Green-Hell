@@ -7,24 +7,6 @@ namespace Pathfinding.RVO.Sampled
 {
 	public class Agent : IAgent
 	{
-		public Agent(Vector2 pos, float elevationCoordinate)
-		{
-			this.AgentTimeHorizon = 2f;
-			this.ObstacleTimeHorizon = 2f;
-			this.Height = 5f;
-			this.Radius = 5f;
-			this.MaxNeighbours = 10;
-			this.Locked = false;
-			this.Position = pos;
-			this.ElevationCoordinate = elevationCoordinate;
-			this.Layer = RVOLayer.DefaultAgent;
-			this.CollidesWith = (RVOLayer)(-1);
-			this.Priority = 0.5f;
-			this.CalculatedTargetPoint = pos;
-			this.CalculatedSpeed = 0f;
-			this.SetTarget(pos, 0f, 0f);
-		}
-
 		public Vector2 Position { get; set; }
 
 		public float ElevationCoordinate { get; set; }
@@ -94,6 +76,24 @@ namespace Pathfinding.RVO.Sampled
 			{
 				return null;
 			}
+		}
+
+		public Agent(Vector2 pos, float elevationCoordinate)
+		{
+			this.AgentTimeHorizon = 2f;
+			this.ObstacleTimeHorizon = 2f;
+			this.Height = 5f;
+			this.Radius = 5f;
+			this.MaxNeighbours = 10;
+			this.Locked = false;
+			this.Position = pos;
+			this.ElevationCoordinate = elevationCoordinate;
+			this.Layer = RVOLayer.DefaultAgent;
+			this.CollidesWith = (RVOLayer)(-1);
+			this.Priority = 0.5f;
+			this.CalculatedTargetPoint = pos;
+			this.CalculatedSpeed = 0f;
+			this.SetTarget(pos, 0f, 0f);
 		}
 
 		public void BufferSwitch()
@@ -221,7 +221,7 @@ namespace Pathfinding.RVO.Sampled
 		{
 			float num = Mathf.Atan2((origin - circleCenter).y, (origin - circleCenter).x);
 			float num2 = radius / (origin - circleCenter).magnitude;
-			float num3 = (num2 > 1f) ? 0f : Mathf.Abs(Mathf.Acos(num2));
+			float num3 = (num2 <= 1f) ? Mathf.Abs(Mathf.Acos(num2)) : 0f;
 			Draw.Debug.CircleXZ(Agent.FromXZ(circleCenter), radius, Color.black, num - num3, num + num3, 40);
 			Vector2 vector = new Vector2(Mathf.Cos(num - num3), Mathf.Sin(num - num3)) * radius;
 			Vector2 vector2 = new Vector2(Mathf.Cos(num + num3), Mathf.Sin(num + num3)) * radius;
@@ -271,18 +271,18 @@ namespace Pathfinding.RVO.Sampled
 
 		private static Color Rainbow(float v)
 		{
-			Color result = new Color(v, 0f, 0f);
-			if (result.r > 1f)
+			Color color = new Color(v, 0f, 0f);
+			if (color.r > 1f)
 			{
-				result.g = result.r - 1f;
-				result.r = 1f;
+				color.g = color.r - 1f;
+				color.r = 1f;
 			}
-			if (result.g > 1f)
+			if (color.g > 1f)
 			{
-				result.b = result.g - 1f;
-				result.g = 1f;
+				color.b = color.g - 1f;
+				color.g = 1f;
 			}
-			return result;
+			return color;
 		}
 
 		private void GenerateObstacleVOs(Agent.VOBuffer vos)
@@ -310,8 +310,7 @@ namespace Pathfinding.RVO.Sampled
 						{
 							float t = Vector2.Dot(this.position - vector, vector2 - vector) / (vector2 - vector).sqrMagnitude;
 							float num3 = Mathf.Lerp(a, b, t);
-							float sqrMagnitude = (Vector2.Lerp(vector, vector2, t) - this.position).sqrMagnitude;
-							if (sqrMagnitude < num * num && this.elevationCoordinate <= num3 + obstacleVertex2.height && this.elevationCoordinate + this.height >= num3)
+							if ((Vector2.Lerp(vector, vector2, t) - this.position).sqrMagnitude < num * num && this.elevationCoordinate <= num3 + obstacleVertex2.height && this.elevationCoordinate + this.height >= num3)
 							{
 								vos.Add(Agent.VO.SegmentObstacle(vector2 - this.position, vector - this.position, Vector2.zero, this.radius * 0.01f, 1f / this.ObstacleTimeHorizon, 1f / this.simulator.DeltaTime));
 							}
@@ -377,7 +376,11 @@ namespace Pathfinding.RVO.Sampled
 			{
 				Draw.Debug.CrossXZ(Agent.FromXZ(vector2 + this.position), Color.magenta, 0.5f);
 			}
-			return (num >= num2) ? vector2 : vector;
+			if (num >= num2)
+			{
+				return vector2;
+			}
+			return vector;
 		}
 
 		private static bool BiasDesiredVelocity(Agent.VOBuffer vos, ref Vector2 desiredVelocity, ref Vector2 targetPointInVelocitySpace, float maxBiasRadians)
@@ -541,8 +544,7 @@ namespace Pathfinding.RVO.Sampled
 				{
 					this.colliding = true;
 					this.line1 = center.normalized * (center.magnitude - radius - 0.001f) * 0.3f * inverseDeltaTime;
-					Vector2 vector = new Vector2(this.line1.y, -this.line1.x);
-					this.dir1 = vector.normalized;
+					this.dir1 = new Vector2(this.line1.y, -this.line1.x).normalized;
 					this.line1 += offset;
 					this.cutoffDir = Vector2.zero;
 					this.cutoffLine = Vector2.zero;
@@ -558,8 +560,7 @@ namespace Pathfinding.RVO.Sampled
 					Vector2 b = center + offset;
 					float d = center.magnitude - radius + 0.001f;
 					this.cutoffLine = center.normalized * d;
-					Vector2 vector2 = new Vector2(-this.cutoffLine.y, this.cutoffLine.x);
-					this.cutoffDir = vector2.normalized;
+					this.cutoffDir = new Vector2(-this.cutoffLine.y, this.cutoffLine.x).normalized;
 					this.cutoffLine += offset;
 					float num = Mathf.Atan2(-center.y, -center.x);
 					float num2 = Mathf.Abs(Mathf.Acos(radius / center.magnitude));
@@ -583,50 +584,49 @@ namespace Pathfinding.RVO.Sampled
 
 			public static Agent.VO SegmentObstacle(Vector2 segmentStart, Vector2 segmentEnd, Vector2 offset, float radius, float inverseDt, float inverseDeltaTime)
 			{
-				Agent.VO result = default(Agent.VO);
-				result.weightFactor = 1f;
-				result.weightBonus = Mathf.Max(radius, 1f) * 40f;
+				Agent.VO vo = default(Agent.VO);
+				vo.weightFactor = 1f;
+				vo.weightBonus = Mathf.Max(radius, 1f) * 40f;
 				Vector3 vector = VectorMath.ClosestPointOnSegment(segmentStart, segmentEnd, Vector2.zero);
 				if (vector.magnitude <= radius)
 				{
-					result.colliding = true;
-					result.line1 = vector.normalized * (vector.magnitude - radius) * 0.3f * inverseDeltaTime;
-					Vector2 vector2 = new Vector2(result.line1.y, -result.line1.x);
-					result.dir1 = vector2.normalized;
-					result.line1 += offset;
-					result.cutoffDir = Vector2.zero;
-					result.cutoffLine = Vector2.zero;
-					result.dir2 = Vector2.zero;
-					result.line2 = Vector2.zero;
-					result.radius = 0f;
-					result.segmentStart = Vector2.zero;
-					result.segmentEnd = Vector2.zero;
-					result.segment = false;
+					vo.colliding = true;
+					vo.line1 = vector.normalized * (vector.magnitude - radius) * 0.3f * inverseDeltaTime;
+					vo.dir1 = new Vector2(vo.line1.y, -vo.line1.x).normalized;
+					vo.line1 += offset;
+					vo.cutoffDir = Vector2.zero;
+					vo.cutoffLine = Vector2.zero;
+					vo.dir2 = Vector2.zero;
+					vo.line2 = Vector2.zero;
+					vo.radius = 0f;
+					vo.segmentStart = Vector2.zero;
+					vo.segmentEnd = Vector2.zero;
+					vo.segment = false;
 				}
 				else
 				{
-					result.colliding = false;
+					vo.colliding = false;
 					segmentStart *= inverseDt;
 					segmentEnd *= inverseDt;
 					radius *= inverseDt;
 					Vector2 normalized = (segmentEnd - segmentStart).normalized;
-					result.cutoffDir = normalized;
-					result.cutoffLine = segmentStart + new Vector2(-normalized.y, normalized.x) * radius;
-					result.cutoffLine += offset;
+					vo.cutoffDir = normalized;
+					vo.cutoffLine = segmentStart + new Vector2(-normalized.y, normalized.x) * radius;
+					vo.cutoffLine += offset;
 					float sqrMagnitude = segmentStart.sqrMagnitude;
-					Vector2 a = -Agent.VO.ComplexMultiply(segmentStart, new Vector2(radius, Mathf.Sqrt(Mathf.Max(0f, sqrMagnitude - radius * radius)))) / sqrMagnitude;
+					Vector2 vector2 = -Agent.VO.ComplexMultiply(segmentStart, new Vector2(radius, Mathf.Sqrt(Mathf.Max(0f, sqrMagnitude - radius * radius)))) / sqrMagnitude;
 					float sqrMagnitude2 = segmentEnd.sqrMagnitude;
-					Vector2 a2 = -Agent.VO.ComplexMultiply(segmentEnd, new Vector2(radius, -Mathf.Sqrt(Mathf.Max(0f, sqrMagnitude2 - radius * radius)))) / sqrMagnitude2;
-					result.line1 = segmentStart + a * radius + offset;
-					result.line2 = segmentEnd + a2 * radius + offset;
-					result.dir1 = new Vector2(a.y, -a.x);
-					result.dir2 = new Vector2(a2.y, -a2.x);
-					result.segmentStart = segmentStart;
-					result.segmentEnd = segmentEnd;
-					result.radius = radius;
-					result.segment = true;
+					Vector2 vector3 = -Agent.VO.ComplexMultiply(segmentEnd, new Vector2(radius, -Mathf.Sqrt(Mathf.Max(0f, sqrMagnitude2 - radius * radius)))) / sqrMagnitude2;
+					vo.line1 = segmentStart + vector2 * radius + offset;
+					vo.line2 = segmentEnd + vector3 * radius + offset;
+					vo.dir1 = new Vector2(vector2.y, -vector2.x);
+					vo.dir2 = new Vector2(vector3.y, -vector3.x);
+					vo.segmentStart = segmentStart;
+					vo.segmentEnd = segmentEnd;
+					vo.radius = radius;
+					vo.segment = true;
 				}
-				return result;
+				return vo;
 			}
 
 			public static float SignedDistanceFromLine(Vector2 a, Vector2 dir, Vector2 p)
@@ -679,18 +679,16 @@ namespace Pathfinding.RVO.Sampled
 					{
 						if (!this.segment)
 						{
-							Vector2 v = p - this.circleCenter;
 							float num5;
-							result = VectorMath.Normalize(v, out num5);
+							result = VectorMath.Normalize(p - this.circleCenter, out num5);
 							weight = this.radius - num5;
 							return result;
 						}
 						if (num2 < this.radius)
 						{
 							Vector2 b = VectorMath.ClosestPointOnSegment(this.segmentStart, this.segmentEnd, p);
-							Vector2 v2 = p - b;
 							float num6;
-							result = VectorMath.Normalize(v2, out num6);
+							result = VectorMath.Normalize(p - b, out num6);
 							weight = this.radius - num6;
 							return result;
 						}
@@ -746,14 +744,14 @@ namespace Pathfinding.RVO.Sampled
 
 		internal class VOBuffer
 		{
-			public VOBuffer(int n)
+			public void Clear()
 			{
-				this.buffer = new Agent.VO[n];
 				this.length = 0;
 			}
 
-			public void Clear()
+			public VOBuffer(int n)
 			{
+				this.buffer = new Agent.VO[n];
 				this.length = 0;
 			}
 
@@ -765,7 +763,10 @@ namespace Pathfinding.RVO.Sampled
 					this.buffer.CopyTo(array, 0);
 					this.buffer = array;
 				}
-				this.buffer[this.length++] = vo;
+				Agent.VO[] array2 = this.buffer;
+				int num = this.length;
+				this.length = num + 1;
+				array2[num] = vo;
 			}
 
 			public Agent.VO[] buffer;

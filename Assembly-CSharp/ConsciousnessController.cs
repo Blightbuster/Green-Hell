@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using AIs;
 using CJTools;
 using Enums;
 using UnityEngine;
@@ -16,7 +17,7 @@ public class ConsciousnessController : PlayerController
 	{
 		ConsciousnessController.s_Instance = this;
 		base.Awake();
-		this.m_ControllerType = PlayerControllerType.Consciousness;
+		base.m_ControllerType = PlayerControllerType.Consciousness;
 		this.m_ConditionModule = this.m_Player.GetComponent<PlayerConditionModule>();
 		this.LoadScript();
 		this.m_TODTime = MainLevel.Instance.m_TODTime;
@@ -67,6 +68,10 @@ public class ConsciousnessController : PlayerController
 			this.m_Player.UnblockMoves();
 			this.m_Player.UnblockRotation();
 		}
+		this.m_PassingOutProgress = 0f;
+		this.m_Animator.SetInteger(this.m_PassOutHash, 0);
+		this.m_State = ConsciousnessController.ConsciousnessState.None;
+		this.m_StartPassOutTime = 0f;
 	}
 
 	public override void ControllerUpdate()
@@ -81,10 +86,11 @@ public class ConsciousnessController : PlayerController
 		ConsciousnessController.ConsciousnessState state = this.m_State;
 		if (state != ConsciousnessController.ConsciousnessState.PassingOut)
 		{
-			if (state == ConsciousnessController.ConsciousnessState.PassedOut)
+			if (state != ConsciousnessController.ConsciousnessState.PassedOut)
 			{
-				this.UpdatePassedOut();
+				return;
 			}
+			this.UpdatePassedOut();
 		}
 		else
 		{
@@ -93,6 +99,7 @@ public class ConsciousnessController : PlayerController
 			if (this.m_PassingOutProgress == 1f)
 			{
 				this.PassOut();
+				return;
 			}
 		}
 	}
@@ -103,7 +110,7 @@ public class ConsciousnessController : PlayerController
 		this.m_Progress = num / this.m_PassOutDurationRealTime;
 		this.m_Progress = Mathf.Clamp01(this.m_Progress);
 		float num2 = this.m_Progress - this.m_PrevProgress;
-		this.m_TODTime.AddHours(this.m_PassOutDuration * num2, true);
+		this.m_TODTime.AddHours(this.m_PassOutDuration * num2, true, false);
 		this.m_HoursDelta = this.m_PassOutDuration * num2;
 		int num3 = (int)(this.m_PassOutDuration * this.m_Progress);
 		if (num3 > this.m_HourProgress)
@@ -116,7 +123,7 @@ public class ConsciousnessController : PlayerController
 		{
 			PropertyInfo property = this.m_ConditionModule.GetType().GetProperty(text);
 			float num5 = (float)property.GetValue(this.m_ConditionModule, null);
-			float num6 = (this.m_FParams[text] <= 0f) ? this.m_FParams[text] : this.m_FParams[text];
+			float num6 = (this.m_FParams[text] > 0f) ? this.m_FParams[text] : this.m_FParams[text];
 			if (PlayerInjuryModule.Get().GetNumWounds() <= 0 || !(text == "m_HP"))
 			{
 				num5 += num6 * num4;
@@ -129,14 +136,15 @@ public class ConsciousnessController : PlayerController
 			this.WakeUp();
 		}
 		this.m_PrevProgress = this.m_Progress;
+		if (HUDPassOut.Get().m_BG.color.a >= 1f)
+		{
+			AIManager.Get().DestroyAllEnemies();
+		}
 	}
 
 	private void DebugUpdatePassingOutCamera()
 	{
-		if (!this.IsState(ConsciousnessController.ConsciousnessState.PassingOut))
-		{
-			return;
-		}
+		this.IsState(ConsciousnessController.ConsciousnessState.PassingOut);
 	}
 
 	private void StartPassingOut()
@@ -146,8 +154,11 @@ public class ConsciousnessController : PlayerController
 		this.m_PrevProgress = 0f;
 		this.m_HoursDelta = 0f;
 		this.m_HourProgress = 0;
+		this.m_Player.ResetBlockMoves();
+		this.m_Player.ResetBlockRotation();
 		this.m_Player.BlockMoves();
 		this.m_Player.BlockRotation();
+		HUDItem.Get().Deactivate();
 		this.m_MovesBlocked = true;
 		this.SetState(ConsciousnessController.ConsciousnessState.PassingOut);
 		this.m_Animator.SetInteger(this.m_PassOutHash, 1);
@@ -155,28 +166,35 @@ public class ConsciousnessController : PlayerController
 		{
 			Inventory3DManager.Get().Deactivate();
 		}
+		DialogsManager.Get().StopDialog();
+		Item currentItem = this.m_Player.GetCurrentItem(Hand.Right);
+		if (currentItem && currentItem.m_Info.IsStone())
+		{
+			this.m_Player.DropItem(currentItem);
+		}
 	}
 
 	private void PassOut()
 	{
 		this.SetState(ConsciousnessController.ConsciousnessState.PassedOut);
 		this.m_StartPassOutTime = Time.time;
+		PlayerConditionModule.Get().GetDirtinessAdd(GetDirtyReason.LossConsciousness, null);
+		TriggerController.Get().m_TriggerInAction = false;
 	}
 
 	public void WakeUp()
 	{
 		this.m_StartPassOutTime = 0f;
-		FadeSystem.Get().FadeOut(FadeType.All, new VDelegate(this.WakeUpOnFade), 1.5f, null);
+		if (!FadeSystem.Get().m_FadingOut && !FadeSystem.Get().m_FadeOut)
+		{
+			FadeSystem.Get().FadeOut(FadeType.All, new VDelegate(this.WakeUpOnFade), 1.5f, null);
+		}
 	}
 
 	public void WakeUpOnFade()
 	{
-		this.m_Player.UnblockMoves();
-		this.m_Player.UnblockRotation();
-		this.m_MovesBlocked = false;
 		this.m_PassingOutProgress = 0f;
-		this.SetState(ConsciousnessController.ConsciousnessState.None);
-		this.Stop();
+		this.SetState(ConsciousnessController.ConsciousnessState.WakingUp);
 		this.m_Animator.SetInteger(this.m_PassOutHash, 2);
 		FadeSystem.Get().FadeIn(FadeType.All, null, 1.5f);
 	}
@@ -214,9 +232,20 @@ public class ConsciousnessController : PlayerController
 	public override void OnAnimEvent(AnimEventID id)
 	{
 		base.OnAnimEvent(id);
+		if (id == AnimEventID.PassingOutFall)
+		{
+			PlayerAudioModule.Get().PlayBodyFallSound();
+			return;
+		}
 		if (id == AnimEventID.RecoverEnd)
 		{
+			this.m_Player.UnblockMoves();
+			this.m_Player.UnblockRotation();
+			this.m_MovesBlocked = false;
+			this.m_PassingOutProgress = 0f;
+			this.SetState(ConsciousnessController.ConsciousnessState.None);
 			this.m_Animator.SetInteger(this.m_PassOutHash, 0);
+			this.Stop();
 		}
 	}
 
@@ -236,7 +265,7 @@ public class ConsciousnessController : PlayerController
 			BIWoundSlot freeWoundSlot = BodyInspectionController.Get().GetFreeWoundSlot((InjuryPlace)i, InjuryType.Worm, true);
 			if (freeWoundSlot != null)
 			{
-				PlayerInjuryModule.Get().AddInjury(InjuryType.Worm, (InjuryPlace)i, freeWoundSlot, InjuryState.Open, 0, null);
+				PlayerInjuryModule.Get().AddInjury(InjuryType.Worm, (InjuryPlace)i, freeWoundSlot, InjuryState.Open, 0, null, null);
 				return;
 			}
 		}
@@ -245,8 +274,7 @@ public class ConsciousnessController : PlayerController
 	private float CalcChanceToGetWorm()
 	{
 		float num = this.m_WormChance;
-		bool activeSelf = RainManager.Get().m_RainCone.activeSelf;
-		if (activeSelf)
+		if (RainManager.Get().m_RainCone.activeSelf)
 		{
 			num *= this.m_RainWormChanceFactor;
 		}
@@ -305,6 +333,7 @@ public class ConsciousnessController : PlayerController
 	{
 		None,
 		PassingOut,
-		PassedOut
+		PassedOut,
+		WakingUp
 	}
 }

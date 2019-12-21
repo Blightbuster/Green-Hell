@@ -6,16 +6,17 @@ namespace AIs
 {
 	public class SnakeSoundModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			AudioSource[] components = base.GetComponents<AudioSource>();
-			if (components.Length > 0)
+			if (components.Length != 0)
 			{
 				this.m_LifeAS = components[0];
 				this.m_LifeAS.clip = this.m_Life;
 				this.m_LifeAS.loop = true;
 				this.m_LifeAS.spatialize = true;
+				this.m_LifeAS.priority = 50;
 				this.m_LifeAS.Play();
 			}
 			if (components.Length > 1)
@@ -24,6 +25,7 @@ namespace AIs
 				this.m_AttackAS.clip = this.m_Attack;
 				this.m_AttackAS.volume = 0.2f;
 				this.m_AttackAS.loop = false;
+				this.m_AttackAS.priority = 50;
 				this.m_AttackAS.spatialize = true;
 			}
 		}

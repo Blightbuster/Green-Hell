@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class ConstraintRotationOffset : Constraint
 	{
-		public ConstraintRotationOffset()
-		{
-		}
-
-		public ConstraintRotationOffset(Transform transform)
-		{
-			this.transform = transform;
-		}
-
 		public override void UpdateConstraint()
 		{
 			if (this.weight <= 0f)
@@ -38,6 +29,15 @@ namespace RootMotion.FinalIK
 			this.transform.localRotation = this.defaultLocalRotation;
 			this.transform.rotation = Quaternion.Slerp(this.transform.rotation, this.offset, this.weight);
 			this.lastLocalRotation = this.transform.localRotation;
+		}
+
+		public ConstraintRotationOffset()
+		{
+		}
+
+		public ConstraintRotationOffset(Transform transform)
+		{
+			this.transform = transform;
 		}
 
 		private bool rotationChanged

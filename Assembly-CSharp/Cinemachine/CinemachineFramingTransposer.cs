@@ -5,11 +5,11 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[SaveDuringPlay]
-	[AddComponentMenu("")]
 	[DocumentationSorting(5.5f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineFramingTransposer : CinemachineComponentBase
 	{
 		public Rect SoftGuideRect
@@ -43,12 +43,11 @@ namespace Cinemachine
 				this.m_SoftZoneHeight = Mathf.Clamp(value.height, 0f, 2f);
 				this.m_DeadZoneWidth = Mathf.Min(this.m_DeadZoneWidth, this.m_SoftZoneWidth);
 				this.m_DeadZoneHeight = Mathf.Min(this.m_DeadZoneHeight, this.m_SoftZoneHeight);
-				Vector2 center = value.center;
-				Vector2 vector = center - new Vector2(this.m_ScreenX, this.m_ScreenY);
+				Vector2 vector = value.center - new Vector2(this.m_ScreenX, this.m_ScreenY);
 				float num = Mathf.Max(0f, this.m_SoftZoneWidth - this.m_DeadZoneWidth);
 				float num2 = Mathf.Max(0f, this.m_SoftZoneHeight - this.m_DeadZoneHeight);
-				this.m_BiasX = ((num >= 0.0001f) ? Mathf.Clamp(vector.x / num, -0.5f, 0.5f) : 0f);
-				this.m_BiasY = ((num2 >= 0.0001f) ? Mathf.Clamp(vector.y / num2, -0.5f, 0.5f) : 0f);
+				this.m_BiasX = ((num < 0.0001f) ? 0f : Mathf.Clamp(vector.x / num, -0.5f, 0.5f));
+				this.m_BiasY = ((num2 < 0.0001f) ? 0f : Mathf.Clamp(vector.y / num2, -0.5f, 0.5f));
 			}
 		}
 
@@ -100,49 +99,49 @@ namespace Cinemachine
 			curState.ReferenceLookAt = base.FollowTarget.position;
 			this.m_Predictor.Smoothing = this.m_LookaheadSmoothing;
 			this.m_Predictor.AddPosition(curState.ReferenceLookAt);
-			this.TrackedPoint = ((this.m_LookaheadTime <= 0f) ? curState.ReferenceLookAt : this.m_Predictor.PredictPosition(this.m_LookaheadTime));
+			this.TrackedPoint = ((this.m_LookaheadTime > 0f) ? this.m_Predictor.PredictPosition(this.m_LookaheadTime) : curState.ReferenceLookAt);
 			Quaternion rawOrientation = curState.RawOrientation;
 			Quaternion rotation = Quaternion.Inverse(rawOrientation);
 			Vector3 vector = rotation * previousCameraPosition;
-			Vector3 targetPos2D = rotation * this.TrackedPoint - vector;
-			Vector3 vector2 = Vector3.zero;
+			Vector3 vector2 = rotation * this.TrackedPoint - vector;
+			Vector3 vector3 = Vector3.zero;
 			float num = Mathf.Max(0.01f, this.m_CameraDistance - this.m_DeadZoneDepth / 2f);
 			float num2 = Mathf.Max(num, this.m_CameraDistance + this.m_DeadZoneDepth / 2f);
-			if (targetPos2D.z < num)
+			if (vector2.z < num)
 			{
-				vector2.z = targetPos2D.z - num;
+				vector3.z = vector2.z - num;
 			}
-			if (targetPos2D.z > num2)
+			if (vector2.z > num2)
 			{
-				vector2.z = targetPos2D.z - num2;
+				vector3.z = vector2.z - num2;
 			}
 			CinemachineTargetGroup targetGroup = this.TargetGroup;
 			if (targetGroup != null && this.m_GroupFramingMode != CinemachineFramingTransposer.FramingMode.None)
 			{
-				vector2.z += this.AdjustCameraDepthAndLensForGroupFraming(targetGroup, targetPos2D.z - vector2.z, ref curState, deltaTime);
+				vector3.z += this.AdjustCameraDepthAndLensForGroupFraming(targetGroup, vector2.z - vector3.z, ref curState, deltaTime);
 			}
-			targetPos2D.z -= vector2.z;
-			float orthoSize = (!curState.Lens.Orthographic) ? (Mathf.Tan(0.5f * curState.Lens.FieldOfView * 0.0174532924f) * targetPos2D.z) : curState.Lens.OrthographicSize;
+			vector2.z -= vector3.z;
+			float orthoSize = curState.Lens.Orthographic ? curState.Lens.OrthographicSize : (Mathf.Tan(0.5f * curState.Lens.FieldOfView * 0.0174532924f) * vector2.z);
 			Rect screenRect = this.ScreenToOrtho(this.SoftGuideRect, orthoSize, curState.Lens.Aspect);
 			if (deltaTime < 0f)
 			{
 				Rect screenRect2 = new Rect(screenRect.center, Vector2.zero);
-				vector2 += this.OrthoOffsetToScreenBounds(targetPos2D, screenRect2);
+				vector3 += this.OrthoOffsetToScreenBounds(vector2, screenRect2);
 			}
 			else
 			{
-				vector2 += this.OrthoOffsetToScreenBounds(targetPos2D, screenRect);
-				Vector3 vector3 = Vector3.zero;
+				vector3 += this.OrthoOffsetToScreenBounds(vector2, screenRect);
+				Vector3 vector4 = Vector3.zero;
 				if (!this.m_UnlimitedSoftZone)
 				{
 					Rect screenRect3 = this.ScreenToOrtho(this.HardGuideRect, orthoSize, curState.Lens.Aspect);
-					vector3 = this.OrthoOffsetToScreenBounds(targetPos2D, screenRect3);
-					float d = Mathf.Max(vector3.x / (vector2.x + 0.0001f), vector3.y / (vector2.y + 0.0001f));
-					vector3 = vector2 * d;
+					vector4 = this.OrthoOffsetToScreenBounds(vector2, screenRect3);
+					float d = Mathf.Max(vector4.x / (vector3.x + 0.0001f), vector4.y / (vector3.y + 0.0001f));
+					vector4 = vector3 * d;
 				}
-				vector2 = vector3 + Damper.Damp(vector2 - vector3, new Vector3(this.m_XDamping, this.m_YDamping, this.m_ZDamping), deltaTime);
+				vector3 = vector4 + Damper.Damp(vector3 - vector4, new Vector3(this.m_XDamping, this.m_YDamping, this.m_ZDamping), deltaTime);
 			}
-			curState.RawPosition = (this.m_PreviousCameraPosition = rawOrientation * (vector + vector2));
+			curState.RawPosition = (this.m_PreviousCameraPosition = rawOrientation * (vector + vector3));
 		}
 
 		private Rect ScreenToOrtho(Rect rScreen, float orthoSize, float aspect)
@@ -247,28 +246,28 @@ namespace Cinemachine
 			return Mathf.Max(b.size.x / (num * base.VcamState.Lens.Aspect), b.size.y / num);
 		}
 
-		[HideInInspector]
 		[NoSaveDuringPlay]
+		[HideInInspector]
 		public Action OnGUICallback;
 
-		[Range(0f, 1f)]
 		[Tooltip("This setting will instruct the composer to adjust its target offset based on the motion of the target.  The composer will look at a point where it estimates the target will be this many seconds into the future.  Note that this setting is sensitive to noisy animation, and can amplify the noise, resulting in undesirable camera jitter.  If the camera jitters unacceptably when the target is in motion, turn down this setting, or animate the target more smoothly.")]
+		[Range(0f, 1f)]
 		public float m_LookaheadTime;
 
-		[Range(3f, 30f)]
 		[Tooltip("Controls the smoothness of the lookahead algorithm.  Larger values smooth out jittery predictions and also increase prediction lag")]
+		[Range(3f, 30f)]
 		public float m_LookaheadSmoothing = 10f;
 
-		[Tooltip("How aggressively the camera tries to maintain the offset in the X-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain the offset in the X-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_XDamping = 1f;
 
 		[Range(0f, 20f)]
 		[Tooltip("How aggressively the camera tries to maintain the offset in the Y-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_YDamping = 1f;
 
-		[Tooltip("How aggressively the camera tries to maintain the offset in the Z-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain the offset in the Z-axis.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_ZDamping = 1f;
 
 		[Space]
@@ -284,20 +283,20 @@ namespace Cinemachine
 		public float m_CameraDistance = 10f;
 
 		[Space]
-		[Tooltip("Camera will not move horizontally if the target is within this range of the position.")]
 		[Range(0f, 1f)]
+		[Tooltip("Camera will not move horizontally if the target is within this range of the position.")]
 		public float m_DeadZoneWidth = 0.1f;
 
-		[Tooltip("Camera will not move vertically if the target is within this range of the position.")]
 		[Range(0f, 1f)]
+		[Tooltip("Camera will not move vertically if the target is within this range of the position.")]
 		public float m_DeadZoneHeight = 0.1f;
 
 		[Tooltip("The camera will not move along its z-axis if the Follow target is within this distance of the specified camera distance")]
 		[FormerlySerializedAs("m_DistanceDeadZoneSize")]
 		public float m_DeadZoneDepth;
 
-		[Tooltip("If checked, then then soft zone will be unlimited in size.")]
 		[Space]
+		[Tooltip("If checked, then then soft zone will be unlimited in size.")]
 		public bool m_UnlimitedSoftZone;
 
 		[Range(0f, 2f)]
@@ -316,8 +315,8 @@ namespace Cinemachine
 		[Tooltip("A non-zero bias will move the target position vertically away from the center of the soft zone.")]
 		public float m_BiasY;
 
-		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]
 		[Space]
+		[Tooltip("What screen dimensions to consider when framing.  Can be Horizontal, Vertical, or both")]
 		[FormerlySerializedAs("m_FramingMode")]
 		public CinemachineFramingTransposer.FramingMode m_GroupFramingMode = CinemachineFramingTransposer.FramingMode.HorizontalAndVertical;
 
@@ -339,8 +338,8 @@ namespace Cinemachine
 		[Tooltip("Set this to limit how far from the target the camera can get.")]
 		public float m_MaximumDistance = 5000f;
 
-		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
 		[Range(1f, 179f)]
+		[Tooltip("If adjusting FOV, will not set the FOV lower than this.")]
 		public float m_MinimumFOV = 3f;
 
 		[Range(1f, 179f)]

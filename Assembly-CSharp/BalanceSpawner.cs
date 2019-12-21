@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 
 public class BalanceSpawner : MonoBehaviour
 {
+	private void Awake()
+	{
+		base.gameObject.layer = LayerMask.NameToLayer("BalanceSpawner");
+	}
+
 	public virtual bool IsAttachmentSpawner()
 	{
 		return false;
@@ -23,7 +29,13 @@ public class BalanceSpawner : MonoBehaviour
 	public bool m_StaticSystem;
 
 	[HideInInspector]
-	public float m_LastCheckSpawnTime = float.MinValue;
+	private static HashSet<BalanceSpawner> s_AllSpawners = new HashSet<BalanceSpawner>();
+
+	private static GUIStyle m_GUIStyleNormal = null;
+
+	private static GUIStyle m_GUIStyleCooldown = null;
 
 	public float m_LastSpawnObjectTime = float.MinValue;
+
+	public float m_LastNoSpawnObjectTime = float.MinValue;
 }

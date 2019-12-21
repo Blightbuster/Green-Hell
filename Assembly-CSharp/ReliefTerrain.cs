@@ -2,8 +2,8 @@
 using System.Reflection;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("Relief Terrain/Engine - Terrain or Mesh")]
+[ExecuteInEditMode]
 public class ReliefTerrain : MonoBehaviour
 {
 	public void GetGlobalSettingsHolder()
@@ -12,7 +12,8 @@ public class ReliefTerrain : MonoBehaviour
 		{
 			ReliefTerrain[] array = (ReliefTerrain[])UnityEngine.Object.FindObjectsOfType(typeof(ReliefTerrain));
 			bool flag = base.GetComponent(typeof(Terrain));
-			for (int i = 0; i < array.Length; i++)
+			int i = 0;
+			while (i < array.Length)
 			{
 				if (array[i].transform.parent == base.transform.parent && array[i].globalSettingsHolder != null && ((flag && array[i].GetComponent(typeof(Terrain)) != null) || (!flag && array[i].GetComponent(typeof(Terrain)) == null)))
 				{
@@ -20,8 +21,13 @@ public class ReliefTerrain : MonoBehaviour
 					if (this.globalSettingsHolder.Get_RTP_LODmanagerScript() && !this.globalSettingsHolder.Get_RTP_LODmanagerScript().RTP_WETNESS_FIRST && !this.globalSettingsHolder.Get_RTP_LODmanagerScript().RTP_WETNESS_ADD)
 					{
 						this.BumpGlobalCombined = array[i].BumpGlobalCombined;
+						break;
 					}
 					break;
+				}
+				else
+				{
+					i++;
 				}
 			}
 			if (this.globalSettingsHolder == null)
@@ -31,12 +37,15 @@ public class ReliefTerrain : MonoBehaviour
 				{
 					this.globalSettingsHolder.numTiles = 0;
 					Terrain terrain = (Terrain)base.GetComponent(typeof(Terrain));
-					this.globalSettingsHolder.splats = new Texture2D[terrain.terrainData.splatPrototypes.Length];
-					this.globalSettingsHolder.Bumps = new Texture2D[terrain.terrainData.splatPrototypes.Length];
-					for (int j = 0; j < terrain.terrainData.splatPrototypes.Length; j++)
+					this.globalSettingsHolder.terrainLayers = new TerrainLayer[terrain.terrainData.terrainLayers.Length];
+					Array.Copy(terrain.terrainData.terrainLayers, this.globalSettingsHolder.terrainLayers, this.globalSettingsHolder.terrainLayers.Length);
+					this.globalSettingsHolder.splats = new Texture2D[terrain.terrainData.terrainLayers.Length];
+					this.globalSettingsHolder.Bumps = new Texture2D[terrain.terrainData.terrainLayers.Length];
+					this.globalSettingsHolder.terrainLayers = terrain.terrainData.terrainLayers;
+					for (int j = 0; j < terrain.terrainData.terrainLayers.Length; j++)
 					{
-						this.globalSettingsHolder.splats[j] = terrain.terrainData.splatPrototypes[j].texture;
-						this.globalSettingsHolder.Bumps[j] = terrain.terrainData.splatPrototypes[j].normalMap;
+						this.globalSettingsHolder.splats[j] = terrain.terrainData.terrainLayers[j].diffuseTexture;
+						this.globalSettingsHolder.Bumps[j] = terrain.terrainData.terrainLayers[j].normalMapTexture;
 					}
 				}
 				else
@@ -44,7 +53,7 @@ public class ReliefTerrain : MonoBehaviour
 					this.globalSettingsHolder.splats = new Texture2D[4];
 				}
 				this.globalSettingsHolder.numLayers = this.globalSettingsHolder.splats.Length;
-				this.globalSettingsHolder.ReturnToDefaults(string.Empty, -1);
+				this.globalSettingsHolder.ReturnToDefaults("", -1);
 			}
 			else if (flag)
 			{
@@ -97,17 +106,47 @@ public class ReliefTerrain : MonoBehaviour
 
 	private void GetSplatsFromGlobalSettingsHolder()
 	{
-		SplatPrototype[] array = new SplatPrototype[this.globalSettingsHolder.numLayers];
-		for (int i = 0; i < this.globalSettingsHolder.numLayers; i++)
-		{
-			array[i] = new SplatPrototype();
-			array[i].tileSize = Vector2.one;
-			array[i].tileOffset = new Vector2(1f / this.customTiling.x, 1f / this.customTiling.y);
-			array[i].texture = this.globalSettingsHolder.splats[i];
-			array[i].normalMap = this.globalSettingsHolder.Bumps[i];
-		}
 		Terrain terrain = (Terrain)base.GetComponent(typeof(Terrain));
-		terrain.terrainData.splatPrototypes = array;
+		if (this.globalSettingsHolder.terrainLayers != null && this.globalSettingsHolder.terrainLayers.Length == this.globalSettingsHolder.numLayers && this.globalSettingsHolder.terrainLayers.Length != 0 && this.globalSettingsHolder.terrainLayers[0] != null)
+		{
+			if (terrain.terrainData.terrainLayers.Length != 0 && terrain.terrainData.terrainLayers[0] == null)
+			{
+				TerrainLayer[] array = new TerrainLayer[this.globalSettingsHolder.numLayers];
+				Array.Copy(this.globalSettingsHolder.terrainLayers, array, this.globalSettingsHolder.terrainLayers.Length);
+				terrain.terrainData.terrainLayers = array;
+				return;
+			}
+		}
+		else
+		{
+			TerrainLayer[] array2 = new TerrainLayer[this.globalSettingsHolder.numLayers];
+			ReliefTerrain[] array3 = (ReliefTerrain[])UnityEngine.Object.FindObjectsOfType(typeof(ReliefTerrain));
+			bool flag = false;
+			for (int i = 0; i < array3.Length; i++)
+			{
+				Terrain component = array3[i].GetComponent<Terrain>();
+				if (component != null && (array3.Length == 1 || array3[i] != this) && component.terrainData.terrainLayers.Length == array2.Length)
+				{
+					this.globalSettingsHolder.terrainLayers = new TerrainLayer[component.terrainData.terrainLayers.Length];
+					Array.Copy(component.terrainData.terrainLayers, this.globalSettingsHolder.terrainLayers, this.globalSettingsHolder.terrainLayers.Length);
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				Debug.LogWarning("TerrainLayers from GlobalSettingsHolder can't be found. Create a set of layers and setup first terrain before adding RTP script to it!");
+				for (int j = 0; j < this.globalSettingsHolder.numLayers; j++)
+				{
+					array2[j] = new TerrainLayer();
+					array2[j].tileSize = Vector2.one;
+					array2[j].tileOffset = new Vector2(1f / this.customTiling.x, 1f / this.customTiling.y);
+					array2[j].diffuseTexture = this.globalSettingsHolder.splats[j];
+					array2[j].normalMapTexture = this.globalSettingsHolder.Bumps[j];
+				}
+			}
+			terrain.terrainData.terrainLayers = array2;
+		}
 	}
 
 	public void InitTerrainTileSizes()
@@ -116,12 +155,10 @@ public class ReliefTerrain : MonoBehaviour
 		if (terrain)
 		{
 			this.globalSettingsHolder.terrainTileSize = terrain.terrainData.size;
+			return;
 		}
-		else
-		{
-			this.globalSettingsHolder.terrainTileSize = base.GetComponent<Renderer>().bounds.size;
-			this.globalSettingsHolder.terrainTileSize.y = this.globalSettingsHolder.tessHeight;
-		}
+		this.globalSettingsHolder.terrainTileSize = base.GetComponent<Renderer>().bounds.size;
+		this.globalSettingsHolder.terrainTileSize.y = this.globalSettingsHolder.tessHeight;
 	}
 
 	private void Awake()
@@ -241,40 +278,35 @@ public class ReliefTerrain : MonoBehaviour
 			Debug.Log("Can't fint terrain component !!!");
 			return;
 		}
-		Type type = terrain.terrainData.GetType();
-		PropertyInfo property = type.GetProperty("alphamapTextures", BindingFlags.Instance | BindingFlags.Public);
-		if (property != null)
+		PropertyInfo property = terrain.terrainData.GetType().GetProperty("alphamapTextures", BindingFlags.Instance | BindingFlags.Public);
+		if (!(property != null))
 		{
-			Texture2D[] array = (Texture2D[])property.GetValue(terrain.terrainData, null);
-			if (array.Length > 0)
-			{
-				this.controlA = array[0];
-			}
-			else
-			{
-				this.controlA = null;
-			}
-			if (array.Length > 1)
-			{
-				this.controlB = array[1];
-			}
-			else
-			{
-				this.controlB = null;
-			}
-			if (array.Length > 2)
-			{
-				this.controlC = array[2];
-			}
-			else
-			{
-				this.controlC = null;
-			}
+			Debug.LogError("Can't access alphamapTexture directly...");
+			return;
+		}
+		Texture2D[] array = (Texture2D[])property.GetValue(terrain.terrainData, null);
+		if (array.Length != 0)
+		{
+			this.controlA = array[0];
 		}
 		else
 		{
-			Debug.LogError("Can't access alphamapTexture directly...");
+			this.controlA = null;
 		}
+		if (array.Length > 1)
+		{
+			this.controlB = array[1];
+		}
+		else
+		{
+			this.controlB = null;
+		}
+		if (array.Length > 2)
+		{
+			this.controlC = array[2];
+			return;
+		}
+		this.controlC = null;
 	}
 
 	public void SetCustomControlMaps()
@@ -396,15 +428,15 @@ public class ReliefTerrain : MonoBehaviour
 
 	public Texture2D controlC;
 
-	public string save_path_controlA = string.Empty;
+	public string save_path_controlA = "";
 
-	public string save_path_controlB = string.Empty;
+	public string save_path_controlB = "";
 
-	public string save_path_controlC = string.Empty;
+	public string save_path_controlC = "";
 
-	public string save_path_colormap = string.Empty;
+	public string save_path_colormap = "";
 
-	public string save_path_BumpGlobalCombined = string.Empty;
+	public string save_path_BumpGlobalCombined = "";
 
 	public Texture2D NormalGlobal;
 

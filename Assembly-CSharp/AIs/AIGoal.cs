@@ -98,12 +98,25 @@ namespace AIs
 
 		protected AIAction GetAction(int index)
 		{
-			return (this.GetPlanCount() <= index) ? null : this.m_Plan[index];
+			if (this.GetPlanCount() <= index)
+			{
+				return null;
+			}
+			return this.m_Plan[index];
 		}
 
 		protected float GetDuration()
 		{
-			return (this.m_ActivationTime < 0f) ? 0f : (Time.time - this.m_ActivationTime);
+			if (this.m_ActivationTime < 0f)
+			{
+				return 0f;
+			}
+			return Time.time - this.m_ActivationTime;
+		}
+
+		public void ResetDuration()
+		{
+			this.m_ActivationTime = Time.time;
 		}
 
 		public virtual void OnUpdate()
@@ -134,14 +147,16 @@ namespace AIs
 			if (this.m_CurrentAction.IsFailed())
 			{
 				this.Deactivate();
+				return;
 			}
-			else if (this.m_CurrentAction.IsFinished())
+			if (this.m_CurrentAction.IsFinished())
 			{
 				this.m_Plan.Remove(this.m_CurrentAction);
 				this.m_CurrentAction = null;
 				if (this.m_Plan.Count == 0)
 				{
 					this.Deactivate();
+					return;
 				}
 			}
 			else
@@ -179,7 +194,7 @@ namespace AIs
 
 		private List<AIAction> m_Plan = new List<AIAction>(10);
 
-		private AIAction m_CurrentAction;
+		protected AIAction m_CurrentAction;
 
 		protected float m_ActivationTime = -1f;
 

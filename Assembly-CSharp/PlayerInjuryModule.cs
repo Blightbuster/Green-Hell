@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using AIs;
+using CJTools;
 using Enums;
 using UnityEngine;
 
@@ -25,9 +27,9 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		this.m_LeechNextTime2 = time;
 	}
 
-	public override void Initialize()
+	public override void Initialize(Being being)
 	{
-		base.Initialize();
+		base.Initialize(being);
 	}
 
 	private void Start()
@@ -53,17 +55,18 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 				string svalue = key.GetVariable(1).SValue;
 				if (svalue != null)
 				{
-					foreach (string text in svalue.Split(new char[]
+					string[] array = svalue.Split(new char[]
 					{
 						';'
-					}))
+					});
+					for (int j = 0; j < array.Length; j++)
 					{
-						string[] array2 = text.Split(new char[]
+						string[] array2 = array[j].Split(new char[]
 						{
 							'*'
 						});
 						ItemID item = (ItemID)Enum.Parse(typeof(ItemID), array2[0]);
-						injuryTreatment.AddItem(item, (array2.Length <= 1) ? 1 : int.Parse(array2[1]));
+						injuryTreatment.AddItem(item, (array2.Length > 1) ? int.Parse(array2[1]) : 1);
 					}
 				}
 				this.m_Treatments[(int)key2] = injuryTreatment;
@@ -88,7 +91,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			{
 				this.m_DamageInfo.m_Damager = base.gameObject;
 				float num = 1f;
-				if (SleepController.Get().IsActive())
+				if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
 				{
 					num = Player.GetSleepTimeFactor();
 					this.m_DamageInfo.m_Damage = injury.m_HealthDecreasePerSec * num;
@@ -97,14 +100,35 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 				{
 					this.m_DamageInfo.m_Damage = injury.m_HealthDecreasePerSec * Time.deltaTime * num;
 				}
+				if (injury.m_State == InjuryState.Infected)
+				{
+					this.m_DamageInfo.m_DamageType = DamageType.Infection;
+				}
+				else if (injury.m_PoisonLevel > 0)
+				{
+					if (injury.m_Type == InjuryType.SnakeBite)
+					{
+						this.m_DamageInfo.m_DamageType = DamageType.SnakePoison;
+					}
+					else
+					{
+						this.m_DamageInfo.m_DamageType = DamageType.VenomPoison;
+					}
+				}
+				else
+				{
+					this.m_DamageInfo.m_DamageType = DamageType.None;
+				}
+				this.m_DamageInfo.m_FromInjury = true;
 				this.m_DamageInfo.m_PlayDamageSound = false;
 				this.m_Player.TakeDamage(this.m_DamageInfo);
 				int num2 = 0;
 				if (this.m_SanityDictionary.TryGetValue((int)injury.m_Type, out num2))
 				{
-					Dictionary<int, int> sanityDictionary;
-					int type;
-					(sanityDictionary = this.m_SanityDictionary)[type = (int)injury.m_Type] = sanityDictionary[type] + 1;
+					Dictionary<int, int> sanityDictionary = this.m_SanityDictionary;
+					int type = (int)injury.m_Type;
+					int num3 = sanityDictionary[type];
+					sanityDictionary[type] = num3 + 1;
 				}
 				else
 				{
@@ -113,111 +137,103 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			}
 			injury.Update();
 		}
-		foreach (KeyValuePair<int, int> keyValuePair in this.m_SanityDictionary)
+		Dictionary<int, int>.Enumerator enumerator = this.m_SanityDictionary.GetEnumerator();
+		while (enumerator.MoveNext())
 		{
+			KeyValuePair<int, int> keyValuePair = enumerator.Current;
 			switch (keyValuePair.Key)
 			{
 			case 0:
 			{
 				PlayerSanityModule playerSanityModule2 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn = PlayerSanityModule.SanityEventType.SmallWoundAbrassion;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair2 = enumerator.Current;
-				playerSanityModule2.OnEvent(evn, keyValuePair2.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule2.OnEvent(evn, keyValuePair.Value);
 				break;
 			}
 			case 1:
 			{
 				PlayerSanityModule playerSanityModule3 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn2 = PlayerSanityModule.SanityEventType.SmallWoundScratch;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair3 = enumerator.Current;
-				playerSanityModule3.OnEvent(evn2, keyValuePair3.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule3.OnEvent(evn2, keyValuePair.Value);
 				break;
 			}
 			case 2:
 			{
 				PlayerSanityModule playerSanityModule4 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn3 = PlayerSanityModule.SanityEventType.Laceration;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair4 = enumerator.Current;
-				playerSanityModule4.OnEvent(evn3, keyValuePair4.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule4.OnEvent(evn3, keyValuePair.Value);
 				break;
 			}
 			case 3:
 			{
 				PlayerSanityModule playerSanityModule5 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn4 = PlayerSanityModule.SanityEventType.LacerationCat;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair5 = enumerator.Current;
-				playerSanityModule5.OnEvent(evn4, keyValuePair5.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule5.OnEvent(evn4, keyValuePair.Value);
 				break;
 			}
 			case 4:
 			{
 				PlayerSanityModule playerSanityModule6 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn5 = PlayerSanityModule.SanityEventType.Rash;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair6 = enumerator.Current;
-				playerSanityModule6.OnEvent(evn5, keyValuePair6.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule6.OnEvent(evn5, keyValuePair.Value);
 				break;
 			}
 			case 5:
 			{
 				PlayerSanityModule playerSanityModule7 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn6 = PlayerSanityModule.SanityEventType.Worm;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair7 = enumerator.Current;
-				playerSanityModule7.OnEvent(evn6, keyValuePair7.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule7.OnEvent(evn6, keyValuePair.Value);
 				break;
 			}
 			case 6:
 			{
 				PlayerSanityModule playerSanityModule8 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn7 = PlayerSanityModule.SanityEventType.WormHole;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair8 = enumerator.Current;
-				playerSanityModule8.OnEvent(evn7, keyValuePair8.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule8.OnEvent(evn7, keyValuePair.Value);
 				break;
 			}
 			case 7:
 			{
 				PlayerSanityModule playerSanityModule9 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn8 = PlayerSanityModule.SanityEventType.Leech;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair9 = enumerator.Current;
-				playerSanityModule9.OnEvent(evn8, keyValuePair9.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule9.OnEvent(evn8, keyValuePair.Value);
 				break;
 			}
 			case 8:
 			{
 				PlayerSanityModule playerSanityModule10 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn9 = PlayerSanityModule.SanityEventType.LeechHole;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair10 = enumerator.Current;
-				playerSanityModule10.OnEvent(evn9, keyValuePair10.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule10.OnEvent(evn9, keyValuePair.Value);
 				break;
 			}
 			case 9:
 			{
 				PlayerSanityModule playerSanityModule11 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn10 = PlayerSanityModule.SanityEventType.VenomBite;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair11 = enumerator.Current;
-				playerSanityModule11.OnEvent(evn10, keyValuePair11.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule11.OnEvent(evn10, keyValuePair.Value);
 				break;
 			}
 			case 10:
 			{
 				PlayerSanityModule playerSanityModule12 = playerSanityModule;
 				PlayerSanityModule.SanityEventType evn11 = PlayerSanityModule.SanityEventType.SnakeBite;
-				Dictionary<int, int>.Enumerator enumerator;
-				KeyValuePair<int, int> keyValuePair12 = enumerator.Current;
-				playerSanityModule12.OnEvent(evn11, keyValuePair12.Value);
+				keyValuePair = enumerator.Current;
+				playerSanityModule12.OnEvent(evn11, keyValuePair.Value);
 				break;
 			}
 			}
 		}
+		enumerator.Dispose();
 	}
 
 	public void CheckLeeches()
@@ -227,6 +243,10 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			return;
 		}
 		if (PlayerConditionModule.Get().GetParameterLossBlocked() || Time.time - MainLevel.Instance.m_LevelStartTime < 20f)
+		{
+			return;
+		}
+		if (!DifficultySettings.ActivePreset.m_Leeches)
 		{
 			return;
 		}
@@ -277,7 +297,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			{
 				return;
 			}
-			this.AddInjury(injuryType, place, freeWoundSlot, InjuryState.Open, 0, null);
+			this.AddInjury(injuryType, place, freeWoundSlot, InjuryState.Open, 0, null, null);
 			this.m_LeechNextTime2 = Injury.s_LeechCooldownInMinutes + MainLevel.Instance.GetCurrentTimeMinutes();
 		}
 	}
@@ -286,36 +306,39 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 	{
 		InjuryType injuryType = (InjuryType)Enum.Parse(typeof(InjuryType), type);
 		InjuryPlace place2 = (InjuryPlace)Enum.Parse(typeof(InjuryPlace), place);
-		InjuryState injuryState = (InjuryState)Enum.Parse(typeof(InjuryState), state);
+		InjuryState state2 = (InjuryState)Enum.Parse(typeof(InjuryState), state);
 		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place2, injuryType, true);
 		Injury injury = null;
 		if (freeWoundSlot != null)
 		{
-			injury = this.AddInjury(injuryType, place2, freeWoundSlot, injuryState, 0, null);
+			injury = this.AddInjury(injuryType, place2, freeWoundSlot, state2, 0, null, null);
 		}
-		if (injuryState != InjuryState.Open)
+		if (injury != null)
 		{
-			if (injuryState != InjuryState.Infected)
+			switch (state2)
 			{
-				if (injuryState == InjuryState.Closed)
-				{
-					injury.CloseWound();
-				}
-			}
-			else
-			{
+			case InjuryState.Open:
+				injury.OpenWound();
+				return;
+			case InjuryState.Infected:
 				injury.Infect();
+				return;
+			case InjuryState.Closed:
+				injury.CloseWound();
+				break;
+			default:
+				return;
 			}
-		}
-		else
-		{
-			injury.OpenWound();
 		}
 	}
 
-	public Injury AddInjury(InjuryType type, InjuryPlace place, BIWoundSlot slot, InjuryState state, int poison_level = 0, Injury parent_injury = null)
+	public Injury AddInjury(InjuryType type, InjuryPlace place, BIWoundSlot slot, InjuryState state, int poison_level = 0, Injury parent_injury = null, DamageInfo damage_info = null)
 	{
 		if (!slot || PlayerConditionModule.Get().GetParameterLossBlocked())
+		{
+			return null;
+		}
+		if (DifficultySettings.GetActivePresetType() == DifficultySettings.PresetType.Tourist && !MainLevel.Instance.m_Tutorial)
 		{
 			return null;
 		}
@@ -324,7 +347,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			PlayerSanityModule.Get().ResetEventCooldown(PlayerSanityModule.SanityEventType.Leech);
 		}
 		Debug.Log("AddInjury");
-		Injury injury = new Injury(type, place, slot, state, poison_level, parent_injury);
+		Injury injury = new Injury(type, place, slot, state, poison_level, parent_injury, damage_info);
 		this.m_Injuries.Add(injury);
 		this.OnAddInjury(type);
 		return injury;
@@ -337,7 +360,11 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 
 	public Injury GetInjury(int index)
 	{
-		return (index < 0 || index >= this.m_Injuries.Count) ? null : this.m_Injuries[index];
+		if (index < 0 || index >= this.m_Injuries.Count)
+		{
+			return null;
+		}
+		return this.m_Injuries[index];
 	}
 
 	public List<Injury> GetInjuriesList()
@@ -440,6 +467,43 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		return true;
 	}
 
+	public InjuryPlace GetInjuryPlaceFromHit(DamageInfo info)
+	{
+		if (info.m_HitDir.magnitude < 0.01f)
+		{
+			return InjuryPlace.None;
+		}
+		if (info.m_AIType == AI.AIID.PoisonDartFrog)
+		{
+			return InjuryPlace.LHand;
+		}
+		Vector2 zero = Vector2.zero;
+		zero.x = Vector3.Dot(base.transform.right, info.m_HitDir);
+		zero.y = Vector3.Dot(base.transform.up, info.m_HitDir);
+		float num = Vector2.Angle(Vector2.up, zero);
+		if (zero.x < 0f)
+		{
+			num *= -1f;
+		}
+		if (num >= 45f && num <= 180f)
+		{
+			return InjuryPlace.LHand;
+		}
+		if (num <= -45f && num >= -180f)
+		{
+			return InjuryPlace.RHand;
+		}
+		if (num >= 0f && num < 45f)
+		{
+			return InjuryPlace.LLeg;
+		}
+		if (num < 0f && num > -45f)
+		{
+			return InjuryPlace.RLeg;
+		}
+		return InjuryPlace.None;
+	}
+
 	public override void OnTakeDamage(DamageInfo info)
 	{
 		base.OnTakeDamage(info);
@@ -447,109 +511,128 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		{
 			return;
 		}
-		if (info.m_Damage > 5f)
+		float num = info.m_Damage;
+		info.m_InjuryPlace = this.GetInjuryPlaceFromHit(info);
+		if (!info.m_FromInjury)
 		{
+			Limb limb = EnumTools.ConvertInjuryPlaceToLimb(info.m_InjuryPlace);
+			if (limb == Limb.None)
+			{
+				limb = Limb.LArm;
+			}
+			if (info.m_DamageType != DamageType.Fall && info.m_DamageType != DamageType.SnakePoison && info.m_DamageType != DamageType.VenomPoison && info.m_DamageType != DamageType.Insects && info.m_DamageType != DamageType.Infection)
+			{
+				num = info.m_Damage * (1f - PlayerArmorModule.Get().GetAbsorption(limb));
+			}
+			PlayerArmorModule.Get().SetPhaseCompleted(ArmorTakeDamagePhase.InjuryModule);
+		}
+		float num2 = 5f;
+		if ((num > num2 && PlayerArmorModule.Get().NoArmorAfterDamage(info)) || info.m_DamageType == DamageType.Insects || info.m_DamageType == DamageType.SnakePoison || info.m_DamageType == DamageType.VenomPoison || info.m_DamageType == DamageType.Fall || info.m_DamageType == DamageType.Infection)
+		{
+			BIWoundSlot biwoundSlot = null;
 			DamageType damageType = info.m_DamageType;
 			InjuryType injuryType;
-			switch (damageType)
+			if (damageType <= DamageType.Claws)
 			{
-			case DamageType.Cut:
-			case DamageType.Thrust:
-				if (info.m_CriticalHit)
+				if (damageType <= DamageType.Melee)
 				{
-					injuryType = InjuryType.Laceration;
-				}
-				else
-				{
-					injuryType = InjuryType.SmallWoundScratch;
-				}
-				break;
-			default:
-				if (damageType != DamageType.Claws)
-				{
-					if (damageType != DamageType.Insects)
+					if (damageType - DamageType.Cut > 1)
 					{
-						if (damageType != DamageType.Fall)
-						{
-							if (damageType != DamageType.Critical)
-							{
-								if (damageType != DamageType.SnakePoison)
-								{
-									injuryType = InjuryType.SmallWoundAbrassion;
-								}
-								else
-								{
-									injuryType = InjuryType.SnakeBite;
-								}
-							}
-							else
-							{
-								injuryType = InjuryType.Laceration;
-							}
-						}
-						else
+						if (damageType == DamageType.Melee)
 						{
 							injuryType = InjuryType.SmallWoundAbrassion;
+							goto IL_17F;
 						}
 					}
 					else
 					{
-						injuryType = InjuryType.Rash;
+						if (info.m_CriticalHit)
+						{
+							injuryType = InjuryType.Laceration;
+							goto IL_17F;
+						}
+						injuryType = InjuryType.SmallWoundScratch;
+						goto IL_17F;
 					}
 				}
 				else
 				{
-					injuryType = InjuryType.LacerationCat;
-				}
-				break;
-			case DamageType.Melee:
-				injuryType = InjuryType.SmallWoundAbrassion;
-				break;
-			case DamageType.VenomPoison:
-				injuryType = InjuryType.VenomBite;
-				break;
-			}
-			Vector2 zero = Vector2.zero;
-			zero.x = Vector3.Dot(base.transform.right, info.m_HitDir);
-			zero.y = Vector3.Dot(base.transform.up, info.m_HitDir);
-			float num = Vector2.Angle(Vector2.up, zero);
-			if (zero.x < 0f)
-			{
-				num *= -1f;
-			}
-			BIWoundSlot freeWoundSlot;
-			if (info.m_DamageType == DamageType.Insects && GreenHellGame.TWITCH_DEMO)
-			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
-			}
-			else if (num < 45f && num > -45f)
-			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LLeg, injuryType, true);
-				if (freeWoundSlot == null)
-				{
-					freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RLeg, injuryType, true);
+					if (damageType == DamageType.VenomPoison)
+					{
+						injuryType = InjuryType.VenomBite;
+						goto IL_17F;
+					}
+					if (damageType == DamageType.Claws)
+					{
+						injuryType = InjuryType.LacerationCat;
+						goto IL_17F;
+					}
 				}
 			}
-			else if (num >= 45f && num < 135f)
+			else if (damageType <= DamageType.Fall)
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
-			}
-			else if (num >= 135f || num < -135f)
-			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
-				if (freeWoundSlot == null)
+				if (damageType == DamageType.Insects)
 				{
-					freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType, true);
+					injuryType = InjuryType.Rash;
+					goto IL_17F;
+				}
+				if (damageType == DamageType.Fall)
+				{
+					injuryType = InjuryType.SmallWoundAbrassion;
+					goto IL_17F;
 				}
 			}
 			else
 			{
-				freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType, true);
+				if (damageType == DamageType.Critical)
+				{
+					injuryType = InjuryType.Laceration;
+					goto IL_17F;
+				}
+				if (damageType == DamageType.SnakePoison)
+				{
+					injuryType = InjuryType.SnakeBite;
+					goto IL_17F;
+				}
 			}
-			if (freeWoundSlot != null)
+			injuryType = InjuryType.SmallWoundAbrassion;
+			IL_17F:
+			if (!info.m_FromInjury && (injuryType == InjuryType.VenomBite || injuryType == InjuryType.SnakeBite))
+			{
+				Disease disease = PlayerDiseasesModule.Get().GetDisease(ConsumeEffect.Fever);
+				if (disease != null && disease.IsActive())
+				{
+					disease.IncreaseLevel(1);
+				}
+				else
+				{
+					PlayerDiseasesModule.Get().RequestDisease(ConsumeEffect.Fever, 0f, 1);
+				}
+			}
+			if (info.m_DamageType == DamageType.Insects && GreenHellGame.TWITCH_DEMO)
+			{
+				biwoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
+			}
+			else if (info.m_InjuryPlace == InjuryPlace.LLeg)
+			{
+				biwoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LLeg, injuryType, true);
+			}
+			else if (info.m_InjuryPlace == InjuryPlace.RLeg)
+			{
+				biwoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RLeg, injuryType, true);
+			}
+			else if (info.m_InjuryPlace == InjuryPlace.LHand)
+			{
+				biwoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.LHand, injuryType, true);
+			}
+			else if (info.m_InjuryPlace == InjuryPlace.RHand)
+			{
+				biwoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(InjuryPlace.RHand, injuryType, true);
+			}
+			if (biwoundSlot != null)
 			{
 				InjuryState state = InjuryState.Open;
-				if (injuryType == InjuryType.Laceration || injuryType == InjuryType.Laceration)
+				if (injuryType == InjuryType.Laceration || injuryType == InjuryType.LacerationCat)
 				{
 					state = InjuryState.Bleeding;
 				}
@@ -557,27 +640,29 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 				{
 					state = InjuryState.WormInside;
 				}
-				this.AddInjury(injuryType, freeWoundSlot.m_InjuryPlace, freeWoundSlot, state, info.m_PoisonLevel, null);
+				this.AddInjury(injuryType, biwoundSlot.m_InjuryPlace, biwoundSlot, state, info.m_PoisonLevel, null, info);
+				return;
 			}
-			else if (info.m_DamageType == DamageType.VenomPoison)
+			if (info.m_DamageType == DamageType.VenomPoison)
 			{
 				for (int i = 0; i < this.m_Injuries.Count; i++)
 				{
 					if (this.m_Injuries[i].m_Type == InjuryType.VenomBite)
 					{
 						this.m_Injuries[i].m_PoisonLevel += info.m_PoisonLevel;
-						break;
+						return;
 					}
 				}
+				return;
 			}
-			else if (info.m_DamageType == DamageType.SnakePoison)
+			if (info.m_DamageType == DamageType.SnakePoison)
 			{
 				for (int j = 0; j < this.m_Injuries.Count; j++)
 				{
 					if (this.m_Injuries[j].m_Type == InjuryType.SnakeBite)
 					{
 						this.m_Injuries[j].m_PoisonLevel += info.m_PoisonLevel;
-						break;
+						return;
 					}
 				}
 			}
@@ -621,16 +706,19 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			{
 				BIWoundSlot woundSlot = BodyInspectionController.Get().GetWoundSlot(place, SaveGame.LoadSVal("InjurySlot" + i));
 				int poison_level = SaveGame.LoadIVal("InjuryPoisonLevel" + i);
-				Injury injury = this.AddInjury(injuryType, place, woundSlot, injuryState, poison_level, null);
-				if (injuryState == InjuryState.Infected)
+				Injury injury = this.AddInjury(injuryType, place, woundSlot, injuryState, poison_level, null, null);
+				if (injury != null)
 				{
-					injury.Infect();
+					if (injuryState == InjuryState.Infected)
+					{
+						injury.Infect();
+					}
+					else if (injuryState == InjuryState.Closed)
+					{
+						injury.CloseWound();
+					}
+					injury.Load(i);
 				}
-				else if (injuryState == InjuryState.Closed)
-				{
-					injury.CloseWound();
-				}
-				injury.Load(i);
 			}
 		}
 	}
@@ -648,7 +736,7 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 	{
 		InjuryPlace place2 = (InjuryPlace)Enum.Parse(typeof(InjuryPlace), place);
 		BIWoundSlot freeWoundSlot = this.m_BodyInspectionController.GetFreeWoundSlot(place2, InjuryType.Worm, true);
-		this.AddInjury(InjuryType.Worm, place2, freeWoundSlot, InjuryState.Open, 0, null);
+		this.AddInjury(InjuryType.Worm, place2, freeWoundSlot, InjuryState.Open, 0, null, null);
 	}
 
 	public bool HasWorm()
@@ -827,9 +915,9 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		{
 			this.m_KnownInjuries.Add(injury_type);
 			HUDInfoLog hudinfoLog = (HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog));
-			string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry");
-			string text = GreenHellGame.Instance.GetLocalization().Get(injury_type.ToString());
-			hudinfoLog.AddInfo(title, text);
+			string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry", true);
+			string text = GreenHellGame.Instance.GetLocalization().Get(injury_type.ToString(), true);
+			hudinfoLog.AddInfo(title, text, HUDInfoLogTextureType.Notepad);
 		}
 	}
 
@@ -882,9 +970,9 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 		{
 			this.m_KnownInjuryState.Add(injury_state);
 			HUDInfoLog hudinfoLog = (HUDInfoLog)HUDManager.Get().GetHUD(typeof(HUDInfoLog));
-			string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry");
-			string text = GreenHellGame.Instance.GetLocalization().Get(injury_state.ToString());
-			hudinfoLog.AddInfo(title, text);
+			string title = GreenHellGame.Instance.GetLocalization().Get("HUD_InfoLog_NewEntry", true);
+			string text = GreenHellGame.Instance.GetLocalization().Get(injury_state.ToString(), true);
+			hudinfoLog.AddInfo(title, text, HUDInfoLogTextureType.Notepad);
 		}
 	}
 
@@ -949,6 +1037,85 @@ public class PlayerInjuryModule : PlayerModule, ISaveLoad
 			{
 				this.m_Injuries[i].OpenWound();
 			}
+		}
+	}
+
+	private void UpdateDebug()
+	{
+		if (Input.GetKeyDown(KeyCode.Alpha0))
+		{
+			DamageInfo damageInfo = new DamageInfo();
+			damageInfo.m_Damage = 10f;
+			damageInfo.m_HitDir = base.transform.up * -1f;
+			Player.Get().TakeDamage(damageInfo);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha1))
+		{
+			DamageInfo damageInfo2 = new DamageInfo();
+			damageInfo2.m_Damage = 10f;
+			damageInfo2.m_HitDir = base.transform.up * -1f;
+			damageInfo2.m_HitDir += base.transform.right * 1f;
+			damageInfo2.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo2);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo2.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha2))
+		{
+			DamageInfo damageInfo3 = new DamageInfo();
+			damageInfo3.m_Damage = 10f;
+			damageInfo3.m_HitDir = base.transform.right * 1f;
+			damageInfo3.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo3);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo3.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha3))
+		{
+			DamageInfo damageInfo4 = new DamageInfo();
+			damageInfo4.m_Damage = 10f;
+			damageInfo4.m_HitDir = base.transform.right * 1f;
+			damageInfo4.m_HitDir += base.transform.up * 1.3f;
+			damageInfo4.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo4);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo4.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha4))
+		{
+			DamageInfo damageInfo5 = new DamageInfo();
+			damageInfo5.m_Damage = 10f;
+			damageInfo5.m_HitDir = base.transform.up;
+			damageInfo5.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo5);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo5.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha5))
+		{
+			DamageInfo damageInfo6 = new DamageInfo();
+			damageInfo6.m_Damage = 10f;
+			damageInfo6.m_HitDir = base.transform.up * 1.2f;
+			damageInfo6.m_HitDir += base.transform.right * -1f;
+			damageInfo6.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo6);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo6.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha6))
+		{
+			DamageInfo damageInfo7 = new DamageInfo();
+			damageInfo7.m_Damage = 10f;
+			damageInfo7.m_HitDir = base.transform.right * -1f;
+			damageInfo7.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo7);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo7.m_HitDir, Color.cyan, 50f);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha7))
+		{
+			DamageInfo damageInfo8 = new DamageInfo();
+			damageInfo8.m_Damage = 10f;
+			damageInfo8.m_HitDir = base.transform.up * -1f;
+			damageInfo8.m_HitDir += base.transform.right * -1f;
+			damageInfo8.m_HitDir.Normalize();
+			Player.Get().TakeDamage(damageInfo8);
+			DebugRender.DrawLine(base.transform.position, base.transform.position + damageInfo8.m_HitDir, Color.cyan, 50f);
 		}
 	}
 

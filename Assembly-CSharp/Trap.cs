@@ -9,6 +9,11 @@ public class Trap : Construction
 	protected override void Awake()
 	{
 		base.Awake();
+		base.RegisterConstantUpdateItem();
+		if (this.IsShrimpTrap())
+		{
+			return;
+		}
 		if (this.m_AIIDs.Count == 0)
 		{
 			DebugUtils.Assert("[Trap:Start] ERROR - AI list in trap " + base.name + " is empty! Trap will be destroyed.", true, DebugUtils.AssertType.Info);
@@ -18,7 +23,11 @@ public class Trap : Construction
 		TrapAIDummy[] componentsInChildren = base.GetComponentsInChildren<TrapAIDummy>();
 		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
-			this.m_SpecificAIDummies.Add((int)componentsInChildren[i].m_ID, componentsInChildren[i].transform);
+			if (!this.m_SpecificAIDummies.ContainsKey((int)componentsInChildren[i].m_ID))
+			{
+				this.m_SpecificAIDummies.Add((int)componentsInChildren[i].m_ID, new List<Transform>());
+			}
+			this.m_SpecificAIDummies[(int)componentsInChildren[i].m_ID].Add(componentsInChildren[i].transform);
 		}
 		this.SetArmed(this.m_ArmOnStart);
 	}
@@ -54,12 +63,27 @@ public class Trap : Construction
 		{
 			this.m_FishTrap = true;
 		}
+		if (this.m_Info.m_ID == ItemID.Stick_Fish_Trap || this.m_Info.m_ID == ItemID.Big_Stick_Fish_Trap)
+		{
+			Vector3 center = this.m_BoxCollider.bounds.center;
+			Vector3 halfExtents = this.m_BoxCollider.size * 0.5f;
+			int num = Physics.OverlapBoxNonAlloc(center, halfExtents, Trap.s_ColliderOverlapsTmp, this.m_BoxCollider.transform.rotation);
+			for (int i = 0; i < num; i++)
+			{
+				if (Trap.s_ColliderOverlapsTmp[i].gameObject.IsWater())
+				{
+					this.m_WaterColl = (BoxCollider)Trap.s_ColliderOverlapsTmp[i];
+					return;
+				}
+			}
+		}
 	}
 
 	protected override void OnDestroy()
 	{
 		base.OnDestroy();
 		TrapsManager.Get().UnregisterTrap(this);
+		base.UnregisterConstantUpdateItem();
 	}
 
 	protected override void OnDisable()
@@ -68,44 +92,69 @@ public class Trap : Construction
 		this.m_LastCheck = Time.time;
 	}
 
+	protected virtual bool IsShrimpTrap()
+	{
+		return false;
+	}
+
 	protected override void Update()
 	{
 		base.Update();
 	}
 
-	public void UpdateEffect()
+	public virtual void UpdateEffect()
 	{
-		if (this.m_AI && !this.m_AI.IsFish())
+		foreach (AI ai in this.m_AIs)
 		{
-			int num = 0;
-			Trap.Effect effect = this.m_Effect;
-			if (effect != Trap.Effect.Block)
+			if (ai && !ai.IsFish())
 			{
-				if (effect == Trap.Effect.Kill)
+				int num = 0;
+				Trap.Effect effect = this.m_Effect;
+				if (effect != Trap.Effect.Kill)
 				{
-					if (this.m_Info.m_ID == ItemID.Snare_Trap)
+					if (effect == Trap.Effect.Block)
 					{
-						num = this.m_HangHash;
-					}
-					else
-					{
-						num = this.m_KillHash;
+						num = this.m_BlockHash;
 					}
 				}
-			}
-			else
-			{
-				num = this.m_BlockHash;
-			}
-			if (this.m_AI.m_Animator.GetCurrentAnimatorStateInfo(0).shortNameHash != num)
-			{
-				this.m_AI.m_Animator.CrossFade(num, 0f, 0, 1f);
+				else if (this.m_Info.m_ID == ItemID.Snare_Trap)
+				{
+					num = this.m_HangHash;
+				}
+				else
+				{
+					num = this.m_KillHash;
+				}
+				if (ai.m_Animator.GetCurrentAnimatorStateInfo(0).shortNameHash != num)
+				{
+					ai.m_Animator.CrossFade(num, 0f, 0, 1f);
+				}
 			}
 		}
 	}
 
-	public void ConstantUpdate()
+	public override void ConstantUpdate()
 	{
+		if (ScenarioManager.Get().IsDreamOrPreDream())
+		{
+			return;
+		}
+		int i = 0;
+		while (i < this.m_AIs.Count)
+		{
+			if (this.m_AIs[i] == null)
+			{
+				this.m_AIs.RemoveAt(i);
+			}
+			else
+			{
+				if (!this.m_AIs[i].gameObject.activeSelf && base.gameObject.activeSelf)
+				{
+					this.m_AIs[i].gameObject.SetActive(true);
+				}
+				i++;
+			}
+		}
 		this.TryCatch();
 	}
 
@@ -115,10 +164,13 @@ public class Trap : Construction
 		{
 			return;
 		}
+		if (this.m_UpperLevel)
+		{
+			return;
+		}
 		if (GreenHellGame.ROADSHOW_DEMO)
 		{
-			float num = Vector3.Distance(Player.Get().transform.position, base.transform.position);
-			if (num < 15f)
+			if (Vector3.Distance(Player.Get().transform.position, base.transform.position) < 15f)
 			{
 				return;
 			}
@@ -131,17 +183,17 @@ public class Trap : Construction
 		{
 			return;
 		}
-		float num2 = (!this.m_Bait || !this.m_Bait.m_Item) ? this.m_ChanceToCatch : this.m_ChanceToCatchWithBait;
-		if (UnityEngine.Random.Range(0f, 1f) <= num2)
+		float num = (this.m_Bait && this.m_Bait.m_Item) ? this.m_ChanceToCatchWithBait : this.m_ChanceToCatch;
+		if (UnityEngine.Random.Range(0f, 1f) <= num)
 		{
 			this.Catch();
 		}
 		this.m_LastCheck = Time.time;
 	}
 
-	public void Catch()
+	public virtual void Catch()
 	{
-		if (this.m_AI)
+		if (this.m_AIs.Count > 0)
 		{
 			return;
 		}
@@ -159,34 +211,71 @@ public class Trap : Construction
 						Vector3 to = aispawner.m_Bounds.ClosestPoint(base.transform.position);
 						if (base.transform.position.Distance(to) > this.m_AdditionalDist)
 						{
-							goto IL_C5;
+							goto IL_BA;
 						}
 					}
-					if (this.m_AIIDs.Contains(aispawner.m_ID))
+					if (this.m_AIIDs.Contains(aispawner.m_ID) && DifficultySettings.IsAIIDEnabled(aispawner.m_ID))
 					{
 						list.Add(aispawner.m_ID);
 					}
 				}
-				IL_C5:;
+				IL_BA:;
 			}
 			if (list.Count > 0)
 			{
 				aiid = list[UnityEngine.Random.Range(0, list.Count)];
 			}
-			else if (UnityEngine.Random.Range(0f, 1f) < this.m_ChanceToCatchOutsideSpawner)
+			else
 			{
-				aiid = this.m_AIIDs[UnityEngine.Random.Range(0, this.m_AIIDs.Count)];
+				if (UnityEngine.Random.Range(0f, 1f) < this.m_ChanceToCatchOutsideSpawner)
+				{
+					aiid = this.m_AIIDs[UnityEngine.Random.Range(0, this.m_AIIDs.Count)];
+				}
+				if (!DifficultySettings.IsAIIDEnabled(aiid))
+				{
+					aiid = AI.AIID.None;
+				}
 			}
 		}
 		else
 		{
-			aiid = this.m_AIIDs[UnityEngine.Random.Range(0, this.m_AIIDs.Count)];
+			OccurringFishes occurringFishes = this.m_WaterColl ? this.m_WaterColl.GetComponent<OccurringFishes>() : null;
+			if (occurringFishes)
+			{
+				List<AI.AIID> list2 = new List<AI.AIID>();
+				foreach (AI.AIID aiid2 in this.m_AIIDs)
+				{
+					if (occurringFishes.m_IDs.Contains(aiid2) && DifficultySettings.IsAIIDEnabled(aiid2))
+					{
+						list2.Add(aiid2);
+					}
+				}
+				if (list2.Count > 0)
+				{
+					aiid = list2[UnityEngine.Random.Range(0, list2.Count)];
+				}
+				else
+				{
+					if (UnityEngine.Random.Range(0f, 1f) < this.m_ChanceToCatchOutsideSpawner)
+					{
+						aiid = this.m_AIIDs[UnityEngine.Random.Range(0, this.m_AIIDs.Count)];
+					}
+					if (!DifficultySettings.IsAIIDEnabled(aiid))
+					{
+						aiid = AI.AIID.None;
+					}
+				}
+			}
+			else
+			{
+				aiid = this.m_AIIDs[UnityEngine.Random.Range(0, this.m_AIIDs.Count)];
+				if (!DifficultySettings.IsAIIDEnabled(aiid))
+				{
+					aiid = AI.AIID.None;
+				}
+			}
 		}
-		if (aiid != AI.AIID.None)
-		{
-			this.Catch(aiid);
-		}
-		else
+		if (aiid == AI.AIID.None)
 		{
 			if (this.m_Bait && this.m_Bait.m_Item)
 			{
@@ -194,46 +283,62 @@ public class Trap : Construction
 			}
 			this.SetArmed(false);
 			this.m_ChanceToCatchOutsideSpawner += this.m_ChanceToCatchOutsideSpawnerChange;
+			return;
 		}
+		if (this.m_SpecificAIDummies.ContainsKey((int)aiid))
+		{
+			for (int j = 0; j < this.m_SpecificAIDummies[(int)aiid].Count; j++)
+			{
+				this.Catch(aiid, j);
+			}
+			return;
+		}
+		this.Catch(aiid, 0);
 	}
 
-	private void Catch(AI.AIID id)
+	private void Catch(AI.AIID id, int index)
 	{
 		if (id != AI.AIID.None)
 		{
 			GameObject prefab = GreenHellGame.Instance.GetPrefab(id.ToString());
 			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(prefab);
 			gameObject.name = prefab.name;
-			this.m_AI = gameObject.GetComponent<AI>();
-			this.m_AI.m_Trap = this;
-			Component[] components = gameObject.GetComponents(typeof(Component));
+			AI component = gameObject.GetComponent<AI>();
+			component.m_Trap = this;
+			Behaviour[] components = gameObject.GetComponents<Behaviour>();
 			for (int i = 0; i < components.Length; i++)
 			{
 				Type type = components[i].GetType();
-				if (type != typeof(Transform) && type != typeof(BoxCollider) && type != typeof(Animator) && type != typeof(AI) && !type.IsSubclassOf(typeof(AI)) && type != typeof(SkinnedMeshRenderer) && type != typeof(AnimationEventsReceiver))
+				if (type != typeof(Transform) && type != typeof(BoxCollider) && type != typeof(Animator) && type != typeof(AI) && !type.IsSubclassOf(typeof(AI)) && type != typeof(SkinnedMeshRenderer) && type != typeof(AnimationEventsReceiver) && type != typeof(GuidComponent) && type != typeof(ReplicationComponent) && type != typeof(Relevance))
 				{
-					UnityEngine.Object.Destroy(components[i]);
+					if (components[i] is IReplicatedBehaviour)
+					{
+						components[i].enabled = false;
+					}
+					else
+					{
+						UnityEngine.Object.Destroy(components[i]);
+					}
 				}
 			}
-			this.m_AI.m_BoxCollider.isTrigger = true;
-			this.m_AI.m_Trap = this;
-			if (this.m_AI.m_SoundModule)
+			component.m_BoxCollider.isTrigger = true;
+			component.m_Trap = this;
+			if ((this.m_Effect == Trap.Effect.Block || this.m_Info.m_ID == ItemID.Snare_Trap) && component.m_SoundModule)
 			{
-				this.m_AI.m_SoundModule.RequestSound(AISoundType.Panic);
+				component.m_SoundModule.RequestSound(AISoundType.Panic);
 			}
-			if (GreenHellGame.Instance.GetPrefab(this.m_AI.m_ID.ToString() + "_Body"))
+			if (GreenHellGame.Instance.GetPrefab(component.m_ID.ToString() + "_Body"))
 			{
-				AIInTrapTrigger aiinTrapTrigger = gameObject.AddComponent<AIInTrapTrigger>();
-				aiinTrapTrigger.m_AI = this.m_AI;
+				gameObject.AddComponent<AIInTrapTrigger>().m_AI = component;
 			}
 			else
 			{
-				this.m_AI.AddDeadBodyComponent();
+				component.AddDeadBodyComponent();
 			}
 			Transform transform;
-			if (this.m_SpecificAIDummies.ContainsKey((int)this.m_AI.m_ID))
+			if (this.m_SpecificAIDummies.ContainsKey((int)component.m_ID))
 			{
-				transform = this.m_SpecificAIDummies[(int)this.m_AI.m_ID];
+				transform = this.m_SpecificAIDummies[(int)component.m_ID][index];
 			}
 			else if (this.m_AIDummy)
 			{
@@ -245,7 +350,14 @@ public class Trap : Construction
 			}
 			gameObject.transform.position = transform.position;
 			gameObject.transform.rotation = transform.rotation;
+			if (this.m_WaterColl)
+			{
+				Vector3 position = gameObject.transform.position;
+				position.y = this.m_WaterColl.bounds.max.y - component.m_BoxCollider.size.y * 0.5f;
+				gameObject.transform.position = position;
+			}
 			this.UpdateEffect();
+			this.m_AIs.Add(component);
 		}
 		if (this.m_Bait && this.m_Bait.m_Item)
 		{
@@ -255,11 +367,6 @@ public class Trap : Construction
 		this.m_ChanceToCatchOutsideSpawner = 0f;
 	}
 
-	public override bool CheckDot()
-	{
-		return false;
-	}
-
 	public override string GetIconName()
 	{
 		return "HUD_arming_trap";
@@ -267,7 +374,7 @@ public class Trap : Construction
 
 	public override bool CanTrigger()
 	{
-		return !this.m_Armed && !this.m_AI;
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !this.m_Armed && this.m_AIs.Count == 0;
 	}
 
 	public override void GetActions(List<TriggerAction.TYPE> actions)
@@ -287,7 +394,7 @@ public class Trap : Construction
 		this.m_LastCheck = Time.time;
 	}
 
-	private void SetArmed(bool set)
+	protected void SetArmed(bool set)
 	{
 		if (this.m_AlwaysArmed && !set)
 		{
@@ -312,23 +419,43 @@ public class Trap : Construction
 	{
 		base.Save(index);
 		SaveGame.SaveVal("TrapArmed" + index, this.m_Armed);
-		SaveGame.SaveVal("TrapAI" + index, (int)((!this.m_AI) ? AI.AIID.None : this.m_AI.m_ID));
+		SaveGame.SaveVal("TrapCount" + index, this.m_AIs.Count);
+		for (int i = 0; i < this.m_AIs.Count; i++)
+		{
+			SaveGame.SaveVal(string.Concat(new object[]
+			{
+				"TrapAI",
+				index,
+				"Count",
+				i
+			}), (int)this.m_AIs[i].m_ID);
+		}
 	}
 
 	public override void Load(int index)
 	{
 		base.Load(index);
 		this.SetArmed(SaveGame.LoadBVal("TrapArmed" + index));
-		AI.AIID aiid = (AI.AIID)SaveGame.LoadIVal("TrapAI" + index);
-		if (aiid != AI.AIID.None)
+		int num = SaveGame.LoadIVal("TrapCount" + index);
+		for (int i = 0; i < num; i++)
 		{
-			this.Catch(aiid);
+			AI.AIID aiid = (AI.AIID)SaveGame.LoadIVal(string.Concat(new object[]
+			{
+				"TrapAI",
+				index,
+				"Count",
+				i
+			}));
+			if (aiid != AI.AIID.None)
+			{
+				this.Catch(aiid, i);
+			}
 		}
 	}
 
 	public override bool TriggerThrough()
 	{
-		return this.m_AI && (this.m_AlwaysArmed || !this.m_Armed);
+		return (this.m_Bait && this.m_Bait.m_Item) || (this.m_AIs.Count > 0 && (this.m_AlwaysArmed || !this.m_Armed));
 	}
 
 	private void PlayArmSound()
@@ -341,6 +468,22 @@ public class Trap : Construction
 		this.m_AudioSource.PlayOneShot(this.m_ArmSoundClips[UnityEngine.Random.Range(0, this.m_ArmSoundClips.Count - 1)]);
 	}
 
+	public override void DestroyMe(bool check_connected = true)
+	{
+		if (this.m_Info.m_ID == ItemID.Snare_Trap)
+		{
+			foreach (AI ai in this.m_AIs)
+			{
+				DeadBody component = ai.GetComponent<DeadBody>();
+				if (component)
+				{
+					component.RemoveFromSnareTrap();
+				}
+			}
+		}
+		base.DestroyMe(check_connected);
+	}
+
 	public Trap.Effect m_Effect;
 
 	public List<AI.AIID> m_AIIDs = new List<AI.AIID>();
@@ -351,7 +494,7 @@ public class Trap : Construction
 
 	public bool m_AlwaysArmed;
 
-	private AI m_AI;
+	private List<AI> m_AIs = new List<AI>();
 
 	public float m_CheckInterval = 10f;
 
@@ -369,7 +512,7 @@ public class Trap : Construction
 
 	public Transform m_AIDummy;
 
-	private Dictionary<int, Transform> m_SpecificAIDummies = new Dictionary<int, Transform>();
+	private Dictionary<int, List<Transform>> m_SpecificAIDummies = new Dictionary<int, List<Transform>>();
 
 	private int m_BlockHash = Animator.StringToHash("TrapBlock");
 
@@ -388,6 +531,10 @@ public class Trap : Construction
 	private float m_ChanceToCatchOutsideSpawner;
 
 	private float m_ChanceToCatchOutsideSpawnerChange = 0.1f;
+
+	private BoxCollider m_WaterColl;
+
+	private static Collider[] s_ColliderOverlapsTmp = new Collider[20];
 
 	public enum Effect
 	{

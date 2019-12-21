@@ -18,13 +18,11 @@ namespace AmplifyColor
 			if ((volumeEffect = this.FindVolumeEffect(colorEffect)) != null)
 			{
 				volumeEffect.UpdateVolume();
+				return;
 			}
-			else
-			{
-				volumeEffect = new VolumeEffect(colorEffect);
-				this.volumes.Add(volumeEffect);
-				volumeEffect.UpdateVolume();
-			}
+			volumeEffect = new VolumeEffect(colorEffect);
+			this.volumes.Add(volumeEffect);
+			volumeEffect.UpdateVolume();
 		}
 
 		public VolumeEffect AddJustColorEffect(AmplifyColorBase colorEffect)

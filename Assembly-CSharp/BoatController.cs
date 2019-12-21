@@ -16,8 +16,8 @@ public class BoatController : PlayerController
 	{
 		base.Awake();
 		BoatController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Boat;
-		this.m_CharacterController = base.GetComponent<CharacterController>();
+		base.m_ControllerType = PlayerControllerType.Boat;
+		this.m_CharacterController = base.GetComponent<CharacterControllerProxy>();
 	}
 
 	protected override void OnEnable()
@@ -30,8 +30,8 @@ public class BoatController : PlayerController
 		this.m_State = BoatControllerState.Entering;
 		this.m_BoatRigidBody = General.GetComponentDeepChild<Rigidbody>(this.m_Boat.gameObject);
 		Collider componentDeepChild = General.GetComponentDeepChild<Collider>(this.m_Boat.gameObject);
-		Collider componentDeepChild2 = General.GetComponentDeepChild<Collider>(this.m_Player.gameObject);
-		Physics.IgnoreCollision(componentDeepChild, componentDeepChild2);
+		Collider collider = this.m_Player.m_Collider;
+		Physics.IgnoreCollision(componentDeepChild, collider);
 		this.m_AnimState = BoatControllerAnimationState.Idle;
 		this.m_BoatStick = ItemsManager.Get().CreateItem("Boat_Stick", false);
 		this.m_Player.SetWantedItem(Hand.Right, this.m_BoatStick, true);
@@ -43,8 +43,8 @@ public class BoatController : PlayerController
 		this.m_Player.gameObject.transform.parent = null;
 		this.m_Animator.SetInteger(this.m_IBoat, 0);
 		Collider componentDeepChild = General.GetComponentDeepChild<Collider>(this.m_Boat.gameObject);
-		Collider componentDeepChild2 = General.GetComponentDeepChild<Collider>(this.m_Player.gameObject);
-		Physics.IgnoreCollision(componentDeepChild, componentDeepChild2, false);
+		Collider collider = this.m_Player.m_Collider;
+		Physics.IgnoreCollision(componentDeepChild, collider, false);
 		if (this.m_BoatStick != null)
 		{
 			UnityEngine.Object.Destroy(this.m_BoatStick.gameObject);
@@ -64,10 +64,11 @@ public class BoatController : PlayerController
 		BoatControllerState state = this.m_State;
 		if (state != BoatControllerState.Entering)
 		{
-			if (state == BoatControllerState.Steering)
+			if (state != BoatControllerState.Steering)
 			{
-				this.UpdateSteering();
+				return;
 			}
+			this.UpdateSteering();
 		}
 		else
 		{
@@ -84,6 +85,7 @@ public class BoatController : PlayerController
 				this.m_State = BoatControllerState.Steering;
 				this.m_BoatRigidBody.isKinematic = false;
 				this.m_BoatRigidBody.useGravity = true;
+				return;
 			}
 		}
 	}
@@ -95,8 +97,9 @@ public class BoatController : PlayerController
 		{
 			this.UpdatePosition();
 			this.UpdateRotation();
+			return;
 		}
-		else if (this.m_State == BoatControllerState.Steering)
+		if (this.m_State == BoatControllerState.Steering)
 		{
 			this.UpdatePlayerTransform();
 		}
@@ -106,7 +109,7 @@ public class BoatController : PlayerController
 	{
 		Vector3 a = this.m_Boat.gameObject.transform.position - this.m_CharacterController.transform.position;
 		a.y = 0f;
-		this.m_CharacterController.Move(a * Time.deltaTime * 3f);
+		this.m_CharacterController.Move(a * Time.deltaTime * 3f, true);
 	}
 
 	private void UpdateRotation()
@@ -206,7 +209,7 @@ public class BoatController : PlayerController
 
 	private BoatControllerState m_State;
 
-	private CharacterController m_CharacterController;
+	private CharacterControllerProxy m_CharacterController;
 
 	private BoatControllerInputs m_Inputs = new BoatControllerInputs();
 

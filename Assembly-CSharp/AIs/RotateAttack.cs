@@ -8,16 +8,13 @@ namespace AIs
 		public void SetupParams(float angle_signed)
 		{
 			base.SetupParams();
-			this.m_Animation = ((angle_signed < 0f) ? "AttackLeft_" : "AttackRight_");
-			float num = Mathf.Abs(angle_signed);
-			if (num < 135f)
+			this.m_Animation = ((angle_signed >= 0f) ? "AttackRight_" : "AttackLeft_");
+			if (Mathf.Abs(angle_signed) < 135f)
 			{
 				this.m_Animation += "90";
+				return;
 			}
-			else
-			{
-				this.m_Animation += "180";
-			}
+			this.m_Animation += "180";
 		}
 
 		public override void Start()

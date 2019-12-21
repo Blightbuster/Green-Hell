@@ -2,16 +2,6 @@
 
 public class Condition
 {
-	public Condition()
-	{
-	}
-
-	public Condition(CJVariable var, Condition.TYPE type)
-	{
-		this.m_Variable = var;
-		this.m_Type = type;
-	}
-
 	public static string ToString(Condition.TYPE type)
 	{
 		switch (type)
@@ -25,6 +15,16 @@ public class Condition
 		default:
 			return "Unknown";
 		}
+	}
+
+	public Condition()
+	{
+	}
+
+	public Condition(CJVariable var, Condition.TYPE type)
+	{
+		this.m_Variable = var;
+		this.m_Type = type;
 	}
 
 	public bool Compare(string value)
@@ -61,7 +61,7 @@ public class Condition
 
 	private Condition.TYPE m_Type;
 
-	public string m_ToCompare = string.Empty;
+	public string m_ToCompare = "";
 
 	public enum TYPE
 	{

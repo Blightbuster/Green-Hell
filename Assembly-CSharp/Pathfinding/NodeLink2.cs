@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link2.php")]
 	[AddComponentMenu("Pathfinding/Link2")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link2.php")]
 	public class NodeLink2 : GraphModifier
 	{
 		public static NodeLink2 GetNodeLink(GraphNode node)
@@ -68,8 +68,7 @@ namespace Pathfinding
 			}
 			if (AstarPath.active.data.pointGraph == null)
 			{
-				PointGraph pointGraph = AstarPath.active.data.AddGraph(typeof(PointGraph)) as PointGraph;
-				pointGraph.name = "PointGraph (used for node links)";
+				(AstarPath.active.data.AddGraph(typeof(PointGraph)) as PointGraph).name = "PointGraph (used for node links)";
 			}
 			if (this.startNode != null && this.startNode.Destroyed)
 			{
@@ -120,11 +119,9 @@ namespace Pathfinding
 			if (!this.postScanCalled)
 			{
 				this.OnPostScan();
+				return;
 			}
-			else
-			{
-				this.Apply(false);
-			}
+			this.Apply(false);
 		}
 
 		protected override void OnEnable()
@@ -232,7 +229,7 @@ namespace Pathfinding
 
 		public void OnDrawGizmos(bool selected)
 		{
-			Color color = (!selected) ? NodeLink2.GizmosColor : NodeLink2.GizmosColorSelected;
+			Color color = selected ? NodeLink2.GizmosColorSelected : NodeLink2.GizmosColor;
 			if (this.StartTransform != null)
 			{
 				Draw.Gizmos.CircleXZ(this.StartTransform.position, 0.4f, color, 0f, 6.28318548f, 10);

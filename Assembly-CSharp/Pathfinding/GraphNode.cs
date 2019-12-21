@@ -9,7 +9,7 @@ namespace Pathfinding
 	{
 		protected GraphNode(AstarPath astar)
 		{
-			if (!object.ReferenceEquals(astar, null))
+			if (astar != null)
 			{
 				this.nodeIndex = astar.GetNewNodeIndex();
 				astar.InitializeNode(this);
@@ -80,11 +80,11 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (this.flags & 1u) != 0u;
+				return (this.flags & 1u) > 0u;
 			}
 			set
 			{
-				this.flags = ((this.flags & 4294967294u) | ((!value) ? 0u : 1u) << 0);
+				this.flags = ((this.flags & 4294967294u) | (value ? 1u : 0u));
 			}
 		}
 

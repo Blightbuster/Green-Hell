@@ -38,7 +38,11 @@ namespace Pathfinding
 			{
 				throw new Exception("Invalid NodeLink3Node. Expected 2 connections, found " + this.connections.Length);
 			}
-			return (a != this.connections[0].node) ? (this.connections[0].node as NodeLink3Node).GetOtherInternal(this) : (this.connections[1].node as NodeLink3Node).GetOtherInternal(this);
+			if (a != this.connections[0].node)
+			{
+				return (this.connections[0].node as NodeLink3Node).GetOtherInternal(this);
+			}
+			return (this.connections[1].node as NodeLink3Node).GetOtherInternal(this);
 		}
 
 		private GraphNode GetOtherInternal(GraphNode a)
@@ -47,7 +51,11 @@ namespace Pathfinding
 			{
 				return null;
 			}
-			return (a != this.connections[0].node) ? this.connections[0].node : this.connections[1].node;
+			if (a != this.connections[0].node)
+			{
+				return this.connections[0].node;
+			}
+			return this.connections[1].node;
 		}
 
 		public NodeLink3 link;

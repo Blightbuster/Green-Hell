@@ -20,6 +20,7 @@ namespace Enums
 		Vietnamese,
 		Thai,
 		Czech,
-		Swedish
+		Swedish,
+		Hungarian
 	}
 }

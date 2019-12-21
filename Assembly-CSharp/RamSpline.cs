@@ -125,8 +125,7 @@ public class RamSpline : MonoBehaviour
 
 	public void RemovePoints(int fromID = -1)
 	{
-		int num = this.controlPoints.Count - 1;
-		for (int i = num; i > fromID; i--)
+		for (int i = this.controlPoints.Count - 1; i > fromID; i--)
 		{
 			this.RemovePoint(i);
 		}
@@ -140,11 +139,12 @@ public class RamSpline : MonoBehaviour
 			this.vertsInShape = 1;
 		}
 		this.beginningConnectionID = this.beginningSpline.points.Count - 1;
-		float num = this.beginningSpline.controlPoints[this.beginningSpline.controlPoints.Count - 1].w;
+		Vector4 vector = this.beginningSpline.controlPoints[this.beginningSpline.controlPoints.Count - 1];
+		float num = vector.w;
 		num *= this.beginningMaxWidth - this.beginningMinWidth;
-		Vector4 value = Vector3.Lerp(this.beginningSpline.pointsDown[this.beginningConnectionID], this.beginningSpline.pointsUp[this.beginningConnectionID], this.beginningMinWidth + (this.beginningMaxWidth - this.beginningMinWidth) * 0.5f) + this.beginningSpline.transform.position - base.transform.position;
-		value.w = num;
-		this.controlPoints[0] = value;
+		vector = Vector3.Lerp(this.beginningSpline.pointsDown[this.beginningConnectionID], this.beginningSpline.pointsUp[this.beginningConnectionID], this.beginningMinWidth + (this.beginningMaxWidth - this.beginningMinWidth) * 0.5f) + this.beginningSpline.transform.position - base.transform.position;
+		vector.w = num;
+		this.controlPoints[0] = vector;
 		if (!this.uvScaleOverride)
 		{
 			this.uvScale = this.beginningSpline.uvScale;
@@ -162,11 +162,12 @@ public class RamSpline : MonoBehaviour
 			}
 		}
 		this.endingConnectionID = 0;
-		float num = this.endingSpline.controlPoints[0].w;
+		Vector4 vector = this.endingSpline.controlPoints[0];
+		float num = vector.w;
 		num *= this.endingMaxWidth - this.endingMinWidth;
-		Vector4 value = Vector3.Lerp(this.endingSpline.pointsDown[this.endingConnectionID], this.endingSpline.pointsUp[this.endingConnectionID], this.endingMinWidth + (this.endingMaxWidth - this.endingMinWidth) * 0.5f) + this.endingSpline.transform.position - base.transform.position;
-		value.w = num;
-		this.controlPoints[this.controlPoints.Count - 1] = value;
+		vector = Vector3.Lerp(this.endingSpline.pointsDown[this.endingConnectionID], this.endingSpline.pointsUp[this.endingConnectionID], this.endingMinWidth + (this.endingMaxWidth - this.endingMinWidth) * 0.5f) + this.endingSpline.transform.position - base.transform.position;
+		vector.w = num;
+		this.controlPoints[this.controlPoints.Count - 1] = vector;
 	}
 
 	public void GenerateSpline(List<RamSpline> generatedSplines = null)
@@ -784,8 +785,7 @@ public class RamSpline : MonoBehaviour
 		Vector2[] uv = baseMesh.uv;
 		Vector2[] uv2 = baseMesh.uv3;
 		base.GetComponent<MeshRenderer>().enabled = false;
-		int num = Mathf.RoundToInt((float)(vertices.Length / this.vertsInShape) / (float)this.meshPartsCount);
-		int num2 = num * this.vertsInShape;
+		int num = Mathf.RoundToInt((float)(vertices.Length / this.vertsInShape) / (float)this.meshPartsCount) * this.vertsInShape;
 		for (int i = 0; i < this.meshPartsCount; i++)
 		{
 			GameObject gameObject = new GameObject(base.gameObject.name + "- Mesh part " + i);
@@ -808,16 +808,16 @@ public class RamSpline : MonoBehaviour
 			List<Vector2> list5 = new List<Vector2>();
 			List<Color> list6 = new List<Color>();
 			List<int> list7 = new List<int>();
-			int num3 = num2 * i + ((i <= 0) ? 0 : (-this.vertsInShape));
-			while ((num3 < num2 * (i + 1) && num3 < vertices.Length) || (i == this.meshPartsCount - 1 && num3 < vertices.Length))
+			int num2 = num * i + ((i > 0) ? (-this.vertsInShape) : 0);
+			while ((num2 < num * (i + 1) && num2 < vertices.Length) || (i == this.meshPartsCount - 1 && num2 < vertices.Length))
 			{
-				list.Add(vertices[num3]);
-				list2.Add(normals[num3]);
-				list3.Add(uv[num3]);
-				list4.Add(uv2[num3]);
-				list5.Add(this.colorsFlowMap[num3]);
-				list6.Add(this.colors[num3]);
-				num3++;
+				list.Add(vertices[num2]);
+				list2.Add(normals[num2]);
+				list3.Add(uv[num2]);
+				list4.Add(uv2[num2]);
+				list5.Add(this.colorsFlowMap[num2]);
+				list6.Add(this.colors[num2]);
+				num2++;
 			}
 			if (list.Count > 0)
 			{
@@ -828,13 +828,13 @@ public class RamSpline : MonoBehaviour
 				}
 				for (int k = 0; k < list.Count / this.vertsInShape - 1; k++)
 				{
-					int num4 = k * this.vertsInShape;
+					int num3 = k * this.vertsInShape;
 					for (int l = 0; l < this.vertsInShape - 1; l++)
 					{
-						int item = num4 + l;
-						int item2 = num4 + l + this.vertsInShape;
-						int item3 = num4 + l + 1 + this.vertsInShape;
-						int item4 = num4 + l + 1;
+						int item = num3 + l;
+						int item2 = num3 + l + this.vertsInShape;
+						int item3 = num3 + l + 1 + this.vertsInShape;
+						int item4 = num3 + l + 1;
 						list7.Add(item);
 						list7.Add(item2);
 						list7.Add(item3);
@@ -868,8 +868,8 @@ public class RamSpline : MonoBehaviour
 		{
 			return;
 		}
-		List<MeshCollider> componentsDeepChild = General.GetComponentsDeepChild<MeshCollider>(base.gameObject);
-		for (int i = 0; i < componentsDeepChild.Count; i++)
+		MeshCollider[] componentsDeepChild = General.GetComponentsDeepChild<MeshCollider>(base.gameObject);
+		for (int i = 0; i < componentsDeepChild.Length; i++)
 		{
 			if (componentsDeepChild[i] != null)
 			{

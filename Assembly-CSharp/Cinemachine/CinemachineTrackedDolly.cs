@@ -5,10 +5,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
+	[DocumentationSorting(7f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
 	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
-	[DocumentationSorting(7f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachineTrackedDolly : CinemachineComponentBase
 	{
 		public override bool IsValid
@@ -45,7 +45,7 @@ namespace Cinemachine
 				{
 					num = this.m_Path.GetPathPositionFromDistance(num);
 				}
-				this.m_PathPosition = this.m_Path.FindClosestPoint(base.FollowTarget.transform.position, Mathf.FloorToInt(num), (deltaTime >= 0f && this.m_AutoDolly.m_SearchRadius > 0) ? this.m_AutoDolly.m_SearchRadius : -1, this.m_AutoDolly.m_SearchResolution);
+				this.m_PathPosition = this.m_Path.FindClosestPoint(base.FollowTarget.transform.position, Mathf.FloorToInt(num), (deltaTime < 0f || this.m_AutoDolly.m_SearchRadius <= 0) ? -1 : this.m_AutoDolly.m_SearchRadius, this.m_AutoDolly.m_SearchResolution);
 				if (this.m_PositionUnits == CinemachinePathBase.PositionUnits.Distance)
 				{
 					this.m_PathPosition = this.m_Path.GetPathDistanceFromPosition(this.m_PathPosition);
@@ -112,8 +112,8 @@ namespace Cinemachine
 					{
 						if (vector6[i] > 180f)
 						{
-							int index;
-							vector6[index = i] = vector6[index] - 360f;
+							int index = i;
+							vector6[index] -= 360f;
 						}
 					}
 					vector6 = Damper.Damp(vector6, this.AngularDamping, deltaTime);
@@ -127,8 +127,7 @@ namespace Cinemachine
 
 		public override void OnPositionDragged(Vector3 delta)
 		{
-			Quaternion rotation = this.m_Path.EvaluateOrientationAtUnit(this.m_PathPosition, this.m_PositionUnits);
-			Vector3 b = Quaternion.Inverse(rotation) * delta;
+			Vector3 b = Quaternion.Inverse(this.m_Path.EvaluateOrientationAtUnit(this.m_PathPosition, this.m_PositionUnits)) * delta;
 			this.m_PathOffset += b;
 		}
 
@@ -188,12 +187,12 @@ namespace Cinemachine
 		[Tooltip("How aggressively the camera tries to maintain its position in a direction perpendicular to the path.  Small numbers are more responsive, rapidly translating the camera to keep the target's x-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_XDamping;
 
-		[Tooltip("How aggressively the camera tries to maintain its position in the path-local up direction.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain its position in the path-local up direction.  Small numbers are more responsive, rapidly translating the camera to keep the target's y-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_YDamping;
 
-		[Tooltip("How aggressively the camera tries to maintain its position in a direction parallel to the path.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to maintain its position in a direction parallel to the path.  Small numbers are more responsive, rapidly translating the camera to keep the target's z-axis offset.  Larger numbers give a more heavy slowly responding camera. Using different settings per axis can yield a wide range of camera behaviors.")]
 		public float m_ZDamping = 1f;
 
 		[Tooltip("How to set the virtual camera's Up vector.  This will affect the screen composition, because the camera Aim behaviours will always try to respect the Up direction.")]
@@ -207,8 +206,8 @@ namespace Cinemachine
 		[Tooltip("How aggressively the camera tries to track the target rotation's Y angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_YawDamping;
 
-		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		[Range(0f, 20f)]
+		[Tooltip("How aggressively the camera tries to track the target rotation's Z angle.  Small numbers are more responsive.  Larger numbers give a more heavy slowly responding camera.")]
 		public float m_RollDamping;
 
 		[Tooltip("Controls how automatic dollying occurs.  A Follow target is necessary to use this feature.")]

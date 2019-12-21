@@ -4,9 +4,9 @@ using UnityEngine;
 namespace Cinemachine
 {
 	[DocumentationSorting(27f, DocumentationSortingAttribute.Level.UserRef)]
-	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
 	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineSameAsFollowObject : CinemachineComponentBase
 	{
 		public override bool IsValid

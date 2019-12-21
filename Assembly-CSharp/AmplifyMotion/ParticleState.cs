@@ -235,9 +235,9 @@ namespace AmplifyMotion
 			}
 			if (starting || !this.m_wasVisible)
 			{
-				foreach (KeyValuePair<uint, ParticleState.Particle> keyValuePair2 in this.m_particleDict)
+				foreach (KeyValuePair<uint, ParticleState.Particle> keyValuePair in this.m_particleDict)
 				{
-					ParticleState.Particle value2 = keyValuePair2.Value;
+					ParticleState.Particle value2 = keyValuePair.Value;
 					value2.prevLocalToWorld = value2.currLocalToWorld;
 				}
 			}
@@ -252,14 +252,14 @@ namespace AmplifyMotion
 				bool flag = (this.m_owner.Instance.CullingMask & 1 << this.m_obj.gameObject.layer) != 0;
 				if (!flag || (flag && this.m_moved))
 				{
-					int num = (!flag) ? 255 : this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject);
+					int num = flag ? this.m_owner.Instance.GenerateObjectId(this.m_obj.gameObject) : 255;
 					renderCB.SetGlobalFloat("_AM_OBJECT_ID", (float)num * 0.003921569f);
-					renderCB.SetGlobalFloat("_AM_MOTION_SCALE", (!flag) ? 0f : scale);
-					int num2 = (quality != Quality.Mobile) ? 2 : 0;
+					renderCB.SetGlobalFloat("_AM_MOTION_SCALE", flag ? scale : 0f);
+					int num2 = (quality == Quality.Mobile) ? 0 : 2;
 					for (int i = 0; i < this.m_sharedMaterials.Length; i++)
 					{
 						MotionState.MaterialDesc materialDesc = this.m_sharedMaterials[i];
-						int shaderPass = num2 + ((!materialDesc.coverage) ? 0 : 1);
+						int shaderPass = num2 + (materialDesc.coverage ? 1 : 0);
 						if (materialDesc.coverage)
 						{
 							Texture mainTexture = materialDesc.material.mainTexture;

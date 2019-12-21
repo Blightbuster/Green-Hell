@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
 	[DocumentationSorting(16f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
 	[AddComponentMenu("")]
+	[SaveDuringPlay]
 	public class CinemachineFollowZoom : CinemachineExtension
 	{
 		private void OnValidate()

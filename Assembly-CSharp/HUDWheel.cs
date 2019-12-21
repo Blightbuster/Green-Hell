@@ -24,16 +24,17 @@ public class HUDWheel : HUDBase, IInputsReceiver
 			RawImage[] icons = this.m_Icons;
 			int num2 = i;
 			Transform transform2 = base.transform;
-			HUDWheel.HUDWheelSlot hudwheelSlot2 = (HUDWheel.HUDWheelSlot)i;
-			icons[num2] = transform2.Find(hudwheelSlot2.ToString() + "Icon").GetComponent<RawImage>();
+			hudwheelSlot = (HUDWheel.HUDWheelSlot)i;
+			icons[num2] = transform2.Find(hudwheelSlot.ToString() + "Icon").GetComponent<RawImage>();
 			RawImage[] iconsHL = this.m_IconsHL;
 			int num3 = i;
 			Transform transform3 = base.transform;
-			HUDWheel.HUDWheelSlot hudwheelSlot3 = (HUDWheel.HUDWheelSlot)i;
-			iconsHL[num3] = transform3.Find(hudwheelSlot3.ToString() + "IconHL").GetComponent<RawImage>();
+			hudwheelSlot = (HUDWheel.HUDWheelSlot)i;
+			iconsHL[num3] = transform3.Find(hudwheelSlot.ToString() + "IconHL").GetComponent<RawImage>();
 		}
-		this.m_CenterText = GreenHellGame.Instance.GetLocalization().Get("HUD_Wheel_Center");
+		this.m_CenterText = GreenHellGame.Instance.GetLocalization().Get("HUD_Wheel_Center", true);
 		this.m_AudioSource = base.gameObject.AddComponent<AudioSource>();
+		this.m_AudioSource.playOnAwake = false;
 		this.m_AudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
 		AudioClip audioClip = Resources.Load<AudioClip>("Sounds/wheel_menu");
 		if (!audioClip)
@@ -57,16 +58,20 @@ public class HUDWheel : HUDBase, IInputsReceiver
 
 	protected override bool ShouldShow()
 	{
-		return this.m_Active && (!NotepadController.Get().IsActive() || NotepadController.Get().CanDisable());
+		return this.m_Active && (!NotepadController.Get().IsActive() || NotepadController.Get().CanDisable()) && !ScenarioManager.Get().IsDreamOrPreDream();
 	}
 
 	protected override void OnShow()
 	{
 		base.OnShow();
 		Player.Get().BlockRotation();
-		CursorManager.Get().ShowCursor(true);
-		Vector3 position = base.gameObject.transform.position;
-		CursorManager.Get().SetCursorPos(position);
+		if (GreenHellGame.IsPCControllerActive())
+		{
+			CursorManager.Get().ShowCursor(true, false);
+			this.m_CursorVisible = true;
+			Vector3 position = base.gameObject.transform.position;
+			CursorManager.Get().SetCursorPos(position);
+		}
 		for (int i = 0; i < 6; i++)
 		{
 			if (!this.IsSlotActive((HUDWheel.HUDWheelSlot)i))
@@ -94,18 +99,30 @@ public class HUDWheel : HUDBase, IInputsReceiver
 		{
 			MapController.Get().Hide();
 		}
+		HUDItem.Get().Deactivate();
+		this.m_SelectedSlot = HUDWheel.HUDWheelSlot.None;
+		for (int j = 0; j < 6; j++)
+		{
+			this.m_Selections[j].enabled = false;
+			this.m_Icons[j].enabled = true;
+			this.m_IconsHL[j].enabled = false;
+		}
+		this.UpdateText();
 	}
 
 	private bool IsSlotActive(HUDWheel.HUDWheelSlot slot)
 	{
-		return (slot != HUDWheel.HUDWheelSlot.Craft || Player.Get().CanStartCrafting()) && (slot != HUDWheel.HUDWheelSlot.Notebook || Player.Get().CanShowNotepad()) && (slot != HUDWheel.HUDWheelSlot.Map || Player.Get().CanShowMap()) && (slot != HUDWheel.HUDWheelSlot.Sleep || Player.Get().CanSleep()) && (slot != HUDWheel.HUDWheelSlot.Inspect || Player.Get().CanStartBodyInspection());
+		return (slot != HUDWheel.HUDWheelSlot.Craft || Player.Get().CanStartCrafting()) && (slot != HUDWheel.HUDWheelSlot.Notebook || Player.Get().CanShowNotepad()) && (slot != HUDWheel.HUDWheelSlot.Map || Player.Get().CanShowMap()) && (slot != HUDWheel.HUDWheelSlot.Sleep || Player.Get().CanSleep()) && (slot != HUDWheel.HUDWheelSlot.Inspect || Player.Get().CanStartBodyInspection()) && (slot != HUDWheel.HUDWheelSlot.Backpack || !Player.Get().m_Animator.GetBool(Player.Get().m_CleanUpHash));
 	}
 
 	protected override void OnHide()
 	{
 		base.OnHide();
 		Player.Get().UnblockRotation();
-		CursorManager.Get().ShowCursor(false);
+		if (this.m_CursorVisible)
+		{
+			CursorManager.Get().ShowCursor(false, false);
+		}
 	}
 
 	public bool CanReceiveAction()
@@ -113,15 +130,31 @@ public class HUDWheel : HUDBase, IInputsReceiver
 		return true;
 	}
 
-	public void OnInputAction(InputsManager.InputAction action)
+	public bool CanReceiveActionPaused()
 	{
-		if (action == InputsManager.InputAction.ShowWheel && !this.m_Active && Player.Get().CanInvokeWheelHUD())
+		return false;
+	}
+
+	public void OnInputAction(InputActionData action_data)
+	{
+		if (action_data.m_Action == InputsManager.InputAction.ShowWheel && !this.m_Active && Player.Get().CanInvokeWheelHUD())
 		{
 			this.Activate();
 		}
-		if (action == InputsManager.InputAction.HideWheel && this.m_Active)
+		if (!base.enabled)
+		{
+			return;
+		}
+		if (action_data.m_Action == InputsManager.InputAction.HideWheel && this.m_Active)
 		{
 			this.Deactivate(true);
+			return;
+		}
+		if (action_data.m_Action == InputsManager.InputAction.WheelSelect)
+		{
+			this.Execute();
+			this.m_Active = false;
+			base.Show(false);
 		}
 	}
 
@@ -180,51 +213,112 @@ public class HUDWheel : HUDBase, IInputsReceiver
 		}
 	}
 
+	private void UpdateBatteryLevel()
+	{
+		this.m_WTBatteryLevel.text = (PlayerWalkieTalkieModule.Get().GetBatteryLevel() * 100f).ToString("F0");
+		if (PlayerWalkieTalkieModule.Get().CanCall())
+		{
+			this.m_WTBatteryLevel.color = Color.white;
+			return;
+		}
+		this.m_WTBatteryLevel.color = Color.red;
+	}
+
 	protected override void Update()
 	{
 		base.Update();
 		this.UpdateSelection();
-		if (!CursorManager.Get().IsCursorVisible())
+		for (int i = 0; i < 6; i++)
 		{
-			CursorManager.Get().ShowCursor(true);
+			if (!this.IsSlotActive((HUDWheel.HUDWheelSlot)i))
+			{
+				this.m_Icons[i].color = this.m_InactiveColor;
+			}
+			else
+			{
+				this.m_Icons[i].color = this.m_ActiveColor;
+			}
+		}
+		if (!CursorManager.Get().IsCursorVisible() && GreenHellGame.IsPCControllerActive())
+		{
+			CursorManager.Get().ShowCursor(true, false);
+			this.m_CursorVisible = true;
 		}
 	}
 
 	private void UpdateSelection()
 	{
 		HUDWheel.HUDWheelSlot selectedSlot = this.m_SelectedSlot;
-		float num = (float)Screen.width;
-		Vector3 from = Input.mousePosition - base.transform.position;
-		float num2 = from.magnitude / (num * 0.5f);
-		if (num2 < 0.08f)
+		if (GreenHellGame.IsPCControllerActive())
 		{
-			this.m_SelectedSlot = HUDWheel.HUDWheelSlot.None;
-			for (int i = 0; i < 6; i++)
+			float num = (float)Screen.width;
+			Vector3 from = Input.mousePosition - base.transform.position;
+			if (from.magnitude / (num * 0.5f) < 0.08f)
 			{
-				this.m_Selections[i].enabled = false;
-				this.m_Icons[i].enabled = true;
-				this.m_IconsHL[i].enabled = false;
+				this.m_SelectedSlot = HUDWheel.HUDWheelSlot.None;
+				for (int i = 0; i < 6; i++)
+				{
+					this.m_Selections[i].enabled = false;
+					this.m_Icons[i].enabled = true;
+					this.m_IconsHL[i].enabled = false;
+				}
+				this.UpdateText();
+				return;
 			}
-			this.UpdateText();
-			return;
+			from.Normalize();
+			float num2 = Vector3.Angle(from, Vector3.up);
+			if (Input.mousePosition.x < base.transform.position.x)
+			{
+				num2 = 360f - num2;
+			}
+			this.m_SelectedSlot = (HUDWheel.HUDWheelSlot)(num2 / 360f * 6f);
 		}
-		from.Normalize();
-		float num3 = Vector3.Angle(from, Vector3.up);
-		if (Input.mousePosition.x < base.transform.position.x)
+		else
 		{
-			num3 = 360f - num3;
+			float axis = InputsManager.Get().GetAxis("RightStickX");
+			float axis2 = InputsManager.Get().GetAxis("RightStickY");
+			Vector2 zero = Vector2.zero;
+			zero.x = axis;
+			zero.y = axis2;
+			if (zero.magnitude <= 0.1f)
+			{
+				this.m_DeadZoneDuration += Time.deltaTime;
+				if (this.m_DeadZoneDuration >= 0.15f)
+				{
+					this.m_SelectedSlot = HUDWheel.HUDWheelSlot.None;
+					for (int j = 0; j < 6; j++)
+					{
+						this.m_Selections[j].enabled = false;
+						this.m_Icons[j].enabled = true;
+						this.m_IconsHL[j].enabled = false;
+					}
+				}
+				this.UpdateText();
+				return;
+			}
+			this.m_DeadZoneDuration = 0f;
+			float num3 = Vector3.Angle(zero, Vector3.up);
+			if (axis > 0f)
+			{
+				num3 = 360f - num3;
+			}
+			this.m_SelectedSlot = (HUDWheel.HUDWheelSlot)(num3 / 360f * 6f);
 		}
-		this.m_SelectedSlot = (HUDWheel.HUDWheelSlot)(num3 / 360f * 6f);
-		for (int j = 0; j < 6; j++)
+		for (int k = 0; k < 6; k++)
 		{
-			this.m_Selections[j].enabled = (j == (int)this.m_SelectedSlot && this.IsSlotActive((HUDWheel.HUDWheelSlot)j));
-			this.m_Icons[j].enabled = (j != (int)this.m_SelectedSlot || !this.IsSlotActive((HUDWheel.HUDWheelSlot)j));
-			this.m_IconsHL[j].enabled = (j == (int)this.m_SelectedSlot && this.IsSlotActive((HUDWheel.HUDWheelSlot)j));
+			this.m_Selections[k].enabled = (k == (int)this.m_SelectedSlot && this.IsSlotActive((HUDWheel.HUDWheelSlot)k));
+			this.m_Icons[k].enabled = (k != (int)this.m_SelectedSlot || !this.IsSlotActive((HUDWheel.HUDWheelSlot)k));
+			this.m_IconsHL[k].enabled = (k == (int)this.m_SelectedSlot && this.IsSlotActive((HUDWheel.HUDWheelSlot)k));
 		}
-		if (this.m_SelectedSlot == HUDWheel.HUDWheelSlot.Inspect && !Player.Get().CanStartBodyInspection())
+		if (HUDWheel.HUDWheelSlot.Inspect == this.m_SelectedSlot && !Player.Get().CanStartBodyInspection())
 		{
 			this.m_SelectedSlot = HUDWheel.HUDWheelSlot.None;
 			this.m_Selections[5].enabled = false;
+		}
+		if (HUDWheel.HUDWheelSlot.Sleep == this.m_SelectedSlot && !Player.Get().CanSleep())
+		{
+			this.m_SelectedSlot = HUDWheel.HUDWheelSlot.None;
+			this.m_Selections[2].enabled = false;
 		}
 		this.UpdateText();
 		if (this.m_SelectedSlot != HUDWheel.HUDWheelSlot.None && selectedSlot != this.m_SelectedSlot && this.m_Selections[(int)this.m_SelectedSlot].enabled)
@@ -242,36 +336,37 @@ public class HUDWheel : HUDBase, IInputsReceiver
 		if (this.m_SelectedSlot == HUDWheel.HUDWheelSlot.None)
 		{
 			this.m_Text.text = this.m_CenterText;
+			return;
 		}
-		else
-		{
-			this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get(this.m_SelectedSlot.ToString());
-		}
+		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get(this.m_SelectedSlot.ToString(), true);
 	}
 
 	private void Execute()
 	{
-		HUDWheel.HUDWheelSlot selectedSlot = this.m_SelectedSlot;
-		switch (selectedSlot + 1)
+		switch (this.m_SelectedSlot)
 		{
-		case HUDWheel.HUDWheelSlot.Craft:
+		case HUDWheel.HUDWheelSlot.None:
+			break;
+		case HUDWheel.HUDWheelSlot.Map:
 			this.OnMap();
-			break;
-		case HUDWheel.HUDWheelSlot.Sleep:
+			return;
+		case HUDWheel.HUDWheelSlot.Craft:
 			this.OnCraft();
-			break;
-		case HUDWheel.HUDWheelSlot.Notebook:
+			return;
+		case HUDWheel.HUDWheelSlot.Sleep:
 			this.OnSleep();
-			break;
-		case HUDWheel.HUDWheelSlot.Backpack:
+			return;
+		case HUDWheel.HUDWheelSlot.Notebook:
 			this.OnNotebook();
-			break;
-		case HUDWheel.HUDWheelSlot.Inspect:
+			return;
+		case HUDWheel.HUDWheelSlot.Backpack:
 			this.OnBackpack();
-			break;
-		case HUDWheel.HUDWheelSlot.Count:
+			return;
+		case HUDWheel.HUDWheelSlot.Inspect:
 			this.OnInspect();
 			break;
+		default:
+			return;
 		}
 	}
 
@@ -282,6 +377,20 @@ public class HUDWheel : HUDBase, IInputsReceiver
 			return;
 		}
 		Player.Get().StartController(PlayerControllerType.Map);
+	}
+
+	private void OnDialog()
+	{
+		if (!DialogsManager.Get().CanSelectDialog())
+		{
+			return;
+		}
+		HUDSelectDialog.Get().Activate();
+		Player.Get().m_ShouldStartWalkieTalkieController = true;
+		if (Player.Get().GetCurrentItem(Hand.Left) == null)
+		{
+			Player.Get().StartController(PlayerControllerType.WalkieTalkie);
+		}
 	}
 
 	private void OnConstruct()
@@ -307,12 +416,8 @@ public class HUDWheel : HUDBase, IInputsReceiver
 		{
 			return;
 		}
-		if (!Player.Get().GetComponent<NotepadController>().IsActive())
+		if (!NotepadController.Get().IsActive())
 		{
-			if (MenuNotepad.Get().m_ActiveTab == MenuNotepad.MenuNotepadTab.PlannerTab)
-			{
-				HUDPlanner.Get().m_PlannerMode = PlannerMode.ReadOnly;
-			}
 			Player.Get().StartController(PlayerControllerType.Notepad);
 		}
 	}
@@ -342,7 +447,8 @@ public class HUDWheel : HUDBase, IInputsReceiver
 
 	private RawImage[] m_IconsHL = new RawImage[6];
 
-	private bool m_Active;
+	[HideInInspector]
+	public bool m_Active;
 
 	private static HUDWheel s_Instance;
 
@@ -355,6 +461,12 @@ public class HUDWheel : HUDBase, IInputsReceiver
 	private AudioSource m_AudioSource;
 
 	private string m_CenterText = string.Empty;
+
+	public Text m_WTBatteryLevel;
+
+	private bool m_CursorVisible;
+
+	private float m_DeadZoneDuration;
 
 	private enum HUDWheelSlot
 	{

@@ -6,7 +6,7 @@ public class TokenLeftBracket : Token
 	{
 	}
 
-	public override bool Check()
+	protected override bool Check()
 	{
 		return base.Check() && this.m_Parser.GetText()[this.m_Parser.Position] == '(';
 	}
@@ -17,7 +17,9 @@ public class TokenLeftBracket : Token
 		{
 			return false;
 		}
-		this.m_Parser.Position++;
+		ScriptParser parser = this.m_Parser;
+		int position = parser.Position + 1;
+		parser.Position = position;
 		return true;
 	}
 }

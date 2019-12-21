@@ -1,61 +1,49 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AIs
 {
 	public class SightModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_Collider = this.m_AI.GetComponent<Collider>();
 		}
 
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
-			bool enabled = this.m_Collider.enabled;
-			this.m_Collider.enabled = false;
 			this.UpdatePlayerVisible();
-			this.m_Collider.enabled = enabled;
-			this.m_LastCheckTime = Time.time;
 		}
 
 		private void UpdatePlayerVisible()
 		{
-			this.m_PlayerVisible = false;
-			float maxValue = float.MaxValue;
-			float num = Vector3.Distance(Player.Get().transform.position, this.m_AI.transform.position);
-			if (num > this.m_AI.m_Params.m_SightRange)
+			this.m_VisiblePlayers.Clear();
+			for (int i = 0; i < ReplicatedLogicalPlayer.s_AllLogicalPlayers.Count; i++)
 			{
-				return;
+				Being component = ReplicatedLogicalPlayer.s_AllLogicalPlayers[i].GetComponent<Being>();
+				if (this.IsBeingVisible(component))
+				{
+					this.m_VisiblePlayers.Add(component);
+				}
 			}
-			if (maxValue < num)
-			{
-				return;
-			}
-			if (!this.IsInSightCone(Player.Get().gameObject))
-			{
-				return;
-			}
+		}
+
+		private bool IsBeingVisible(Being being)
+		{
 			RaycastHit raycastHit;
-			if (Physics.Linecast(this.m_AI.GetHeadTransform().position, Player.Get().GetHeadTransform().position, out raycastHit) && raycastHit.transform == Player.Get().transform)
-			{
-				this.m_PlayerVisible = true;
-			}
+			return Vector3.Distance(being.transform.position, this.m_AI.transform.position) <= this.m_AI.m_Params.m_SightRange && this.IsInSightCone(being.gameObject) && ((Physics.Linecast(this.m_AI.GetHeadTransform().position, being.GetHeadTransform().position, out raycastHit) && raycastHit.transform == being.transform) || (Camera.main && raycastHit.transform == Camera.main.transform));
 		}
 
 		private bool IsInSightCone(GameObject obj)
 		{
 			Vector3 to = -this.m_AI.GetHeadTransform().up.GetNormalized2D();
-			Vector3 normalized = (obj.transform.position - this.m_AI.GetHeadTransform().position).normalized;
-			float num = Vector3.Angle(normalized, to);
-			return num <= this.m_AI.m_Params.m_SightAngle;
+			return Vector3.Angle((obj.transform.position - this.m_AI.GetHeadTransform().position).normalized, to) <= this.m_AI.m_Params.m_SightAngle;
 		}
 
-		public bool m_PlayerVisible;
-
-		private float m_LastCheckTime;
+		public List<Being> m_VisiblePlayers = new List<Being>();
 
 		private Collider m_Collider;
 	}

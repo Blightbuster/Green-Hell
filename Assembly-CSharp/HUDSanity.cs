@@ -33,7 +33,7 @@ public class HUDSanity : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return true;
+		return !Player.Get().m_DreamActive && !HUDReadableItem.Get().isActiveAndEnabled && !CutscenesManager.Get().IsCutscenePlaying() && DifficultySettings.ActivePreset.m_Sanity;
 	}
 
 	protected override void Update()
@@ -49,7 +49,7 @@ public class HUDSanity : HUDBase
 		{
 			return;
 		}
-		this.m_ChangeSanityAnim = ((diff <= 0f) ? -1 : 1);
+		this.m_ChangeSanityAnim = ((diff > 0f) ? 1 : -1);
 		this.m_ChangeSanityTime = Time.time;
 	}
 
@@ -58,19 +58,19 @@ public class HUDSanity : HUDBase
 		Color color = Color.Lerp(this.m_OrigColor, this.m_AlertColor, CJTools.Math.GetProportionalClamp(0f, 1f, (float)PlayerSanityModule.Get().m_Sanity, 50f, 0f));
 		if (this.m_ChangeSanityAnim == -1)
 		{
-			float num = Time.time - this.m_ChangeSanityTime;
-			float num2 = Mathf.Sin(num * 5f);
-			if (num2 >= 0f)
+			float num = Mathf.Sin((Time.time - this.m_ChangeSanityTime) * 5f);
+			if (num >= 0f)
 			{
-				color = Color.Lerp(color, this.m_AlertColor, num2);
+				color = Color.Lerp(color, this.m_AlertColor, num);
 			}
 			else
 			{
 				this.m_ChangeSanityAnim = 0;
 			}
 		}
-		else if (this.m_ChangeSanityAnim == 1)
+		else
 		{
+			int changeSanityAnim = this.m_ChangeSanityAnim;
 		}
 		this.m_Icon.color = color;
 	}

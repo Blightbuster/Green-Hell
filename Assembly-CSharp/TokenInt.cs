@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 public class TokenInt : Token
 {
@@ -6,7 +7,7 @@ public class TokenInt : Token
 	{
 	}
 
-	public override bool Check()
+	public override bool TryToGet()
 	{
 		if (!base.Check())
 		{
@@ -15,7 +16,7 @@ public class TokenInt : Token
 		int num = this.m_Parser.Position;
 		bool flag = false;
 		char c = this.m_Parser.GetText()[num];
-		while (ScriptParser.DIGITS.Contains(this.m_Parser.GetText()[num].ToString()) || c == ScriptParser.MINUS)
+		while (ScriptParser.DIGITS.Contains(this.m_Parser.GetText()[num]) || c == ScriptParser.MINUS)
 		{
 			if (c == ScriptParser.COMA)
 			{
@@ -24,20 +25,12 @@ public class TokenInt : Token
 			num++;
 			c = this.m_Parser.GetText()[num];
 		}
-		return !flag && num > this.m_Parser.Position;
-	}
-
-	public override bool TryToGet()
-	{
-		if (!this.Check())
+		if (!flag && num > this.m_Parser.Position)
 		{
-			return false;
+			this.m_Value = this.m_Parser.GetText().Substring(this.m_Parser.Position, num - this.m_Parser.Position);
+			this.m_Parser.Position = num;
+			return true;
 		}
-		while (ScriptParser.DIGITS.Contains(this.m_Parser.GetText()[this.m_Parser.Position].ToString()) || this.m_Parser.GetText()[this.m_Parser.Position] == ScriptParser.MINUS)
-		{
-			this.m_Value += this.m_Parser.GetText()[this.m_Parser.Position];
-			this.m_Parser.Position++;
-		}
-		return true;
+		return false;
 	}
 }

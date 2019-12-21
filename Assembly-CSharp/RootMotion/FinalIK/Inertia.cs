@@ -8,17 +8,19 @@ namespace RootMotion.FinalIK
 		public void ResetBodies()
 		{
 			this.lastTime = Time.time;
-			foreach (Inertia.Body body in this.bodies)
+			Inertia.Body[] array = this.bodies;
+			for (int i = 0; i < array.Length; i++)
 			{
-				body.Reset();
+				array[i].Reset();
 			}
 		}
 
 		protected override void OnModifyOffset()
 		{
-			foreach (Inertia.Body body in this.bodies)
+			Inertia.Body[] array = this.bodies;
+			for (int i = 0; i < array.Length; i++)
 			{
-				body.Update(this.ik.solver, this.weight, base.deltaTime);
+				array[i].Update(this.ik.solver, this.weight, base.deltaTime);
 			}
 			base.ApplyLimits(this.limits);
 		}

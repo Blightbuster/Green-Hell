@@ -54,11 +54,9 @@ namespace RootMotion.FinalIK
 			if (chainIndex == -1)
 			{
 				nodeIndex = -1;
+				return;
 			}
-			else
-			{
-				nodeIndex = this.chain[chainIndex].GetNodeIndex(transform);
-			}
+			nodeIndex = this.chain[chainIndex].GetNodeIndex(transform);
 		}
 
 		public override IKSolver.Point[] GetPoints()
@@ -114,9 +112,10 @@ namespace RootMotion.FinalIK
 					return false;
 				}
 			}
-			foreach (IKEffector ikeffector in this.effectors)
+			IKEffector[] array = this.effectors;
+			for (int j = 0; j < array.Length; j++)
 			{
-				if (!ikeffector.IsValid(this, ref message))
+				if (!array[j].IsValid(this, ref message))
 				{
 					return false;
 				}
@@ -125,16 +124,18 @@ namespace RootMotion.FinalIK
 			{
 				return false;
 			}
-			foreach (IKMappingLimb ikmappingLimb in this.limbMappings)
+			IKMappingLimb[] array2 = this.limbMappings;
+			for (int j = 0; j < array2.Length; j++)
 			{
-				if (!ikmappingLimb.IsValid(this, ref message))
+				if (!array2[j].IsValid(this, ref message))
 				{
 					return false;
 				}
 			}
-			foreach (IKMappingBone ikmappingBone in this.boneMappings)
+			IKMappingBone[] array3 = this.boneMappings;
+			for (int j = 0; j < array3.Length; j++)
 			{
-				if (!ikmappingBone.IsValid(this, ref message))
+				if (!array3[j].IsValid(this, ref message))
 				{
 					return false;
 				}
@@ -186,18 +187,21 @@ namespace RootMotion.FinalIK
 			{
 				this.chain[i].Initiate(this);
 			}
-			foreach (IKEffector ikeffector in this.effectors)
+			IKEffector[] array = this.effectors;
+			for (int j = 0; j < array.Length; j++)
 			{
-				ikeffector.Initiate(this);
+				array[j].Initiate(this);
 			}
 			this.spineMapping.Initiate(this);
-			foreach (IKMappingBone ikmappingBone in this.boneMappings)
+			IKMappingBone[] array2 = this.boneMappings;
+			for (int j = 0; j < array2.Length; j++)
 			{
-				ikmappingBone.Initiate(this);
+				array2[j].Initiate(this);
 			}
-			foreach (IKMappingLimb ikmappingLimb in this.limbMappings)
+			IKMappingLimb[] array3 = this.limbMappings;
+			for (int j = 0; j < array3.Length; j++)
 			{
-				ikmappingLimb.Initiate(this);
+				array3[j].Initiate(this);
 			}
 		}
 
@@ -276,7 +280,7 @@ namespace RootMotion.FinalIK
 		{
 			if (this.iterations > 0)
 			{
-				for (int i = 0; i < ((!this.FABRIKPass) ? 1 : this.iterations); i++)
+				for (int i = 0; i < (this.FABRIKPass ? this.iterations : 1); i++)
 				{
 					if (this.OnPreIteration != null)
 					{

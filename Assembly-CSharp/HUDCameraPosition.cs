@@ -30,11 +30,11 @@ public class HUDCameraPosition : HUDBase
 	protected override void Update()
 	{
 		base.Update();
-		if (Camera.main == null)
+		if (CameraManager.Get().m_MainCamera == null)
 		{
 			return;
 		}
-		this.m_Text.text = Camera.main.transform.position.ToString();
+		this.m_Text.text = CameraManager.Get().m_MainCamera.transform.position.ToString();
 	}
 
 	[HideInInspector]

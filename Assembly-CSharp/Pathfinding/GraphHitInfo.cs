@@ -5,6 +5,14 @@ namespace Pathfinding
 {
 	public struct GraphHitInfo
 	{
+		public float distance
+		{
+			get
+			{
+				return (this.point - this.origin).magnitude;
+			}
+		}
+
 		public GraphHitInfo(Vector3 point)
 		{
 			this.tangentOrigin = Vector3.zero;
@@ -12,14 +20,6 @@ namespace Pathfinding
 			this.point = point;
 			this.node = null;
 			this.tangent = Vector3.zero;
-		}
-
-		public float distance
-		{
-			get
-			{
-				return (this.point - this.origin).magnitude;
-			}
 		}
 
 		public Vector3 origin;

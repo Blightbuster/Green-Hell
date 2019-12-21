@@ -45,7 +45,7 @@ namespace Pathfinding
 			{
 				return new NNInfoInternal(this.lookupTree.GetNearest((Int3)position, constraint));
 			}
-			float num = (constraint != null && !constraint.constrainDistance) ? float.PositiveInfinity : AstarPath.active.maxNearestNodeDistanceSqr;
+			float num = (constraint == null || constraint.constrainDistance) ? AstarPath.active.maxNearestNodeDistanceSqr : float.PositiveInfinity;
 			NNInfoInternal result = new NNInfoInternal(null);
 			float num2 = float.PositiveInfinity;
 			float num3 = float.PositiveInfinity;
@@ -77,7 +77,7 @@ namespace Pathfinding
 		{
 			if (this.nodes == null || this.nodeCount == this.nodes.Length)
 			{
-				PointNode[] array = new PointNode[(this.nodes == null) ? 4 : Math.Max(this.nodes.Length + 4, this.nodes.Length * 2)];
+				PointNode[] array = new PointNode[(this.nodes != null) ? Math.Max(this.nodes.Length + 4, this.nodes.Length * 2) : 4];
 				for (int i = 0; i < this.nodeCount; i++)
 				{
 					array[i] = this.nodes[i];
@@ -88,7 +88,8 @@ namespace Pathfinding
 			node.GraphIndex = this.graphIndex;
 			node.Walkable = true;
 			this.nodes[this.nodeCount] = node;
-			this.nodeCount++;
+			int nodeCount = this.nodeCount;
+			this.nodeCount = nodeCount + 1;
 			this.AddToLookup(node);
 			return node;
 		}
@@ -96,51 +97,25 @@ namespace Pathfinding
 		protected static int CountChildren(Transform tr)
 		{
 			int num = 0;
-			IEnumerator enumerator = tr.GetEnumerator();
-			try
+			foreach (object obj in tr)
 			{
-				while (enumerator.MoveNext())
-				{
-					object obj = enumerator.Current;
-					Transform tr2 = (Transform)obj;
-					num++;
-					num += PointGraph.CountChildren(tr2);
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
-				}
+				Transform tr2 = (Transform)obj;
+				num++;
+				num += PointGraph.CountChildren(tr2);
 			}
 			return num;
 		}
 
 		protected void AddChildren(ref int c, Transform tr)
 		{
-			IEnumerator enumerator = tr.GetEnumerator();
-			try
+			foreach (object obj in tr)
 			{
-				while (enumerator.MoveNext())
-				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					this.nodes[c].SetPosition((Int3)transform.position);
-					this.nodes[c].Walkable = true;
-					this.nodes[c].gameObject = transform.gameObject;
-					c++;
-					this.AddChildren(ref c, transform);
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
-				}
+				Transform transform = (Transform)obj;
+				this.nodes[c].SetPosition((Int3)transform.position);
+				this.nodes[c].Walkable = true;
+				this.nodes[c].gameObject = transform.gameObject;
+				c++;
+				this.AddChildren(ref c, transform);
 			}
 		}
 
@@ -149,11 +124,11 @@ namespace Pathfinding
 			if (!this.optimizeForSparseGraph || this.nodes == null)
 			{
 				this.lookupTree = new PointKDTree();
+				return;
 			}
-			else
-			{
-				this.lookupTree.Rebuild(this.nodes, 0, this.nodeCount);
-			}
+			PointKDTree pointKDTree = this.lookupTree;
+			GraphNode[] array = this.nodes;
+			pointKDTree.Rebuild(array, 0, this.nodeCount);
 		}
 
 		private void AddToLookup(PointNode node)
@@ -166,7 +141,7 @@ namespace Pathfinding
 			yield return new Progress(0f, "Searching for GameObjects");
 			if (this.root == null)
 			{
-				GameObject[] gos = (this.searchTag == null) ? null : GameObject.FindGameObjectsWithTag(this.searchTag);
+				GameObject[] gos = (this.searchTag != null) ? GameObject.FindGameObjectsWithTag(this.searchTag) : null;
 				if (gos == null)
 				{
 					this.nodes = new PointNode[0];
@@ -186,40 +161,33 @@ namespace Pathfinding
 					this.nodes[k].Walkable = true;
 					this.nodes[k].gameObject = gos[k].gameObject;
 				}
-			}
-			else if (!this.recursive)
-			{
-				this.nodes = new PointNode[this.root.childCount];
-				this.nodeCount = this.nodes.Length;
-				for (int l = 0; l < this.nodes.Length; l++)
-				{
-					this.nodes[l] = new PointNode(this.active);
-				}
-				int num = 0;
-				IEnumerator enumerator = this.root.GetEnumerator();
-				try
-				{
-					while (enumerator.MoveNext())
-					{
-						object obj = enumerator.Current;
-						Transform transform = (Transform)obj;
-						this.nodes[num].SetPosition((Int3)transform.position);
-						this.nodes[num].Walkable = true;
-						this.nodes[num].gameObject = transform.gameObject;
-						num++;
-					}
-				}
-				finally
-				{
-					IDisposable disposable;
-					if ((disposable = (enumerator as IDisposable)) != null)
-					{
-						disposable.Dispose();
-					}
-				}
+				gos = null;
 			}
 			else
 			{
+				if (!this.recursive)
+				{
+					this.nodes = new PointNode[this.root.childCount];
+					this.nodeCount = this.nodes.Length;
+					for (int l = 0; l < this.nodes.Length; l++)
+					{
+						this.nodes[l] = new PointNode(this.active);
+					}
+					int num = 0;
+					using (IEnumerator enumerator = this.root.GetEnumerator())
+					{
+						while (enumerator.MoveNext())
+						{
+							object obj = enumerator.Current;
+							Transform transform = (Transform)obj;
+							this.nodes[num].SetPosition((Int3)transform.position);
+							this.nodes[num].Walkable = true;
+							this.nodes[num].gameObject = transform.gameObject;
+							num++;
+						}
+						goto IL_2B5;
+					}
+				}
 				this.nodes = new PointNode[PointGraph.CountChildren(this.root)];
 				this.nodeCount = this.nodes.Length;
 				for (int m = 0; m < this.nodes.Length; m++)
@@ -229,6 +197,7 @@ namespace Pathfinding
 				int num2 = 0;
 				this.AddChildren(ref num2, this.root);
 			}
+			IL_2B5:
 			if (this.optimizeForSparseGraph)
 			{
 				yield return new Progress(0.15f, "Building node lookup");
@@ -248,27 +217,28 @@ namespace Pathfinding
 					maxPossibleSqrRange = (long)(Mathf.Max(this.limits.x, Mathf.Max(this.limits.y, Mathf.Max(this.limits.z, this.maxDistance))) * 1000f) + 1L;
 					maxPossibleSqrRange *= maxPossibleSqrRange;
 				}
-				for (int i = 0; i < this.nodes.Length; i++)
+				int num6;
+				for (int i = 0; i < this.nodes.Length; i = num6 + 1)
 				{
 					if (i % 512 == 0)
 					{
 						yield return new Progress(Mathf.Lerp(0.15f, 1f, (float)i / (float)this.nodes.Length), "Connecting nodes");
 					}
 					connections.Clear();
-					PointNode node = this.nodes[i];
+					PointNode pointNode = this.nodes[i];
 					if (this.optimizeForSparseGraph)
 					{
 						candidateConnections.Clear();
-						this.lookupTree.GetInRange(node.position, maxPossibleSqrRange, candidateConnections);
+						this.lookupTree.GetInRange(pointNode.position, maxPossibleSqrRange, candidateConnections);
 						for (int n = 0; n < candidateConnections.Count; n++)
 						{
-							PointNode pointNode = candidateConnections[n] as PointNode;
+							PointNode pointNode2 = candidateConnections[n] as PointNode;
 							float num3;
-							if (pointNode != node && this.IsValidConnection(node, pointNode, out num3))
+							if (pointNode2 != pointNode && this.IsValidConnection(pointNode, pointNode2, out num3))
 							{
 								connections.Add(new Connection
 								{
-									node = pointNode,
+									node = pointNode2,
 									cost = (uint)Mathf.RoundToInt(num3 * 1000f)
 								});
 							}
@@ -280,22 +250,26 @@ namespace Pathfinding
 						{
 							if (i != num4)
 							{
-								PointNode pointNode2 = this.nodes[num4];
+								PointNode pointNode3 = this.nodes[num4];
 								float num5;
-								if (this.IsValidConnection(node, pointNode2, out num5))
+								if (this.IsValidConnection(pointNode, pointNode3, out num5))
 								{
 									connections.Add(new Connection
 									{
-										node = pointNode2,
+										node = pointNode3,
 										cost = (uint)Mathf.RoundToInt(num5 * 1000f)
 									});
 								}
 							}
 						}
 					}
-					node.connections = connections.ToArray();
+					pointNode.connections = connections.ToArray();
+					num6 = i;
 				}
+				connections = null;
+				candidateConnections = null;
 			}
+			yield break;
 			yield break;
 		}
 

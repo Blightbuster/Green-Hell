@@ -108,7 +108,7 @@ namespace Pathfinding
 					}
 				}
 			}
-			int num = (this.connections == null) ? 0 : this.connections.Length;
+			int num = (this.connections != null) ? this.connections.Length : 0;
 			Connection[] array = ArrayPool<Connection>.ClaimWithExactLength(num + 1);
 			for (int j = 0; j < num; j++)
 			{
@@ -191,15 +191,13 @@ namespace Pathfinding
 			if (this.connections == null)
 			{
 				ctx.writer.Write(-1);
+				return;
 			}
-			else
+			ctx.writer.Write(this.connections.Length);
+			for (int i = 0; i < this.connections.Length; i++)
 			{
-				ctx.writer.Write(this.connections.Length);
-				for (int i = 0; i < this.connections.Length; i++)
-				{
-					ctx.SerializeNodeReference(this.connections[i].node);
-					ctx.writer.Write(this.connections[i].cost);
-				}
+				ctx.SerializeNodeReference(this.connections[i].node);
+				ctx.writer.Write(this.connections[i].cost);
 			}
 		}
 
@@ -209,18 +207,16 @@ namespace Pathfinding
 			if (num == -1)
 			{
 				this.connections = null;
+				return;
 			}
-			else
+			this.connections = ArrayPool<Connection>.ClaimWithExactLength(num);
+			for (int i = 0; i < num; i++)
 			{
-				this.connections = ArrayPool<Connection>.ClaimWithExactLength(num);
-				for (int i = 0; i < num; i++)
+				this.connections[i] = new Connection
 				{
-					this.connections[i] = new Connection
-					{
-						node = ctx.DeserializeNodeReference(),
-						cost = ctx.reader.ReadUInt32()
-					};
-				}
+					node = ctx.DeserializeNodeReference(),
+					cost = ctx.reader.ReadUInt32()
+				};
 			}
 		}
 

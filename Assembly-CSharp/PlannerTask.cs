@@ -5,7 +5,7 @@ public class PlannerTask
 {
 	public virtual void Parse(Key key)
 	{
-		this.m_LocalizedText = GreenHellGame.Instance.GetLocalization().Get(key.GetVariable(1).SValue);
+		this.m_LocalizedText = GreenHellGame.Instance.GetLocalization().Get(key.GetVariable(1).SValue, true);
 		this.m_ShowInList = key.GetVariable(2).BValue;
 		this.m_PositivePlanned = key.GetVariable(3).FValue;
 		this.m_NegativePlanned = key.GetVariable(4).FValue;

@@ -29,7 +29,7 @@ public class ScriptParser
 
 	public bool Parse(string file_name, bool from_asset = true)
 	{
-		string text = (!from_asset) ? (Application.dataPath + "/" + file_name) : ("Scripts/" + ((file_name.LastIndexOf(".") < 0) ? file_name : file_name.Substring(0, file_name.LastIndexOf("."))));
+		string text = from_asset ? ("Scripts/" + ((file_name.LastIndexOf(".") >= 0) ? file_name.Substring(0, file_name.LastIndexOf(".")) : file_name)) : (Application.dataPath + "/" + file_name);
 		if (from_asset)
 		{
 			this.m_TextAsset = (Resources.Load(text) as TextAsset);
@@ -62,21 +62,10 @@ public class ScriptParser
 	public bool Write(string file_name, bool display_warning_message = true)
 	{
 		string path = Application.dataPath + "/" + file_name;
-		if (!display_warning_message || File.Exists(path))
+		if (display_warning_message)
 		{
+			File.Exists(path);
 		}
-		StreamWriter streamWriter = new StreamWriter(path);
-		if (streamWriter == null)
-		{
-			return false;
-		}
-		for (int i = 0; i < this.m_Keys.Count; i++)
-		{
-			Key key = this.m_Keys[i];
-			key.Write(streamWriter, 0);
-			streamWriter.Write("\n");
-		}
-		streamWriter.Close();
 		return true;
 	}
 
@@ -99,7 +88,7 @@ public class ScriptParser
 	private void SkipWhiteSpaces()
 	{
 		string text = this.m_Text[this.m_Position].ToString();
-		while (text.IndexOfAny(ScriptParser.WHITE_SPACES) != -1 || text.IndexOfAny(ScriptParser.LINE_END) != -1 || text.IndexOfAny(ScriptParser.TABS) != -1)
+		while (text.IndexOfAny(ScriptParser.WHITE_SPACES) != -1 || text.IndexOfAny(ScriptParser.TABS) != -1)
 		{
 			this.m_Position++;
 			if (this.m_Position >= this.m_Text.Length)
@@ -124,7 +113,12 @@ public class ScriptParser
 		TokenBool tokenBool = new TokenBool(this);
 		TokenLeftCurlyBracket tokenLeftCurlyBracket = new TokenLeftCurlyBracket(this);
 		TokenRightCurlyBracket tokenRightCurlyBracket = new TokenRightCurlyBracket(this);
-		if (tokenComment.TryToGet())
+		TokenNewline tokenNewline = new TokenNewline(this);
+		if (tokenNewline.TryToGet())
+		{
+			this.m_Tokens.Add(tokenNewline);
+		}
+		else if (tokenComment.TryToGet())
 		{
 			this.m_Tokens.Add(tokenComment);
 		}
@@ -186,136 +180,139 @@ public class ScriptParser
 		for (int i = 0; i < this.m_Tokens.Count; i++)
 		{
 			Token token = this.m_Tokens[i];
-			if (token.GetType() == typeof(TokenKeyword))
+			if (!(token.GetType() == typeof(TokenNewline)))
 			{
-				if (flag)
+				if (token.GetType() == typeof(TokenKeyword))
 				{
-					Debug.Log("Parsing error around " + token.GetValue());
-					return;
-				}
-				Key key2 = new Key(token.GetValue());
-				if (key != null)
-				{
-					if (flag5)
+					if (flag)
 					{
-						key2.m_Parent = key;
+						Debug.Log("Parsing error around " + token.GetValue());
+						return;
 					}
-					else if (key.m_Parent != null)
+					Key key2 = new Key(token.GetValue());
+					if (key != null)
 					{
-						key2.m_Parent = key.m_Parent;
+						if (flag5)
+						{
+							key2.m_Parent = key;
+						}
+						else if (key.m_Parent != null)
+						{
+							key2.m_Parent = key.m_Parent;
+						}
+					}
+					key = key2;
+					if (key.m_Parent != null)
+					{
+						key.m_Parent.AddKey(key);
+					}
+					else
+					{
+						this.m_Keys.Add(key);
+					}
+					flag = true;
+					flag5 = false;
+				}
+				else if (token.GetType() == typeof(TokenLeftBracket))
+				{
+					if (!flag || flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? key.GetName() : "unknown");
+						return;
+					}
+					flag2 = true;
+				}
+				else if (token.GetType() == typeof(TokenRightBracket))
+				{
+					if (!flag || !flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? key.GetName() : "unknown");
+						return;
+					}
+					flag2 = false;
+					flag = false;
+				}
+				else if (token.GetType() == typeof(TokenString))
+				{
+					if (!flag || !flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? token.GetValue() : "unknown");
+						return;
+					}
+					key.AddVariable(new CJVariable
+					{
+						SValue = token.GetValue()
+					});
+				}
+				else if (token.GetType() == typeof(TokenFloat))
+				{
+					if (!flag || !flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? token.GetValue() : "unknown");
+						return;
+					}
+					key.AddVariable(new CJVariable
+					{
+						FValue = float.Parse(token.GetValue())
+					});
+				}
+				else if (token.GetType() == typeof(TokenInt))
+				{
+					if (!flag || !flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? token.GetValue() : "unknown");
+						return;
+					}
+					key.AddVariable(new CJVariable
+					{
+						IValue = int.Parse(token.GetValue())
+					});
+				}
+				else if (token.GetType() == typeof(TokenBool))
+				{
+					if (!flag || !flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? token.GetValue() : "unknown");
+						return;
+					}
+					key.AddVariable(new CJVariable
+					{
+						BValue = bool.Parse(token.GetValue())
+					});
+				}
+				else if (token.GetType() == typeof(TokenComma))
+				{
+					if (!flag || !flag2)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? key.GetName() : "unknown");
+						return;
 					}
 				}
-				key = key2;
-				if (key.m_Parent != null)
+				else if (token.GetType() == typeof(TokenLeftCurlyBracket))
 				{
-					key.m_Parent.AddKey(key);
-				}
-				else
-				{
-					this.m_Keys.Add(key);
-				}
-				flag = true;
-				flag5 = false;
-			}
-			else if (token.GetType() == typeof(TokenLeftBracket))
-			{
-				if (!flag || flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : key.GetName());
-					return;
-				}
-				flag2 = true;
-			}
-			else if (token.GetType() == typeof(TokenRightBracket))
-			{
-				if (!flag || !flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : key.GetName());
-					return;
-				}
-				flag2 = false;
-				flag = false;
-			}
-			else if (token.GetType() == typeof(TokenString))
-			{
-				if (!flag || !flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : token.GetValue());
-					return;
-				}
-				key.AddVariable(new CJVariable
-				{
-					SValue = token.GetValue()
-				});
-			}
-			else if (token.GetType() == typeof(TokenFloat))
-			{
-				if (!flag || !flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : token.GetValue());
-					return;
-				}
-				key.AddVariable(new CJVariable
-				{
-					FValue = float.Parse(token.GetValue())
-				});
-			}
-			else if (token.GetType() == typeof(TokenInt))
-			{
-				if (!flag || !flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : token.GetValue());
-					return;
-				}
-				key.AddVariable(new CJVariable
-				{
-					IValue = int.Parse(token.GetValue())
-				});
-			}
-			else if (token.GetType() == typeof(TokenBool))
-			{
-				if (!flag || !flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : token.GetValue());
-					return;
-				}
-				key.AddVariable(new CJVariable
-				{
-					BValue = bool.Parse(token.GetValue())
-				});
-			}
-			else if (token.GetType() == typeof(TokenComma))
-			{
-				if (!flag || !flag2)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : key.GetName());
-					return;
-				}
-			}
-			else if (token.GetType() == typeof(TokenLeftCurlyBracket))
-			{
-				if (flag || flag2 || key == null)
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : key.GetName());
-					return;
-				}
-				flag3 = true;
-				flag4 = false;
-				flag5 = true;
-			}
-			else if (token.GetType() == typeof(TokenRightCurlyBracket))
-			{
-				if (flag || flag2 || key == null || (!flag3 && !flag4))
-				{
-					Debug.Log(("Parsing error around " + key == null) ? "unknown" : key.GetName());
-					return;
-				}
-				flag3 = false;
-				flag4 = true;
-				key = key.m_Parent;
-				if (key != null && key.m_Parent != null)
-				{
+					if (flag || flag2 || key == null)
+					{
+						Debug.Log(("Parsing error around " + key != null) ? key.GetName() : "unknown");
+						return;
+					}
 					flag3 = true;
+					flag4 = false;
+					flag5 = true;
+				}
+				else if (token.GetType() == typeof(TokenRightCurlyBracket))
+				{
+					if (flag || flag2 || key == null || (!flag3 && !flag4))
+					{
+						Debug.Log(("Parsing error around " + key != null) ? key.GetName() : "unknown");
+						return;
+					}
+					flag3 = false;
+					flag4 = true;
+					key = key.m_Parent;
+					if (key != null && key.m_Parent != null)
+					{
+						flag3 = true;
+					}
 				}
 			}
 		}
@@ -360,12 +357,79 @@ public class ScriptParser
 
 	public static char[] LINE_END = new char[]
 	{
+		'\r',
 		'\n'
 	};
 
-	public static string LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	public static char[] LETTERS = new char[]
+	{
+		'a',
+		'b',
+		'c',
+		'd',
+		'e',
+		'f',
+		'g',
+		'h',
+		'i',
+		'j',
+		'k',
+		'l',
+		'm',
+		'n',
+		'o',
+		'p',
+		'q',
+		'r',
+		's',
+		't',
+		'u',
+		'v',
+		'w',
+		'x',
+		'y',
+		'z',
+		'A',
+		'B',
+		'C',
+		'D',
+		'E',
+		'F',
+		'G',
+		'H',
+		'I',
+		'J',
+		'K',
+		'L',
+		'M',
+		'N',
+		'O',
+		'P',
+		'Q',
+		'R',
+		'S',
+		'T',
+		'U',
+		'V',
+		'W',
+		'X',
+		'Y',
+		'Z'
+	};
 
-	public static string DIGITS = "0123456789";
+	public static char[] DIGITS = new char[]
+	{
+		'0',
+		'1',
+		'2',
+		'3',
+		'4',
+		'5',
+		'6',
+		'7',
+		'8',
+		'9'
+	};
 
 	public static char COMA = ',';
 

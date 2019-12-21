@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IEventSystemHandler
+public class UIListEx : MonoBehaviour, IPointerClickHandler, IEventSystemHandler, IPointerDownHandler
 {
 	private void Awake()
 	{
@@ -86,11 +85,9 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 			UnityEngine.Object.Destroy(this.m_DeleteButtons[idx].ui_element);
 			this.m_DeleteButtons.RemoveAt(idx);
 			this.UpdateElements();
+			return;
 		}
-		else
-		{
-			DebugUtils.Assert(DebugUtils.AssertType.Info);
-		}
+		DebugUtils.Assert(DebugUtils.AssertType.Info);
 	}
 
 	private void Update()
@@ -169,8 +166,7 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 		{
 			return;
 		}
-		int num = this.m_Elements.Count - this.m_Capacity;
-		if (num > 0)
+		if (this.m_Elements.Count - this.m_Capacity > 0)
 		{
 			this.m_Slider.normalizedValue = (float)this.m_ListStartIndex / (float)(this.m_Elements.Count - this.m_Capacity);
 		}
@@ -194,11 +190,9 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 			if (this.m_Elements.Count - this.m_ListStartIndex > this.m_Capacity)
 			{
 				this.m_ButtonDown.enabled = true;
+				return;
 			}
-			else
-			{
-				this.m_ButtonDown.enabled = false;
-			}
+			this.m_ButtonDown.enabled = false;
 		}
 	}
 
@@ -237,7 +231,7 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 		this.m_SelectionIndex--;
 		if (this.m_SelectionIndex < 0)
 		{
-			this.m_SelectionIndex = ((this.m_Elements.Count <= 0) ? 0 : (this.m_Elements.Count - 1));
+			this.m_SelectionIndex = ((this.m_Elements.Count > 0) ? (this.m_Elements.Count - 1) : 0);
 		}
 		if (this.m_SelectionIndex >= this.m_ListStartIndex + this.m_Capacity)
 		{
@@ -261,7 +255,7 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 		this.m_SelectionIndex = index;
 		if (this.m_SelectionIndex < 0)
 		{
-			this.m_SelectionIndex = ((this.m_Elements.Count <= 0) ? 0 : (this.m_Elements.Count - 1));
+			this.m_SelectionIndex = ((this.m_Elements.Count > 0) ? (this.m_Elements.Count - 1) : 0);
 		}
 		if (this.m_SelectionIndex > this.m_Elements.Count - 1)
 		{
@@ -296,7 +290,11 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 
 	public string GetElementText(int index)
 	{
-		return (index < 0 || index >= this.m_Elements.Count) ? string.Empty : this.m_Elements[index].text;
+		if (index < 0 || index >= this.m_Elements.Count)
+		{
+			return string.Empty;
+		}
+		return this.m_Elements[index].text;
 	}
 
 	public int GetSelectedElementData()
@@ -306,7 +304,11 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 
 	public int GetElementData(int index)
 	{
-		return (index < 0 || index >= this.m_Elements.Count) ? -1 : this.m_Elements[index].data;
+		if (index < 0 || index >= this.m_Elements.Count)
+		{
+			return -1;
+		}
+		return this.m_Elements[index].data;
 	}
 
 	public int GetCount()
@@ -409,12 +411,7 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 
 	public void SortAlphabetically()
 	{
-		List<UIListExElement> elements = this.m_Elements;
-		if (UIListEx.<>f__mg$cache0 == null)
-		{
-			UIListEx.<>f__mg$cache0 = new Comparison<UIListExElement>(UIListEx.CompareListByName);
-		}
-		elements.Sort(UIListEx.<>f__mg$cache0);
+		this.m_Elements.Sort(new Comparison<UIListExElement>(UIListEx.CompareListByName));
 	}
 
 	[HideInInspector]
@@ -457,7 +454,4 @@ public class UIListEx : MonoBehaviour, IPointerClickHandler, IPointerDownHandler
 	public bool m_Sorted;
 
 	private float m_LastSliderVal;
-
-	[CompilerGenerated]
-	private static Comparison<UIListExElement> <>f__mg$cache0;
 }

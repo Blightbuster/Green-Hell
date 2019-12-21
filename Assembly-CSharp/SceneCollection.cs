@@ -11,8 +11,7 @@ public class SceneCollection : MonoBehaviour
 		{
 			if (this.names[i].Contains("x10") && this.names[i].Contains("z33"))
 			{
-				int num = 0;
-				num++;
+				int num = 0 + 1;
 			}
 		}
 	}

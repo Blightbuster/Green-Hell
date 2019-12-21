@@ -27,12 +27,17 @@ public class BalanceAttachmentSpawner : BalanceSpawner
 				item.transform.position = Vector3.zero;
 				item.transform.rotation = Quaternion.identity;
 				item.transform.SetParent(this.m_ObjectList[i].m_List[0].transform, false);
-				item.m_CanSave = false;
-				for (int j = 0; j < base.transform.childCount; j++)
+				item.m_CanSaveNotTriggered = false;
+				Item[] componentsInChildren = item.GetComponentsInChildren<Item>();
+				for (int j = 0; j < componentsInChildren.Length; j++)
 				{
-					if (base.transform.GetChild(j) == this.m_ObjectList[i].m_List[0].transform)
+					componentsInChildren[j].m_CanSaveNotTriggered = false;
+				}
+				for (int k = 0; k < base.transform.childCount; k++)
+				{
+					if (base.transform.GetChild(k) == this.m_ObjectList[i].m_List[0].transform)
 					{
-						child_num = j;
+						child_num = k;
 						return item.gameObject;
 					}
 				}
@@ -47,22 +52,27 @@ public class BalanceAttachmentSpawner : BalanceSpawner
 		item.transform.position = Vector3.zero;
 		item.transform.rotation = Quaternion.identity;
 		item.transform.SetParent(base.transform.GetChild(child_num), false);
-		item.m_CanSave = false;
-		this.m_GameObjectsToDestroy.Clear();
-		for (int i = 0; i < item.gameObject.transform.childCount; i++)
+		item.m_CanSaveNotTriggered = false;
+		Item[] componentsInChildren = item.GetComponentsInChildren<Item>();
+		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
-			if ((1 << i & active_children_mask) > 0)
+			componentsInChildren[i].m_CanSaveNotTriggered = false;
+		}
+		this.m_GameObjectsToDestroy.Clear();
+		for (int j = 0; j < item.gameObject.transform.childCount; j++)
+		{
+			if ((1 << j & active_children_mask) > 0)
 			{
-				item.gameObject.transform.GetChild(i).gameObject.SetActive(true);
+				item.gameObject.transform.GetChild(j).gameObject.SetActive(true);
 			}
 			else
 			{
-				this.m_GameObjectsToDestroy.Add(item.gameObject.transform.GetChild(i).gameObject);
+				this.m_GameObjectsToDestroy.Add(item.gameObject.transform.GetChild(j).gameObject);
 			}
 		}
-		for (int j = 0; j < this.m_GameObjectsToDestroy.Count; j++)
+		for (int k = 0; k < this.m_GameObjectsToDestroy.Count; k++)
 		{
-			UnityEngine.Object.Destroy(this.m_GameObjectsToDestroy[j]);
+			UnityEngine.Object.Destroy(this.m_GameObjectsToDestroy[k]);
 		}
 		return item;
 	}

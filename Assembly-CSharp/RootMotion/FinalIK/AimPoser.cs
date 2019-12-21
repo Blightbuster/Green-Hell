@@ -25,7 +25,7 @@ namespace RootMotion.FinalIK
 		{
 			for (int i = 0; i < this.poses.Length; i++)
 			{
-				this.poses[i].SetAngleBuffer((this.poses[i] != pose) ? 0f : this.angleBuffer);
+				this.poses[i].SetAngleBuffer((this.poses[i] == pose) ? this.angleBuffer : 0f);
 			}
 		}
 
@@ -53,9 +53,7 @@ namespace RootMotion.FinalIK
 					{
 						forward = Vector3.forward;
 					}
-					Vector3 from = new Vector3(d.x, 0f, d.z);
-					float num = Vector3.Angle(from, forward);
-					if (num > this.yaw + this.angleBuffer)
+					if (Vector3.Angle(new Vector3(d.x, 0f, d.z), forward) > this.yaw + this.angleBuffer)
 					{
 						return false;
 					}
@@ -64,9 +62,8 @@ namespace RootMotion.FinalIK
 				{
 					return true;
 				}
-				float num2 = Vector3.Angle(Vector3.up, this.direction);
-				float num3 = Vector3.Angle(Vector3.up, d);
-				return Mathf.Abs(num3 - num2) < this.pitch + this.angleBuffer;
+				float num = Vector3.Angle(Vector3.up, this.direction);
+				return Mathf.Abs(Vector3.Angle(Vector3.up, d) - num) < this.pitch + this.angleBuffer;
 			}
 
 			public void SetAngleBuffer(float value)

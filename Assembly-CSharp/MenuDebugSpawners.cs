@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MenuDebugSpawners : MenuScreen
+public class MenuDebugSpawners : MenuDebugScreen
 {
 	protected override void Awake()
 	{
@@ -19,18 +19,26 @@ public class MenuDebugSpawners : MenuScreen
 			if (scriptParser.GetKey(i).GetName() == "DebugSpawner")
 			{
 				string svalue = scriptParser.GetKey(i).GetVariable(0).SValue;
-				this.m_List.AddElement(svalue, -1);
+				string[] data = (scriptParser.GetKey(i).GetVariablesCount() > 1) ? scriptParser.GetKey(i).GetVariable(1).SValue.Split(new char[]
+				{
+					','
+				}) : new string[0];
+				this.m_List.AddElement<string[]>(svalue, data);
 			}
 		}
 	}
 
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.m_List.SetFocus(true);
+		if (this.m_ButtonSpawnAndLoad != null)
+		{
+			this.m_ButtonSpawnAndLoad.gameObject.SetActive(false);
+		}
 	}
 
-	public void OnButtonSpawn()
+	public void OnButtonSpawn(bool load_scene)
 	{
 		string selectedElementText = this.m_List.GetSelectedElementText();
 		if (selectedElementText.Length == 0)
@@ -42,7 +50,7 @@ public class MenuDebugSpawners : MenuScreen
 		{
 			if (array[i].gameObject.name == selectedElementText)
 			{
-				Player.Get().gameObject.transform.position = array[i].gameObject.transform.position;
+				Player.Get().Reposition(array[i].gameObject.transform.position, null);
 				MenuInGameManager.Get().ShowPrevoiusScreen();
 				return;
 			}
@@ -52,4 +60,6 @@ public class MenuDebugSpawners : MenuScreen
 	public UIList m_List;
 
 	public Button m_ButtonSpawn;
+
+	public Button m_ButtonSpawnAndLoad;
 }

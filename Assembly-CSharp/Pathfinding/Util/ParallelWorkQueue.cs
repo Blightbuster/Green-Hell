@@ -29,12 +29,17 @@ namespace Pathfinding.Util
 				this.waitEvents[i] = new ManualResetEvent(false);
 				ThreadPool.QueueUserWorkItem(delegate(object threadIndex)
 				{
-					this.$this.RunTask((int)threadIndex);
+					this.RunTask((int)threadIndex);
 				}, i);
 			}
-			while (!WaitHandle.WaitAll(this.waitEvents, progressTimeoutMillis))
+			for (;;)
 			{
-				object obj = this.queue;
+				WaitHandle[] waitHandles = this.waitEvents;
+				if (WaitHandle.WaitAll(waitHandles, progressTimeoutMillis))
+				{
+					break;
+				}
+				Queue<T> obj = this.queue;
 				int count;
 				lock (obj)
 				{
@@ -47,6 +52,7 @@ namespace Pathfinding.Util
 				throw this.innerException;
 			}
 			yield break;
+			yield break;
 		}
 
 		private void RunTask(int threadIndex)
@@ -55,7 +61,7 @@ namespace Pathfinding.Util
 			{
 				for (;;)
 				{
-					object obj = this.queue;
+					Queue<T> obj = this.queue;
 					T arg;
 					lock (obj)
 					{
@@ -71,8 +77,8 @@ namespace Pathfinding.Util
 			catch (Exception ex)
 			{
 				this.innerException = ex;
-				object obj2 = this.queue;
-				lock (obj2)
+				Queue<T> obj = this.queue;
+				lock (obj)
 				{
 					this.queue.Clear();
 				}

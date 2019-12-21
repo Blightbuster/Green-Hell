@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class IKMappingLimb : IKMapping
 	{
-		public IKMappingLimb()
-		{
-		}
-
-		public IKMappingLimb(Transform bone1, Transform bone2, Transform bone3, Transform parentBone = null)
-		{
-			this.SetBones(bone1, bone2, bone3, parentBone);
-		}
-
 		public override bool IsValid(IKSolver solver, ref string message)
 		{
 			return base.IsValid(solver, ref message) && base.BoneIsValid(this.bone1, solver, ref message, null) && base.BoneIsValid(this.bone2, solver, ref message, null) && base.BoneIsValid(this.bone3, solver, ref message, null);
@@ -43,6 +34,15 @@ namespace RootMotion.FinalIK
 		{
 			this.boneMap1.defaultLocalTargetRotation = Quaternion.Inverse(Quaternion.Inverse(this.bone1.rotation) * Quaternion.LookRotation(this.bone2.position - this.bone1.position, this.bone1.rotation * -upper));
 			this.boneMap2.defaultLocalTargetRotation = Quaternion.Inverse(Quaternion.Inverse(this.bone2.rotation) * Quaternion.LookRotation(this.bone3.position - this.bone2.position, this.bone2.rotation * -lower));
+		}
+
+		public IKMappingLimb()
+		{
+		}
+
+		public IKMappingLimb(Transform bone1, Transform bone2, Transform bone3, Transform parentBone = null)
+		{
+			this.SetBones(bone1, bone2, bone3, parentBone);
 		}
 
 		public void SetBones(Transform bone1, Transform bone2, Transform bone3, Transform parentBone = null)

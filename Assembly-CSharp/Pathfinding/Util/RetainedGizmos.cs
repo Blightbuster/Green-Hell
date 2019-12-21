@@ -61,15 +61,14 @@ namespace Pathfinding.Util
 		public void FinalizeDraw()
 		{
 			this.RemoveUnusedMeshes(this.meshes);
-			Camera current = Camera.current;
-			Plane[] planes = GeometryUtility.CalculateFrustumPlanes(current);
+			Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.current);
 			if (this.surfaceMaterial == null || this.lineMaterial == null)
 			{
 				return;
 			}
 			for (int i = 0; i <= 1; i++)
 			{
-				Material material = (i != 0) ? this.lineMaterial : this.surfaceMaterial;
+				Material material = (i == 0) ? this.surfaceMaterial : this.lineMaterial;
 				for (int j = 0; j < material.passCount; j++)
 				{
 					material.SetPass(j);
@@ -157,7 +156,7 @@ namespace Pathfinding.Util
 				{
 					PathNode pathNode = this.debugData.GetPathNode(node.NodeIndex);
 					this.AddHash((int)pathNode.pathID);
-					this.AddHash((pathNode.pathID != this.debugData.PathID) ? 0 : 1);
+					this.AddHash((pathNode.pathID == this.debugData.PathID) ? 1 : 0);
 					this.AddHash((int)pathNode.F);
 				}
 			}

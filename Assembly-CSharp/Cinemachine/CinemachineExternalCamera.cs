@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[DisallowMultipleComponent]
-	[ExecuteInEditMode]
 	[DocumentationSorting(14f, DocumentationSortingAttribute.Level.UserRef)]
 	[RequireComponent(typeof(Camera))]
+	[DisallowMultipleComponent]
+	[ExecuteInEditMode]
 	[AddComponentMenu("Cinemachine/CinemachineExternalCamera")]
 	public class CinemachineExternalCamera : CinemachineVirtualCameraBase
 	{

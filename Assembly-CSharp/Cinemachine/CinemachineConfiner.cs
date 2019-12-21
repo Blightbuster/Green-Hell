@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[ExecuteInEditMode]
 	[DocumentationSorting(22f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	[AddComponentMenu("")]
+	[SaveDuringPlay]
 	public class CinemachineConfiner : CinemachineExtension
 	{
 		public bool CameraWasDisplaced(CinemachineVirtualCameraBase vcam)
@@ -62,8 +62,8 @@ namespace Cinemachine
 
 		private bool ValidatePathCache()
 		{
-			Type type = (!(this.m_BoundingShape2D == null)) ? this.m_BoundingShape2D.GetType() : null;
-			if (type == typeof(PolygonCollider2D))
+			Type left = (this.m_BoundingShape2D == null) ? null : this.m_BoundingShape2D.GetType();
+			if (left == typeof(PolygonCollider2D))
 			{
 				PolygonCollider2D polygonCollider2D = this.m_BoundingShape2D as PolygonCollider2D;
 				if (this.m_pathCache == null || this.m_pathCache.Count != polygonCollider2D.pathCount)
@@ -82,7 +82,7 @@ namespace Cinemachine
 				}
 				return true;
 			}
-			if (type == typeof(CompositeCollider2D))
+			if (left == typeof(CompositeCollider2D))
 			{
 				CompositeCollider2D compositeCollider2D = this.m_BoundingShape2D as CompositeCollider2D;
 				if (this.m_pathCache == null || this.m_pathCache.Count != compositeCollider2D.pathCount)

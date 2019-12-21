@@ -130,8 +130,8 @@ namespace Pathfinding
 				while (i > num3 + 1)
 				{
 					int num4 = (i + num3) / 2;
-					Vector3 start2 = (start != num) ? ((Vector3)nodes[start].position) : startPoint;
-					Vector3 end2 = (num4 != end) ? ((Vector3)nodes[num4].position) : endPoint;
+					Vector3 start2 = (start == num) ? startPoint : ((Vector3)nodes[start].position);
+					Vector3 end2 = (num4 == end) ? endPoint : ((Vector3)nodes[num4].position);
 					GraphHitInfo graphHitInfo;
 					if (graph.Linecast(start2, end2, nodes[start], out graphHitInfo))
 					{
@@ -150,19 +150,19 @@ namespace Pathfinding
 				}
 				else
 				{
-					Vector3 start3 = (start != num) ? ((Vector3)nodes[start].position) : startPoint;
-					Vector3 end3 = (num3 != end) ? ((Vector3)nodes[num3].position) : endPoint;
+					Vector3 start3 = (start == num) ? startPoint : ((Vector3)nodes[start].position);
+					Vector3 end3 = (num3 == end) ? endPoint : ((Vector3)nodes[num3].position);
 					GraphHitInfo graphHitInfo2;
 					graph.Linecast(start3, end3, nodes[start], out graphHitInfo2, result);
 					long num5 = 0L;
 					long num6 = 0L;
 					for (int j = start; j <= num3; j++)
 					{
-						num5 += (long)((ulong)nodes[j].Penalty + (ulong)((long)((!(this.path.seeker != null)) ? 0 : this.path.seeker.tagPenalties[(int)((UIntPtr)nodes[j].Tag)])));
+						num5 += (long)((ulong)nodes[j].Penalty + (ulong)((long)((this.path.seeker != null) ? this.path.seeker.tagPenalties[(int)nodes[j].Tag] : 0)));
 					}
 					for (int k = count; k < result.Count; k++)
 					{
-						num6 += (long)((ulong)result[k].Penalty + (ulong)((long)((!(this.path.seeker != null)) ? 0 : this.path.seeker.tagPenalties[(int)((UIntPtr)result[k].Tag)])));
+						num6 += (long)((ulong)result[k].Penalty + (ulong)((long)((this.path.seeker != null) ? this.path.seeker.tagPenalties[(int)result[k].Tag] : 0)));
 					}
 					if ((double)num5 * 1.4 * (double)(num3 - start + 1) < (double)(num6 * (long)(result.Count - count)) || result[result.Count - 1] != nodes[num3])
 					{
@@ -223,7 +223,7 @@ namespace Pathfinding
 			get
 			{
 				TriangleMeshNode triangleMeshNode = this.CurrentNode;
-				Vector3 b = (triangleMeshNode == null) ? this.currentPosition : triangleMeshNode.ClosestPointOnNode(this.currentPosition);
+				Vector3 b = (triangleMeshNode != null) ? triangleMeshNode.ClosestPointOnNode(this.currentPosition) : this.currentPosition;
 				return (this.exactEnd - b).magnitude;
 			}
 		}
@@ -342,8 +342,7 @@ namespace Pathfinding
 				{
 					return true;
 				}
-				Vector3 a = this.nodes[i].ClosestPointOnNode(position);
-				float sqrMagnitude = (a - position).sqrMagnitude;
+				float sqrMagnitude = (this.nodes[i].ClosestPointOnNode(position) - position).sqrMagnitude;
 				if (sqrMagnitude < closestDist)
 				{
 					closestDist = sqrMagnitude;
@@ -363,8 +362,7 @@ namespace Pathfinding
 					TriangleMeshNode triangleMeshNode = node as TriangleMeshNode;
 					if (triangleMeshNode != null)
 					{
-						Vector3 a2 = triangleMeshNode.ClosestPointOnNode(posCopy);
-						float sqrMagnitude2 = (a2 - posCopy).sqrMagnitude;
+						float sqrMagnitude2 = (triangleMeshNode.ClosestPointOnNode(posCopy) - posCopy).sqrMagnitude;
 						if (sqrMagnitude2 < closestDist)
 						{
 							closestDist = sqrMagnitude2;
@@ -378,7 +376,8 @@ namespace Pathfinding
 			while (containingIndex >= 0)
 			{
 				this.nodes[containingIndex].GetConnections(action);
-				containingIndex--;
+				int containingIndex2 = containingIndex;
+				containingIndex = containingIndex2 - 1;
 			}
 			if (closestIsInPath)
 			{
@@ -413,81 +412,78 @@ namespace Pathfinding
 			int num = 0;
 			while (!flag || !flag2)
 			{
-				if (num >= 0 || !flag)
+				if ((num >= 0 || !flag) && (num <= 0 || !flag2))
 				{
-					if (num <= 0 || !flag2)
+					if (num < 0 && nodeIndex + num < 0)
 					{
-						if (num < 0 && nodeIndex + num < 0)
+						flag = true;
+					}
+					else if (num > 0 && nodeIndex + num >= this.nodes.Count)
+					{
+						flag2 = true;
+					}
+					else
+					{
+						TriangleMeshNode triangleMeshNode = (nodeIndex + num - 1 < 0) ? null : this.nodes[nodeIndex + num - 1];
+						TriangleMeshNode triangleMeshNode2 = this.nodes[nodeIndex + num];
+						TriangleMeshNode triangleMeshNode3 = (nodeIndex + num + 1 >= this.nodes.Count) ? null : this.nodes[nodeIndex + num + 1];
+						if (triangleMeshNode2.Destroyed)
 						{
-							flag = true;
+							break;
 						}
-						else if (num > 0 && nodeIndex + num >= this.nodes.Count)
+						if ((triangleMeshNode2.ClosestPointOnNodeXZ(position) - position).sqrMagnitude > range)
 						{
-							flag2 = true;
-						}
-						else
-						{
-							TriangleMeshNode triangleMeshNode = (nodeIndex + num - 1 >= 0) ? this.nodes[nodeIndex + num - 1] : null;
-							TriangleMeshNode triangleMeshNode2 = this.nodes[nodeIndex + num];
-							TriangleMeshNode triangleMeshNode3 = (nodeIndex + num + 1 < this.nodes.Count) ? this.nodes[nodeIndex + num + 1] : null;
-							if (triangleMeshNode2.Destroyed)
+							if (num < 0)
 							{
-								break;
-							}
-							if ((triangleMeshNode2.ClosestPointOnNodeXZ(position) - position).sqrMagnitude > range)
-							{
-								if (num < 0)
-								{
-									flag = true;
-								}
-								else
-								{
-									flag2 = true;
-								}
+								flag = true;
 							}
 							else
 							{
-								for (int i = 0; i < 3; i++)
+								flag2 = true;
+							}
+						}
+						else
+						{
+							for (int i = 0; i < 3; i++)
+							{
+								this.triBuffer[i] = 0;
+							}
+							for (int j = 0; j < triangleMeshNode2.connections.Length; j++)
+							{
+								TriangleMeshNode triangleMeshNode4 = triangleMeshNode2.connections[j].node as TriangleMeshNode;
+								if (triangleMeshNode4 != null)
 								{
-									this.triBuffer[i] = 0;
-								}
-								for (int j = 0; j < triangleMeshNode2.connections.Length; j++)
-								{
-									TriangleMeshNode triangleMeshNode4 = triangleMeshNode2.connections[j].node as TriangleMeshNode;
-									if (triangleMeshNode4 != null)
+									int num2 = -1;
+									for (int k = 0; k < 3; k++)
 									{
-										int num2 = -1;
-										for (int k = 0; k < 3; k++)
+										for (int l = 0; l < 3; l++)
 										{
-											for (int l = 0; l < 3; l++)
+											if (triangleMeshNode2.GetVertex(k) == triangleMeshNode4.GetVertex((l + 1) % 3) && triangleMeshNode2.GetVertex((k + 1) % 3) == triangleMeshNode4.GetVertex(l))
 											{
-												if (triangleMeshNode2.GetVertex(k) == triangleMeshNode4.GetVertex((l + 1) % 3) && triangleMeshNode2.GetVertex((k + 1) % 3) == triangleMeshNode4.GetVertex(l))
-												{
-													num2 = k;
-													k = 3;
-													break;
-												}
+												num2 = k;
+												k = 3;
+												break;
 											}
 										}
-										if (num2 != -1)
-										{
-											this.triBuffer[num2] = ((triangleMeshNode4 != triangleMeshNode && triangleMeshNode4 != triangleMeshNode3) ? 1 : 2);
-										}
+									}
+									if (num2 != -1)
+									{
+										this.triBuffer[num2] = ((triangleMeshNode4 == triangleMeshNode || triangleMeshNode4 == triangleMeshNode3) ? 2 : 1);
 									}
 								}
-								for (int m = 0; m < 3; m++)
+							}
+							for (int m = 0; m < 3; m++)
+							{
+								if (this.triBuffer[m] == 0)
 								{
-									if (this.triBuffer[m] == 0)
-									{
-										wallBuffer.Add((Vector3)triangleMeshNode2.GetVertex(m));
-										wallBuffer.Add((Vector3)triangleMeshNode2.GetVertex((m + 1) % 3));
-									}
+									wallBuffer.Add((Vector3)triangleMeshNode2.GetVertex(m));
+									wallBuffer.Add((Vector3)triangleMeshNode2.GetVertex((m + 1) % 3));
 								}
 							}
 						}
 					}
 				}
-				num = ((num >= 0) ? (-num - 1) : (-num));
+				num = ((num < 0) ? (-num) : (-num - 1));
 			}
 			if (this.path.transform != null)
 			{
@@ -577,13 +573,13 @@ namespace Pathfinding
 				Vector3 vector6 = this.right[i];
 				if (VectorMath.SignedTriangleAreaTimes2XZ(vector2, vector4, vector6) < 0f)
 				{
-					goto IL_2FB;
+					goto IL_2AE;
 				}
 				if (vector2 == vector4 || VectorMath.SignedTriangleAreaTimes2XZ(vector2, vector3, vector6) <= 0f)
 				{
 					vector4 = vector6;
 					num = i;
-					goto IL_2FB;
+					goto IL_2AE;
 				}
 				funnelPath.Add(vector3);
 				vector2 = vector3;
@@ -593,29 +589,29 @@ namespace Pathfinding
 				num2 = num3;
 				num = num3;
 				i = num3;
-				IL_35F:
+				IL_2FB:
 				i++;
 				continue;
-				IL_2FB:
+				IL_2AE:
 				if (VectorMath.SignedTriangleAreaTimes2XZ(vector2, vector3, vector5) > 0f)
 				{
-					goto IL_35F;
+					goto IL_2FB;
 				}
 				if (vector2 == vector3 || VectorMath.SignedTriangleAreaTimes2XZ(vector2, vector4, vector5) >= 0f)
 				{
 					vector3 = vector5;
 					num2 = i;
-					goto IL_35F;
+					goto IL_2FB;
 				}
 				funnelPath.Add(vector4);
 				vector2 = vector4;
-				num3 = num;
+				int num4 = num;
 				vector3 = vector2;
 				vector4 = vector2;
-				num2 = num3;
-				num = num3;
-				i = num3;
-				goto IL_35F;
+				num2 = num4;
+				num = num4;
+				i = num4;
+				goto IL_2FB;
 			}
 			lastCorner = true;
 			funnelPath.Add(this.left[count - 1]);

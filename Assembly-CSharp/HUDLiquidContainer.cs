@@ -72,17 +72,16 @@ public class HUDLiquidContainer : HUDBase
 		{
 			this.m_SelectionPour.enabled = true;
 			this.m_SelectionGet.enabled = false;
+			return;
 		}
-		else if (this.m_ColliderGet.OverlapPoint(Input.mousePosition))
+		if (this.m_ColliderGet.OverlapPoint(Input.mousePosition))
 		{
 			this.m_SelectionPour.enabled = false;
 			this.m_SelectionGet.enabled = true;
+			return;
 		}
-		else
-		{
-			this.m_SelectionPour.enabled = false;
-			this.m_SelectionGet.enabled = false;
-		}
+		this.m_SelectionPour.enabled = false;
+		this.m_SelectionGet.enabled = false;
 	}
 
 	private void UpdateInputs()
@@ -99,7 +98,7 @@ public class HUDLiquidContainer : HUDBase
 			}
 			this.m_Container0.StaticPhxRequestRemove();
 			this.m_Active = false;
-			Inventory3DManager.Get().SetCarriedItem(this.m_Container0);
+			Inventory3DManager.Get().SetCarriedItem(this.m_Container0, true);
 		}
 	}
 

@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter))]
 [AddComponentMenu("Relief Terrain/Geometry Blend")]
 [SelectionBase]
+[RequireComponent(typeof(MeshFilter))]
 public class GeometryVsTerrainBlend : MonoBehaviour
 {
 	private void Start()
@@ -88,14 +88,12 @@ public class GeometryVsTerrainBlend : MonoBehaviour
 						base.GetComponent<Renderer>().lightmapScaleOffset = terrain.lightmapScaleOffset;
 						base.GetComponent<Renderer>().realtimeLightmapIndex = terrain.realtimeLightmapIndex;
 						base.GetComponent<Renderer>().realtimeLightmapScaleOffset = terrain.realtimeLightmapScaleOffset;
+						return;
 					}
-					else
-					{
-						base.GetComponent<Renderer>().lightmapIndex = this.blendedObject.GetComponent<Renderer>().lightmapIndex;
-						base.GetComponent<Renderer>().lightmapScaleOffset = this.blendedObject.GetComponent<Renderer>().lightmapScaleOffset;
-						base.GetComponent<Renderer>().realtimeLightmapIndex = this.blendedObject.GetComponent<Renderer>().realtimeLightmapIndex;
-						base.GetComponent<Renderer>().realtimeLightmapScaleOffset = this.blendedObject.GetComponent<Renderer>().realtimeLightmapScaleOffset;
-					}
+					base.GetComponent<Renderer>().lightmapIndex = this.blendedObject.GetComponent<Renderer>().lightmapIndex;
+					base.GetComponent<Renderer>().lightmapScaleOffset = this.blendedObject.GetComponent<Renderer>().lightmapScaleOffset;
+					base.GetComponent<Renderer>().realtimeLightmapIndex = this.blendedObject.GetComponent<Renderer>().realtimeLightmapIndex;
+					base.GetComponent<Renderer>().realtimeLightmapScaleOffset = this.blendedObject.GetComponent<Renderer>().realtimeLightmapScaleOffset;
 				}
 			}
 		}
@@ -109,7 +107,7 @@ public class GeometryVsTerrainBlend : MonoBehaviour
 
 	private const int progress_granulation = 1000;
 
-	private string progress_description = string.Empty;
+	private string progress_description = "";
 
 	public float blend_distance = 0.1f;
 
@@ -205,7 +203,7 @@ public class GeometryVsTerrainBlend : MonoBehaviour
 	public bool RealizePaint_Flag;
 
 	[HideInInspector]
-	public string save_path = string.Empty;
+	public string save_path = "";
 
 	[HideInInspector]
 	public bool isBatched;

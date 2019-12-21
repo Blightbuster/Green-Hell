@@ -20,38 +20,46 @@ namespace AIs
 				if (this.m_AI.m_EnemyModule.m_Enemy != null)
 				{
 					this.SetState(HostileStateModule.State.Upset);
+					return;
 				}
 				break;
 			case HostileStateModule.State.Upset:
 				if (this.m_AI.m_EnemyModule.m_Enemy == null)
 				{
 					this.SetState(HostileStateModule.State.Calm);
+					return;
 				}
-				else if (Player.Get().IsRunning() || Vector3.Distance(Player.Get().transform.position, base.transform.position) < this.m_AI.m_Params.m_AttackRange * 3f)
+				if (Player.Get().IsRunning() || Vector3.Distance(Player.Get().transform.position, base.transform.position) < this.m_AI.m_Params.m_AttackRange * 3f)
 				{
 					this.SetState(HostileStateModule.State.Aggressive);
+					return;
 				}
 				break;
 			case HostileStateModule.State.Aggressive:
 				if (this.m_AI.m_EnemyModule.m_Enemy == null)
 				{
 					this.SetState(HostileStateModule.State.Calm);
+					return;
 				}
-				else if (this.m_AI.m_MoraleModule.m_Morale <= 0f)
+				if (this.m_AI.m_MoraleModule.m_Morale <= 0f)
 				{
 					this.SetState(HostileStateModule.State.Scared);
+					return;
 				}
 				break;
 			case HostileStateModule.State.Scared:
 				if (this.m_AI.m_EnemyModule.m_Enemy == null)
 				{
 					this.SetState(HostileStateModule.State.Calm);
+					return;
 				}
-				else if (this.m_AI.m_MoraleModule.m_Morale > 0.5f)
+				if (this.m_AI.m_MoraleModule.m_Morale > 0.5f)
 				{
 					this.SetState(HostileStateModule.State.Upset);
 				}
 				break;
+			default:
+				return;
 			}
 		}
 

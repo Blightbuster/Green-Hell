@@ -10,11 +10,9 @@ public class DestroyableChunkSource : MonoBehaviour
 		if (this.m_RootChunks.Count > 0)
 		{
 			this.m_IKTargetPos = this.m_RootChunks[0].transform.position;
+			return;
 		}
-		else
-		{
-			DebugUtils.Assert(DebugUtils.AssertType.Info);
-		}
+		DebugUtils.Assert(DebugUtils.AssertType.Info);
 	}
 
 	public void Hit(Vector3 pos, Vector3 dir, Item item)
@@ -24,8 +22,7 @@ public class DestroyableChunkSource : MonoBehaviour
 		{
 			Vector3 position = item.m_DamagerStart.transform.position;
 			Vector3 position2 = item.m_DamagerEnd.transform.position;
-			Vector3 vector = CJTools.Math.ProjectPointOnSegment(item.m_DamagerStart.transform.position, item.m_DamagerEnd.transform.position, this.m_IKTargetPos);
-			if (vector.Distance2D(this.m_IKTargetPos) > num)
+			if (CJTools.Math.ProjectPointOnSegment(item.m_DamagerStart.transform.position, item.m_DamagerEnd.transform.position, this.m_IKTargetPos).Distance2D(this.m_IKTargetPos) > num)
 			{
 				return;
 			}
@@ -51,22 +48,18 @@ public class DestroyableChunkSource : MonoBehaviour
 			{
 				GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.m_ChunksToDeactivate[i], this.m_ChunksToDeactivate[i].transform.position, this.m_ChunksToDeactivate[i].transform.rotation);
 				gameObject.AddComponent<TinyPhysicsObject>();
-				Rigidbody rigidbody = gameObject.AddComponent<Rigidbody>();
-				rigidbody.velocity = -this.m_HitDir * UnityEngine.Random.Range(0.4f, 0.7f);
-				BoxCollider collider = gameObject.AddComponent<BoxCollider>();
-				Physics.IgnoreCollision(collider, Player.Get().m_Collider);
+				gameObject.AddComponent<Rigidbody>().velocity = -this.m_HitDir * UnityEngine.Random.Range(0.4f, 0.7f);
+				Physics.IgnoreCollision(gameObject.AddComponent<BoxCollider>(), Player.Get().m_Collider);
 				this.m_ChunksToDeactivate[i].SetActive(false);
 			}
+			return;
 		}
-		else
+		this.FindChunkToDeactivate(pos);
+		if (this.m_ClosestChunk == null)
 		{
-			this.FindChunkToDeactivate(pos);
-			if (this.m_ClosestChunk == null)
-			{
-				return;
-			}
-			this.m_ClosestChunk.SetActive(false);
+			return;
 		}
+		this.m_ClosestChunk.SetActive(false);
 	}
 
 	private void FindChunkToDeactivate(Vector3 pos)

@@ -14,7 +14,7 @@ public class CraftingController : PlayerController
 	{
 		base.Awake();
 		CraftingController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Crafting;
+		base.m_ControllerType = PlayerControllerType.Crafting;
 		this.SetupAudio();
 	}
 
@@ -52,8 +52,11 @@ public class CraftingController : PlayerController
 		}
 		foreach (Item item in this.m_Items)
 		{
-			item.gameObject.SetActive(true);
-			Inventory3DManager.Get().DropItem(item);
+			if (item && item.gameObject)
+			{
+				item.gameObject.SetActive(true);
+				Inventory3DManager.Get().DropItem(item);
+			}
 		}
 	}
 
@@ -62,11 +65,9 @@ public class CraftingController : PlayerController
 		base.ControllerUpdate();
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if (action != InputsManager.InputAction.Drop)
-		{
-		}
+		InputsManager.InputAction action = action_data.m_Action;
 	}
 
 	public void StartCrafting(List<Item> items)
@@ -77,7 +78,7 @@ public class CraftingController : PlayerController
 			this.m_Items.Add(item);
 			item.gameObject.SetActive(false);
 		}
-		CraftingManager.Get().RemoveAllItems();
+		CraftingManager.Get().RemoveAllItems(true);
 		this.m_Animator.SetBool(this.m_CraftHash, true);
 		if (this.m_Player.GetCurrentItem(Hand.Right))
 		{
@@ -137,5 +138,6 @@ public class CraftingController : PlayerController
 
 	private List<AudioClip> m_CraftingClips = new List<AudioClip>();
 
-	private List<Item> m_Items = new List<Item>();
+	[HideInInspector]
+	public List<Item> m_Items = new List<Item>();
 }

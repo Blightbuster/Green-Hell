@@ -46,9 +46,10 @@ namespace RootMotion.FinalIK
 				message = "FBIK chain contains no nodes.";
 				return false;
 			}
-			foreach (IKSolver.Node node in this.nodes)
+			IKSolver.Node[] array = this.nodes;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (node.transform == null)
+				if (array[i].transform == null)
 				{
 					message = "Node transform is null in FBIK chain.";
 					return false;
@@ -65,9 +66,10 @@ namespace RootMotion.FinalIK
 				node.solverPosition = node.transform.position;
 			}
 			this.CalculateBoneLengths(solver);
-			foreach (FBIKChain.ChildConstraint childConstraint in this.childConstraints)
+			FBIKChain.ChildConstraint[] array2 = this.childConstraints;
+			for (int i = 0; i < array2.Length; i++)
 			{
-				childConstraint.Initiate(solver);
+				array2[i].Initiate(solver);
 			}
 			if (this.nodes.Length == 3)
 			{
@@ -95,7 +97,7 @@ namespace RootMotion.FinalIK
 				{
 					this.childConstraints[j].OnPreSolve(solver);
 				}
-				if (this.children.Length > 0)
+				if (this.children.Length != 0)
 				{
 					float num = this.nodes[this.nodes.Length - 1].effectorPositionWeight;
 					for (int k = 0; k < this.children.Length; k++)
@@ -271,7 +273,7 @@ namespace RootMotion.FinalIK
 			}
 			float num = Mathf.Clamp(magnitude, 0f, this.length * 0.99999f);
 			Vector3 direction = a / magnitude * num;
-			Vector3 bendDirection = (!calculateBendDirection || !this.bendConstraint.initiated) ? (this.nodes[1].solverPosition - this.nodes[0].solverPosition) : this.bendConstraint.GetDir(solver);
+			Vector3 bendDirection = (calculateBendDirection && this.bendConstraint.initiated) ? this.bendConstraint.GetDir(solver) : (this.nodes[1].solverPosition - this.nodes[0].solverPosition);
 			Vector3 dirToBendPoint = this.GetDirToBendPoint(direction, bendDirection, num);
 			this.nodes[1].solverPosition = this.nodes[0].solverPosition + dirToBendPoint;
 		}
@@ -308,7 +310,7 @@ namespace RootMotion.FinalIK
 		{
 			this.BackwardReach(position);
 			int num = Mathf.Clamp(solver.iterations, 2, 4);
-			if (this.childConstraints.Length > 0)
+			if (this.childConstraints.Length != 0)
 			{
 				for (int i = 0; i < num; i++)
 				{
@@ -447,6 +449,10 @@ namespace RootMotion.FinalIK
 		[Serializable]
 		public class ChildConstraint
 		{
+			public float nominalDistance { get; private set; }
+
+			public bool isRigid { get; private set; }
+
 			public ChildConstraint(Transform bone1, Transform bone2, float pushElasticity = 0f, float pullElasticity = 0f)
 			{
 				this.bone1 = bone1;
@@ -454,10 +460,6 @@ namespace RootMotion.FinalIK
 				this.pushElasticity = pushElasticity;
 				this.pullElasticity = pullElasticity;
 			}
-
-			public float nominalDistance { get; private set; }
-
-			public bool isRigid { get; private set; }
 
 			public void Initiate(IKSolverFullBody solver)
 			{
@@ -501,7 +503,7 @@ namespace RootMotion.FinalIK
 				float num = 1f;
 				if (!this.isRigid)
 				{
-					float num2 = (magnitude <= this.nominalDistance) ? this.pushElasticity : this.pullElasticity;
+					float num2 = (magnitude > this.nominalDistance) ? this.pullElasticity : this.pushElasticity;
 					num = 1f - num2;
 				}
 				num *= 1f - this.nominalDistance / magnitude;

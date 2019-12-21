@@ -16,8 +16,8 @@ namespace Pathfinding
 
 		public void UpdateInfo()
 		{
-			this.clampedPosition = ((this.node == null) ? Vector3.zero : ((Vector3)this.node.position));
-			this.constClampedPosition = ((this.constrainedNode == null) ? Vector3.zero : ((Vector3)this.constrainedNode.position));
+			this.clampedPosition = ((this.node != null) ? ((Vector3)this.node.position) : Vector3.zero);
+			this.constClampedPosition = ((this.constrainedNode != null) ? ((Vector3)this.constrainedNode.position) : Vector3.zero);
 		}
 
 		public GraphNode node;

@@ -58,7 +58,7 @@ namespace UnityStandardAssets.Cameras
 				Debug.DrawRay(this.m_Ray.origin, -this.m_Pivot.forward * (num + this.sphereCastRadius), Color.red);
 			}
 			this.protecting = flag2;
-			this.m_CurrentDist = Mathf.SmoothDamp(this.m_CurrentDist, num, ref this.m_MoveVelocity, (this.m_CurrentDist <= num) ? this.returnTime : this.clipMoveTime);
+			this.m_CurrentDist = Mathf.SmoothDamp(this.m_CurrentDist, num, ref this.m_MoveVelocity, (this.m_CurrentDist > num) ? this.clipMoveTime : this.returnTime);
 			this.m_CurrentDist = Mathf.Clamp(this.m_CurrentDist, this.closestDistance, this.m_OriginalDist);
 			this.m_Cam.localPosition = -Vector3.forward * this.m_CurrentDist;
 		}

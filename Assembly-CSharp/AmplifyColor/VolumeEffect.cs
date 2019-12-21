@@ -37,47 +37,44 @@ namespace AmplifyColor
 								{
 									VolumeEffectField volumeEffectField3 = new VolumeEffectField(volumeEffectField.fieldName, volumeEffectField.fieldType);
 									string fieldType = volumeEffectField3.fieldType;
-									if (fieldType != null)
+									if (!(fieldType == "System.Single"))
 									{
-										if (!(fieldType == "System.Single"))
+										if (!(fieldType == "System.Boolean"))
 										{
-											if (!(fieldType == "System.Boolean"))
+											if (!(fieldType == "UnityEngine.Vector2"))
 											{
-												if (!(fieldType == "UnityEngine.Vector2"))
+												if (!(fieldType == "UnityEngine.Vector3"))
 												{
-													if (!(fieldType == "UnityEngine.Vector3"))
+													if (!(fieldType == "UnityEngine.Vector4"))
 													{
-														if (!(fieldType == "UnityEngine.Vector4"))
+														if (fieldType == "UnityEngine.Color")
 														{
-															if (fieldType == "UnityEngine.Color")
-															{
-																volumeEffectField3.valueColor = Color.Lerp(volumeEffectField.valueColor, volumeEffectField2.valueColor, blend);
-															}
-														}
-														else
-														{
-															volumeEffectField3.valueVector4 = Vector4.Lerp(volumeEffectField.valueVector4, volumeEffectField2.valueVector4, blend);
+															volumeEffectField3.valueColor = Color.Lerp(volumeEffectField.valueColor, volumeEffectField2.valueColor, blend);
 														}
 													}
 													else
 													{
-														volumeEffectField3.valueVector3 = Vector3.Lerp(volumeEffectField.valueVector3, volumeEffectField2.valueVector3, blend);
+														volumeEffectField3.valueVector4 = Vector4.Lerp(volumeEffectField.valueVector4, volumeEffectField2.valueVector4, blend);
 													}
 												}
 												else
 												{
-													volumeEffectField3.valueVector2 = Vector2.Lerp(volumeEffectField.valueVector2, volumeEffectField2.valueVector2, blend);
+													volumeEffectField3.valueVector3 = Vector3.Lerp(volumeEffectField.valueVector3, volumeEffectField2.valueVector3, blend);
 												}
 											}
 											else
 											{
-												volumeEffectField3.valueBoolean = volumeEffectField2.valueBoolean;
+												volumeEffectField3.valueVector2 = Vector2.Lerp(volumeEffectField.valueVector2, volumeEffectField2.valueVector2, blend);
 											}
 										}
 										else
 										{
-											volumeEffectField3.valueSingle = Mathf.Lerp(volumeEffectField.valueSingle, volumeEffectField2.valueSingle, blend);
+											volumeEffectField3.valueBoolean = volumeEffectField2.valueBoolean;
 										}
+									}
+									else
+									{
+										volumeEffectField3.valueSingle = Mathf.Lerp(volumeEffectField.valueSingle, volumeEffectField2.valueSingle, blend);
 									}
 									volumeEffectComponent3.fields.Add(volumeEffectField3);
 								}
@@ -94,12 +91,12 @@ namespace AmplifyColor
 		{
 			if (compFlags == null)
 			{
-				VolumeEffectComponent volumeEffectComponent = new VolumeEffectComponent(c.GetType() + string.Empty);
+				VolumeEffectComponent volumeEffectComponent = new VolumeEffectComponent(string.Concat(c.GetType()));
 				this.components.Add(volumeEffectComponent);
 				return volumeEffectComponent;
 			}
 			VolumeEffectComponent volumeEffectComponent2;
-			if ((volumeEffectComponent2 = this.FindEffectComponent(c.GetType() + string.Empty)) != null)
+			if ((volumeEffectComponent2 = this.FindEffectComponent(string.Concat(c.GetType()))) != null)
 			{
 				volumeEffectComponent2.UpdateComponent(c, compFlags);
 				return volumeEffectComponent2;
@@ -120,8 +117,7 @@ namespace AmplifyColor
 			{
 				return;
 			}
-			VolumeEffectFlags effectFlags = this.gameObject.EffectFlags;
-			foreach (VolumeEffectComponentFlags volumeEffectComponentFlags in effectFlags.components)
+			foreach (VolumeEffectComponentFlags volumeEffectComponentFlags in this.gameObject.EffectFlags.components)
 			{
 				if (volumeEffectComponentFlags.blendFlag)
 				{
@@ -152,50 +148,47 @@ namespace AmplifyColor
 							{
 								FieldInfo field = component.GetType().GetField(volumeEffectFieldFlags.fieldName);
 								VolumeEffectField volumeEffectField = volumeEffectComponent.FindEffectField(volumeEffectFieldFlags.fieldName);
-								if (field != null && volumeEffectField != null)
+								if (!(field == null) && volumeEffectField != null)
 								{
 									string fullName = field.FieldType.FullName;
-									if (fullName != null)
+									if (!(fullName == "System.Single"))
 									{
-										if (!(fullName == "System.Single"))
+										if (!(fullName == "System.Boolean"))
 										{
-											if (!(fullName == "System.Boolean"))
+											if (!(fullName == "UnityEngine.Vector2"))
 											{
-												if (!(fullName == "UnityEngine.Vector2"))
+												if (!(fullName == "UnityEngine.Vector3"))
 												{
-													if (!(fullName == "UnityEngine.Vector3"))
+													if (!(fullName == "UnityEngine.Vector4"))
 													{
-														if (!(fullName == "UnityEngine.Vector4"))
+														if (fullName == "UnityEngine.Color")
 														{
-															if (fullName == "UnityEngine.Color")
-															{
-																field.SetValue(component, volumeEffectField.valueColor);
-															}
-														}
-														else
-														{
-															field.SetValue(component, volumeEffectField.valueVector4);
+															field.SetValue(component, volumeEffectField.valueColor);
 														}
 													}
 													else
 													{
-														field.SetValue(component, volumeEffectField.valueVector3);
+														field.SetValue(component, volumeEffectField.valueVector4);
 													}
 												}
 												else
 												{
-													field.SetValue(component, volumeEffectField.valueVector2);
+													field.SetValue(component, volumeEffectField.valueVector3);
 												}
 											}
 											else
 											{
-												field.SetValue(component, volumeEffectField.valueBoolean);
+												field.SetValue(component, volumeEffectField.valueVector2);
 											}
 										}
 										else
 										{
-											field.SetValue(component, volumeEffectField.valueSingle);
+											field.SetValue(component, volumeEffectField.valueBoolean);
 										}
+									}
+									else
+									{
+										field.SetValue(component, volumeEffectField.valueSingle);
 									}
 								}
 							}
@@ -227,50 +220,47 @@ namespace AmplifyColor
 								FieldInfo field = component.GetType().GetField(volumeEffectFieldFlags.fieldName);
 								VolumeEffectField volumeEffectField = volumeEffectComponent.FindEffectField(volumeEffectFieldFlags.fieldName);
 								VolumeEffectField volumeEffectField2 = volumeEffectComponent2.FindEffectField(volumeEffectFieldFlags.fieldName);
-								if (field != null && volumeEffectField != null && volumeEffectField2 != null)
+								if (!(field == null) && volumeEffectField != null && volumeEffectField2 != null)
 								{
 									string fullName = field.FieldType.FullName;
-									if (fullName != null)
+									if (!(fullName == "System.Single"))
 									{
-										if (!(fullName == "System.Single"))
+										if (!(fullName == "System.Boolean"))
 										{
-											if (!(fullName == "System.Boolean"))
+											if (!(fullName == "UnityEngine.Vector2"))
 											{
-												if (!(fullName == "UnityEngine.Vector2"))
+												if (!(fullName == "UnityEngine.Vector3"))
 												{
-													if (!(fullName == "UnityEngine.Vector3"))
+													if (!(fullName == "UnityEngine.Vector4"))
 													{
-														if (!(fullName == "UnityEngine.Vector4"))
+														if (fullName == "UnityEngine.Color")
 														{
-															if (fullName == "UnityEngine.Color")
-															{
-																field.SetValue(component, Color.Lerp(volumeEffectField.valueColor, volumeEffectField2.valueColor, blendAmount));
-															}
-														}
-														else
-														{
-															field.SetValue(component, Vector4.Lerp(volumeEffectField.valueVector4, volumeEffectField2.valueVector4, blendAmount));
+															field.SetValue(component, Color.Lerp(volumeEffectField.valueColor, volumeEffectField2.valueColor, blendAmount));
 														}
 													}
 													else
 													{
-														field.SetValue(component, Vector3.Lerp(volumeEffectField.valueVector3, volumeEffectField2.valueVector3, blendAmount));
+														field.SetValue(component, Vector4.Lerp(volumeEffectField.valueVector4, volumeEffectField2.valueVector4, blendAmount));
 													}
 												}
 												else
 												{
-													field.SetValue(component, Vector2.Lerp(volumeEffectField.valueVector2, volumeEffectField2.valueVector2, blendAmount));
+													field.SetValue(component, Vector3.Lerp(volumeEffectField.valueVector3, volumeEffectField2.valueVector3, blendAmount));
 												}
 											}
 											else
 											{
-												field.SetValue(component, volumeEffectField2.valueBoolean);
+												field.SetValue(component, Vector2.Lerp(volumeEffectField.valueVector2, volumeEffectField2.valueVector2, blendAmount));
 											}
 										}
 										else
 										{
-											field.SetValue(component, Mathf.Lerp(volumeEffectField.valueSingle, volumeEffectField2.valueSingle, blendAmount));
+											field.SetValue(component, volumeEffectField2.valueBoolean);
 										}
+									}
+									else
+									{
+										field.SetValue(component, Mathf.Lerp(volumeEffectField.valueSingle, volumeEffectField2.valueSingle, blendAmount));
 									}
 								}
 							}
@@ -298,9 +288,8 @@ namespace AmplifyColor
 			{
 				return new Component[0];
 			}
-			Component[] source = go.GetComponents(typeof(Component));
-			return (from comp in source
-			where comp != null && (!(comp.GetType() + string.Empty).StartsWith("UnityEngine.") && comp.GetType() != typeof(AmplifyColorBase))
+			return (from comp in go.GetComponents(typeof(Component))
+			where comp != null && !string.Concat(comp.GetType()).StartsWith("UnityEngine.") && !(comp.GetType() == typeof(AmplifyColorBase))
 			select comp).ToArray<Component>();
 		}
 

@@ -16,13 +16,12 @@ namespace AIs
 		{
 			Vector3 position = this.m_ReferenceBone.position;
 			Vector3 position2 = Player.Get().GetHeadTransform().transform.position;
-			Vector3 v = Vector3.RotateTowards(base.transform.forward, (position2 - position).normalized, 0.0174532924f * this.m_MaxAngle, 0f);
+			Vector3 vector = Vector3.RotateTowards(base.transform.forward, (position2 - position).normalized, 0.0174532924f * this.m_MaxAngle, 0f);
 			float num = Mathf.Min(0.02f, Time.deltaTime);
 			float num2 = 0f;
 			if (this.m_RotateToPlayer)
 			{
-				float num3 = v.AngleSigned(base.transform.forward, Vector3.up);
-				num2 = num3 / (float)this.m_Bones.Count;
+				num2 = vector.AngleSigned(base.transform.forward, Vector3.up) / (float)this.m_Bones.Count;
 			}
 			this.m_BodyAngle += (num2 - this.m_BodyAngle) * num * 20f;
 			for (int i = 0; i < this.m_Bones.Count; i++)
@@ -32,9 +31,7 @@ namespace AIs
 			num2 = 0f;
 			if (this.m_LookAtPlayer)
 			{
-				float num4 = (v.y - base.transform.forward.y) * 90f;
-				num4 = Mathf.Clamp(num4, -this.m_MaxHeadAngle, this.m_MaxHeadAngle);
-				num2 = num4 / (float)this.m_HeadBones.Count;
+				num2 = Mathf.Clamp((vector.y - base.transform.forward.y) * 90f, -this.m_MaxHeadAngle, this.m_MaxHeadAngle) / (float)this.m_HeadBones.Count;
 			}
 			this.m_HeadAngle += (num2 - this.m_HeadAngle) * num * 10f;
 			for (int j = 0; j < this.m_HeadBones.Count; j++)

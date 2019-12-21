@@ -2,8 +2,8 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
+[ExecuteInEditMode]
 public class NGSS_ContactShadows : MonoBehaviour
 {
 	private Camera mCamera
@@ -65,20 +65,22 @@ public class NGSS_ContactShadows : MonoBehaviour
 		bool flag = this.mCamera.actualRenderingPath == RenderingPath.Forward;
 		if (this.mCamera)
 		{
-			foreach (CommandBuffer commandBuffer in this.mCamera.GetCommandBuffers((!flag) ? CameraEvent.BeforeLighting : CameraEvent.AfterDepthTexture))
+			CommandBuffer[] commandBuffers = this.mCamera.GetCommandBuffers(flag ? CameraEvent.AfterDepthTexture : CameraEvent.BeforeLighting);
+			for (int i = 0; i < commandBuffers.Length; i++)
 			{
-				if (commandBuffer.name == this.computeShadowsCB.name)
+				if (commandBuffers[i].name == this.computeShadowsCB.name)
 				{
 					return;
 				}
 			}
-			this.mCamera.AddCommandBuffer((!flag) ? CameraEvent.BeforeLighting : CameraEvent.AfterDepthTexture, this.computeShadowsCB);
+			this.mCamera.AddCommandBuffer(flag ? CameraEvent.AfterDepthTexture : CameraEvent.BeforeLighting, this.computeShadowsCB);
 		}
 		if (this.mainDirectionalLight)
 		{
-			foreach (CommandBuffer commandBuffer2 in this.mainDirectionalLight.GetCommandBuffers(LightEvent.AfterScreenspaceMask))
+			CommandBuffer[] commandBuffers = this.mainDirectionalLight.GetCommandBuffers(LightEvent.AfterScreenspaceMask);
+			for (int i = 0; i < commandBuffers.Length; i++)
 			{
-				if (commandBuffer2.name == this.blendShadowsCB.name)
+				if (commandBuffers[i].name == this.blendShadowsCB.name)
 				{
 					return;
 				}
@@ -93,7 +95,7 @@ public class NGSS_ContactShadows : MonoBehaviour
 		bool flag = this.mCamera.actualRenderingPath == RenderingPath.Forward;
 		if (this.mCamera)
 		{
-			this.mCamera.RemoveCommandBuffer((!flag) ? CameraEvent.BeforeLighting : CameraEvent.AfterDepthTexture, this.computeShadowsCB);
+			this.mCamera.RemoveCommandBuffer(flag ? CameraEvent.AfterDepthTexture : CameraEvent.BeforeLighting, this.computeShadowsCB);
 		}
 		if (this.mainDirectionalLight)
 		{
@@ -166,11 +168,9 @@ public class NGSS_ContactShadows : MonoBehaviour
 		if (this.noiseFilter)
 		{
 			this.mMaterial.EnableKeyword("NGSS_CONTACT_SHADOWS_USE_NOISE");
+			return;
 		}
-		else
-		{
-			this.mMaterial.DisableKeyword("NGSS_CONTACT_SHADOWS_USE_NOISE");
-		}
+		this.mMaterial.DisableKeyword("NGSS_CONTACT_SHADOWS_USE_NOISE");
 	}
 
 	public Light mainDirectionalLight;

@@ -4,7 +4,7 @@ using Enums;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HUDCrafting : HUDBase
+public class HUDCrafting : HUDBase, IInputsReceiver
 {
 	public static HUDCrafting Get()
 	{
@@ -24,6 +24,7 @@ public class HUDCrafting : HUDBase
 			}
 			this.m_Slots.Add(transform.GetComponent<RawImage>());
 		}
+		this.m_CraftCJButton = this.m_CraftButton.GetComponent<CJButton>();
 	}
 
 	public override void SetupGroups()
@@ -71,7 +72,7 @@ public class HUDCrafting : HUDBase
 			}
 			num = Mathf.Max(num, num2);
 		}
-		if (num >= this.m_Slots.Count)
+		if (num > this.m_Slots.Count)
 		{
 			DebugUtils.Assert("Add more crafting slots!!!", true, DebugUtils.AssertType.Info);
 		}
@@ -115,14 +116,46 @@ public class HUDCrafting : HUDBase
 		Sprite sprite = null;
 		ItemsManager.Get().m_ItemIconsSprites.TryGetValue(text, out sprite);
 		this.m_Icon.sprite = sprite;
-		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get(itemInfo.m_ID.ToString());
+		this.m_Text.text = GreenHellGame.Instance.GetLocalization().Get(itemInfo.m_ID.ToString(), true);
 		this.m_CraftButton.gameObject.SetActive(true);
+		this.m_CraftCJButton.OnPointerExit(null);
 		this.m_Icon.gameObject.SetActive(true);
 		this.m_Text.gameObject.SetActive(true);
 	}
 
 	protected override void Update()
 	{
+	}
+
+	public bool IsOverCraftButton()
+	{
+		return base.enabled && this.m_CraftCJButton.gameObject.activeSelf && this.m_CraftCJButton.m_IsOver;
+	}
+
+	public bool CanReceiveAction()
+	{
+		return base.enabled;
+	}
+
+	public bool CanReceiveActionPaused()
+	{
+		return false;
+	}
+
+	public void OnInputAction(InputActionData action_data)
+	{
+		if (action_data.m_Action == InputsManager.InputAction.StartCrafting)
+		{
+			if (CraftingManager.Get().m_Results.Count > 0)
+			{
+				CraftingManager.Get().StartCrafting(CraftingManager.Get().m_Results[0].m_ID);
+				return;
+			}
+		}
+		else if (action_data.m_Action == InputsManager.InputAction.Button_X && this.IsOverCraftButton() && CraftingManager.Get().m_Results.Count > 0)
+		{
+			CraftingManager.Get().StartCrafting(CraftingManager.Get().m_Results[0].m_ID);
+		}
 	}
 
 	public GameObject m_CraftButton;
@@ -136,6 +169,9 @@ public class HUDCrafting : HUDBase
 	public Texture m_IconOccupied;
 
 	private List<RawImage> m_Slots = new List<RawImage>();
+
+	[HideInInspector]
+	public CJButton m_CraftCJButton;
 
 	private static HUDCrafting s_Instance;
 }

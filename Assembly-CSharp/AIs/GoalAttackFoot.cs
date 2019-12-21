@@ -23,7 +23,7 @@ namespace AIs
 			{
 				return false;
 			}
-			Player enemy = this.m_AI.m_EnemyModule.m_Enemy;
+			Being enemy = this.m_AI.m_EnemyModule.m_Enemy;
 			if (!enemy)
 			{
 				return false;
@@ -74,8 +74,7 @@ namespace AIs
 			{
 				return;
 			}
-			float num = this.m_Target.transform.position.Distance(this.m_AI.transform.position);
-			if (num > this.m_AI.m_Radius)
+			if (this.m_Target.transform.position.Distance(this.m_AI.transform.position) > this.m_AI.m_Radius)
 			{
 				Vector3 normalized = (this.m_Target.transform.position - this.m_AI.transform.position).normalized;
 				Vector3 position = this.m_AI.transform.position + normalized * Time.deltaTime;
@@ -90,8 +89,8 @@ namespace AIs
 				return;
 			}
 			Vector3 normalized = (this.m_Target.transform.position - this.m_AI.transform.position).normalized;
-			Vector3 up = this.m_AI.m_EnemyModule.m_Enemy.transform.up;
-			this.m_AI.transform.rotation = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(normalized, up), Time.deltaTime / 0.1f);
+			Vector3 upwards = this.m_AI.m_EnemyModule.m_Enemy ? this.m_AI.m_EnemyModule.m_Enemy.transform.up : Vector3.up;
+			this.m_AI.transform.rotation = Quaternion.Slerp(this.m_AI.transform.rotation, Quaternion.LookRotation(normalized, upwards), Time.deltaTime / 0.1f);
 		}
 
 		protected override void OnDeactivate()

@@ -23,7 +23,11 @@ namespace Cinemachine
 			get
 			{
 				CinemachineVirtualCameraBase virtualCamera = this.VirtualCamera;
-				return (!(virtualCamera == null)) ? virtualCamera.Follow : null;
+				if (!(virtualCamera == null))
+				{
+					return virtualCamera.Follow;
+				}
+				return null;
 			}
 		}
 
@@ -32,7 +36,11 @@ namespace Cinemachine
 			get
 			{
 				CinemachineVirtualCameraBase virtualCamera = this.VirtualCamera;
-				return (!(virtualCamera == null)) ? virtualCamera.LookAt : null;
+				if (!(virtualCamera == null))
+				{
+					return virtualCamera.LookAt;
+				}
+				return null;
 			}
 		}
 
@@ -41,7 +49,11 @@ namespace Cinemachine
 			get
 			{
 				CinemachineVirtualCameraBase virtualCamera = this.VirtualCamera;
-				return (!(virtualCamera == null)) ? virtualCamera.State : CameraState.Default;
+				if (!(virtualCamera == null))
+				{
+					return virtualCamera.State;
+				}
+				return CameraState.Default;
 			}
 		}
 

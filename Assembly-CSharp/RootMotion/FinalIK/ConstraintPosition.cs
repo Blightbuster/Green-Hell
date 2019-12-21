@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class ConstraintPosition : Constraint
 	{
-		public ConstraintPosition()
-		{
-		}
-
-		public ConstraintPosition(Transform transform)
-		{
-			this.transform = transform;
-		}
-
 		public override void UpdateConstraint()
 		{
 			if (this.weight <= 0f)
@@ -26,6 +17,15 @@ namespace RootMotion.FinalIK
 				return;
 			}
 			this.transform.position = Vector3.Lerp(this.transform.position, this.position, this.weight);
+		}
+
+		public ConstraintPosition()
+		{
+		}
+
+		public ConstraintPosition(Transform transform)
+		{
+			this.transform = transform;
 		}
 
 		public Vector3 position;

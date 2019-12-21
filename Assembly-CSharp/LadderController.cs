@@ -14,9 +14,9 @@ public class LadderController : PlayerController
 	{
 		base.Awake();
 		LadderController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.Ladder;
+		base.m_ControllerType = PlayerControllerType.Ladder;
 		this.m_Camera = Camera.main;
-		this.m_CharacterController = base.GetComponent<CharacterController>();
+		this.m_CharacterController = base.GetComponent<CharacterControllerProxy>();
 		this.m_OffsetHelperController = base.GetComponent<OffsetHelperController>();
 		this.m_LookController = base.gameObject.GetComponent<LookController>();
 	}
@@ -40,8 +40,7 @@ public class LadderController : PlayerController
 			this.m_Animator.SetInteger(this.m_ILadder, 9);
 			this.m_State = LadderControllerState.PreEnterUp;
 		}
-		this.m_Player.GetComponent<Rigidbody>().useGravity = false;
-		this.m_Player.GetComponent<Rigidbody>().isKinematic = true;
+		this.m_Player.m_UseGravity = false;
 		this.SetupCollisions(false);
 		this.SetupWantedPos();
 		this.SetupWantedDir();
@@ -56,8 +55,7 @@ public class LadderController : PlayerController
 	{
 		base.OnDisable();
 		this.m_Animator.SetInteger(this.m_ILadder, 0);
-		this.m_Player.GetComponent<Rigidbody>().useGravity = true;
-		this.m_Player.GetComponent<Rigidbody>().isKinematic = true;
+		this.m_Player.m_UseGravity = true;
 		this.m_State = LadderControllerState.None;
 		this.SetupCollisions(true);
 		this.m_CharacterController.center = this.m_CharacterControllerCenterToRestore;
@@ -219,7 +217,7 @@ public class LadderController : PlayerController
 				vector.Normalize();
 			}
 			vector *= Time.fixedDeltaTime * 4f;
-			this.m_CharacterController.Move(vector);
+			this.m_CharacterController.Move(vector, true);
 		}
 	}
 
@@ -264,13 +262,13 @@ public class LadderController : PlayerController
 		{
 			return;
 		}
-		Collider component = this.m_Player.gameObject.GetComponent<Collider>();
-		Collider component2 = this.m_Ladder.gameObject.GetComponent<Collider>();
-		if (component == null || component2 == null)
+		Collider collider = this.m_Player.m_Collider;
+		Collider component = this.m_Ladder.gameObject.GetComponent<Collider>();
+		if (collider == null || component == null)
 		{
 			return;
 		}
-		Physics.IgnoreCollision(component, component2, !set);
+		Physics.IgnoreCollision(collider, component, !set);
 	}
 
 	private void UpdateInputs()
@@ -283,8 +281,9 @@ public class LadderController : PlayerController
 		if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Forward))
 		{
 			this.m_Inputs.m_Up = 1f;
+			return;
 		}
-		else if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Backward))
+		if (InputsManager.Get().IsActionActive(InputsManager.InputAction.Backward))
 		{
 			this.m_Inputs.m_Up = -1f;
 		}
@@ -300,18 +299,16 @@ public class LadderController : PlayerController
 		if (id == AnimEventID.LadderSound)
 		{
 			PlayerAudioModule.Get().PlayLadderSound();
+			return;
 		}
-		else
-		{
-			base.OnAnimEvent(id);
-		}
+		base.OnAnimEvent(id);
 	}
 
 	private Ladder m_Ladder;
 
 	private LadderControllerState m_State;
 
-	private CharacterController m_CharacterController;
+	private CharacterControllerProxy m_CharacterController;
 
 	private OffsetHelperController m_OffsetHelperController;
 

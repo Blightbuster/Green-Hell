@@ -31,9 +31,10 @@ namespace RootMotion.FinalIK
 			float num = magnitude * UnityEngine.Random.value * this.magnitudeRandom;
 			this.magnitudeMlp = magnitude + num;
 			this.randomRotation = Quaternion.Euler(this.rotationRandom * UnityEngine.Random.value);
-			foreach (Recoil.RecoilOffset recoilOffset in this.offsets)
+			Recoil.RecoilOffset[] array = this.offsets;
+			for (int i = 0; i < array.Length; i++)
 			{
-				recoilOffset.Start();
+				array[i].Start();
 			}
 			if (Time.time < this.endTime)
 			{
@@ -81,11 +82,12 @@ namespace RootMotion.FinalIK
 			}
 			float b = this.recoilWeight.Evaluate(this.length - (this.endTime - Time.time)) * this.magnitudeMlp;
 			this.w = Mathf.Lerp(this.w, b, this.blendWeight);
-			Quaternion quaternion = (!(this.aimIK != null) || this.aimIKSolvedLast) ? this.ik.references.root.rotation : Quaternion.LookRotation(this.aimIK.solver.IKPosition - this.aimIK.solver.transform.position, this.ik.references.root.up);
+			Quaternion quaternion = (this.aimIK != null && !this.aimIKSolvedLast) ? Quaternion.LookRotation(this.aimIK.solver.IKPosition - this.aimIK.solver.transform.position, this.ik.references.root.up) : this.ik.references.root.rotation;
 			quaternion = this.randomRotation * quaternion;
-			foreach (Recoil.RecoilOffset recoilOffset in this.offsets)
+			Recoil.RecoilOffset[] array = this.offsets;
+			for (int i = 0; i < array.Length; i++)
 			{
-				recoilOffset.Apply(this.ik.solver, quaternion, this.w, this.length, this.endTime - Time.time);
+				array[i].Apply(this.ik.solver, quaternion, this.w, this.length, this.endTime - Time.time);
 			}
 			if (!this.handRotationsSet)
 			{
@@ -98,9 +100,8 @@ namespace RootMotion.FinalIK
 			{
 				Vector3 point = Quaternion.Inverse(this.primaryHand.rotation) * (this.secondaryHand.position - this.primaryHand.position);
 				this.secondaryHandRelativeRotation = Quaternion.Inverse(this.primaryHand.rotation) * this.secondaryHand.rotation;
-				Vector3 a = this.primaryHand.position + this.primaryHandEffector.positionOffset;
-				Vector3 a2 = a + this.handRotation * point;
-				this.secondaryHandEffector.positionOffset += a2 - (this.secondaryHand.position + this.secondaryHandEffector.positionOffset);
+				Vector3 a = this.primaryHand.position + this.primaryHandEffector.positionOffset + this.handRotation * point;
+				this.secondaryHandEffector.positionOffset += a - (this.secondaryHand.position + this.secondaryHandEffector.positionOffset);
 			}
 			if (this.aimIK != null && this.aimIKSolvedLast)
 			{
@@ -267,8 +268,8 @@ namespace RootMotion.FinalIK
 			[Tooltip("Offset vector for the associated effector when doing recoil.")]
 			public Vector3 offset;
 
-			[Range(0f, 1f)]
 			[Tooltip("When firing before the last recoil has faded, how much of the current recoil offset will be maintained?")]
+			[Range(0f, 1f)]
 			public float additivity = 1f;
 
 			[Tooltip("Max additive recoil for automatic fire.")]

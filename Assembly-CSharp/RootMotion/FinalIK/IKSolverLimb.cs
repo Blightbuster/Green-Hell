@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class IKSolverLimb : IKSolverTrigonometric
 	{
-		public IKSolverLimb()
-		{
-		}
-
-		public IKSolverLimb(AvatarIKGoal goal)
-		{
-			this.goal = goal;
-		}
-
 		public void MaintainRotation()
 		{
 			if (!base.initiated)
@@ -68,7 +59,7 @@ namespace RootMotion.FinalIK
 			}
 			if (this.maintainRotationWeight * this.IKPositionWeight > 0f)
 			{
-				this.bone3RotationBeforeSolve = ((!this.maintainRotationFor1Frame) ? this.bone3.transform.rotation : this.maintainRotation);
+				this.bone3RotationBeforeSolve = (this.maintainRotationFor1Frame ? this.maintainRotation : this.bone3.transform.rotation);
 				this.maintainRotationFor1Frame = false;
 			}
 		}
@@ -83,6 +74,15 @@ namespace RootMotion.FinalIK
 			{
 				this.bone3.transform.rotation = Quaternion.Slerp(this.bone3.transform.rotation, this.bone3RotationBeforeSolve, this.maintainRotationWeight * this.IKPositionWeight);
 			}
+		}
+
+		public IKSolverLimb()
+		{
+		}
+
+		public IKSolverLimb(AvatarIKGoal goal)
+		{
+			this.goal = goal;
 		}
 
 		private IKSolverLimb.AxisDirection[] axisDirections

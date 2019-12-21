@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[SaveDuringPlay]
-	[RequireComponent(typeof(CinemachinePipeline))]
 	[DocumentationSorting(23f, DocumentationSortingAttribute.Level.UserRef)]
 	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
+	[SaveDuringPlay]
 	public class CinemachineHardLockToTarget : CinemachineComponentBase
 	{
 		public override bool IsValid

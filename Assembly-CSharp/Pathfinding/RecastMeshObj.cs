@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_recast_mesh_obj.php")]
 	[AddComponentMenu("Pathfinding/Navmesh/RecastMeshObj")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_recast_mesh_obj.php")]
 	public class RecastMeshObj : VersionedMonoBehaviour
 	{
 		public static void GetAllInBounds(List<RecastMeshObj> buffer, Bounds bounds)
@@ -66,16 +66,14 @@ namespace Pathfinding
 			{
 				throw new Exception("A renderer was attached but no mesh filter");
 			}
-			this.bounds = ((!(component != null)) ? component2.bounds : component.bounds);
+			this.bounds = ((component != null) ? component.bounds : component2.bounds);
 			this._dynamic = this.dynamic;
 			if (this._dynamic)
 			{
 				RecastMeshObj.dynamicMeshObjs.Add(this);
+				return;
 			}
-			else
-			{
-				RecastMeshObj.tree.Insert(this);
-			}
+			RecastMeshObj.tree.Insert(this);
 		}
 
 		private void RecalculateBounds()
@@ -91,7 +89,7 @@ namespace Pathfinding
 			{
 				throw new Exception("A renderer was attached but no mesh filter");
 			}
-			this.bounds = ((!(component != null)) ? collider.bounds : component.bounds);
+			this.bounds = ((component != null) ? component.bounds : collider.bounds);
 		}
 
 		public Bounds GetBounds()

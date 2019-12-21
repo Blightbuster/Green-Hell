@@ -26,7 +26,7 @@ public class HUDFirecamp : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return this.m_Datas.Count > 0 && !MapController.Get().IsActive() && !NotepadController.Get().IsActive();
+		return this.m_Datas.Count > 0 && !MapController.Get().IsActive() && !NotepadController.Get().IsActive() && !CutscenesManager.Get().IsCutscenePlaying() && !ScenarioManager.Get().IsDreamOrPreDream();
 	}
 
 	public void RegisterFirecamp(Firecamp firecamp)
@@ -62,7 +62,7 @@ public class HUDFirecamp : HUDBase
 
 	private void UpdateIcons()
 	{
-		if (!Camera.main)
+		if (!CameraManager.Get().m_MainCamera)
 		{
 			return;
 		}
@@ -74,7 +74,7 @@ public class HUDFirecamp : HUDBase
 			}
 			else
 			{
-				firecampIconData.obj.transform.position = Camera.main.WorldToScreenPoint(firecampIconData.firecamp.transform.position + Vector3.up * 0.5f);
+				firecampIconData.obj.transform.position = CameraManager.Get().m_MainCamera.WorldToScreenPoint(firecampIconData.firecamp.transform.position + Vector3.up * 0.5f);
 				if (firecampIconData.obj.transform.position.z <= 0f)
 				{
 					firecampIconData.obj.SetActive(false);
@@ -95,7 +95,7 @@ public class HUDFirecamp : HUDBase
 
 	public GameObject m_IconPrefab;
 
-	private static HUDFirecamp s_Instance;
+	private static HUDFirecamp s_Instance = null;
 
 	public static float s_DistToActivate = 3f;
 }

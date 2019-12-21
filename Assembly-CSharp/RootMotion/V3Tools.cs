@@ -70,12 +70,11 @@ namespace RootMotion
 				return direction;
 			}
 			changed = true;
-			float num3 = (clampWeight <= 0f) ? 1f : Mathf.Clamp(1f - (clampWeight - num2) / (1f - num2), 0f, 1f);
-			float num4 = (clampWeight <= 0f) ? 1f : Mathf.Clamp(num2 / clampWeight, 0f, 1f);
+			float num3 = (clampWeight > 0f) ? Mathf.Clamp(1f - (clampWeight - num2) / (1f - num2), 0f, 1f) : 1f;
+			float num4 = (clampWeight > 0f) ? Mathf.Clamp(num2 / clampWeight, 0f, 1f) : 1f;
 			for (int i = 0; i < clampSmoothing; i++)
 			{
-				float f = num4 * 3.14159274f * 0.5f;
-				num4 = Mathf.Sin(f);
+				num4 = Mathf.Sin(num4 * 3.14159274f * 0.5f);
 			}
 			return Vector3.Slerp(normalDirection, direction, num4 * num3);
 		}
@@ -98,12 +97,11 @@ namespace RootMotion
 				clampValue = 0f;
 				return direction;
 			}
-			float num3 = (clampWeight <= 0f) ? 1f : Mathf.Clamp(1f - (clampWeight - num2) / (1f - num2), 0f, 1f);
-			float num4 = (clampWeight <= 0f) ? 1f : Mathf.Clamp(num2 / clampWeight, 0f, 1f);
+			float num3 = (clampWeight > 0f) ? Mathf.Clamp(1f - (clampWeight - num2) / (1f - num2), 0f, 1f) : 1f;
+			float num4 = (clampWeight > 0f) ? Mathf.Clamp(num2 / clampWeight, 0f, 1f) : 1f;
 			for (int i = 0; i < clampSmoothing; i++)
 			{
-				float f = num4 * 3.14159274f * 0.5f;
-				num4 = Mathf.Sin(f);
+				num4 = Mathf.Sin(num4 * 3.14159274f * 0.5f);
 			}
 			float num5 = num4 * num3;
 			clampValue = 1f - num5;

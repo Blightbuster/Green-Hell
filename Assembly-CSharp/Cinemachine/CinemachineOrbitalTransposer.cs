@@ -5,9 +5,9 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[RequireComponent(typeof(CinemachinePipeline))]
-	[AddComponentMenu("")]
 	[DocumentationSorting(6f, DocumentationSortingAttribute.Level.UserRef)]
+	[AddComponentMenu("")]
+	[RequireComponent(typeof(CinemachinePipeline))]
 	[SaveDuringPlay]
 	public class CinemachineOrbitalTransposer : CinemachineTransposer
 	{
@@ -31,15 +31,10 @@ namespace Cinemachine
 
 		public float UpdateHeading(float deltaTime, Vector3 up, ref AxisState axis)
 		{
-			if (deltaTime >= 0f || CinemachineCore.Instance.IsLive(base.VirtualCamera))
+			if ((deltaTime >= 0f || CinemachineCore.Instance.IsLive(base.VirtualCamera)) && (false | axis.Update(deltaTime)))
 			{
-				bool flag = false;
-				flag |= axis.Update(deltaTime);
-				if (flag)
-				{
-					this.mLastHeadingAxisInputTime = Time.time;
-					this.mHeadingRecenteringVelocity = 0f;
-				}
+				this.mLastHeadingAxisInputTime = Time.time;
+				this.mHeadingRecenteringVelocity = 0f;
 			}
 			float targetHeading = this.GetTargetHeading(axis.Value, base.GetReferenceOrientation(up), deltaTime);
 			if (deltaTime < 0f)
@@ -103,8 +98,8 @@ namespace Cinemachine
 			if (base.FollowTarget != this.PreviousTarget)
 			{
 				this.PreviousTarget = base.FollowTarget;
-				this.mTargetRigidBody = ((!(this.PreviousTarget == null)) ? this.PreviousTarget.GetComponent<Rigidbody>() : null);
-				this.mLastTargetPosition = ((!(this.PreviousTarget == null)) ? this.PreviousTarget.position : Vector3.zero);
+				this.mTargetRigidBody = ((this.PreviousTarget == null) ? null : this.PreviousTarget.GetComponent<Rigidbody>());
+				this.mLastTargetPosition = ((this.PreviousTarget == null) ? Vector3.zero : this.PreviousTarget.position);
 				this.mHeadingTracker = null;
 			}
 			float num = this.HeadingUpdater(this, deltaTime, curState.ReferenceUp);
@@ -129,15 +124,14 @@ namespace Cinemachine
 				}
 				quaternion2 *= quaternion;
 				curState.RawPosition = a + quaternion2 * effectiveOffset;
-				this.mHeadingPrevFrame = ((this.m_BindingMode != CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp) ? quaternion : Quaternion.identity);
+				this.mHeadingPrevFrame = ((this.m_BindingMode == CinemachineTransposer.BindingMode.SimpleFollowWithWorldUp) ? Quaternion.identity : quaternion);
 				this.mOffsetPrevFrame = effectiveOffset;
 			}
 		}
 
 		public override void OnPositionDragged(Vector3 delta)
 		{
-			Quaternion referenceOrientation = base.GetReferenceOrientation(base.VcamState.ReferenceUp);
-			Vector3 b = Quaternion.Inverse(referenceOrientation) * delta;
+			Vector3 b = Quaternion.Inverse(base.GetReferenceOrientation(base.VcamState.ReferenceUp)) * delta;
 			b.x = 0f;
 			this.m_FollowOffset += b;
 			this.m_FollowOffset = base.EffectiveOffset;
@@ -147,7 +141,7 @@ namespace Cinemachine
 		{
 			if (current == null)
 			{
-				return string.Empty;
+				return "";
 			}
 			if (current.transform.parent == null)
 			{
@@ -176,16 +170,16 @@ namespace Cinemachine
 			{
 			case CinemachineOrbitalTransposer.Heading.HeadingDefinition.PositionDelta:
 				vector = base.FollowTarget.position - this.mLastTargetPosition;
-				goto IL_E9;
+				goto IL_D1;
 			case CinemachineOrbitalTransposer.Heading.HeadingDefinition.Velocity:
 				vector = this.mTargetRigidBody.velocity;
-				goto IL_E9;
+				goto IL_D1;
 			case CinemachineOrbitalTransposer.Heading.HeadingDefinition.TargetForward:
 				vector = base.FollowTarget.forward;
-				goto IL_E9;
+				goto IL_D1;
 			}
 			return 0f;
-			IL_E9:
+			IL_D1:
 			int num = this.m_Heading.m_VelocityFilterStrength * 5;
 			if (this.mHeadingTracker == null || this.mHeadingTracker.FilterSize != num)
 			{
@@ -206,8 +200,8 @@ namespace Cinemachine
 			return currentHeading;
 		}
 
-		[Tooltip("The definition of Forward.  Camera will follow behind.")]
 		[Space]
+		[Tooltip("The definition of Forward.  Camera will follow behind.")]
 		public CinemachineOrbitalTransposer.Heading m_Heading = new CinemachineOrbitalTransposer.Heading(CinemachineOrbitalTransposer.Heading.HeadingDefinition.TargetForward, 4, 0f);
 
 		[Tooltip("Automatic heading recentering.  The settings here defines how the camera will reposition itself in the absence of player input.")]
@@ -269,8 +263,8 @@ namespace Cinemachine
 			[Tooltip("Size of the velocity sampling window for target heading filter.  This filters out irregularities in the target's movement.  Used only if deriving heading from target's movement (PositionDelta or Velocity)")]
 			public int m_VelocityFilterStrength;
 
-			[Tooltip("Where the camera is placed when the X-axis value is zero.  This is a rotation in degrees around the Y axis.  When this value is 0, the camera will be placed behind the target.  Nonzero offsets will rotate the zero position around the target.")]
 			[Range(-180f, 180f)]
+			[Tooltip("Where the camera is placed when the X-axis value is zero.  This is a rotation in degrees around the Y axis.  When this value is 0, the camera will be placed behind the target.  Nonzero offsets will rotate the zero position around the target.")]
 			public float m_HeadingBias;
 
 			[DocumentationSorting(6.21f, DocumentationSortingAttribute.Level.UserRef)]
@@ -327,8 +321,8 @@ namespace Cinemachine
 			[FormerlySerializedAs("m_HeadingDefinition")]
 			private int m_LegacyHeadingDefinition;
 
-			[HideInInspector]
 			[SerializeField]
+			[HideInInspector]
 			[FormerlySerializedAs("m_VelocityFilterStrength")]
 			private int m_LegacyVelocityFilterStrength;
 		}
@@ -385,7 +379,9 @@ namespace Cinemachine
 					}
 					this.mCount++;
 					this.mHistory[this.mTop] = item;
-					if (++this.mTop == this.FilterSize)
+					int num = this.mTop + 1;
+					this.mTop = num;
+					if (num == this.FilterSize)
 					{
 						this.mTop = 0;
 					}
@@ -402,14 +398,16 @@ namespace Cinemachine
 				{
 					float time = Time.time;
 					CinemachineOrbitalTransposer.HeadingTracker.Item item = this.mHistory[this.mBottom];
-					if (++this.mBottom == this.FilterSize)
+					int num = this.mBottom + 1;
+					this.mBottom = num;
+					if (num == this.FilterSize)
 					{
 						this.mBottom = 0;
 					}
 					this.mCount--;
-					float num = CinemachineOrbitalTransposer.HeadingTracker.Decay(time - item.time);
-					this.mWeightSum -= item.weight * num;
-					this.mHeadingSum -= item.velocity * num;
+					float num2 = CinemachineOrbitalTransposer.HeadingTracker.Decay(time - item.time);
+					this.mWeightSum -= item.weight * num2;
+					this.mHeadingSum -= item.velocity * num2;
 					if (this.mWeightSum <= 0.0001f || this.mCount == 0)
 					{
 						this.ClearHistory();
@@ -426,11 +424,9 @@ namespace Cinemachine
 				if (this.mWeightSum < 0.0001f)
 				{
 					this.ClearHistory();
+					return;
 				}
-				else
-				{
-					this.mHeadingSum *= num;
-				}
+				this.mHeadingSum *= num;
 			}
 
 			public Vector3 GetReliableHeading()

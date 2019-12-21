@@ -3,10 +3,11 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuCredits : MainMenuScreen
+public class MainMenuCredits : MenuScreen
 {
-	private void Awake()
+	protected override void Awake()
 	{
+		base.Awake();
 		this.m_FadedColor = this.m_TextColor;
 		this.m_FadedColor.a = 0f;
 		this.m_CreditsText = base.gameObject.GetComponentInChildren<Text>(true);
@@ -17,24 +18,36 @@ public class MainMenuCredits : MainMenuScreen
 	public override void OnShow()
 	{
 		base.OnShow();
-		string text = GreenHellGame.Instance.GetLocalization().Get("MainMenu_CreditText");
+		string text = GreenHellGame.Instance.GetLocalization().Get("MainMenu_CreditText", true);
 		text.Replace("<br>", Environment.NewLine);
 		this.m_CreditsText.text = text;
+		Vector2 anchoredPosition = this.m_CreditsText.rectTransform.anchoredPosition;
+		anchoredPosition.y = this.m_StartY;
+		this.m_CreditsText.rectTransform.anchoredPosition = anchoredPosition;
 	}
 
-	private void Update()
+	protected override void Update()
 	{
-		Vector3 v = this.m_CreditsText.rectTransform.anchoredPosition;
-		v.y += Time.unscaledDeltaTime * this.m_Speed;
-		if (v.y > 1700f)
+		base.Update();
+		Vector3 vector = this.m_CreditsText.rectTransform.anchoredPosition;
+		vector.y += Time.unscaledDeltaTime * this.m_Speed;
+		if (vector.y > 1460f)
 		{
-			v.y = this.m_StartY;
+			vector.y = this.m_StartY;
 		}
-		this.m_CreditsText.rectTransform.anchoredPosition = v;
+		this.m_CreditsText.rectTransform.anchoredPosition = vector;
 		if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(0))
 		{
 			base.StartCoroutine(this.FadeOut());
-			MainMenuManager.Get().SetActiveScreen(typeof(MainMenu), true);
+			if (MainMenuManager.Get())
+			{
+				MainMenuManager.Get().SetActiveScreen(typeof(MainMenu), true);
+				return;
+			}
+			if (Input.GetKeyDown(KeyCode.Escape))
+			{
+				GreenHellGame.Instance.ReturnToMainMenu();
+			}
 		}
 	}
 
@@ -55,6 +68,7 @@ public class MainMenuCredits : MainMenuScreen
 			time += Time.unscaledDeltaTime;
 			yield return null;
 		}
+		yield break;
 		yield break;
 	}
 

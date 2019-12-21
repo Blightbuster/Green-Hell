@@ -98,8 +98,9 @@ namespace AIs
 			if (this.ShouldFinish())
 			{
 				this.Finish();
+				return;
 			}
-			else if (this.ShouldFail())
+			if (this.ShouldFail())
 			{
 				this.Fail();
 			}

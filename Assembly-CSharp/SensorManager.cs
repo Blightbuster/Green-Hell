@@ -5,23 +5,25 @@ using UnityEngine;
 
 public class SensorManager : MonoBehaviour, ISaveLoad
 {
-	private SensorManager()
-	{
-		SensorManager.s_Instance = this;
-	}
-
 	public static SensorManager Get()
 	{
 		return SensorManager.s_Instance;
 	}
 
+	private SensorManager()
+	{
+		SensorManager.s_Instance = this;
+	}
+
 	public void RegisterSensor(SensorBase sensor)
 	{
-		if (!this.m_Sensors.ContainsKey(sensor.name))
+		int key = Animator.StringToHash(sensor.name);
+		if (!this.m_Sensors.ContainsKey(key))
 		{
-			this.m_Sensors.Add(sensor.name, sensor);
+			this.m_Sensors.Add(key, sensor);
+			return;
 		}
-		else if (this.m_Sensors.ContainsValue(sensor))
+		if (this.m_Sensors.ContainsValue(sensor))
 		{
 			DebugUtils.Assert("[SensorManager:RegisterSensor] ERROR - More than one sensor with name " + sensor.name, true, DebugUtils.AssertType.Info);
 		}
@@ -29,13 +31,15 @@ public class SensorManager : MonoBehaviour, ISaveLoad
 
 	public void UnregisterSensor(SensorBase sensor)
 	{
-		this.m_Sensors.Remove(sensor.name);
+		int key = Animator.StringToHash(sensor.name);
+		this.m_Sensors.Remove(key);
 	}
 
 	public bool PlayerIsInSensor(string sensor_name)
 	{
+		int key = Animator.StringToHash(sensor_name);
 		SensorBase sensorBase = null;
-		this.m_Sensors.TryGetValue(sensor_name, out sensorBase);
+		this.m_Sensors.TryGetValue(key, out sensorBase);
 		return sensorBase && sensorBase.IsInside();
 	}
 
@@ -55,7 +59,7 @@ public class SensorManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	private Dictionary<string, SensorBase> m_Sensors = new Dictionary<string, SensorBase>();
+	private Dictionary<int, SensorBase> m_Sensors = new Dictionary<int, SensorBase>();
 
 	private static SensorManager s_Instance;
 }

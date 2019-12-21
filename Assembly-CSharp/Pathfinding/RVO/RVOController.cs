@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Pathfinding.RVO
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_controller.php")]
 	[AddComponentMenu("Pathfinding/Local Avoidance/RVO Controller")]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_r_v_o_1_1_r_v_o_controller.php")]
 	public class RVOController : VersionedMonoBehaviour
 	{
 		[Obsolete("This field is obsolete in version 4.0 and will not affect anything. Use the LegacyRVOController if you need the old behaviour")]
@@ -161,23 +161,21 @@ namespace Pathfinding.RVO
 			if (RVOSimulator.active == null)
 			{
 				Debug.LogError("No RVOSimulator component found in the scene. Please add one.");
+				return;
+			}
+			this.simulator = RVOSimulator.active.GetSimulator();
+			if (this.rvoAgent != null)
+			{
+				this.simulator.AddAgent(this.rvoAgent);
 			}
 			else
 			{
-				this.simulator = RVOSimulator.active.GetSimulator();
-				if (this.rvoAgent != null)
-				{
-					this.simulator.AddAgent(this.rvoAgent);
-				}
-				else
-				{
-					float elevationCoordinate;
-					Vector2 position = this.To2D(base.transform.position, out elevationCoordinate);
-					this.rvoAgent = this.simulator.AddAgent(position, elevationCoordinate);
-					this.rvoAgent.PreCalculationCallback = new Action(this.UpdateAgentProperties);
-				}
-				this.UpdateAgentProperties();
+				float elevationCoordinate;
+				Vector2 position = this.To2D(base.transform.position, out elevationCoordinate);
+				this.rvoAgent = this.simulator.AddAgent(position, elevationCoordinate);
+				this.rvoAgent.PreCalculationCallback = new Action(this.UpdateAgentProperties);
 			}
+			this.UpdateAgentProperties();
 		}
 
 		protected void UpdateAgentProperties()
@@ -197,12 +195,10 @@ namespace Pathfinding.RVO
 			{
 				this.rvoAgent.Height = this.height;
 				this.rvoAgent.ElevationCoordinate = num + this.center - 0.5f * this.height;
+				return;
 			}
-			else
-			{
-				this.rvoAgent.Height = 1f;
-				this.rvoAgent.ElevationCoordinate = 0f;
-			}
+			this.rvoAgent.Height = 1f;
+			this.rvoAgent.ElevationCoordinate = 0f;
 		}
 
 		public void SetTarget(Vector3 pos, float speed, float maxSpeed)
@@ -241,22 +237,20 @@ namespace Pathfinding.RVO
 
 		private void OnDrawGizmos()
 		{
-			Color color = RVOController.GizmoColor * ((!this.locked) ? 1f : 0.5f);
+			Color color = RVOController.GizmoColor * (this.locked ? 0.5f : 1f);
 			if (this.movementPlane == MovementPlane.XY)
 			{
 				Draw.Gizmos.Cylinder(base.transform.position, Vector3.forward, 0f, this.radius, color);
+				return;
 			}
-			else
-			{
-				Draw.Gizmos.Cylinder(base.transform.position + this.To3D(Vector2.zero, this.center - this.height * 0.5f), this.To3D(Vector2.zero, 1f), this.height, this.radius, color);
-			}
+			Draw.Gizmos.Cylinder(base.transform.position + this.To3D(Vector2.zero, this.center - this.height * 0.5f), this.To3D(Vector2.zero, 1f), this.height, this.radius, color);
 		}
 
 		[Tooltip("Radius of the agent")]
 		public float radius = 0.5f;
 
-		[HideInInspector]
 		[Tooltip("Height of the agent. In world units")]
+		[HideInInspector]
 		public float height = 2f;
 
 		[Tooltip("A locked unit cannot move. Other units will still avoid it. But avoidance quality is not the best")]
@@ -279,20 +273,20 @@ namespace Pathfinding.RVO
 		[AstarEnumFlag]
 		public RVOLayer collidesWith = (RVOLayer)(-1);
 
-		[Obsolete]
 		[HideInInspector]
+		[Obsolete]
 		public float wallAvoidForce = 1f;
 
-		[Obsolete]
 		[HideInInspector]
+		[Obsolete]
 		public float wallAvoidFalloff = 1f;
 
-		[Range(0f, 1f)]
 		[Tooltip("How strongly other agents will avoid this agent")]
+		[Range(0f, 1f)]
 		public float priority = 0.5f;
 
-		[HideInInspector]
 		[Tooltip("Center of the agent relative to the pivot point of this game object")]
+		[HideInInspector]
 		public float center = 1f;
 
 		protected Transform tr;

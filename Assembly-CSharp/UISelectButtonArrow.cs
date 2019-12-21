@@ -4,16 +4,20 @@ using UnityEngine.UI;
 
 public class UISelectButtonArrow : Button
 {
-	protected override void Start()
+	protected override void Awake()
 	{
 		base.Start();
 		this.m_Text = base.gameObject.GetComponentInChildren<Text>();
-		this.m_SelectButton = base.gameObject.transform.parent.GetComponent<UISelectButton>();
+		if (this.m_SelectButton == null)
+		{
+			this.m_SelectButton = base.gameObject.transform.parent.GetComponent<UISelectButton>();
+		}
 		if (base.gameObject.name.Contains("Left"))
 		{
 			this.m_Dir = UISelectButtonArrowDir.Left;
+			return;
 		}
-		else if (base.gameObject.name.Contains("Right"))
+		if (base.gameObject.name.Contains("Right"))
 		{
 			this.m_Dir = UISelectButtonArrowDir.Right;
 		}
@@ -21,36 +25,66 @@ public class UISelectButtonArrow : Button
 
 	protected override void DoStateTransition(Selectable.SelectionState state, bool instant)
 	{
-		Color color;
 		switch (state)
 		{
 		case Selectable.SelectionState.Normal:
-			color = base.colors.normalColor;
+		{
+			Color color = base.colors.normalColor;
+			if (this.m_Text != null)
+			{
+				this.m_Text.color = color;
+				return;
+			}
 			break;
+		}
 		case Selectable.SelectionState.Highlighted:
-			color = base.colors.highlightedColor;
+		{
+			Color color = base.colors.highlightedColor;
+			if (this.m_Text != null)
+			{
+				this.m_Text.color = color;
+				return;
+			}
 			break;
+		}
 		case Selectable.SelectionState.Pressed:
-			color = base.colors.pressedColor;
+		{
+			Color color = base.colors.pressedColor;
+			if (this.m_Text != null)
+			{
+				this.m_Text.color = color;
+			}
 			if (this.m_Dir == UISelectButtonArrowDir.Left)
 			{
 				this.m_SelectButton.OnLeftButtonPressed();
+				return;
 			}
-			else if (this.m_Dir == UISelectButtonArrowDir.Right)
+			if (this.m_Dir == UISelectButtonArrowDir.Right)
 			{
 				this.m_SelectButton.OnRightButtonPressed();
+				return;
 			}
 			break;
+		}
 		case Selectable.SelectionState.Disabled:
-			color = base.colors.disabledColor;
-			break;
-		default:
-			color = Color.black;
+		{
+			Color color = base.colors.disabledColor;
+			if (this.m_Text != null)
+			{
+				this.m_Text.color = color;
+				return;
+			}
 			break;
 		}
-		if (this.m_Text != null)
+		default:
 		{
-			this.m_Text.color = color;
+			Color color = Color.black;
+			if (this.m_Text != null)
+			{
+				this.m_Text.color = color;
+			}
+			break;
+		}
 		}
 	}
 

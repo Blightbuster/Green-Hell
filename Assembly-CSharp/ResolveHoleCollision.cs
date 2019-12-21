@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Collider))]
 [AddComponentMenu("Relief Terrain/Helpers/Resolve Hole Collision")]
+[RequireComponent(typeof(Collider))]
 public class ResolveHoleCollision : MonoBehaviour
 {
 	private void Awake()

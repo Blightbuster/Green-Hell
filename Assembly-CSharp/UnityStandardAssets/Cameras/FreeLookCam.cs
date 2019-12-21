@@ -9,7 +9,7 @@ namespace UnityStandardAssets.Cameras
 		protected override void Awake()
 		{
 			base.Awake();
-			Cursor.lockState = ((!this.m_LockCursor) ? CursorLockMode.None : CursorLockMode.Locked);
+			Cursor.lockState = (this.m_LockCursor ? CursorLockMode.Locked : CursorLockMode.None);
 			Cursor.visible = !this.m_LockCursor;
 			this.m_PivotEulers = this.m_Pivot.rotation.eulerAngles;
 			this.m_PivotTargetRot = this.m_Pivot.transform.localRotation;
@@ -21,7 +21,7 @@ namespace UnityStandardAssets.Cameras
 			this.HandleRotationMovement();
 			if (this.m_LockCursor && Input.GetMouseButtonUp(0))
 			{
-				Cursor.lockState = ((!this.m_LockCursor) ? CursorLockMode.None : CursorLockMode.Locked);
+				Cursor.lockState = (this.m_LockCursor ? CursorLockMode.Locked : CursorLockMode.None);
 				Cursor.visible = !this.m_LockCursor;
 			}
 		}
@@ -53,7 +53,7 @@ namespace UnityStandardAssets.Cameras
 			this.m_TransformTargetRot = Quaternion.Euler(0f, this.m_LookAngle, 0f);
 			if (this.m_VerticalAutoReturn)
 			{
-				this.m_TiltAngle = ((axis2 <= 0f) ? Mathf.Lerp(0f, this.m_TiltMax, -axis2) : Mathf.Lerp(0f, -this.m_TiltMin, axis2));
+				this.m_TiltAngle = ((axis2 > 0f) ? Mathf.Lerp(0f, -this.m_TiltMin, axis2) : Mathf.Lerp(0f, this.m_TiltMax, -axis2));
 			}
 			else
 			{
@@ -65,19 +65,17 @@ namespace UnityStandardAssets.Cameras
 			{
 				this.m_Pivot.localRotation = Quaternion.Slerp(this.m_Pivot.localRotation, this.m_PivotTargetRot, this.m_TurnSmoothing * Time.deltaTime);
 				base.transform.localRotation = Quaternion.Slerp(base.transform.localRotation, this.m_TransformTargetRot, this.m_TurnSmoothing * Time.deltaTime);
+				return;
 			}
-			else
-			{
-				this.m_Pivot.localRotation = this.m_PivotTargetRot;
-				base.transform.localRotation = this.m_TransformTargetRot;
-			}
+			this.m_Pivot.localRotation = this.m_PivotTargetRot;
+			base.transform.localRotation = this.m_TransformTargetRot;
 		}
 
 		[SerializeField]
 		private float m_MoveSpeed = 1f;
 
-		[SerializeField]
 		[Range(0f, 10f)]
+		[SerializeField]
 		private float m_TurnSpeed = 1.5f;
 
 		[SerializeField]

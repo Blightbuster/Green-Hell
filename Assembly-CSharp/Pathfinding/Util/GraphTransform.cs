@@ -56,13 +56,11 @@ namespace Pathfinding.Util
 				{
 					arr[i] += this.i3translation;
 				}
+				return;
 			}
-			else
+			for (int j = arr.Length - 1; j >= 0; j--)
 			{
-				for (int j = arr.Length - 1; j >= 0; j--)
-				{
-					arr[j] = (Int3)this.matrix.MultiplyPoint3x4((Vector3)arr[j]);
-				}
+				arr[j] = (Int3)this.matrix.MultiplyPoint3x4((Vector3)arr[j]);
 			}
 		}
 
@@ -74,13 +72,11 @@ namespace Pathfinding.Util
 				{
 					arr[i] += this.translation;
 				}
+				return;
 			}
-			else
+			for (int j = arr.Length - 1; j >= 0; j--)
 			{
-				for (int j = arr.Length - 1; j >= 0; j--)
-				{
-					arr[j] = this.matrix.MultiplyPoint3x4(arr[j]);
-				}
+				arr[j] = this.matrix.MultiplyPoint3x4(arr[j]);
 			}
 		}
 

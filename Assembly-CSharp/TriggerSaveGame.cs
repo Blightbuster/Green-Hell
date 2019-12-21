@@ -15,16 +15,26 @@ public class TriggerSaveGame : Trigger, ITriggerThrough
 
 	public override bool CanExecuteActions()
 	{
-		return base.enabled;
+		return base.enabled && base.CanExecuteActions() && PlayerStateModule.Get().m_State != PlayerStateModule.State.Combat;
 	}
 
 	public override bool CanTrigger()
 	{
-		return !ChallengesManager.Get().IsChallengeActive();
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !MainLevel.Instance.m_SaveGameBlocked && !GreenHellGame.Instance.IsGamescom() && ReplTools.AmIMaster() && !ChallengesManager.Get().IsChallengeActive();
 	}
 
 	public override void OnExecute(TriggerAction.TYPE action)
 	{
-		MenuInGameManager.Get().ShowScreen(typeof(MenuSave));
+		MenuInGameManager.Get().ShowScreen(typeof(SaveGameMenu));
+	}
+
+	public override bool ShowAdditionalInfo()
+	{
+		return PlayerStateModule.Get().m_State == PlayerStateModule.State.Combat;
+	}
+
+	public override string GetAdditionalInfoLocalized()
+	{
+		return GreenHellGame.Instance.GetLocalization().Get("HUD_CantSave_Combat", true);
 	}
 }

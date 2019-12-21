@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CJTools;
 using Enums;
 using UnityEngine;
 
@@ -13,6 +14,24 @@ public class Being : CJObject
 	protected override void Start()
 	{
 		base.Start();
+		if (!this.IsAI())
+		{
+			this.m_LFoot = base.gameObject.transform.FindDeepChild("mixamorig:Foot.L");
+			if (!this.m_LFoot)
+			{
+				this.m_LFoot = base.gameObject.transform.FindDeepChild("L_foot");
+			}
+			this.m_RFoot = base.gameObject.transform.FindDeepChild("mixamorig:Foot.R");
+			if (!this.m_RFoot)
+			{
+				this.m_RFoot = base.gameObject.transform.FindDeepChild("R_foot");
+			}
+			this.m_Head = base.gameObject.transform.FindDeepChild("mixamorig:Head");
+			if (!this.m_Head)
+			{
+				this.m_Head = base.gameObject.transform.FindDeepChild("head");
+			}
+		}
 		this.InitializeModules();
 		this.m_AnimationEventsReceiver = base.GetComponent<AnimationEventsReceiver>();
 		if (this.m_AnimationEventsReceiver)
@@ -27,13 +46,21 @@ public class Being : CJObject
 		{
 			return;
 		}
-		List<BeingModule> list = new List<BeingModule>();
-		base.GetComponents<BeingModule>(list);
-		for (int i = 0; i < list.Count; i++)
+		base.GetComponents<BeingModule>(this.m_Modules);
+		for (int i = 0; i < this.m_Modules.Count; i++)
 		{
-			list[i].Initialize();
+			this.m_Modules[i].Initialize(this);
 		}
 		this.m_ModulesInitialized = true;
+		for (int j = 0; j < this.m_Modules.Count; j++)
+		{
+			this.m_Modules[j].PostInitialize();
+		}
+	}
+
+	public void OnDestroyModule(BeingModule module)
+	{
+		this.m_Modules.Remove(module);
 	}
 
 	protected override void OnEnable()
@@ -60,22 +87,53 @@ public class Being : CJObject
 
 	public virtual Transform GetLEyeTransform()
 	{
-		return (!(this.m_LEye != null)) ? base.transform : this.m_LEye.transform;
+		if (!(this.m_LEye != null))
+		{
+			return base.transform;
+		}
+		return this.m_LEye.transform;
 	}
 
 	public virtual Transform GetREyeTransform()
 	{
-		return (!(this.m_REye != null)) ? base.transform : this.m_REye.transform;
+		if (!(this.m_REye != null))
+		{
+			return base.transform;
+		}
+		return this.m_REye.transform;
 	}
 
 	public virtual Transform GetHeadTransform()
 	{
-		return (!(this.m_Head != null)) ? base.transform : this.m_Head.transform;
+		if (!(this.m_Head != null))
+		{
+			return base.transform;
+		}
+		return this.m_Head.transform;
 	}
 
 	public virtual Transform GetCamTransform()
 	{
-		return (!(this.m_Cam != null)) ? base.transform : this.m_Cam.transform;
+		if (!(this.m_Cam != null))
+		{
+			return base.transform;
+		}
+		return this.m_Cam.transform;
+	}
+
+	public bool IsInSafeZone()
+	{
+		return this.m_CurrentSafeZonesCount > 0;
+	}
+
+	public void SetInSafeZone()
+	{
+		this.m_CurrentSafeZonesCount++;
+	}
+
+	public void ResetInSafeZone()
+	{
+		this.m_CurrentSafeZonesCount--;
 	}
 
 	public bool GiveDamage(GameObject damager, Item damage_item, float damage, Vector3 hit_dir, DamageType damage_type = DamageType.None, int poison_level = 0, bool critical_hit = false)
@@ -100,11 +158,9 @@ public class Being : CJObject
 			return false;
 		}
 		bool result = base.TakeDamage(info);
-		List<BeingModule> list = new List<BeingModule>();
-		base.GetComponents<BeingModule>(list);
-		for (int i = 0; i < list.Count; i++)
+		for (int i = 0; i < this.m_Modules.Count; i++)
 		{
-			list[i].OnTakeDamage(info);
+			this.m_Modules[i].OnTakeDamage(info);
 		}
 		if (this.m_Hallucination)
 		{
@@ -135,21 +191,25 @@ public class Being : CJObject
 
 	public EObjectMaterial GetMaterial()
 	{
-		Vector3 position = base.transform.position;
-		RaycastHit[] array = Physics.RaycastAll(position, Vector3.down * 0.5f);
-		float num = float.MaxValue;
+		Vector3 vector = base.transform.position + Vector3.up * 0.2f;
+		int num = Physics.RaycastNonAlloc(vector, Vector3.down * 0.5f, Being.s_RaycastCache);
+		float num2 = float.MaxValue;
 		GameObject gameObject = null;
-		for (int i = 0; i < array.Length; i++)
+		for (int i = 0; i < num; i++)
 		{
-			if (array[i].distance < num)
+			if (Being.s_RaycastCache[i].distance < num2)
 			{
-				num = array[i].distance;
-				gameObject = array[i].collider.gameObject;
+				num2 = Being.s_RaycastCache[i].distance;
+				gameObject = Being.s_RaycastCache[i].collider.gameObject;
 			}
 		}
 		if (gameObject == null)
 		{
 			return EObjectMaterial.Unknown;
+		}
+		if (gameObject.layer == LayerMask.NameToLayer("Water"))
+		{
+			return EObjectMaterial.Water;
 		}
 		ObjectMaterial component = gameObject.GetComponent<ObjectMaterial>();
 		if (component != null)
@@ -160,30 +220,29 @@ public class Being : CJObject
 		{
 			return EObjectMaterial.Unknown;
 		}
-		Terrain activeTerrain = Terrain.activeTerrain;
-		TerrainData terrainData = activeTerrain.terrainData;
-		int num2 = (int)(position.x / terrainData.size.x * (float)terrainData.alphamapWidth);
-		int num3 = (int)(position.z / terrainData.size.z * (float)terrainData.alphamapHeight);
-		if (num2 > terrainData.alphamapWidth || num3 > terrainData.alphamapHeight)
+		TerrainData terrainData = Terrain.activeTerrain.terrainData;
+		int num3 = (int)(vector.x / terrainData.size.x * (float)terrainData.alphamapWidth);
+		int num4 = (int)(vector.z / terrainData.size.z * (float)terrainData.alphamapHeight);
+		if (num3 > terrainData.alphamapWidth || num4 > terrainData.alphamapHeight)
 		{
 			return EObjectMaterial.Grass;
 		}
-		float[,,] alphamaps = terrainData.GetAlphamaps(num2, num3, 1, 1);
-		int num4 = -1;
-		float num5 = float.MinValue;
+		float[,,] alphamaps = terrainData.GetAlphamaps(num3, num4, 1, 1);
+		int num5 = -1;
+		float num6 = float.MinValue;
 		for (int j = 0; j < terrainData.alphamapLayers; j++)
 		{
-			if (alphamaps[0, 0, j] > num5)
+			if (alphamaps[0, 0, j] > num6)
 			{
-				num5 = alphamaps[0, 0, j];
-				num4 = j;
+				num6 = alphamaps[0, 0, j];
+				num5 = j;
 			}
 		}
-		if (num4 < 0)
+		if (num5 < 0)
 		{
 			return EObjectMaterial.Unknown;
 		}
-		switch (num4)
+		switch (num5)
 		{
 		case 0:
 			return EObjectMaterial.DryLeaves;
@@ -211,6 +270,11 @@ public class Being : CJObject
 		return false;
 	}
 
+	public virtual void Load()
+	{
+		this.m_CurrentSafeZonesCount = 0;
+	}
+
 	[HideInInspector]
 	public bool m_DebugIsSelected;
 
@@ -231,4 +295,15 @@ public class Being : CJObject
 
 	[HideInInspector]
 	public AnimationEventsReceiver m_AnimationEventsReceiver;
+
+	public Transform m_LFoot;
+
+	public Transform m_RFoot;
+
+	[HideInInspector]
+	public int m_CurrentSafeZonesCount;
+
+	protected List<BeingModule> m_Modules = new List<BeingModule>();
+
+	private static RaycastHit[] s_RaycastCache = new RaycastHit[20];
 }

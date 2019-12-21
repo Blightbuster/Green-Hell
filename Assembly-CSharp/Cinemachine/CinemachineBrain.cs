@@ -6,11 +6,11 @@ using UnityEngine.Events;
 
 namespace Cinemachine
 {
-	[AddComponentMenu("Cinemachine/CinemachineBrain")]
-	[SaveDuringPlay]
-	[DisallowMultipleComponent]
 	[DocumentationSorting(0f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineBrain")]
+	[SaveDuringPlay]
 	public class CinemachineBrain : MonoBehaviour
 	{
 		public Camera OutputCamera
@@ -38,7 +38,11 @@ namespace Cinemachine
 		{
 			get
 			{
-				return (!(this.m_WorldUpOverride != null)) ? Vector3.up : this.m_WorldUpOverride.transform.up;
+				if (!(this.m_WorldUpOverride != null))
+				{
+					return Vector3.up;
+				}
+				return this.m_WorldUpOverride.transform.up;
 			}
 		}
 
@@ -95,7 +99,9 @@ namespace Cinemachine
 		{
 			if (overrideId < 0)
 			{
-				overrideId = this.mNextOverrideId++;
+				int num = this.mNextOverrideId;
+				this.mNextOverrideId = num + 1;
+				overrideId = num;
 			}
 			CinemachineBrain.OverrideStackFrame overrideFrame = this.GetOverrideFrame(overrideId);
 			overrideFrame.camera = null;
@@ -137,7 +143,7 @@ namespace Cinemachine
 						}
 						else
 						{
-							camA = ((nextActiveFrame.camera == null) ? camB : nextActiveFrame.camera);
+							camA = ((nextActiveFrame.camera != null) ? nextActiveFrame.camera : camB);
 						}
 					}
 					if (overrideFrame.blend == null)
@@ -193,25 +199,24 @@ namespace Cinemachine
 
 		private IEnumerator AfterPhysics()
 		{
-			for (;;)
-			{
-				yield return this.mWaitForFixedUpdate;
-				if (this.m_UpdateMethod == CinemachineBrain.UpdateMethod.SmartUpdate)
-				{
-					this.AddSubframe();
-					this.UpdateVirtualCameras(CinemachineCore.UpdateFilter.Fixed, this.GetEffectiveDeltaTime(true));
-				}
-				else if (this.m_UpdateMethod == CinemachineBrain.UpdateMethod.LateUpdate)
-				{
-					CinemachineBrain.msSubframes = 1;
-				}
-				else
-				{
-					this.AddSubframe();
-					this.UpdateVirtualCameras(CinemachineCore.UpdateFilter.ForcedFixed, this.GetEffectiveDeltaTime(true));
-				}
-			}
-			yield break;
+			/*
+An exception occurred when decompiling this method (0600412E)
+
+ICSharpCode.Decompiler.DecompilerException: Error decompiling System.Collections.IEnumerator Cinemachine.CinemachineBrain::AfterPhysics()
+ ---> System.ArgumentOutOfRangeException: Der Index lag außerhalb des Bereichs. Er darf nicht negativ und kleiner als die Sammlung sein.
+Parametername: index
+   bei System.ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+   bei ICSharpCode.Decompiler.ILAst.StateRangeAnalysis.CreateLabelRangeMapping(List`1 body, Int32 pos, Int32 bodyLength, LabelRangeMapping result, Boolean onlyInitialLabels) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\StateRange.cs:Zeile 326.
+   bei ICSharpCode.Decompiler.ILAst.MicrosoftYieldReturnDecompiler.AnalyzeMoveNext() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\MicrosoftYieldReturnDecompiler.cs:Zeile 347.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 93.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, List`1 list_ILNode, Func`2 getILInlining, List`1 listExpr, List`1 listBlock, Dictionary`2 labelRefCount) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 69.
+   bei ICSharpCode.Decompiler.ILAst.ILAstOptimizer.Optimize(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, ILAstOptimizationStep abortBeforeStep) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\ILAstOptimizer.cs:Zeile 233.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(IEnumerable`1 parameters, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 118.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 88.
+   --- Ende der internen Ausnahmestapelüberwachung ---
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 92.
+   bei ICSharpCode.Decompiler.Ast.AstBuilder.CreateMethodBody(MethodDef method, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, MethodKind methodKind, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstBuilder.cs:Zeile 1427.
+*/;
 		}
 
 		private void LateUpdate()
@@ -241,17 +246,35 @@ namespace Cinemachine
 			CinemachineBrain.OverrideStackFrame activeOverride = this.GetActiveOverride();
 			if (activeOverride != null)
 			{
-				return (!activeOverride.Expired) ? activeOverride.deltaTime : -1f;
-			}
-			if (!Application.isPlaying)
-			{
+				if (!activeOverride.Expired)
+				{
+					return activeOverride.deltaTime;
+				}
 				return -1f;
 			}
-			if (this.m_IgnoreTimeScale)
+			else
 			{
-				return (!fixedDelta) ? Time.unscaledDeltaTime : Time.fixedDeltaTime;
+				if (!Application.isPlaying)
+				{
+					return -1f;
+				}
+				if (this.m_IgnoreTimeScale)
+				{
+					if (!fixedDelta)
+					{
+						return Time.unscaledDeltaTime;
+					}
+					return Time.fixedDeltaTime;
+				}
+				else
+				{
+					if (!fixedDelta)
+					{
+						return Time.deltaTime;
+					}
+					return Time.fixedDeltaTime * Time.timeScale;
+				}
 			}
-			return (!fixedDelta) ? Time.deltaTime : (Time.fixedDeltaTime * Time.timeScale);
 		}
 
 		private void UpdateVirtualCameras(CinemachineCore.UpdateFilter updateFilter, float deltaTime)
@@ -326,7 +349,7 @@ namespace Cinemachine
 				{
 					if (activeOverride == null)
 					{
-						cinemachineBlend.TimeInBlend += ((deltaTime < 0f) ? cinemachineBlend.Duration : deltaTime);
+						cinemachineBlend.TimeInBlend += ((deltaTime >= 0f) ? deltaTime : cinemachineBlend.Duration);
 					}
 					if (cinemachineBlend.IsComplete)
 					{
@@ -357,12 +380,10 @@ namespace Cinemachine
 				{
 					this.mActiveCameraPreviousFrame = activeOverride.blend.CamA;
 					this.mOutgoingCameraPreviousFrame = activeOverride.blend.CamB;
+					return;
 				}
-				else
-				{
-					this.mActiveCameraPreviousFrame = activeOverride.blend.CamB;
-					this.mOutgoingCameraPreviousFrame = activeOverride.blend.CamA;
-				}
+				this.mActiveCameraPreviousFrame = activeOverride.blend.CamB;
+				this.mOutgoingCameraPreviousFrame = activeOverride.blend.CamA;
 			}
 		}
 
@@ -383,7 +404,11 @@ namespace Cinemachine
 					return null;
 				}
 				CinemachineBrain.OverrideStackFrame activeOverride = this.GetActiveOverride();
-				return (activeOverride == null || activeOverride.blend == null) ? this.mActiveBlend : activeOverride.blend;
+				if (activeOverride == null || activeOverride.blend == null)
+				{
+					return this.mActiveBlend;
+				}
+				return activeOverride.blend;
 			}
 		}
 
@@ -420,7 +445,11 @@ namespace Cinemachine
 					return CinemachineBrain.SoloCamera;
 				}
 				CinemachineBrain.OverrideStackFrame activeOverride = this.GetActiveOverride();
-				return (activeOverride == null || activeOverride.camera == null) ? this.TopCameraFromPriorityQueue() : activeOverride.camera;
+				if (activeOverride == null || activeOverride.camera == null)
+				{
+					return this.TopCameraFromPriorityQueue();
+				}
+				return activeOverride.camera;
 			}
 		}
 
@@ -429,12 +458,12 @@ namespace Cinemachine
 		private ICinemachineCamera TopCameraFromPriorityQueue()
 		{
 			Camera outputCamera = this.OutputCamera;
-			int num = (!(outputCamera == null)) ? outputCamera.cullingMask : -1;
+			int num = (outputCamera == null) ? -1 : outputCamera.cullingMask;
 			int virtualCameraCount = CinemachineCore.Instance.VirtualCameraCount;
 			for (int i = 0; i < virtualCameraCount; i++)
 			{
 				ICinemachineCamera virtualCamera = CinemachineCore.Instance.GetVirtualCamera(i);
-				GameObject gameObject = (virtualCamera == null) ? null : virtualCamera.VirtualCameraGameObject;
+				GameObject gameObject = (virtualCamera != null) ? virtualCamera.VirtualCameraGameObject : null;
 				if (gameObject != null && (num & 1 << gameObject.layer) != 0)
 				{
 					return virtualCamera;
@@ -448,12 +477,12 @@ namespace Cinemachine
 			AnimationCurve animationCurve = this.m_DefaultBlend.BlendCurve;
 			if (this.m_CustomBlends != null)
 			{
-				string fromCameraName = (fromKey == null) ? string.Empty : fromKey.Name;
-				string toCameraName = (toKey == null) ? string.Empty : toKey.Name;
+				string fromCameraName = (fromKey != null) ? fromKey.Name : string.Empty;
+				string toCameraName = (toKey != null) ? toKey.Name : string.Empty;
 				animationCurve = this.m_CustomBlends.GetBlendCurveForVirtualCameras(fromCameraName, toCameraName, animationCurve);
 			}
 			Keyframe[] keys = animationCurve.keys;
-			duration = ((keys != null && keys.Length != 0) ? keys[keys.Length - 1].time : 0f);
+			duration = ((keys == null || keys.Length == 0) ? 0f : keys[keys.Length - 1].time);
 			return animationCurve;
 		}
 
@@ -476,7 +505,7 @@ namespace Cinemachine
 					state.RawOrientation = base.transform.rotation;
 					state.Lens = LensSettings.FromCamera(this.OutputCamera);
 				}
-				camA = new StaticPointVirtualCamera(state, (activeBlend != null) ? "Mid-blend" : "(none)");
+				camA = new StaticPointVirtualCamera(state, (activeBlend == null) ? "(none)" : "Mid-blend");
 			}
 			return new CinemachineBlend(camA, camB, blendCurve, duration, 0f);
 		}
@@ -508,6 +537,7 @@ namespace Cinemachine
 				if (CinemachineBrain.msFirstBrainObjectId == base.GetInstanceID())
 				{
 					CinemachineBrain.msSubframes++;
+					return;
 				}
 			}
 			else
@@ -538,8 +568,8 @@ namespace Cinemachine
 		[Tooltip("Use FixedUpdate if all your targets are animated during FixedUpdate (e.g. RigidBodies), LateUpdate if all your targets are animated during the normal Update loop, and SmartUpdate if you want Cinemachine to do the appropriate thing on a per-target basis.  SmartUpdate is the recommended setting")]
 		public CinemachineBrain.UpdateMethod m_UpdateMethod = CinemachineBrain.UpdateMethod.SmartUpdate;
 
-		[Tooltip("The blend that is used in cases where you haven't explicitly defined a blend between two Virtual Cameras")]
 		[CinemachineBlendDefinitionProperty]
+		[Tooltip("The blend that is used in cases where you haven't explicitly defined a blend between two Virtual Cameras")]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.EaseInOut, 2f);
 
 		[Tooltip("This is the asset that contains custom settings for blends between specific virtual cameras in your scene")]

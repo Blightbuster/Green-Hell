@@ -21,8 +21,7 @@ namespace UnityEngine.PostProcessing
 			material.SetTexture(BloomComponent.Uniforms._AutoExposure, autoExposure);
 			int width = this.context.width / 2;
 			int num = this.context.height / 2;
-			bool isMobilePlatform = Application.isMobilePlatform;
-			RenderTextureFormat format = (!isMobilePlatform) ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default;
+			RenderTextureFormat format = Application.isMobilePlatform ? RenderTextureFormat.Default : RenderTextureFormat.DefaultHDR;
 			float num2 = Mathf.Log((float)num, 2f) + bloom.radius - 8f;
 			int num3 = (int)num2;
 			int num4 = Mathf.Clamp(num3, 1, 16);
@@ -31,7 +30,7 @@ namespace UnityEngine.PostProcessing
 			float num5 = thresholdLinear * bloom.softKnee + 1E-05f;
 			Vector3 v = new Vector3(thresholdLinear - num5, num5 * 2f, 0.25f / num5);
 			material.SetVector(BloomComponent.Uniforms._Curve, v);
-			material.SetFloat(BloomComponent.Uniforms._PrefilterOffs, (!bloom.antiFlicker) ? 0f : -0.5f);
+			material.SetFloat(BloomComponent.Uniforms._PrefilterOffs, bloom.antiFlicker ? -0.5f : 0f);
 			float num6 = 0.5f + num2 - (float)num3;
 			material.SetFloat(BloomComponent.Uniforms._SampleScale, num6);
 			if (bloom.antiFlicker)
@@ -44,7 +43,7 @@ namespace UnityEngine.PostProcessing
 			for (int i = 0; i < num4; i++)
 			{
 				this.m_BlurBuffer1[i] = this.context.renderTextureFactory.Get(renderTexture2.width / 2, renderTexture2.height / 2, 0, format, RenderTextureReadWrite.Default, FilterMode.Bilinear, TextureWrapMode.Clamp, "FactoryTempTexture");
-				int pass = (i != 0) ? 2 : 1;
+				int pass = (i == 0) ? 1 : 2;
 				Graphics.Blit(renderTexture2, this.m_BlurBuffer1[i], material, pass);
 				renderTexture2 = this.m_BlurBuffer1[i];
 			}
@@ -78,11 +77,9 @@ namespace UnityEngine.PostProcessing
 				uberMaterial.SetTexture(BloomComponent.Uniforms._Bloom_DirtTex, lensDirt.texture);
 				uberMaterial.SetFloat(BloomComponent.Uniforms._Bloom_DirtIntensity, lensDirt.intensity);
 				uberMaterial.EnableKeyword("BLOOM_LENS_DIRT");
+				return;
 			}
-			else
-			{
-				uberMaterial.EnableKeyword("BLOOM");
-			}
+			uberMaterial.EnableKeyword("BLOOM");
 		}
 
 		private const int k_MaxPyramidBlurLevel = 16;

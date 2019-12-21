@@ -16,20 +16,22 @@ public class HUDItemInHand : HUDBase
 				break;
 			}
 			Text component = transform.gameObject.GetComponent<Text>();
-			HUDItemInHand.Action item = default(HUDItemInHand.Action);
-			item.text = component;
-			item.parent = transform.gameObject;
-			item.rect_trans = (RectTransform)transform;
-			item.key_frame = transform.gameObject.FindChild("KeyFrame").GetComponent<RawImage>();
-			item.mouse_icon_lmb = transform.gameObject.FindChild("MouseIconLMB").GetComponent<RawImage>();
-			item.mouse_icon_rmb = transform.gameObject.FindChild("MouseIconRMB").GetComponent<RawImage>();
-			item.mouse_icon_mmb = transform.gameObject.FindChild("MouseIconMMB").GetComponent<RawImage>();
-			item.key_text = transform.gameObject.FindChild("KeyText").GetComponent<Text>();
-			item.position = item.rect_trans.anchoredPosition;
-			item.disbled_pos = item.position;
-			item.disbled_pos.x = item.disbled_pos.x + 2000f;
-			item.parent.SetActive(true);
-			this.m_Actions.Add(item);
+			HUDItemInHand.Action action = default(HUDItemInHand.Action);
+			action.text = component;
+			action.parent = transform.gameObject;
+			action.rect_trans = (RectTransform)transform;
+			action.key_frame = transform.gameObject.FindChild("KeyFrame").GetComponent<RawImage>();
+			action.mouse_icon_lmb = transform.gameObject.FindChild("MouseIconLMB").GetComponent<RawImage>();
+			action.mouse_icon_rmb = transform.gameObject.FindChild("MouseIconRMB").GetComponent<RawImage>();
+			action.mouse_icon_mmb = transform.gameObject.FindChild("MouseIconMMB").GetComponent<RawImage>();
+			action.pad_icon = transform.gameObject.FindChild("PadIcon").GetComponent<Image>();
+			action.key_text = transform.gameObject.FindChild("KeyText").GetComponent<Text>();
+			action.key_text_long = transform.gameObject.FindChild("KeyTextLong").GetComponent<Text>();
+			action.position = action.rect_trans.anchoredPosition;
+			action.disbled_pos = action.position;
+			action.disbled_pos.x = action.disbled_pos.x + 2000f;
+			action.parent.SetActive(true);
+			this.m_Actions.Add(action);
 		}
 		this.m_Initialized = true;
 	}
@@ -42,6 +44,10 @@ public class HUDItemInHand : HUDBase
 
 	private Item GetCurrentItem()
 	{
+		if (Player.Get().m_WeaponHiddenFromScenario)
+		{
+			return null;
+		}
 		if (Player.Get().GetCurrentItem(Hand.Right))
 		{
 			return Player.Get().GetCurrentItem(Hand.Right);
@@ -59,7 +65,7 @@ public class HUDItemInHand : HUDBase
 
 	protected override bool ShouldShow()
 	{
-		return !Player.Get().m_DreamActive && this.GetCurrentItem() != null;
+		return !Player.Get().m_DreamActive && !HUDReadableItem.Get().isActiveAndEnabled && !CutscenesManager.Get().IsCutscenePlaying() && this.GetCurrentItem() != null;
 	}
 
 	protected override void OnShow()
@@ -141,49 +147,83 @@ public class HUDItemInHand : HUDBase
 		{
 			DebugUtils.Assert("HUDItemInHand - Not enough action slots!", true, DebugUtils.AssertType.Info);
 		}
+		bool flag = GreenHellGame.IsPadControllerActive();
 		int num = 0;
 		while (num < this.m_ActionsTemp.Count && num < this.m_Actions.Count)
 		{
 			InputActionData inputActionData = InputsManager.Get().GetInputActionData((InputsManager.InputAction)this.m_ActionsTemp[num]);
-			string text = this.GetText(inputActionData);
+			string text;
+			if (!this.m_CachedTexts.TryGetValue(this.m_ActionsTemp[num], out text))
+			{
+				text = this.GetText(inputActionData);
+				this.m_CachedTexts[this.m_ActionsTemp[num]] = text;
+			}
 			if (!text.Empty())
 			{
 				HUDItemInHand.Action action2 = this.m_Actions[num];
 				action2.rect_trans.anchoredPosition = action2.position;
-				if (inputActionData.m_KeyCode == KeyCode.Mouse0)
+				action2.text.text = text;
+				if (flag)
 				{
+					action2.pad_icon.sprite = inputActionData.m_PadIcon;
 					action2.key_frame.gameObject.SetActive(false);
 					action2.key_text.gameObject.SetActive(false);
-					action2.mouse_icon_lmb.gameObject.SetActive(true);
-					action2.mouse_icon_rmb.gameObject.SetActive(false);
-					action2.mouse_icon_mmb.gameObject.SetActive(false);
-				}
-				else if (inputActionData.m_KeyCode == KeyCode.Mouse1)
-				{
-					action2.key_frame.gameObject.SetActive(false);
-					action2.key_text.gameObject.SetActive(false);
-					action2.mouse_icon_lmb.gameObject.SetActive(false);
-					action2.mouse_icon_rmb.gameObject.SetActive(true);
-					action2.mouse_icon_mmb.gameObject.SetActive(false);
-				}
-				else if (inputActionData.m_KeyCode == KeyCode.Mouse2)
-				{
-					action2.key_frame.gameObject.SetActive(false);
-					action2.key_text.gameObject.SetActive(false);
+					action2.key_text_long.gameObject.SetActive(false);
 					action2.mouse_icon_lmb.gameObject.SetActive(false);
 					action2.mouse_icon_rmb.gameObject.SetActive(false);
-					action2.mouse_icon_mmb.gameObject.SetActive(true);
+					action2.mouse_icon_mmb.gameObject.SetActive(false);
 				}
 				else
 				{
-					action2.key_frame.gameObject.SetActive(true);
-					action2.key_text.gameObject.SetActive(true);
-					action2.mouse_icon_lmb.gameObject.SetActive(false);
-					action2.mouse_icon_rmb.gameObject.SetActive(false);
-					action2.mouse_icon_mmb.gameObject.SetActive(false);
+					string keyText = this.GetKeyText(inputActionData);
+					if (inputActionData.m_KeyCode == KeyCode.Mouse0)
+					{
+						action2.key_frame.gameObject.SetActive(false);
+						action2.key_text.gameObject.SetActive(false);
+						action2.key_text_long.gameObject.SetActive(false);
+						action2.mouse_icon_lmb.gameObject.SetActive(true);
+						action2.mouse_icon_rmb.gameObject.SetActive(false);
+						action2.mouse_icon_mmb.gameObject.SetActive(false);
+					}
+					else if (inputActionData.m_KeyCode == KeyCode.Mouse1)
+					{
+						action2.key_frame.gameObject.SetActive(false);
+						action2.key_text.gameObject.SetActive(false);
+						action2.key_text_long.gameObject.SetActive(false);
+						action2.mouse_icon_lmb.gameObject.SetActive(false);
+						action2.mouse_icon_rmb.gameObject.SetActive(true);
+						action2.mouse_icon_mmb.gameObject.SetActive(false);
+					}
+					else if (inputActionData.m_KeyCode == KeyCode.Mouse2)
+					{
+						action2.key_frame.gameObject.SetActive(false);
+						action2.key_text.gameObject.SetActive(false);
+						action2.key_text_long.gameObject.SetActive(false);
+						action2.mouse_icon_lmb.gameObject.SetActive(false);
+						action2.mouse_icon_rmb.gameObject.SetActive(false);
+						action2.mouse_icon_mmb.gameObject.SetActive(true);
+					}
+					else if (action2.key_text.text.Length <= 1)
+					{
+						action2.key_frame.gameObject.SetActive(true);
+						action2.key_text.gameObject.SetActive(true);
+						action2.key_text_long.gameObject.SetActive(false);
+						action2.mouse_icon_lmb.gameObject.SetActive(false);
+						action2.mouse_icon_rmb.gameObject.SetActive(false);
+						action2.mouse_icon_mmb.gameObject.SetActive(false);
+						action2.key_text.text = keyText;
+					}
+					else
+					{
+						action2.key_frame.gameObject.SetActive(false);
+						action2.key_text.gameObject.SetActive(false);
+						action2.key_text_long.gameObject.SetActive(true);
+						action2.mouse_icon_lmb.gameObject.SetActive(false);
+						action2.mouse_icon_rmb.gameObject.SetActive(false);
+						action2.mouse_icon_mmb.gameObject.SetActive(false);
+						action2.key_text_long.text = keyText;
+					}
 				}
-				action2.text.text = text;
-				action2.key_text.text = this.GetKeyText(inputActionData);
 			}
 			num++;
 		}
@@ -199,9 +239,9 @@ public class HUDItemInHand : HUDBase
 		InputsManager.InputAction action = data.m_Action;
 		if (data.m_Hold > 0f)
 		{
-			str = str + GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Hold") + " ";
+			str = str + GreenHellGame.Instance.GetLocalization().Get("HUD_Trigger_Hold", true) + " ";
 		}
-		return str + GreenHellGame.Instance.GetLocalization().Get("HUDItemInHand_" + InputActionToString.GetString(action));
+		return str + GreenHellGame.Instance.GetLocalization().Get("HUDItemInHand_" + EnumUtils<InputsManager.InputAction>.GetName((int)action), true);
 	}
 
 	private string GetKeyText(InputActionData data)
@@ -227,6 +267,8 @@ public class HUDItemInHand : HUDBase
 
 	private List<int> m_ActionsTemp = new List<int>(200);
 
+	private Dictionary<int, string> m_CachedTexts = new Dictionary<int, string>();
+
 	private struct Action
 	{
 		public GameObject parent;
@@ -241,7 +283,11 @@ public class HUDItemInHand : HUDBase
 
 		public RawImage mouse_icon_mmb;
 
+		public Image pad_icon;
+
 		public Text key_text;
+
+		public Text key_text_long;
 
 		public Vector3 position;
 

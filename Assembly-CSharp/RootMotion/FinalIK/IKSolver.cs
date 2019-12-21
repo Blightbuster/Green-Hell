@@ -163,8 +163,8 @@ namespace RootMotion.FinalIK
 		[HideInInspector]
 		public Vector3 IKPosition;
 
-		[Range(0f, 1f)]
 		[Tooltip("The positional or the master weight of the solver.")]
+		[Range(0f, 1f)]
 		public float IKPositionWeight = 1f;
 
 		public IKSolver.UpdateDelegate OnPreInitiate;
@@ -241,21 +241,6 @@ namespace RootMotion.FinalIK
 		[Serializable]
 		public class Bone : IKSolver.Point
 		{
-			public Bone()
-			{
-			}
-
-			public Bone(Transform transform)
-			{
-				this.transform = transform;
-			}
-
-			public Bone(Transform transform, float weight)
-			{
-				this.transform = transform;
-				this.weight = weight;
-			}
-
 			public RotationLimit rotationLimit
 			{
 				get
@@ -330,6 +315,21 @@ namespace RootMotion.FinalIK
 			public void SetToSolverPosition()
 			{
 				this.transform.position = this.solverPosition;
+			}
+
+			public Bone()
+			{
+			}
+
+			public Bone(Transform transform)
+			{
+				this.transform = transform;
+			}
+
+			public Bone(Transform transform, float weight)
+			{
+				this.transform = transform;
+				this.weight = weight;
 			}
 
 			public float length;

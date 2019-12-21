@@ -58,8 +58,8 @@ namespace Cinemachine.Utility
 			int num = Mathf.Min(Mathf.RoundToInt(lookaheadTime / Time.deltaTime), 6);
 			float d = lookaheadTime / (float)num;
 			Vector3 vector = this.m_Position;
-			Vector3 vector2 = (!this.m_Velocity.IsEmpty()) ? this.m_Velocity.Value() : Vector3.zero;
-			Vector3 vector3 = (!this.m_Accel.IsEmpty()) ? this.m_Accel.Value() : Vector3.zero;
+			Vector3 vector2 = this.m_Velocity.IsEmpty() ? Vector3.zero : this.m_Velocity.Value();
+			Vector3 vector3 = this.m_Accel.IsEmpty() ? Vector3.zero : this.m_Accel.Value();
 			for (int i = 0; i < num; i++)
 			{
 				vector += vector2 * d;

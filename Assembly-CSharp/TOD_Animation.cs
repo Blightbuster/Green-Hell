@@ -10,8 +10,7 @@ public class TOD_Animation : MonoBehaviour
 		get
 		{
 			Vector3 point = base.transform.position * 0.0001f;
-			Quaternion rotation = Quaternion.Euler(0f, -base.transform.rotation.eulerAngles.y, 0f);
-			return rotation * point;
+			return Quaternion.Euler(0f, -base.transform.rotation.eulerAngles.y, 0f) * point;
 		}
 	}
 

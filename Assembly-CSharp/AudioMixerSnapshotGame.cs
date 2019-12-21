@@ -4,5 +4,6 @@ public enum AudioMixerSnapshotGame
 {
 	Default,
 	LowSanity,
-	Sleep
+	Sleep,
+	Underwater
 }

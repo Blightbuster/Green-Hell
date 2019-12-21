@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using CJTools;
 using Enums;
 using UnityEngine;
@@ -9,20 +10,23 @@ public class GhostSlot : Trigger, IItemSlotParent
 	protected override void Awake()
 	{
 		base.Awake();
+		this.m_IgnoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
 		this.m_Parent = base.transform.parent.gameObject.GetComponent<ConstructionGhost>();
 		DebugUtils.Assert(this.m_Parent, true);
 		this.m_Renderer = base.gameObject.GetComponent<Renderer>();
-		this.m_ItemID = (ItemID)Enum.Parse(typeof(ItemID), this.m_ItemName);
-		if (this.m_Collider)
+		this.m_ItemID = EnumUtils<ItemID>.GetValue(this.m_ItemName);
+		if (base.m_Collider)
 		{
-			this.m_Collider.enabled = false;
+			base.m_Collider.enabled = false;
+			this.m_ColliderTrigger = base.m_Collider.isTrigger;
+			this.m_ColliderEnabled = false;
 		}
 		base.enabled = false;
 	}
 
 	public void Init()
 	{
-		if (this.m_Fulfilled)
+		if (this.m_Fulfilled || !this.m_Parent)
 		{
 			return;
 		}
@@ -32,12 +36,12 @@ public class GhostSlot : Trigger, IItemSlotParent
 
 	public override string GetName()
 	{
-		return this.m_ItemID.ToString();
+		return EnumUtils<ItemID>.GetName((int)this.m_ItemID);
 	}
 
 	public override bool CanTrigger()
 	{
-		return base.enabled;
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !ReplicatedPlayerTriggerHelper.IsTriggerActiveForOtherPlayer(this) && base.enabled;
 	}
 
 	public override void GetActions(List<TriggerAction.TYPE> actions)
@@ -46,8 +50,9 @@ public class GhostSlot : Trigger, IItemSlotParent
 		if (currentItem && currentItem.GetInfoID() == this.m_ItemID)
 		{
 			actions.Add(TriggerAction.TYPE.Insert);
+			return;
 		}
-		else if (InventoryBackpack.Get().Contains(this.m_ItemID))
+		if (InventoryBackpack.Get().Contains(this.m_ItemID))
 		{
 			actions.Add(TriggerAction.TYPE.Insert);
 		}
@@ -66,11 +71,10 @@ public class GhostSlot : Trigger, IItemSlotParent
 				{
 					this.Fulfill(false);
 					heavyObject.DetachHeavyObject(0, true);
+					return;
 				}
-				else
-				{
-					HeavyObjectController.Get().InsertToGhostSlot(this);
-				}
+				HeavyObjectController.Get().InsertToGhostSlot(this);
+				return;
 			}
 			else
 			{
@@ -80,9 +84,24 @@ public class GhostSlot : Trigger, IItemSlotParent
 		}
 	}
 
+	public void Reset()
+	{
+		this.m_Fulfilled = false;
+		if (base.m_Collider)
+		{
+			base.m_Collider.isTrigger = this.m_ColliderTrigger;
+			base.m_Collider.enabled = this.m_ColliderEnabled;
+		}
+		this.SetLayer(base.transform, this.m_DefaultLayer);
+	}
+
 	public void Fulfill(bool from_save = false)
 	{
-		if (this.m_ResultMaterials != null && this.m_ResultMaterials.Length > 0)
+		if (!this.ReplIsBeingDeserialized(true))
+		{
+			this.ReplRequestOwnership(true);
+		}
+		if (this.m_ResultMaterials != null && this.m_ResultMaterials.Length != 0)
 		{
 			this.m_Renderer.materials = this.m_ResultMaterials;
 		}
@@ -108,17 +127,22 @@ public class GhostSlot : Trigger, IItemSlotParent
 		}
 		this.m_Fulfilled = true;
 		this.m_Parent.OnGhostFulfill(this.m_ItemID, from_save);
-		if (this.m_Collider)
+		if (base.m_Collider)
 		{
-			this.m_Collider.isTrigger = false;
+			base.m_Collider.isTrigger = false;
+			base.m_Collider.enabled = true;
 		}
-		if (this.m_Collider && this.m_NoCollisionWhenFilled)
+		if (base.m_Collider && this.m_NoCollisionWhenFilled)
 		{
-			this.m_Collider.enabled = false;
+			base.m_Collider.enabled = false;
 		}
-		base.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+		this.SetLayer(base.transform, this.m_IgnoreRaycastLayer);
 		base.enabled = false;
 		PlayerSanityModule.Get().OnWhispersEvent(PlayerSanityModule.WhisperType.GhostSlot);
+	}
+
+	public override void UpdateLayer()
+	{
 	}
 
 	public void Activate()
@@ -128,11 +152,11 @@ public class GhostSlot : Trigger, IItemSlotParent
 			return;
 		}
 		this.m_Renderer.material = this.m_Parent.m_ActiveMaterial;
-		this.m_RendererMaterialNameHash = Animator.StringToHash(this.m_Parent.m_ActiveMaterial.name);
-		if (this.m_Collider)
+		this.m_RendererMaterialNameHash = Animator.StringToHash(this.m_Parent.m_ActiveMaterialName);
+		if (base.m_Collider)
 		{
-			this.m_Collider.enabled = true;
-			this.m_Collider.isTrigger = true;
+			base.m_Collider.enabled = true;
+			base.m_Collider.isTrigger = true;
 		}
 		base.enabled = true;
 	}
@@ -148,26 +172,28 @@ public class GhostSlot : Trigger, IItemSlotParent
 		if (!this.m_Fulfilled)
 		{
 			Material material;
+			string name;
 			if (TriggerController.Get().GetBestTrigger() == this)
 			{
 				material = this.m_Parent.m_HighlightedMaterial;
+				name = this.m_Parent.m_HighlightedMaterialName;
 			}
 			else
 			{
 				material = this.m_Parent.m_ActiveMaterial;
+				name = this.m_Parent.m_ActiveMaterialName;
 			}
-			if (this.m_RendererMaterialNameHash != Animator.StringToHash(material.name))
+			if (this.m_RendererMaterialNameHash != Animator.StringToHash(name))
 			{
 				this.m_Renderer.material = material;
-				this.m_RendererMaterialNameHash = Animator.StringToHash(material.name);
+				this.m_RendererMaterialNameHash = Animator.StringToHash(name);
 			}
 		}
 	}
 
 	public void SetColor(Color color)
 	{
-		Renderer component = base.gameObject.GetComponent<Renderer>();
-		foreach (Material material in component.materials)
+		foreach (Material material in base.gameObject.GetComponent<Renderer>().materials)
 		{
 			Color color2 = material.color;
 			color2.a = color.a;
@@ -192,7 +218,10 @@ public class GhostSlot : Trigger, IItemSlotParent
 	{
 		if (this.m_Fulfilled)
 		{
-			ItemsManager.Get().CreateItem(this.m_ItemID, true, base.transform.position, Quaternion.identity);
+			Vector3 position = base.transform.position;
+			float terrainY = MainLevel.GetTerrainY(position);
+			position.y = Mathf.Max(position.y, terrainY);
+			ItemsManager.Get().CreateItem(this.m_ItemID, true, position, Quaternion.identity);
 		}
 	}
 
@@ -213,13 +242,9 @@ public class GhostSlot : Trigger, IItemSlotParent
 				num += ((HeavyObject)currentItem).m_Attached.Count;
 			}
 		}
-		return string.Concat(new object[]
-		{
-			GreenHellGame.Instance.GetLocalization().Get(this.GetName()),
-			" (",
-			num,
-			")"
-		});
+		int itemsCountInCurrentStep = this.m_Parent.GetItemsCountInCurrentStep(this.m_ItemID);
+		int insertedItemsCountInCurrentStep = this.m_Parent.GetInsertedItemsCountInCurrentStep(this.m_ItemID);
+		return this.m_TriggerInfoHolder.GetText(this.m_ItemID, insertedItemsCountInCurrentStep, itemsCountInCurrentStep, num);
 	}
 
 	private ConstructionGhost m_Parent;
@@ -229,7 +254,8 @@ public class GhostSlot : Trigger, IItemSlotParent
 
 	public string m_ItemName = string.Empty;
 
-	private ItemID m_ItemID = ItemID.None;
+	[HideInInspector]
+	public ItemID m_ItemID = ItemID.None;
 
 	private Renderer m_Renderer;
 
@@ -240,4 +266,46 @@ public class GhostSlot : Trigger, IItemSlotParent
 	public GameObject m_PositionDummy;
 
 	public bool m_NoCollisionWhenFilled;
+
+	private int m_IgnoreRaycastLayer;
+
+	private bool m_ColliderTrigger;
+
+	private bool m_ColliderEnabled;
+
+	private GhostSlot.TriggerInfoHolder m_TriggerInfoHolder;
+
+	private struct TriggerInfoHolder
+	{
+		public string GetText(ItemID item, int inserted, int all_count, int count)
+		{
+			if (this.text == null || this.item != item || this.inserted != inserted || this.all_count != all_count || this.count != count)
+			{
+				this.item = item;
+				this.inserted = inserted;
+				this.all_count = all_count;
+				this.count = count;
+				StringBuilder stringBuilder = new StringBuilder(GreenHellGame.Instance.GetLocalization().Get(EnumUtils<ItemID>.GetName((int)item), true));
+				stringBuilder.Append(" ");
+				stringBuilder.Append(inserted);
+				stringBuilder.Append("/");
+				stringBuilder.Append(all_count);
+				stringBuilder.Append(" (");
+				stringBuilder.Append(count);
+				stringBuilder.Append(")");
+				this.text = stringBuilder.ToString();
+			}
+			return this.text;
+		}
+
+		public ItemID item;
+
+		public int inserted;
+
+		public int all_count;
+
+		public int count;
+
+		private string text;
+	}
 }

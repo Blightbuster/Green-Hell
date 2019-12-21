@@ -8,6 +8,7 @@ public class ArcherySkill : Skill
 		base.RegisterCurve(this.m_StaminaConsumptionMul, "StaminaConsumptionMul");
 		base.RegisterCurve(this.m_ShotForceMul, "ShotForceMulCurve");
 		base.RegisterCurve(this.m_AimDuration, "AimDuration");
+		base.RegisterCurve(this.m_AimShakeMul, "AimShakeMul");
 	}
 
 	public float GetAimDuration()
@@ -25,9 +26,16 @@ public class ArcherySkill : Skill
 		return this.m_StaminaConsumptionMul.Evaluate(this.m_Value);
 	}
 
+	public float GetAimShakeMul()
+	{
+		return this.m_AimShakeMul.Evaluate(this.m_Value);
+	}
+
 	private SkillCurve m_ShotForceMul = new SkillCurve();
 
 	private SkillCurve m_AimDuration = new SkillCurve();
 
 	private SkillCurve m_StaminaConsumptionMul = new SkillCurve();
+
+	private SkillCurve m_AimShakeMul = new SkillCurve();
 }

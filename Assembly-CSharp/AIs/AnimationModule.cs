@@ -6,9 +6,9 @@ namespace AIs
 {
 	public class AnimationModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_WantedBlend = this.DEFAULT_BLEND;
 			this.m_WantedAttackBlend = this.DEFAULT_BLEND;
 			TextAssetParser textAssetParser = AIManager.Get().m_AnimatorDataParsers[this.GetStatesDataScript()];
@@ -42,18 +42,20 @@ namespace AIs
 			{
 				return;
 			}
-			foreach (AnimatorControllerParameter animatorControllerParameter in this.m_AI.m_Animator.parameters)
+			AnimatorControllerParameter[] parameters = this.m_AI.m_Animator.parameters;
+			for (int i = 0; i < parameters.Length; i++)
 			{
-				if (animatorControllerParameter.nameHash == this.m_BlendHash)
+				if (parameters[i].nameHash == this.m_BlendHash)
 				{
 					this.m_HasBlend = true;
 					this.m_AI.m_Animator.SetFloat(this.m_BlendHash, this.m_Blend);
 					break;
 				}
 			}
-			foreach (AnimatorControllerParameter animatorControllerParameter2 in this.m_AI.m_Animator.parameters)
+			parameters = this.m_AI.m_Animator.parameters;
+			for (int i = 0; i < parameters.Length; i++)
 			{
-				if (animatorControllerParameter2.nameHash == this.m_AttackBlendHash)
+				if (parameters[i].nameHash == this.m_AttackBlendHash)
 				{
 					this.m_HasAttackBlend = true;
 					this.m_AI.m_Animator.SetFloat(this.m_AttackBlendHash, this.m_AttackBlend);
@@ -112,27 +114,29 @@ namespace AIs
 			if (this.m_ForcedSpeed >= 0f)
 			{
 				this.m_AI.m_Animator.speed = this.m_ForcedSpeed;
+				return;
 			}
-			else if (currentAnimatorStateInfo.shortNameHash == this.m_SneakHash)
+			if (currentAnimatorStateInfo.shortNameHash == this.m_SneakHash)
 			{
 				this.m_AI.m_Animator.speed = this.m_AI.m_Params.m_SneakSpeedMul;
+				return;
 			}
-			else if (currentAnimatorStateInfo.shortNameHash == this.m_WalkHash)
+			if (currentAnimatorStateInfo.shortNameHash == this.m_WalkHash)
 			{
 				this.m_AI.m_Animator.speed = this.m_AI.m_Params.m_WalkSpeedMul;
+				return;
 			}
-			else if (currentAnimatorStateInfo.shortNameHash == this.m_TrotHash)
+			if (currentAnimatorStateInfo.shortNameHash == this.m_TrotHash)
 			{
 				this.m_AI.m_Animator.speed = this.m_AI.m_Params.m_TrotSpeedMul;
+				return;
 			}
-			else if (currentAnimatorStateInfo.shortNameHash == this.m_RunHash)
+			if (currentAnimatorStateInfo.shortNameHash == this.m_RunHash)
 			{
 				this.m_AI.m_Animator.speed = this.m_AI.m_Params.m_RunSpeedMul;
+				return;
 			}
-			else
-			{
-				this.m_AI.m_Animator.speed = 1f;
-			}
+			this.m_AI.m_Animator.speed = 1f;
 		}
 
 		public void ForceReset()

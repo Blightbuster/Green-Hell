@@ -4,7 +4,7 @@ using System.IO;
 using CJTools;
 using UnityEngine;
 
-public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
+public class RainManager : ReplicatedBehaviour, ISaveLoad
 {
 	public event Action OnRainBegin;
 
@@ -87,6 +87,13 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 					this.m_RainCollectorFillPerSecondNoRain = key.GetVariable(0).FValue;
 				}
 			}
+			else if (key.GetName() == "Period")
+			{
+				RainPeriod rainPeriod = new RainPeriod();
+				rainPeriod.m_Type = (RainPeriodType)Enum.Parse(typeof(RainPeriodType), key.GetVariable(0).SValue);
+				rainPeriod.m_Duration = key.GetVariable(1).FValue;
+				this.m_Periods.Add(rainPeriod);
+			}
 		}
 	}
 
@@ -120,6 +127,49 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		if (this.m_DebugEnabled)
 		{
 			if (this.m_DebugRainEnabled)
+			{
+				this.m_WeatherInterpolated += Time.deltaTime * 0.15f;
+			}
+			else
+			{
+				this.m_WeatherInterpolated -= Time.deltaTime * 0.15f;
+			}
+			this.m_WeatherInterpolated = Mathf.Clamp01(this.m_WeatherInterpolated);
+			if (this.m_WeatherInterpolated >= 1f)
+			{
+				this.m_Wetness += Time.deltaTime * 0.5f;
+			}
+			else
+			{
+				this.m_Wetness -= Time.deltaTime * 0.2f;
+			}
+			this.m_Wetness = Mathf.Clamp01(this.m_Wetness);
+			this.SetShaderProperty();
+			this.SendRainMessages();
+			this.UpdateTerrainWetness();
+			return;
+		}
+		if (this.m_CurrentPeriod < 0)
+		{
+			this.m_CurrentPeriod = 0;
+			if (MainLevel.Instance.GetCurrentTimeMinutes() < 0.1f)
+			{
+				MainLevel.Instance.UpdateCurentTimeInMinutes();
+			}
+			this.m_PeriodStartTime = MainLevel.Instance.GetCurrentTimeMinutes();
+		}
+		if (MainLevel.Instance.GetCurrentTimeMinutes() > this.m_PeriodStartTime + this.m_Periods[this.m_CurrentPeriod].m_Duration)
+		{
+			this.m_CurrentPeriod++;
+			if (this.m_CurrentPeriod >= this.m_Periods.Count)
+			{
+				this.m_CurrentPeriod = 0;
+			}
+			this.m_PeriodStartTime = MainLevel.Instance.GetCurrentTimeMinutes();
+		}
+		if ((this.m_Periods[this.m_CurrentPeriod].m_Type == RainPeriodType.Dry && this.m_CurrentRainData != this.m_ScenarioRain) || (this.m_Periods[this.m_CurrentPeriod].m_Type == RainPeriodType.Wet && this.m_CurrentRainData != this.m_ScenarioNoRain))
+		{
+			if (this.m_Periods[this.m_CurrentPeriod].m_Type == RainPeriodType.Wet)
 			{
 				this.m_WeatherInterpolated += Time.deltaTime * 0.15f;
 			}
@@ -191,6 +241,16 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		this.m_LastWeatherInterpolated = this.m_WeatherInterpolated;
 	}
 
+	private void UpdateRainConeActivity()
+	{
+		if (Player.Get().IsCameraUnderwater())
+		{
+			this.m_RainCone.SetActive(false);
+			return;
+		}
+		this.m_RainCone.SetActive(true);
+	}
+
 	private void PlayThunderSound()
 	{
 		this.m_AudioSource.PlayOneShot(this.m_ThunderClips[UnityEngine.Random.Range(0, this.m_ThunderClips.Count)]);
@@ -200,7 +260,7 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 	{
 		if (this.m_HasRainBegun)
 		{
-			this.m_RTP.globalSettingsHolder.TERRAIN_RainIntensity = 1f;
+			this.m_RTP.globalSettingsHolder.TERRAIN_RainIntensity = this.m_WeatherInterpolated;
 			this.m_RTP.globalSettingsHolder.TERRAIN_DropletsSpeed = 60f;
 			this.m_RTP.globalSettingsHolder.TERRAIN_RippleScale = 0.7f;
 			this.m_RTP.globalSettingsHolder.TERRAIN_GlobalWetness = this.m_RTP.globalSettingsHolder.TERRAIN_WetnessAttackCurve.Evaluate(Time.time - this.m_RainStartTime);
@@ -262,36 +322,46 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 
 	private void FillRainCollectors()
 	{
-		float amount;
+		float num = Time.deltaTime;
+		if (SleepController.Get().IsActive() && !SleepController.Get().IsWakingUp())
+		{
+			num = Player.GetSleepTimeFactor();
+		}
+		float fill_amount;
 		if (this.m_WeatherInterpolated >= 0.95f)
 		{
-			amount = this.m_RainCollectorFillPerSecondRain * Time.deltaTime;
+			fill_amount = this.m_RainCollectorFillPerSecondRain * num;
 		}
 		else
 		{
-			amount = this.m_RainCollectorFillPerSecondNoRain * Time.deltaTime;
+			fill_amount = this.m_RainCollectorFillPerSecondNoRain * num;
 		}
-		for (int i = 0; i < this.m_RainCollectors.Count; i++)
+		for (int i = 0; i < RainCollector.s_AllRainCollectors.Count; i++)
 		{
-			this.m_RainCollectors[i].Pour(amount);
+			RainCollector.s_AllRainCollectors[i].Pour(fill_amount);
 		}
-	}
-
-	public void RegisterRainCutter(RainCutter rain_cutter)
-	{
-		this.m_RainCutters.Add(rain_cutter);
-	}
-
-	public void UnregisterRainCutter(RainCutter rain_cutter)
-	{
-		this.m_RainCutters.Remove(rain_cutter);
 	}
 
 	public bool IsInRainCutter(Vector3 point)
 	{
-		foreach (RainCutter rainCutter in this.m_RainCutters)
+		using (List<RainCutter>.Enumerator enumerator = RainCutter.s_AllRainCutters.GetEnumerator())
 		{
-			if (rainCutter.IsInside(point))
+			while (enumerator.MoveNext())
+			{
+				if (enumerator.Current.CheckInside(point))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool IsInRainCutterTent(Vector3 point)
+	{
+		foreach (RainCutter rainCutter in RainCutter.s_AllRainCutters)
+		{
+			if (rainCutter.m_Type == RainCutterType.Tent && rainCutter.CheckInside(point))
 			{
 				return true;
 			}
@@ -299,19 +369,14 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		return false;
 	}
 
-	public void Register(IRainCollector collector)
-	{
-		this.m_RainCollectors.Add(collector);
-	}
-
-	public void UnRegister(IRainCollector collector)
-	{
-		this.m_RainCollectors.Remove(collector);
-	}
-
 	public void ToggleDebug()
 	{
 		this.m_DebugEnabled = !this.m_DebugEnabled;
+	}
+
+	public void TogglePeriodDebug()
+	{
+		this.m_DebugPeriodEnabled = !this.m_DebugPeriodEnabled;
 	}
 
 	public void ToggleRain()
@@ -328,25 +393,37 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		this.UpdateWind();
 		this.UpdateAreaDensity();
 		this.UpdateCameraInRainCutter();
+		this.UpdateRainConeActivity();
 	}
 
 	private void UpdateCameraInRainCutter()
 	{
-		Camera main = Camera.main;
-		if (main == null)
+		if (this.m_CameraMain == null)
+		{
+			this.m_CameraMain = Camera.main;
+		}
+		Camera cameraMain = this.m_CameraMain;
+		if (cameraMain == null)
 		{
 			this.m_Material.SetFloat(this.m_ShaderInRainCutter, 0f);
 			return;
 		}
-		foreach (RainCutter rainCutter in this.m_RainCutters)
+		RainCutter rainCutter = null;
+		float num = 0f;
+		foreach (RainCutter rainCutter2 in RainCutter.s_AllRainCutters)
 		{
-			if (rainCutter.IsInside(main.transform.position))
+			float insideValue = rainCutter2.GetInsideValue(cameraMain.transform.position);
+			if (num < insideValue)
 			{
-				this.m_Material.SetFloat(this.m_ShaderInRainCutter, 1f);
-				return;
+				num = insideValue;
+				rainCutter = rainCutter2;
 			}
 		}
-		this.m_Material.SetFloat(this.m_ShaderInRainCutter, 0f);
+		if (rainCutter != null)
+		{
+			this.m_Material.SetMatrix(this.m_ShaderRainCutterMtx, rainCutter.transform.worldToLocalMatrix);
+		}
+		this.m_Material.SetFloat(this.m_ShaderInRainCutter, num);
 	}
 
 	private void UpdatePlayerSanity()
@@ -428,6 +505,10 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		Vector2 vector = this.CalculateUV(Player.Get().gameObject.transform.position);
 		int num = (int)(vector.x * (float)this.m_TextureWidth);
 		int num2 = (int)(vector.y * (float)this.m_TextureHeight);
+		if (num < 0 || num2 < 0 || num >= this.m_TextureWidth || num2 >= this.m_TextureHeight)
+		{
+			return AreaDensity.Low;
+		}
 		return this.m_AreaDenityData[num, num2];
 	}
 
@@ -467,23 +548,18 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 	{
 		int num = RainManager.m_DenityTexturePath.IndexOf("/", 2);
 		int num2 = RainManager.m_DenityTexturePath.IndexOf(".");
-		string path = RainManager.m_DenityTexturePath.Substring(num + 1, num2 - num - 1);
-		TextAsset textAsset = Resources.Load(path) as TextAsset;
-		Stream stream = new MemoryStream(textAsset.bytes);
-		byte b = (byte)stream.ReadByte();
-		if ((ushort)b != 68)
+		Stream stream = new MemoryStream((Resources.Load(RainManager.m_DenityTexturePath.Substring(num + 1, num2 - num - 1)) as TextAsset).bytes);
+		if ((byte)stream.ReadByte() != 68)
 		{
 			DebugUtils.Assert(DebugUtils.AssertType.Info);
 			return;
 		}
-		b = (byte)stream.ReadByte();
-		if ((ushort)b != 65)
+		if ((byte)stream.ReadByte() != 65)
 		{
 			DebugUtils.Assert(DebugUtils.AssertType.Info);
 			return;
 		}
-		b = (byte)stream.ReadByte();
-		if ((ushort)b != 80)
+		if ((byte)stream.ReadByte() != 80)
 		{
 			DebugUtils.Assert(DebugUtils.AssertType.Info);
 			return;
@@ -500,17 +576,13 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		{
 			for (int j = 0; j < num4; j++)
 			{
-				b = (byte)stream.ReadByte();
-				float num5 = (float)b;
+				float num5 = (float)((byte)stream.ReadByte());
 				num5 /= 255f;
-				b = (byte)stream.ReadByte();
-				float num6 = (float)b;
+				float num6 = (float)((byte)stream.ReadByte());
 				num6 /= 255f;
-				b = (byte)stream.ReadByte();
-				float num7 = (float)b;
+				float num7 = (float)((byte)stream.ReadByte());
 				num7 /= 255f;
-				b = (byte)stream.ReadByte();
-				float num8 = (float)b;
+				float num8 = (float)((byte)stream.ReadByte());
 				num8 /= 255f;
 				Color color;
 				color.r = num5;
@@ -550,6 +622,8 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		SaveGame.SaveVal("WeatherInterpolated", this.m_WeatherInterpolated);
 		SaveGame.SaveVal("CurrentWeatherDataIndex", this.m_CurrentDataIndex);
 		SaveGame.SaveVal("WeatherExecutionTime", this.m_CurrentRainData.m_ExecutionTime);
+		SaveGame.SaveVal("CurrentPeriod", this.m_CurrentPeriod);
+		SaveGame.SaveVal("PeriodStartTime", this.m_PeriodStartTime);
 	}
 
 	public void Load()
@@ -558,6 +632,47 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 		this.m_CurrentDataIndex = SaveGame.LoadIVal("CurrentWeatherDataIndex");
 		this.m_CurrentRainData = this.m_RainData[this.m_CurrentDataIndex];
 		this.m_CurrentRainData.m_ExecutionTime = SaveGame.LoadFVal("WeatherExecutionTime");
+		if (SaveGame.m_SaveGameVersion >= GreenHellGame.s_GameVersionEarlyAccessUpdate5)
+		{
+			this.m_CurrentPeriod = SaveGame.LoadIVal("CurrentPeriod");
+			this.m_PeriodStartTime = SaveGame.LoadFVal("PeriodStartTime");
+		}
+	}
+
+	public override void OnReplicationPrepare()
+	{
+		this.ReplSetDirty();
+	}
+
+	public override void OnReplicationSerialize(P2PNetworkWriter writer, bool initial_state)
+	{
+		writer.Write(this.m_WeatherInterpolated);
+		writer.Write(this.m_CurrentDataIndex);
+		writer.Write((this.m_CurrentRainData != null) ? this.m_CurrentRainData.m_ExecutionTime : 0f);
+		writer.Write(this.m_CurrentPeriod);
+		writer.Write(this.m_PeriodStartTime);
+		writer.Write(this.m_LastRainTime);
+	}
+
+	public override void OnReplicationDeserialize(P2PNetworkReader reader, bool initial_state)
+	{
+		this.m_WeatherInterpolated = reader.ReadFloat();
+		this.m_CurrentDataIndex = reader.ReadInt32();
+		if (this.m_RainData.Count > this.m_CurrentDataIndex)
+		{
+			this.m_CurrentRainData = this.m_RainData[this.m_CurrentDataIndex];
+		}
+		if (this.m_CurrentRainData != null)
+		{
+			this.m_CurrentRainData.m_ExecutionTime = reader.ReadFloat();
+		}
+		else
+		{
+			reader.ReadFloat();
+		}
+		this.m_CurrentPeriod = reader.ReadInt32();
+		this.m_PeriodStartTime = reader.ReadFloat();
+		this.m_LastRainTime = reader.ReadFloat();
 	}
 
 	public GameObject m_RainCone;
@@ -572,17 +687,15 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 
 	public bool m_DebugRainEnabled;
 
+	public bool m_DebugPeriodEnabled;
+
 	private float m_RainCollectorFillPerSecondRain = 5f;
 
 	private float m_RainCollectorFillPerSecondNoRain = 0.5f;
 
-	private List<RainCutter> m_RainCutters = new List<RainCutter>();
-
-	private List<IRainCollector> m_RainCollectors = new List<IRainCollector>();
-
 	private float m_PlayerWetDuration;
 
-	private static RainManager s_Instance;
+	private static RainManager s_Instance = null;
 
 	public float m_WeatherInterpolated;
 
@@ -608,6 +721,8 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 
 	private int m_ShaderInRainCutter = Shader.PropertyToID("_InRainCutter");
 
+	private int m_ShaderRainCutterMtx = Shader.PropertyToID("_RainCutterMtx");
+
 	private bool m_HasRainBegun;
 
 	private bool m_HasRainEnded;
@@ -630,6 +745,12 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 
 	private AudioSource m_AudioSource;
 
+	private List<RainPeriod> m_Periods = new List<RainPeriod>();
+
+	private float m_PeriodStartTime = float.MinValue;
+
+	private int m_CurrentPeriod = -1;
+
 	private List<AudioClip> m_ThunderClips = new List<AudioClip>();
 
 	private float m_LastWeatherInterpolated;
@@ -647,6 +768,8 @@ public class RainManager : MonoBehaviour, IRainCollectorWatcher, ISaveLoad
 	private float m_Wetness;
 
 	private List<BoxCollider> m_BoxColliderTemp = new List<BoxCollider>();
+
+	private Camera m_CameraMain;
 
 	private float m_WantedAreaDensity;
 

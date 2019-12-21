@@ -39,7 +39,7 @@ namespace UnityEngine.PostProcessing
 			}
 			Material material = this.context.materialFactory.Get("Hidden/Post FX/Grain Generator");
 			material.SetFloat(GrainComponent.Uniforms._Phase, realtimeSinceStartup / 20f);
-			Graphics.Blit(null, this.m_GrainLookupRT, material, (!settings.colored) ? 0 : 1);
+			Graphics.Blit(null, this.m_GrainLookupRT, material, settings.colored ? 1 : 0);
 			uberMaterial.SetTexture(GrainComponent.Uniforms._GrainTex, this.m_GrainLookupRT);
 			uberMaterial.SetVector(GrainComponent.Uniforms._Grain_Params1, new Vector2(settings.luminanceContribution, settings.intensity * 20f));
 			uberMaterial.SetVector(GrainComponent.Uniforms._Grain_Params2, new Vector4((float)this.context.width / (float)this.m_GrainLookupRT.width / settings.size, (float)this.context.height / (float)this.m_GrainLookupRT.height / settings.size, value, value2));

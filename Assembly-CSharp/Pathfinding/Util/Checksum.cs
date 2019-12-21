@@ -14,7 +14,7 @@ namespace Pathfinding.Util
 		{
 			for (int i = 0; i < Value.Length; i++)
 			{
-				CRCVal = (CRCVal >> 8 ^ Checksum.CRCTable[(int)((UIntPtr)((CRCVal & 255u) ^ (uint)Value[i]))]);
+				CRCVal = (CRCVal >> 8 ^ Checksum.CRCTable[(int)((CRCVal & 255u) ^ (uint)Value[i])]);
 			}
 			return CRCVal;
 		}

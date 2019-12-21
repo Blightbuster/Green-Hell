@@ -13,7 +13,7 @@ public class NotepadController : PlayerController
 	protected override void Awake()
 	{
 		base.Awake();
-		this.m_ControllerType = PlayerControllerType.Notepad;
+		base.m_ControllerType = PlayerControllerType.Notepad;
 		NotepadController.s_Instance = this;
 	}
 
@@ -23,6 +23,7 @@ public class NotepadController : PlayerController
 		this.m_Animator.SetInteger(this.m_NotepadHash, 1);
 		this.m_Player.BlockRotation();
 		this.m_Player.BlockMoves();
+		HUDItem.Get().Deactivate();
 		if (Inventory3DManager.Get().gameObject.activeSelf)
 		{
 			Inventory3DManager.Get().Deactivate();
@@ -45,7 +46,7 @@ public class NotepadController : PlayerController
 		Player.Get().OnHideNotepad();
 		this.m_Animator.SetInteger(this.m_NotepadHash, 0);
 		HUDNotepad.Get().Deactivate();
-		CursorManager.Get().ShowCursor(false);
+		CursorManager.Get().ShowCursor(false, false);
 	}
 
 	public bool CanDisable()
@@ -58,8 +59,10 @@ public class NotepadController : PlayerController
 		GameObject original = Resources.Load("Prefabs/TempPrefabs/Items/Item/notebook") as GameObject;
 		this.m_Notepad = UnityEngine.Object.Instantiate<GameObject>(original);
 		this.m_NotepadHolder = this.m_Notepad.transform.FindDeepChild("Holder");
-		MenuNotepad.Get().SetNotepadObject(this.m_Notepad.GetComponent<Notepad>());
+		Notepad component = this.m_Notepad.GetComponent<Notepad>();
+		MenuNotepad.Get().SetNotepadObject(component);
 		MenuNotepad.Get().gameObject.SetActive(true);
+		HUDNotepad.Get().OnCreateNotepad(component);
 	}
 
 	private void DestroyNotepadObject()
@@ -74,7 +77,7 @@ public class NotepadController : PlayerController
 		this.m_Animator.SetInteger(this.m_NotepadHash, 0);
 		MenuNotepad.Get().OnNotepadHide();
 		HUDNotepad.Get().Deactivate();
-		CursorManager.Get().ShowCursor(false);
+		CursorManager.Get().ShowCursor(false, false);
 	}
 
 	public override void ControllerLateUpdate()
@@ -113,21 +116,21 @@ public class NotepadController : PlayerController
 		if (id == AnimEventID.ShowNotebook)
 		{
 			this.CreateNotepadObject();
+			return;
 		}
-		else if (id == AnimEventID.ShowNotebookEnd)
+		if (id == AnimEventID.ShowNotebookEnd)
 		{
 			this.m_CanDisable = true;
 			HUDNotepad.Get().Activate();
-			CursorManager.Get().ShowCursor(true);
+			CursorManager.Get().ShowCursor(true, true);
+			return;
 		}
-		else if (id == AnimEventID.HideNotebookEnd)
+		if (id == AnimEventID.HideNotebookEnd)
 		{
 			this.Stop();
+			return;
 		}
-		else
-		{
-			base.OnAnimEvent(id);
-		}
+		base.OnAnimEvent(id);
 	}
 
 	private int m_NotepadHash = Animator.StringToHash("Notepad");

@@ -32,7 +32,20 @@ public class QuadTreeBalanceSystem
 	public void InsertObject(BalanceSystemObject obj)
 	{
 		QuadTreeCellBalanceSystem cellAtPos = this.GetCellAtPos(obj.m_GameObject.transform.position);
-		cellAtPos.m_Objects.Add(obj);
+		if (!cellAtPos.m_Objects.Contains(obj))
+		{
+			cellAtPos.m_Objects.Add(obj);
+		}
+		this.m_ObjCellMap[obj] = cellAtPos;
+	}
+
+	public void InsertObject(BalanceSystemObject obj, Vector3 position)
+	{
+		QuadTreeCellBalanceSystem cellAtPos = this.GetCellAtPos(position);
+		if (!cellAtPos.m_Objects.Contains(obj))
+		{
+			cellAtPos.m_Objects.Add(obj);
+		}
 		this.m_ObjCellMap[obj] = cellAtPos;
 	}
 
@@ -48,11 +61,9 @@ public class QuadTreeBalanceSystem
 		{
 			quadTreeCellBalanceSystem.RemoveObject(go);
 			this.m_ObjCellMap.Remove(go);
+			return;
 		}
-		else
-		{
-			DebugUtils.Assert(false, true);
-		}
+		DebugUtils.Assert(false, true);
 	}
 
 	private QuadTreeCellBalanceSystem GetCellAtPos(Vector3 pos)
@@ -80,12 +91,11 @@ public class QuadTreeBalanceSystem
 
 	public BalanceSystemObject GetObjectInPos(Vector3 pos)
 	{
-		QuadTreeCellBalanceSystem cellAtPos = this.GetCellAtPos(pos);
-		foreach (BalanceSystemObject balanceSystemObject in cellAtPos.m_Objects)
+		foreach (BalanceSystemObject balanceSystemObject in this.GetCellAtPos(pos).m_Objects)
 		{
-			if (balanceSystemObject.m_GameObject != null)
+			if (balanceSystemObject.m_BalanceSpawner != null)
 			{
-				if (balanceSystemObject.m_GameObject.transform.position == pos)
+				if (balanceSystemObject.m_Position == pos)
 				{
 					return balanceSystemObject;
 				}
@@ -151,6 +161,53 @@ public class QuadTreeBalanceSystem
 		return null;
 	}
 
+	public void SerializeAllObjects(P2PNetworkWriter writer)
+	{
+		using (P2PNetworkWriterSeekHelper p2PNetworkWriterSeekHelper = new P2PNetworkWriterSeekHelper(writer))
+		{
+			writer.Write(0);
+			int num = 0;
+			for (int i = 0; i < this.m_NumCellsX; i++)
+			{
+				for (int j = 0; j < this.m_NumCellsY; j++)
+				{
+					QuadTreeCellBalanceSystem quadTreeCellBalanceSystem = this.m_Cells[i, j];
+					for (int k = 0; k < quadTreeCellBalanceSystem.m_Objects.Count; k++)
+					{
+						BalanceSystemObject balanceSystemObject = quadTreeCellBalanceSystem.m_Objects[k];
+						writer.Write(balanceSystemObject.m_Position);
+						balanceSystemObject.Serialize(writer);
+						num++;
+					}
+				}
+			}
+			p2PNetworkWriterSeekHelper.SeekToStoredPos();
+			writer.Write(num);
+		}
+	}
+
+	public void Clear()
+	{
+		for (int i = 0; i < this.m_NumCellsX; i++)
+		{
+			for (int j = 0; j < this.m_NumCellsY; j++)
+			{
+				QuadTreeCellBalanceSystem quadTreeCellBalanceSystem = this.m_Cells[i, j];
+				for (int k = 0; k < quadTreeCellBalanceSystem.m_Objects.Count; k++)
+				{
+					BalanceSystemObject balanceSystemObject = quadTreeCellBalanceSystem.m_Objects[k];
+					if (balanceSystemObject.m_GameObject)
+					{
+						UnityEngine.Object.Destroy(balanceSystemObject.m_GameObject);
+						balanceSystemObject.m_GameObject = null;
+					}
+				}
+				quadTreeCellBalanceSystem.m_Objects.Clear();
+			}
+		}
+		this.m_ObjCellMap.Clear();
+	}
+
 	public void DrawDebug()
 	{
 		bool flag = false;
@@ -180,7 +237,7 @@ public class QuadTreeBalanceSystem
 						BalanceSystemObject balanceSystemObject = quadTreeCellBalanceSystem.m_Objects[k];
 						if (balanceSystemObject.m_GameObject != null)
 						{
-							DebugRender.DrawPoint(balanceSystemObject.m_GameObject.transform.position, (!balanceSystemObject.m_GameObject.activeSelf) ? Color.green : Color.red, 0.3f, 0f);
+							DebugRender.DrawPoint(balanceSystemObject.m_GameObject.transform.position, balanceSystemObject.m_GameObject.activeSelf ? Color.red : Color.green, 0.3f, 0f);
 						}
 					}
 				}
@@ -190,11 +247,11 @@ public class QuadTreeBalanceSystem
 
 	private QuadTreeCellBalanceSystem[,] m_Cells;
 
-	private Vector2 m_Start = default(Vector2);
+	private Vector2 m_Start;
 
-	private Vector2 m_Size = default(Vector2);
+	private Vector2 m_Size;
 
-	private Vector2 m_CellSize = default(Vector2);
+	private Vector2 m_CellSize;
 
 	private int m_NumCellsX;
 

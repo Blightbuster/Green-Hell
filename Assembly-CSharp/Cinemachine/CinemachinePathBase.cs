@@ -55,7 +55,7 @@ namespace Cinemachine
 			float num4 = 1f / (float)stepsPerSegment;
 			float num5 = (float)startSegment;
 			float num6 = float.MaxValue;
-			int num7 = (stepsPerSegment != 1) ? 3 : 1;
+			int num7 = (stepsPerSegment == 1) ? 1 : 3;
 			for (int i = 0; i < num7; i++)
 			{
 				Vector3 vector = this.EvaluatePosition(num);
@@ -80,12 +80,20 @@ namespace Cinemachine
 
 		public float MinUnit(CinemachinePathBase.PositionUnits units)
 		{
-			return (units != CinemachinePathBase.PositionUnits.Distance) ? this.MinPos : 0f;
+			if (units != CinemachinePathBase.PositionUnits.Distance)
+			{
+				return this.MinPos;
+			}
+			return 0f;
 		}
 
 		public float MaxUnit(CinemachinePathBase.PositionUnits units)
 		{
-			return (units != CinemachinePathBase.PositionUnits.Distance) ? this.MaxPos : this.PathLength;
+			if (units != CinemachinePathBase.PositionUnits.Distance)
+			{
+				return this.MaxPos;
+			}
+			return this.PathLength;
 		}
 
 		public virtual float NormalizeUnit(float pos, CinemachinePathBase.PositionUnits units)

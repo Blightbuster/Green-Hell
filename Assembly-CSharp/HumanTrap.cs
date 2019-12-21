@@ -30,7 +30,7 @@ public class HumanTrap : Construction
 
 	public override bool CanTrigger()
 	{
-		return !this.m_Armed;
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && !this.m_Armed;
 	}
 
 	public override void GetActions(List<TriggerAction.TYPE> actions)
@@ -52,7 +52,7 @@ public class HumanTrap : Construction
 	private void SetArmed(bool armed)
 	{
 		this.m_Armed = armed;
-		this.m_Animation.CrossFade((!armed) ? this.m_FireAnimName : this.m_IdleAnimName, (!armed) ? 0f : 1f);
+		this.m_Animation.CrossFade(armed ? this.m_IdleAnimName : this.m_FireAnimName, armed ? 1f : 0f);
 		this.m_Area.enabled = armed;
 		if (armed)
 		{
@@ -89,7 +89,7 @@ public class HumanTrap : Construction
 
 	public void OnEnter(GameObject obj)
 	{
-		if (obj == Player.Get().gameObject)
+		if (obj.IsPlayer())
 		{
 			this.Fire(null);
 			Player.Get().GiveDamage(base.gameObject, this, 10f, -base.transform.forward, DamageType.None, 0, false);

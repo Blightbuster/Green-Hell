@@ -172,8 +172,7 @@ namespace RootMotion.FinalIK
 				Vector3 vector3 = up;
 				Vector3 fromDirection = vector2;
 				Vector3.OrthoNormalize(ref vector3, ref fromDirection);
-				Quaternion rotation = Quaternion.FromToRotation(fromDirection, vector2);
-				vector = rotation * vector;
+				vector = Quaternion.FromToRotation(fromDirection, vector2) * vector;
 			}
 			return vector;
 		}
@@ -185,9 +184,10 @@ namespace RootMotion.FinalIK
 				return;
 			}
 			this.pelvis.Reset();
-			foreach (Grounding.Leg leg in this.legs)
+			Grounding.Leg[] legs = this.legs;
+			for (int i = 0; i < legs.Length; i++)
 			{
-				leg.Reset();
+				legs[i].Reset();
 			}
 		}
 
@@ -200,7 +200,11 @@ namespace RootMotion.FinalIK
 		{
 			get
 			{
-				return (!this.useRootRotation) ? Vector3.up : this.root.up;
+				if (!this.useRootRotation)
+				{
+					return Vector3.up;
+				}
+				return this.root.up;
 			}
 		}
 
@@ -254,22 +258,22 @@ namespace RootMotion.FinalIK
 		[Tooltip("CapsuleCast radius. Should match approximately with the size of the feet.")]
 		public float footRadius = 0.15f;
 
-		[HideInInspector]
 		[Tooltip("Offset of the foot center along character forward axis.")]
+		[HideInInspector]
 		public float footCenterOffset;
 
 		[Tooltip("Amount of velocity based prediction of the foot positions.")]
 		public float prediction = 0.05f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Weight of rotating the feet to the ground normal offset.")]
+		[Range(0f, 1f)]
 		public float footRotationWeight = 1f;
 
 		[Tooltip("Speed of slerping the feet to their grounded rotations.")]
 		public float footRotationSpeed = 7f;
 
-		[Range(0f, 90f)]
 		[Tooltip("Max Foot Rotation Angle. Max angular offset from the foot's rotation.")]
+		[Range(0f, 90f)]
 		public float maxFootRotationAngle = 45f;
 
 		[Tooltip("If true, solver will rotate with the character root so the character can be grounded for example to spherical planets. For performance reasons leave this off unless needed.")]
@@ -278,8 +282,8 @@ namespace RootMotion.FinalIK
 		[Tooltip("The speed of moving the character up/down.")]
 		public float pelvisSpeed = 5f;
 
-		[Range(0f, 1f)]
 		[Tooltip("Used for smoothing out vertical pelvis movement (range 0 - 1).")]
+		[Range(0f, 1f)]
 		public float pelvisDamper;
 
 		[Tooltip("The weight of lowering the pelvis to the lowest foot.")]
@@ -377,40 +381,39 @@ namespace RootMotion.FinalIK
 				{
 					this.grounding.quality = Grounding.Quality.Fastest;
 				}
-				Grounding.Quality quality = this.grounding.quality;
-				if (quality != Grounding.Quality.Fastest)
+				switch (this.grounding.quality)
 				{
-					if (quality != Grounding.Quality.Simple)
-					{
-						if (quality == Grounding.Quality.Best)
-						{
-							this.heelHit = this.GetRaycastHit((!this.invertFootCenter) ? Vector3.zero : (-this.grounding.GetFootCenterOffset()));
-							RaycastHit capsuleHit = this.GetCapsuleHit(vector);
-							this.SetFootToPlane(capsuleHit.normal, capsuleHit.point, this.heelHit.point);
-						}
-					}
-					else
-					{
-						this.heelHit = this.GetRaycastHit(Vector3.zero);
-						Vector3 a = this.grounding.GetFootCenterOffset();
-						if (this.invertFootCenter)
-						{
-							a = -a;
-						}
-						RaycastHit raycastHit = this.GetRaycastHit(a + vector);
-						RaycastHit raycastHit2 = this.GetRaycastHit(this.grounding.root.right * this.grounding.footRadius * 0.5f);
-						Vector3 vector2 = Vector3.Cross(raycastHit.point - this.heelHit.point, raycastHit2.point - this.heelHit.point).normalized;
-						if (Vector3.Dot(vector2, this.up) < 0f)
-						{
-							vector2 = -vector2;
-						}
-						this.SetFootToPlane(vector2, this.heelHit.point, this.heelHit.point);
-					}
+				case Grounding.Quality.Fastest:
+				{
+					RaycastHit raycastHit = this.GetRaycastHit(vector);
+					this.SetFootToPoint(raycastHit.normal, raycastHit.point);
+					break;
 				}
-				else
+				case Grounding.Quality.Simple:
 				{
-					RaycastHit raycastHit3 = this.GetRaycastHit(vector);
-					this.SetFootToPoint(raycastHit3.normal, raycastHit3.point);
+					this.heelHit = this.GetRaycastHit(Vector3.zero);
+					Vector3 a = this.grounding.GetFootCenterOffset();
+					if (this.invertFootCenter)
+					{
+						a = -a;
+					}
+					RaycastHit raycastHit2 = this.GetRaycastHit(a + vector);
+					RaycastHit raycastHit3 = this.GetRaycastHit(this.grounding.root.right * this.grounding.footRadius * 0.5f);
+					Vector3 vector2 = Vector3.Cross(raycastHit2.point - this.heelHit.point, raycastHit3.point - this.heelHit.point).normalized;
+					if (Vector3.Dot(vector2, this.up) < 0f)
+					{
+						vector2 = -vector2;
+					}
+					this.SetFootToPlane(vector2, this.heelHit.point, this.heelHit.point);
+					break;
+				}
+				case Grounding.Quality.Best:
+				{
+					this.heelHit = this.GetRaycastHit(this.invertFootCenter ? (-this.grounding.GetFootCenterOffset()) : Vector3.zero);
+					RaycastHit capsuleHit = this.GetCapsuleHit(vector);
+					this.SetFootToPlane(capsuleHit.normal, capsuleHit.point, this.heelHit.point);
+					break;
+				}
 				}
 				this.isGrounded = (this.heightFromGround < this.grounding.maxStep);
 				float num = this.stepHeightFromGround;
@@ -426,7 +429,7 @@ namespace RootMotion.FinalIK
 				this.RotateFoot();
 				this.IKPosition = this.transform.position - this.up * this.IKOffset;
 				float footRotationWeight = this.grounding.footRotationWeight;
-				this.rotationOffset = ((footRotationWeight < 1f) ? Quaternion.Slerp(Quaternion.identity, this.r, footRotationWeight) : this.r);
+				this.rotationOffset = ((footRotationWeight >= 1f) ? this.r : Quaternion.Slerp(Quaternion.identity, this.r, footRotationWeight));
 			}
 
 			public float stepHeightFromGround
@@ -601,7 +604,7 @@ namespace RootMotion.FinalIK
 				this.heightOffset = Mathf.Lerp(this.heightOffset, b, num * this.grounding.pelvisSpeed);
 				Vector3 p = this.grounding.root.position - this.lastRootPosition;
 				this.lastRootPosition = this.grounding.root.position;
-				this.damperF = Interp.LerpValue(this.damperF, (!isGrounded) ? 0f : 1f, 1f, 10f);
+				this.damperF = Interp.LerpValue(this.damperF, isGrounded ? 1f : 0f, 1f, 10f);
 				this.heightOffset -= this.grounding.GetVerticalOffset(p, Vector3.zero) * this.grounding.pelvisDamper * this.damperF;
 				this.IKOffset = this.grounding.up * this.heightOffset;
 			}

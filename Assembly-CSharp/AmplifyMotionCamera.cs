@@ -4,8 +4,8 @@ using AmplifyMotion;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("")]
+[RequireComponent(typeof(Camera))]
 public class AmplifyMotionCamera : MonoBehaviour
 {
 	public bool Initialized
@@ -249,20 +249,20 @@ public class AmplifyMotionCamera : MonoBehaviour
 		}
 		float nearClipPlane = this.m_camera.nearClipPlane;
 		float farClipPlane = this.m_camera.farClipPlane;
-		Vector4 value;
+		Vector4 vector;
 		if (AmplifyMotionEffectBase.IsD3D)
 		{
-			value.x = 1f - farClipPlane / nearClipPlane;
-			value.y = farClipPlane / nearClipPlane;
+			vector.x = 1f - farClipPlane / nearClipPlane;
+			vector.y = farClipPlane / nearClipPlane;
 		}
 		else
 		{
-			value.x = (1f - farClipPlane / nearClipPlane) / 2f;
-			value.y = (1f + farClipPlane / nearClipPlane) / 2f;
+			vector.x = (1f - farClipPlane / nearClipPlane) / 2f;
+			vector.y = (1f + farClipPlane / nearClipPlane) / 2f;
 		}
-		value.z = value.x / farClipPlane;
-		value.w = value.y / farClipPlane;
-		this.m_renderCB.SetGlobalVector("_AM_ZBUFFER_PARAMS", value);
+		vector.z = vector.x / farClipPlane;
+		vector.w = vector.y / farClipPlane;
+		this.m_renderCB.SetGlobalVector("_AM_ZBUFFER_PARAMS", vector);
 		if (this.m_affectedObjectsChanged)
 		{
 			this.UpdateAffectedObjects();
@@ -271,7 +271,7 @@ public class AmplifyMotionCamera : MonoBehaviour
 		{
 			if ((this.m_camera.cullingMask & 1 << this.m_affectedObjects[i].gameObject.layer) != 0)
 			{
-				this.m_affectedObjects[i].OnRenderVectors(this.m_camera, this.m_renderCB, (!this.m_affectedObjects[i].FixedStep) ? scale : fixedScale, quality);
+				this.m_affectedObjects[i].OnRenderVectors(this.m_camera, this.m_renderCB, this.m_affectedObjects[i].FixedStep ? fixedScale : scale, quality);
 			}
 		}
 	}

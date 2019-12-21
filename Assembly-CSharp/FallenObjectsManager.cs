@@ -83,14 +83,16 @@ public class FallenObjectsManager : MonoBehaviour
 		{
 			return;
 		}
+		if (SaveGame.m_State != SaveGame.State.None)
+		{
+			return;
+		}
 		if (this.m_InitializeInternalRequested)
 		{
 			this.InitializeInternal();
+			return;
 		}
-		else
-		{
-			this.GenerateObjects(10);
-		}
+		this.GenerateObjects(10);
 	}
 
 	private void GenerateObjects(int num_objects)
@@ -99,10 +101,8 @@ public class FallenObjectsManager : MonoBehaviour
 		{
 			return;
 		}
-		Vector3 position = Player.Get().gameObject.transform.position;
-		position.y = 0f;
-		int i = 0;
-		while (i < num_objects)
+		int num = 0;
+		while (num < num_objects && this.m_Generators.Count != 0)
 		{
 			if (this.m_CurrentObjectIdx >= this.m_Generators.Count)
 			{
@@ -112,55 +112,45 @@ public class FallenObjectsManager : MonoBehaviour
 			if (fallenObjectGenerator == null)
 			{
 				this.m_Generators.RemoveAt(this.m_CurrentObjectIdx);
+				this.m_CurrentObjectIdx--;
 			}
-			else if (fallenObjectGenerator.m_GeneratorData.m_Object)
+			else if (fallenObjectGenerator.m_GeneratorData.m_Object && RelevanceTools.GetDistToClosestPlayer2D(fallenObjectGenerator.m_GeneratorData.m_Object) <= FallenObjectsManager.s_MaxDistToPlayer)
 			{
-				Vector3 position2 = fallenObjectGenerator.m_GeneratorData.m_Object.transform.position;
-				position2.y = 0f;
-				if (position.Distance(position2) <= FallenObjectsManager.s_MaxDistToPlayer)
+				for (int i = 0; i < fallenObjectGenerator.m_GeneratorData.m_Data.Count; i++)
 				{
-					for (int j = 0; j < fallenObjectGenerator.m_GeneratorData.m_Data.Count; j++)
+					bool flag = false;
+					FallenObjectData fallenObjectData = fallenObjectGenerator.m_GeneratorData.m_Data[i];
+					if (fallenObjectData.m_ObjectsSpawnNextTime < 0f)
 					{
-						bool flag = false;
-						FallenObjectData fallenObjectData = fallenObjectGenerator.m_GeneratorData.m_Data[j];
-						if (fallenObjectData.m_ObjectsSpawnNextTime < 0f)
+						fallenObjectData.m_ObjectsSpawnNextTime = MainLevel.Instance.GetCurrentTimeMinutes() + fallenObjectData.m_Cooldown;
+						flag = true;
+					}
+					int j = 0;
+					while (j < fallenObjectData.m_GeneratedObjects.Count)
+					{
+						if (fallenObjectData.m_GeneratedObjects[j] == null)
 						{
-							fallenObjectData.m_ObjectsSpawnNextTime = MainLevel.Instance.GetCurrentTimeMinutes() + fallenObjectData.m_Cooldown;
-							flag = true;
+							fallenObjectData.m_GeneratedObjects.RemoveAt(j);
 						}
-						int k = 0;
-						while (k < fallenObjectData.m_GeneratedObjects.Count)
+						else
 						{
-							if (fallenObjectData.m_GeneratedObjects[k] == null)
-							{
-								fallenObjectData.m_GeneratedObjects.RemoveAt(k);
-							}
-							else
-							{
-								k++;
-							}
+							j++;
 						}
-						if (fallenObjectData.m_GeneratedObjects.Count <= 0)
+					}
+					if (fallenObjectData.m_GeneratedObjects.Count <= 0 && (!fallenObjectData.m_AlreadySpawned || !fallenObjectData.m_NoRespawn) && (flag || MainLevel.Instance.GetCurrentTimeMinutes() >= fallenObjectData.m_ObjectsSpawnNextTime))
+					{
+						bool flag2 = this.CreateFallenObjects(fallenObjectGenerator.m_GeneratorData.m_Object, fallenObjectData, fallenObjectGenerator.m_GeneratorData, i, fallenObjectGenerator);
+						fallenObjectData.m_ObjectsSpawnNextTime = MainLevel.Instance.GetCurrentTimeMinutes() + fallenObjectData.m_Cooldown;
+						fallenObjectData.m_AlreadySpawned = true;
+						if (flag2)
 						{
-							if (!fallenObjectData.m_AlreadySpawned || !fallenObjectData.m_NoRespawn)
-							{
-								if (flag || MainLevel.Instance.GetCurrentTimeMinutes() >= fallenObjectData.m_ObjectsSpawnNextTime)
-								{
-									bool flag2 = this.CreateFallenObjects(fallenObjectGenerator.m_GeneratorData.m_Object, fallenObjectData, fallenObjectGenerator.m_GeneratorData, j, fallenObjectGenerator);
-									fallenObjectData.m_ObjectsSpawnNextTime = MainLevel.Instance.GetCurrentTimeMinutes() + fallenObjectData.m_Cooldown;
-									fallenObjectData.m_AlreadySpawned = true;
-									if (flag2)
-									{
-										this.m_CurrentObjectIdx++;
-										return;
-									}
-								}
-							}
+							this.m_CurrentObjectIdx++;
+							return;
 						}
 					}
 				}
 			}
-			i++;
+			num++;
 			this.m_CurrentObjectIdx++;
 		}
 	}
@@ -199,10 +189,8 @@ public class FallenObjectsManager : MonoBehaviour
 				else
 				{
 					vector = raycastHit.point;
-					BoxCollider component = gameObject.GetComponent<BoxCollider>();
-					float y = component.bounds.min.y;
-					float y2 = gameObject.transform.position.y;
-					float num2 = y2 - y;
+					float y = gameObject.GetComponent<BoxCollider>().bounds.min.y;
+					float num2 = gameObject.transform.position.y - y;
 					vector.y += num2;
 					gameObject.transform.position = vector;
 					Quaternion quaternion = gameObject.transform.rotation;
@@ -211,11 +199,11 @@ public class FallenObjectsManager : MonoBehaviour
 					Vector3 forward = gameObject.transform.forward - Vector3.Dot(gameObject.transform.forward, raycastHit.normal) * raycastHit.normal;
 					gameObject.transform.rotation = Quaternion.LookRotation(forward, raycastHit.normal);
 					data.m_GeneratedObjects.Add(gameObject);
-					Trigger component2 = gameObject.GetComponent<Trigger>();
-					DebugUtils.Assert(component2 != null, "[FallenObjectsManager:CreateFallenObjects] Generated object is not item!", true, DebugUtils.AssertType.Info);
-					component2.m_FallenObject = true;
-					component2.m_FallenObjectCreationTime = Time.time;
-					component2.m_FallenObjectGenerator = generator;
+					Trigger component = gameObject.GetComponent<Trigger>();
+					DebugUtils.Assert(component != null, "[FallenObjectsManager:CreateFallenObjects] Generated object is not item!", true, DebugUtils.AssertType.Info);
+					component.m_FallenObject = true;
+					component.m_FallenObjectCreationTime = Time.time;
+					component.m_FallenObjectGenerator = generator;
 					result = true;
 				}
 			}
@@ -236,9 +224,7 @@ public class FallenObjectsManager : MonoBehaviour
 
 	public void AddObject(GameObject obj, int gen_index, int data_index)
 	{
-		FallenObjectGenerator fallenObjectGenerator = this.m_Generators[gen_index];
-		FallenObjectData fallenObjectData = fallenObjectGenerator.m_GeneratorData.m_Data[data_index];
-		fallenObjectData.m_GeneratedObjects.Add(obj);
+		this.m_Generators[gen_index].m_GeneratorData.m_Data[data_index].m_GeneratedObjects.Add(obj);
 	}
 
 	public void RemoveItem(Trigger trigger)
@@ -305,18 +291,24 @@ public class FallenObjectsManager : MonoBehaviour
 
 	public void OnFullLoadEnd()
 	{
-		for (int i = 0; i < this.m_Generators.Count; i++)
+		int i = 0;
+		while (i < this.m_Generators.Count)
 		{
 			FallenObjectGenerator fallenObjectGenerator = this.m_Generators[i];
 			if (fallenObjectGenerator != null)
 			{
 				for (int j = 0; j < fallenObjectGenerator.m_GeneratorData.m_Data.Count; j++)
 				{
-					FallenObjectData fallenObjectData = fallenObjectGenerator.m_GeneratorData.m_Data[j];
-					fallenObjectData.m_ObjectsSpawnNextTime = -1f;
+					fallenObjectGenerator.m_GeneratorData.m_Data[j].m_ObjectsSpawnNextTime = -1f;
 				}
+				i++;
+			}
+			else
+			{
+				this.m_Generators.RemoveAt(i);
 			}
 		}
+		this.m_CurrentObjectIdx = 0;
 	}
 
 	private Dictionary<string, List<FallenObjectData>> m_Data = new Dictionary<string, List<FallenObjectData>>();
@@ -331,7 +323,7 @@ public class FallenObjectsManager : MonoBehaviour
 
 	public static float s_MaxDistToPlayer = 40f;
 
-	private static FallenObjectsManager s_Instance;
+	private static FallenObjectsManager s_Instance = null;
 
 	private bool m_InitializeInternalRequested;
 

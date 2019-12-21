@@ -15,8 +15,7 @@ public class DeluxeEyeAdaptationLogic
 	private void RenderHistogram(Material histogramMaterial)
 	{
 		this.ComputeHistogramCoefs();
-		RenderTexture active = this.m_HistogramList[this.m_CurrentHistogram];
-		RenderTexture.active = active;
+		RenderTexture.active = this.m_HistogramList[this.m_CurrentHistogram];
 		GL.Clear(true, true, Color.black);
 		histogramMaterial.SetFloat("_ValueRange", this.m_Range);
 		histogramMaterial.SetFloat("_StepSize", 0.03125f);
@@ -94,9 +93,10 @@ public class DeluxeEyeAdaptationLogic
 		}
 		if (this.m_Meshes != null)
 		{
-			foreach (Mesh obj in this.m_Meshes)
+			Mesh[] meshes = this.m_Meshes;
+			for (int i = 0; i < meshes.Length; i++)
 			{
-				UnityEngine.Object.DestroyImmediate(obj, true);
+				UnityEngine.Object.DestroyImmediate(meshes[i], true);
 			}
 		}
 		this.m_Meshes = null;
@@ -174,9 +174,10 @@ public class DeluxeEyeAdaptationLogic
 	{
 		if (this.m_Meshes != null)
 		{
-			foreach (Mesh obj in this.m_Meshes)
+			Mesh[] meshes = this.m_Meshes;
+			for (int i = 0; i < meshes.Length; i++)
 			{
-				UnityEngine.Object.DestroyImmediate(obj, true);
+				UnityEngine.Object.DestroyImmediate(meshes[i], true);
 			}
 		}
 		this.m_Meshes = null;
@@ -246,7 +247,7 @@ public class DeluxeEyeAdaptationLogic
 	private float m_HistLogMax = Mathf.Log(5f, 2f);
 
 	[SerializeField]
-	public Vector4 m_HistCoefs = default(Vector4);
+	public Vector4 m_HistCoefs;
 
 	[SerializeField]
 	public float m_Attenuation = 1f;

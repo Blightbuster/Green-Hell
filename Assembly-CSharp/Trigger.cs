@@ -1,26 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using Enums;
 using UnityEngine;
 
 public class Trigger : CJObject
 {
+	public Collider m_Collider
+	{
+		get
+		{
+			if (this.m_ColliderInternal == null)
+			{
+				return null;
+			}
+			return this.m_ColliderInternal.GetValueOrDefault().Get();
+		}
+		set
+		{
+			this.m_ColliderInternal = new CachedComponent<Collider>?(value);
+		}
+	}
+
+	[HideInInspector]
+	public int m_ForcedLayer
+	{
+		get
+		{
+			return this.m_ForcedLayerProp;
+		}
+		set
+		{
+			this.m_ForcedLayerProp = value;
+			this.UpdateLayer();
+		}
+	}
+
 	protected override void Awake()
 	{
 		base.Awake();
+		this.m_WasTriggered = false;
 		this.m_BoxCollider = base.gameObject.GetComponent<BoxCollider>();
-		this.m_Collider = base.gameObject.GetComponent<Collider>();
-		if (this.m_ExecuteSound != null)
-		{
-			this.m_ExecuteAudioSource = base.gameObject.AddComponent<AudioSource>();
-			this.m_ExecuteAudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
-			this.m_ExecuteAudioSource.playOnAwake = false;
-			this.m_ExecuteAudioSource.clip = this.m_ExecuteSound;
-		}
-		this.m_IsCut = (this.GetName().EndsWith("_cut") || this.GetName().EndsWith("_cut_Fallen"));
+		this.m_ColliderInternal = new CachedComponent<Collider>?(new CachedComponent<Collider>(base.gameObject));
+		this.m_IsCut = (this.GetName().EndsWith("_cut", StringComparison.Ordinal) || this.GetName().EndsWith("_cut_Fallen", StringComparison.Ordinal));
 		this.m_DefaultLayer = base.gameObject.layer;
 		this.m_InventoryLayer = LayerMask.NameToLayer("3DInventory");
 		this.m_OutlineLayer = LayerMask.NameToLayer("Outline");
 		Trigger.s_AllTriggers.Add(this);
+	}
+
+	protected override void Start()
+	{
+		base.Start();
+		this.m_Initialized = true;
 	}
 
 	protected override void OnEnable()
@@ -40,17 +71,42 @@ public class Trigger : CJObject
 		return this.m_GUID;
 	}
 
+	public void SetOwner(ITriggerOwner owner)
+	{
+		this.m_Owner = owner;
+	}
+
 	public virtual void OnExecute(TriggerAction.TYPE action)
 	{
+		if (this.m_RequiredItems.Count > 0 && this.m_DestroyRequiredItemsOnExecute)
+		{
+			foreach (ItemID item_id in this.m_RequiredItems)
+			{
+				Item item = InventoryBackpack.Get().FindItem(item_id);
+				if (item)
+				{
+					if (item.m_InventorySlot && item.m_InventorySlot.m_Items.Count > 0)
+					{
+						UnityEngine.Object.Destroy(item.m_InventorySlot.m_Items[0].gameObject);
+					}
+					else
+					{
+						UnityEngine.Object.Destroy(item.gameObject);
+					}
+				}
+			}
+		}
 		if (!this.m_WasTriggered)
 		{
 			this.m_WasTriggered = true;
 			this.m_FirstTriggerTime = MainLevel.Instance.m_TODSky.Cycle.GameTime;
 		}
-		if (this.m_ExecuteAudioSource)
+		if (this.m_Owner != null)
 		{
-			this.m_ExecuteAudioSource.Play();
+			this.m_Owner.OnExecute(this, action);
+			return;
 		}
+		this.TryPlayExecuteSound();
 	}
 
 	protected override void OnDestroy()
@@ -67,8 +123,28 @@ public class Trigger : CJObject
 		}
 	}
 
+	public void TryPlayExecuteSound()
+	{
+		if (this.m_ExecuteSound != null)
+		{
+			if (this.m_ExecuteAudioSource == null)
+			{
+				this.m_ExecuteAudioSource = base.gameObject.AddComponent<AudioSource>();
+				this.m_ExecuteAudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Player);
+				this.m_ExecuteAudioSource.playOnAwake = false;
+				this.m_ExecuteAudioSource.clip = this.m_ExecuteSound;
+			}
+			this.m_ExecuteAudioSource.Play();
+		}
+	}
+
 	public virtual void GetActions(List<TriggerAction.TYPE> actions)
 	{
+		if (this.m_Owner != null)
+		{
+			this.m_Owner.GetActions(this, actions);
+			return;
+		}
 		if (HeavyObjectController.Get().IsActive())
 		{
 			return;
@@ -85,6 +161,14 @@ public class Trigger : CJObject
 
 	public virtual string GetIconName()
 	{
+		if (this.m_Owner != null)
+		{
+			return this.m_Owner.GetIconName(this);
+		}
+		if (this.m_DefaultIconName.Length > 0)
+		{
+			return this.m_DefaultIconName;
+		}
 		return string.Empty;
 	}
 
@@ -103,9 +187,26 @@ public class Trigger : CJObject
 		return false;
 	}
 
+	public virtual bool IsFreeHandsLadder()
+	{
+		return false;
+	}
+
 	public virtual bool CanTrigger()
 	{
-		return (!this.m_OneTime) ? (true && !this.m_HallucinationDisappearing) : (!this.m_WasTriggered);
+		if (this.m_CantTriggerDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
+		{
+			return false;
+		}
+		if (this.m_Owner != null)
+		{
+			return this.m_Owner.CanTrigger(this);
+		}
+		if (!this.m_OneTime)
+		{
+			return !this.m_HallucinationDisappearing;
+		}
+		return !this.m_WasTriggered;
 	}
 
 	public virtual bool CheckRange()
@@ -135,17 +236,26 @@ public class Trigger : CJObject
 
 	public virtual bool CanExecuteActions()
 	{
-		if (Inventory3DManager.Get().gameObject.activeSelf)
+		if (this.m_CantExecuteActionsDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
 		{
-			return true;
+			return false;
 		}
-		float magnitude = (Player.Get().transform.position - this.m_Collider.ClosestPointOnBounds(Player.Get().transform.position)).magnitude;
-		return magnitude < Mathf.Max(this.m_TriggerUseRange, Player.Get().GetParams().GetTriggerUseRange());
+		if (this.m_RequiredItems.Count > 0 && (this.m_RequiredBoolValue == string.Empty || !ScenarioManager.Get().IsBoolVariableTrue(this.m_RequiredBoolValue)))
+		{
+			foreach (ItemID id in this.m_RequiredItems)
+			{
+				if (!Player.Get().HaveItem(id))
+				{
+					return false;
+				}
+			}
+		}
+		return Inventory3DManager.Get().gameObject.activeSelf || (Player.Get().transform.position - this.m_Collider.ClosestPointOnBounds(Player.Get().transform.position)).magnitude < Mathf.Max(this.m_TriggerUseRange, Player.Get().GetParams().GetTriggerUseRange());
 	}
 
 	public virtual Vector3 GetIconPos()
 	{
-		return ((!this.m_Collider || !this.m_Collider.enabled) ? ((!this.m_IsBeingDestroyed) ? base.gameObject.transform.position : Vector3.zero) : this.m_Collider.bounds.center) + Vector3.up * 0.15f;
+		return ((this.m_Collider && this.m_Collider.enabled) ? this.m_Collider.bounds.center : (this.m_IsBeingDestroyed ? Vector3.zero : base.gameObject.transform.position)) + Vector3.up * 0.15f;
 	}
 
 	public virtual Vector3 GetHudInfoDisplayOffset()
@@ -179,7 +289,7 @@ public class Trigger : CJObject
 
 	public virtual bool PlayGrabAnimOnExecute(TriggerAction.TYPE action)
 	{
-		return action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold || action == TriggerAction.TYPE.DrinkHold || action == TriggerAction.TYPE.PickUp;
+		return this.m_PlayGrabAnimOnExecute && (action == TriggerAction.TYPE.Take || action == TriggerAction.TYPE.TakeHold || action == TriggerAction.TYPE.TakeHoldLong || action == TriggerAction.TYPE.DrinkHold || action == TriggerAction.TYPE.PickUp);
 	}
 
 	public virtual bool IsAdditionalCollider(Collider coll)
@@ -190,10 +300,9 @@ public class Trigger : CJObject
 	protected override void Update()
 	{
 		base.Update();
-		this.UpdateLayer();
 	}
 
-	protected virtual void UpdateLayer()
+	public virtual void UpdateLayer()
 	{
 		if (this.m_ForcedLayer != 0)
 		{
@@ -214,7 +323,7 @@ public class Trigger : CJObject
 		}
 	}
 
-	public void SetLayer(Transform trans, int layer)
+	public virtual void SetLayer(Transform trans, int layer)
 	{
 		trans.gameObject.layer = layer;
 		for (int i = 0; i < trans.childCount; i++)
@@ -223,7 +332,7 @@ public class Trigger : CJObject
 		}
 	}
 
-	public void Save()
+	public virtual void Save()
 	{
 		if (this.m_GUID != string.Empty)
 		{
@@ -231,7 +340,7 @@ public class Trigger : CJObject
 		}
 	}
 
-	public void Load()
+	public virtual void Load()
 	{
 		if (this.m_GUID != string.Empty)
 		{
@@ -266,6 +375,35 @@ public class Trigger : CJObject
 		return false;
 	}
 
+	public override string GetTriggerInfoLocalized()
+	{
+		if (this.m_Owner != null)
+		{
+			return this.m_Owner.GetTriggerInfoLocalized(this);
+		}
+		return base.GetTriggerInfoLocalized();
+	}
+
+	public virtual bool IsFIrecamp()
+	{
+		return false;
+	}
+
+	public virtual bool IsCharcoalFurnace()
+	{
+		return false;
+	}
+
+	public virtual bool IsForge()
+	{
+		return false;
+	}
+
+	public virtual bool IsAcre()
+	{
+		return false;
+	}
+
 	public bool m_ShowInfoOnHUD;
 
 	public float m_TriggerUseRange;
@@ -278,21 +416,27 @@ public class Trigger : CJObject
 	[HideInInspector]
 	public float m_FirstTriggerTime;
 
+	[HideInInspector]
+	public bool m_Initialized;
+
 	public bool m_OneTime;
 
 	[HideInInspector]
 	public BoxCollider m_BoxCollider;
 
-	public Collider m_Collider;
+	private CachedComponent<Collider>? m_ColliderInternal;
 
 	public TriggerAction.TYPE m_DefaultAction = TriggerAction.TYPE.None;
 
+	public string m_DefaultIconName = string.Empty;
+
 	public static HashSet<Trigger> s_AllTriggers = new HashSet<Trigger>();
 
-	public static List<Trigger> s_ActiveTriggers = new List<Trigger>();
+	public static HashSet<Trigger> s_ActiveTriggers = new HashSet<Trigger>();
 
 	public AudioClip m_ExecuteSound;
 
+	[HideInInspector]
 	private AudioSource m_ExecuteAudioSource;
 
 	[HideInInspector]
@@ -306,8 +450,7 @@ public class Trigger : CJObject
 	[HideInInspector]
 	public int m_DefaultLayer;
 
-	[HideInInspector]
-	public int m_ForcedLayer;
+	private int m_ForcedLayerProp;
 
 	public bool m_CanBeOutlined;
 
@@ -320,4 +463,24 @@ public class Trigger : CJObject
 
 	[HideInInspector]
 	public float m_FallenObjectCreationTime;
+
+	public bool m_PlayGrabAnimOnExecute = true;
+
+	private ITriggerOwner m_Owner;
+
+	public float m_TriggerMaxDot = -1f;
+
+	public List<ItemID> m_RequiredItems = new List<ItemID>();
+
+	public string m_RequiredBoolValue = string.Empty;
+
+	public bool m_DestroyRequiredItemsOnExecute;
+
+	public bool m_SetWasTriggeredWhenLookAt;
+
+	public bool m_HideHUD;
+
+	public bool m_CantTriggerDuringDialog;
+
+	public bool m_CantExecuteActionsDuringDialog;
 }

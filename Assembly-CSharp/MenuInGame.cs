@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Enums;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,35 +9,29 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 	protected override void Awake()
 	{
 		base.Awake();
-		this.m_ResumeText = this.m_ResumeButton.GetComponentInChildren<Text>();
-		this.m_ResumeText.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Resume");
-		this.m_LoadText = this.m_LoadButton.GetComponentInChildren<Text>();
-		this.m_LoadText.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Load");
-		this.m_OptionsText = this.m_OptionsButton.GetComponentInChildren<Text>();
-		this.m_OptionsText.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Options");
-		this.m_QuitText = this.m_QuitButton.GetComponentInChildren<Text>();
-		this.m_QuitText.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Quit");
-		this.m_SkipTutorialText = this.m_SkipTutorialButton.GetComponentInChildren<Text>();
-		this.m_SkipTutorialText.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_SkipTutorial");
-		MainMenuScreen.s_ButtonsAlpha = this.m_ResumeButton.GetComponentInChildren<Text>().color.a;
-		MainMenuScreen.s_InactiveButtonsAlpha = MainMenuScreen.s_ButtonsAlpha * 0.5f;
-		this.m_ButtonsYDiff = ((RectTransform)this.m_LoadButton.transform).anchoredPosition.y - ((RectTransform)this.m_ResumeButton.transform).anchoredPosition.y;
-	}
-
-	protected override void Start()
-	{
-		base.Start();
-		if (this.m_MenuName)
-		{
-			this.m_MenuName.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Name");
-		}
+		this.AddMenuButton(this.m_ResumeButton, "MenuInGame_Resume");
+		this.AddMenuButton(this.m_LoadButton, "MenuInGame_Load");
+		this.AddMenuButton(this.m_OptionsButton, "MenuInGame_Options");
+		this.AddMenuButton(this.m_QuitButton, "MenuInGame_Quit");
+		this.AddMenuButton(this.m_SkipTutorialButton, "MenuInGame_SkipTutorial");
+		this.AddMenuButton(this.m_OnlineButton, "MenuInGame_Online");
+		MenuScreen.s_ButtonsAlpha = this.m_ResumeButton.GetComponentInChildren<Button>().colors.normalColor.a;
+		MenuScreen.s_ButtonsHighlightedAlpha = this.m_ResumeButton.GetComponentInChildren<Button>().colors.highlightedColor.a;
+		MenuScreen.s_InactiveButtonsAlpha = MenuScreen.s_ButtonsAlpha * 0.5f;
 	}
 
 	protected override void Update()
 	{
 		base.Update();
-		this.UpdateButtons();
-		this.UpdateInputs();
+		this.UpdatePauseText();
+	}
+
+	protected void Start()
+	{
+		if (this.m_MenuName)
+		{
+			this.m_MenuName.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Name", true);
+		}
 	}
 
 	public void OnConstruction()
@@ -51,7 +46,7 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 
 	public void OnLoad()
 	{
-		this.m_MenuInGameManager.ShowScreen(typeof(MenuLoad));
+		this.m_MenuInGameManager.ShowScreen(typeof(LoadGameMenu));
 	}
 
 	public void OnObjectives()
@@ -72,13 +67,18 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 	public void OnSkipTutorial()
 	{
 		this.m_CurrentQuestion = MenuInGame.Question.SkipTutorial;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuInGame_SkipTutorial"), GreenHellGame.Instance.GetLocalization().Get("MenuInGame_SkipTutorial_Question"), false);
+		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuInGame_SkipTutorial", true), GreenHellGame.Instance.GetLocalization().Get("MenuInGame_SkipTutorial_Question", true), false);
 	}
 
 	public void OnQuitGame()
 	{
 		this.m_CurrentQuestion = MenuInGame.Question.Quit;
-		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Quit"), GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Quit_Question"), false);
+		GreenHellGame.GetYesNoDialog().Show(this, DialogWindowType.YesNo, GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Quit", true), GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Quit_Question", true), false);
+	}
+
+	public void OnOnline()
+	{
+		this.m_MenuInGameManager.ShowScreen(typeof(MenuFindGame));
 	}
 
 	public void OnYesFromDialog()
@@ -86,8 +86,9 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 		if (this.m_CurrentQuestion == MenuInGame.Question.Quit)
 		{
 			this.QuitToMainMenu();
+			return;
 		}
-		else if (this.m_CurrentQuestion == MenuInGame.Question.SkipTutorial)
+		if (this.m_CurrentQuestion == MenuInGame.Question.SkipTutorial)
 		{
 			this.SkipTutorial();
 		}
@@ -101,6 +102,10 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 	{
 	}
 
+	public void OnCloseDialog()
+	{
+	}
+
 	private void SkipTutorial()
 	{
 		this.m_MenuInGameManager.HideMenu();
@@ -109,183 +114,95 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 
 	public void QuitToMainMenu()
 	{
+		Music.Get().StopAll();
+		MusicJingle.Get().StoppAll();
 		GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.Default, 0.5f);
 		this.m_MenuInGameManager.HideMenu();
 		LoadingScreen.Get().Show(LoadingScreenState.ReturnToMainMenu);
 		GreenHellGame.Instance.ReturnToMainMenu();
 	}
 
-	private void UpdateButtons()
-	{
-		if (GreenHellGame.GetYesNoDialog().isActiveAndEnabled)
-		{
-			return;
-		}
-		Color color = this.m_ResumeButton.GetComponentInChildren<Text>().color;
-		Color color2 = this.m_ResumeButton.GetComponentInChildren<Text>().color;
-		float s_ButtonsAlpha = MainMenuScreen.s_ButtonsAlpha;
-		float s_InactiveButtonsAlpha = MainMenuScreen.s_InactiveButtonsAlpha;
-		color.a = s_ButtonsAlpha;
-		color2.a = s_InactiveButtonsAlpha;
-		this.m_ResumeText.color = color;
-		this.m_OptionsText.color = ((!GreenHellGame.TWITCH_DEMO) ? color : color2);
-		this.m_QuitText.color = color;
-		this.m_LoadText.color = color;
-		this.m_SkipTutorialText.color = color;
-		Vector2 screenPoint = Input.mousePosition;
-		this.m_ActiveButton = null;
-		RectTransform component = this.m_ResumeButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-		{
-			this.m_ActiveButton = this.m_ResumeButton;
-		}
-		component = this.m_LoadButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-		{
-			this.m_ActiveButton = this.m_LoadButton;
-		}
-		if (!GreenHellGame.TWITCH_DEMO)
-		{
-			component = this.m_OptionsButton.GetComponent<RectTransform>();
-			if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-			{
-				this.m_ActiveButton = this.m_OptionsButton;
-			}
-		}
-		component = this.m_QuitButton.GetComponent<RectTransform>();
-		if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-		{
-			this.m_ActiveButton = this.m_QuitButton;
-		}
-		if (this.m_SkipTutorialButton.gameObject.activeSelf)
-		{
-			component = this.m_SkipTutorialButton.GetComponent<RectTransform>();
-			if (RectTransformUtility.RectangleContainsScreenPoint(component, screenPoint))
-			{
-				this.m_ActiveButton = this.m_SkipTutorialButton;
-			}
-		}
-		component = this.m_ResumeText.GetComponent<RectTransform>();
-		Vector3 localPosition = component.localPosition;
-		float num = (!(this.m_ActiveButton == this.m_ResumeButton)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX;
-		float num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
-		localPosition.x += num2;
-		component.localPosition = localPosition;
-		if (this.m_ActiveButton == this.m_ResumeButton)
-		{
-			color = this.m_ResumeText.color;
-			color.a = 1f;
-			this.m_ResumeText.color = color;
-		}
-		component = this.m_LoadText.GetComponent<RectTransform>();
-		localPosition = component.localPosition;
-		num = ((!(this.m_ActiveButton == this.m_LoadButton)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX);
-		num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
-		localPosition.x += num2;
-		component.localPosition = localPosition;
-		if (this.m_ActiveButton == this.m_LoadButton)
-		{
-			color = this.m_LoadText.color;
-			color.a = 1f;
-			this.m_LoadText.color = color;
-		}
-		component = this.m_OptionsText.GetComponent<RectTransform>();
-		localPosition = component.localPosition;
-		num = ((!(this.m_ActiveButton == this.m_OptionsButton)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX);
-		num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
-		localPosition.x += num2;
-		component.localPosition = localPosition;
-		if (this.m_ActiveButton == this.m_OptionsButton)
-		{
-			color = this.m_OptionsText.color;
-			color.a = 1f;
-			this.m_OptionsText.color = color;
-		}
-		component = this.m_QuitText.GetComponent<RectTransform>();
-		localPosition = component.localPosition;
-		num = ((!(this.m_ActiveButton == this.m_QuitButton)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX);
-		num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
-		localPosition.x += num2;
-		component.localPosition = localPosition;
-		if (this.m_ActiveButton == this.m_QuitButton)
-		{
-			color = this.m_QuitText.color;
-			color.a = 1f;
-			this.m_QuitText.color = color;
-		}
-		if (this.m_SkipTutorialButton.gameObject.activeSelf)
-		{
-			component = this.m_SkipTutorialText.GetComponent<RectTransform>();
-			localPosition = component.localPosition;
-			num = ((!(this.m_ActiveButton == this.m_SkipTutorialButton)) ? this.m_ButtonTextStartX : this.m_SelectedButtonX);
-			num2 = Mathf.Ceil(num - localPosition.x) * Time.unscaledDeltaTime * 10f;
-			localPosition.x += num2;
-			component.localPosition = localPosition;
-			if (this.m_ActiveButton == this.m_SkipTutorialButton)
-			{
-				color = this.m_SkipTutorialText.color;
-				color.a = 1f;
-				this.m_SkipTutorialText.color = color;
-			}
-		}
-		CursorManager.Get().SetCursor((!(this.m_ActiveButton != null)) ? CursorManager.TYPE.Normal : CursorManager.TYPE.MouseOver);
-	}
-
-	private void UpdateInputs()
-	{
-		if (GreenHellGame.GetYesNoDialog().isActiveAndEnabled)
-		{
-			return;
-		}
-		if (Input.GetMouseButton(0) && this.m_ActiveButton != null)
-		{
-			this.OnButtonPressed(this.m_ActiveButton);
-		}
-	}
-
-	private void OnButtonPressed(Button button)
-	{
-		if (button == this.m_ResumeButton)
-		{
-			this.OnResume();
-		}
-		else if (button == this.m_QuitButton)
-		{
-			this.OnQuitGame();
-		}
-		else if (button == this.m_OptionsButton)
-		{
-			this.OnOptions();
-		}
-		else if (button == this.m_SkipTutorialButton)
-		{
-			this.OnSkipTutorial();
-		}
-		else if (button == this.m_LoadButton)
-		{
-			this.OnLoad();
-		}
-	}
-
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
+		if (this.m_ControlsImage)
+		{
+			this.m_ControlsImage.SetActive(GreenHellGame.GAMESCOM_DEMO);
+		}
+		Button onlineButton = this.m_OnlineButton;
+		if (onlineButton != null)
+		{
+			onlineButton.gameObject.SetActive(false);
+		}
+		GameObject lobbyInfo = this.m_LobbyInfo;
+		if (lobbyInfo != null)
+		{
+			lobbyInfo.gameObject.SetActive(false);
+		}
 		this.m_SkipTutorialButton.gameObject.SetActive(MainLevel.Instance.m_Tutorial);
-		Vector2 vector = ((RectTransform)this.m_SkipTutorialButton.transform).anchoredPosition + ((!MainLevel.Instance.m_Tutorial) ? Vector2.zero : (Vector2.up * this.m_ButtonsYDiff));
-		((RectTransform)this.m_ResumeButton.transform).anchoredPosition = vector;
-		((RectTransform)this.m_LoadButton.transform).anchoredPosition = vector + Vector2.up * this.m_ButtonsYDiff;
-		((RectTransform)this.m_OptionsButton.transform).anchoredPosition = vector + Vector2.up * this.m_ButtonsYDiff * 2f;
-		((RectTransform)this.m_QuitButton.transform).anchoredPosition = vector + Vector2.up * this.m_ButtonsYDiff * 3f;
 		this.SetupStatistics();
+		this.UpdatePauseText();
 	}
 
 	private void SetupStatistics()
 	{
+		Localization localization = GreenHellGame.Instance.GetLocalization();
 		int ivalue = StatsManager.Get().GetStatistic(Enums.Event.DaysSurvived).IValue;
-		this.m_DaysVal.text = ivalue.ToString() + ((ivalue != 1) ? " days" : " day");
-		this.m_DistVal.text = StatsManager.Get().GetStatistic(Enums.Event.TraveledDist).FValue.ToString("F1") + " km";
+		this.m_DaysVal.text = localization.GetMixed((ivalue == 1) ? "Statistic_DaysSurvivedOne" : "Statistic_DaysSurvived", new string[]
+		{
+			ivalue.ToString()
+		});
+		this.m_DistVal.text = localization.GetMixed("Statistic_TravelledDist", new string[]
+		{
+			StatsManager.Get().GetStatistic(Enums.Event.TraveledDist).FValue.ToString("F1")
+		});
 		int ivalue2 = StatsManager.Get().GetStatistic(Enums.Event.Vomit).IValue;
-		this.m_VomitVal.text = ivalue2.ToString() + ((ivalue2 != 1) ? " times" : " time");
+		this.m_VomitVal.text = localization.GetMixed((ivalue2 == 1) ? "Statistic_VomitedTimesOnce" : "Statistic_VomitedTimes", new string[]
+		{
+			ivalue2.ToString()
+		});
+	}
+
+	public override bool IsMenuButtonEnabled(Button b)
+	{
+		return (!(b == this.m_LoadButton) || !ChallengesManager.Get() || !ChallengesManager.Get().m_ChallengeMode) && (!(b == this.m_LoadButton) || !GreenHellGame.Instance.IsGamescom()) && (!(b == this.m_OptionsButton) || !GreenHellGame.TWITCH_DEMO) && !GreenHellGame.GetYesNoDialog().isActiveAndEnabled && (!(b == this.m_SkipTutorialButton) || (MainLevel.Instance.m_Tutorial && !GreenHellGame.Instance.IsGamescom())) && (!(b == this.m_LoadButton) || ReplTools.IsPlayingAlone()) && !(b == this.m_OnlineButton) && !(b.GetComponent<LobbyMemberListElement>() != null) && base.IsMenuButtonEnabled(b);
+	}
+
+	private void UpdatePauseText()
+	{
+		if (Time.timeScale == 0f)
+		{
+			this.m_PauseText.gameObject.SetActive(true);
+			if (this.m_LastPausedCount != -1)
+			{
+				this.m_PauseText.text = GreenHellGame.Instance.GetLocalization().Get("MenuInGame_Paused", true);
+				this.m_LastPausedCount = -1;
+				return;
+			}
+		}
+		else
+		{
+			int num = 0;
+			using (List<ReplicatedLogicalPlayer>.Enumerator enumerator = ReplicatedLogicalPlayer.s_AllLogicalPlayers.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					if (enumerator.Current.m_PauseGame)
+					{
+						num++;
+					}
+				}
+			}
+			this.m_PauseText.gameObject.SetActive(num > 0);
+			if (num > 0 && this.m_LastPausedCount != num)
+			{
+				this.m_LastPausedCount = num;
+				this.m_PauseText.text = GreenHellGame.Instance.GetLocalization().GetMixed("MenuInGame_PauseRequested", new string[]
+				{
+					string.Format("{0}/{1}", num, ReplicatedLogicalPlayer.s_AllLogicalPlayers.Count)
+				});
+			}
+		}
 	}
 
 	public Button m_ResumeButton;
@@ -298,15 +215,7 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 
 	public Button m_SkipTutorialButton;
 
-	private Text m_ResumeText;
-
-	private Text m_OptionsText;
-
-	private Text m_QuitText;
-
-	private Text m_LoadText;
-
-	private Text m_SkipTutorialText;
+	public Button m_OnlineButton;
 
 	public Text m_DaysVal;
 
@@ -316,13 +225,15 @@ public class MenuInGame : MenuScreen, IYesNoDialogOwner
 
 	private float m_ButtonsYDiff;
 
-	private Button m_ActiveButton;
-
 	public Text m_MenuName;
 
-	private float m_ButtonTextStartX;
+	public GameObject m_ControlsImage;
 
-	private float m_SelectedButtonX = 10f;
+	public Text m_PauseText;
+
+	public GameObject m_LobbyInfo;
+
+	private int m_LastPausedCount;
 
 	private MenuInGame.Question m_CurrentQuestion;
 

@@ -18,8 +18,18 @@ namespace AIs
 
 		public bool IsProperPosToBowAttack()
 		{
-			float num = base.transform.position.Distance(Player.Get().transform.position);
-			return num >= this.m_MinBowDistance && num <= this.m_MaxBowDistance;
+			if (this.m_CheckDistanceToTarget)
+			{
+				float num = base.transform.position.Distance(Player.Get().transform.position);
+				if (num < this.m_MinBowDistance || num > this.m_MaxBowDistance)
+				{
+					return false;
+				}
+			}
+			Vector3 normalized = (Player.Get().GetHeadTransform().position - this.GetHeadTransform().position).normalized;
+			Debug.DrawLine(this.GetHeadTransform().position + normalized, Player.Get().GetHeadTransform().position - normalized, Color.blue);
+			RaycastHit raycastHit;
+			return Physics.Raycast(this.GetHeadTransform().position + normalized, normalized, out raycastHit) && (raycastHit.collider.gameObject.IsPlayer() || raycastHit.collider.gameObject == Camera.main.gameObject);
 		}
 
 		public void OnBowShot()
@@ -34,8 +44,7 @@ namespace AIs
 
 		public void OnHitPlayerByArrow()
 		{
-			float num = UnityEngine.Random.Range(0f, 1f);
-			if (num < this.m_HitArrowTauntProbability)
+			if (UnityEngine.Random.Range(0f, 1f) < this.m_HitArrowTauntProbability)
 			{
 				this.m_GoalsModule.ActivateGoal(AIGoalType.HumanTaunt);
 			}
@@ -58,5 +67,8 @@ namespace AIs
 		private float m_MaxBowAttackInterval = 3f;
 
 		private float m_HitArrowTauntProbability = 0.2f;
+
+		[HideInInspector]
+		public bool m_CheckDistanceToTarget = true;
 	}
 }

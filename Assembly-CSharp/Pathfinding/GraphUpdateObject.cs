@@ -7,15 +7,6 @@ namespace Pathfinding
 {
 	public class GraphUpdateObject
 	{
-		public GraphUpdateObject()
-		{
-		}
-
-		public GraphUpdateObject(Bounds b)
-		{
-			this.bounds = b;
-		}
-
 		public virtual void WillUpdateNode(GraphNode node)
 		{
 			if (this.trackChangedNodes && node != null)
@@ -82,6 +73,15 @@ namespace Pathfinding
 					node.Tag = (uint)this.setTag;
 				}
 			}
+		}
+
+		public GraphUpdateObject()
+		{
+		}
+
+		public GraphUpdateObject(Bounds b)
+		{
+			this.bounds = b;
 		}
 
 		public Bounds bounds;

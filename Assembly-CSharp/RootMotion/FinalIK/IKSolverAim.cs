@@ -109,18 +109,16 @@ namespace RootMotion.FinalIK
 			Vector3 b = this.clampedIKPosition - this.transform.position;
 			b = Vector3.Slerp(this.transformAxis * b.magnitude, b, this.IKPositionWeight);
 			this.clampedIKPosition = this.transform.position + b;
-			for (int i = 0; i < this.maxIterations; i++)
+			int num = 0;
+			while (num < this.maxIterations && (num < 1 || this.tolerance <= 0f || this.GetAngle() >= this.tolerance))
 			{
-				if (i >= 1 && this.tolerance > 0f && this.GetAngle() < this.tolerance)
-				{
-					break;
-				}
 				this.lastLocalDirection = this.localDirection;
 				if (this.OnPreIteration != null)
 				{
-					this.OnPreIteration(i);
+					this.OnPreIteration(num);
 				}
 				this.Solve();
+				num++;
 			}
 			this.lastLocalDirection = this.localDirection;
 		}
@@ -154,12 +152,11 @@ namespace RootMotion.FinalIK
 			}
 			float num = Vector3.Angle(this.transformAxis, this.IKPosition - this.transform.position);
 			float num2 = 1f - num / 180f;
-			float num3 = (this.clampWeight <= 0f) ? 1f : Mathf.Clamp(1f - (this.clampWeight - num2) / (1f - num2), 0f, 1f);
-			float num4 = (this.clampWeight <= 0f) ? 1f : Mathf.Clamp(num2 / this.clampWeight, 0f, 1f);
+			float num3 = (this.clampWeight > 0f) ? Mathf.Clamp(1f - (this.clampWeight - num2) / (1f - num2), 0f, 1f) : 1f;
+			float num4 = (this.clampWeight > 0f) ? Mathf.Clamp(num2 / this.clampWeight, 0f, 1f) : 1f;
 			for (int i = 0; i < this.clampSmoothing; i++)
 			{
-				float f = num4 * 3.14159274f * 0.5f;
-				num4 = Mathf.Sin(f);
+				num4 = Mathf.Sin(num4 * 3.14159274f * 0.5f);
 			}
 			return this.transform.position + Vector3.Slerp(this.transformAxis * 10f, this.IKPosition - this.transform.position, num4 * num3);
 		}
@@ -193,8 +190,7 @@ namespace RootMotion.FinalIK
 				}
 				if (this.poleWeight > 0f)
 				{
-					Vector3 vector2 = this.polePosition - this.transform.position;
-					Vector3 toDirection = vector2;
+					Vector3 toDirection = this.polePosition - this.transform.position;
 					Vector3 transformAxis2 = this.transformAxis;
 					Vector3.OrthoNormalize(ref transformAxis2, ref toDirection);
 					Quaternion b = Quaternion.FromToRotation(this.transformPoleAxis, toDirection);

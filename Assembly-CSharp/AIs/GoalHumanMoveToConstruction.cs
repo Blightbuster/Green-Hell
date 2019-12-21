@@ -13,12 +13,7 @@ namespace AIs
 
 		public override bool ShouldPerform()
 		{
-			if (!this.m_HumanAI.m_SelectedConstruction)
-			{
-				return false;
-			}
-			float num = this.m_HumanAI.m_SelectedConstruction.transform.position.Distance(this.m_AI.transform.position);
-			return num > this.m_AI.m_Params.m_AttackRange && (this.m_Active || (this.m_HumanAI.m_SelectedConstruction != null && this.m_AI.m_PathModule.CalcPath(PathModule.PathType.MoveToConstruction)));
+			return this.m_HumanAI.m_SelectedConstruction && this.m_HumanAI.m_SelectedConstruction.transform.position.Distance(this.m_AI.transform.position) > this.m_AI.m_Params.m_AttackRange && (this.m_Active || (this.m_HumanAI.m_SelectedConstruction != null && this.m_AI.m_PathModule.CalcPath(PathModule.PathType.MoveToConstruction)));
 		}
 
 		protected override void Prepare()

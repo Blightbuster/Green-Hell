@@ -6,15 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class IKMappingBone : IKMapping
 	{
-		public IKMappingBone()
-		{
-		}
-
-		public IKMappingBone(Transform bone)
-		{
-			this.bone = bone;
-		}
-
 		public override bool IsValid(IKSolver solver, ref string message)
 		{
 			if (!base.IsValid(solver, ref message))
@@ -27,6 +18,15 @@ namespace RootMotion.FinalIK
 				return false;
 			}
 			return true;
+		}
+
+		public IKMappingBone()
+		{
+		}
+
+		public IKMappingBone(Transform bone)
+		{
+			this.bone = bone;
 		}
 
 		public void StoreDefaultLocalState()

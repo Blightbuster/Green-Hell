@@ -39,22 +39,22 @@ namespace CJTools
 		{
 			float d = 0f;
 			float num = 1f;
-			Vector3 a = e - s;
-			Vector3 vector = -this.half_sizes + this.start;
-			Vector3 vector2 = this.half_sizes + this.start;
-			if (!this.Line_AABB_1d(s.x, a.x, vector.x, vector2.x, ref d, ref num))
+			Vector3 vector = e - s;
+			Vector3 vector2 = -this.half_sizes + this.start;
+			Vector3 vector3 = this.half_sizes + this.start;
+			if (!this.Line_AABB_1d(s.x, vector.x, vector2.x, vector3.x, ref d, ref num))
 			{
 				return false;
 			}
-			if (!this.Line_AABB_1d(s.y, a.y, vector.y, vector2.y, ref d, ref num))
+			if (!this.Line_AABB_1d(s.y, vector.y, vector2.y, vector3.y, ref d, ref num))
 			{
 				return false;
 			}
-			if (!this.Line_AABB_1d(s.z, a.z, vector.z, vector2.z, ref d, ref num))
+			if (!this.Line_AABB_1d(s.z, vector.z, vector2.z, vector3.z, ref d, ref num))
 			{
 				return false;
 			}
-			hit_point = s + a * d;
+			hit_point = s + vector * d;
 			return true;
 		}
 

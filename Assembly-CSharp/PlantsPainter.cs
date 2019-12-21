@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[AddComponentMenu("Terrain/Plants on terrain placer")]
 [ExecuteInEditMode]
+[AddComponentMenu("Terrain/Plants on terrain placer")]
 public class PlantsPainter : MonoBehaviour
 {
 }

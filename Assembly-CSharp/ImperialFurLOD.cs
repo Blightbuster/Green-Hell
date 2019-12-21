@@ -21,8 +21,7 @@ public class ImperialFurLOD : MonoBehaviour
 
 	private void Update()
 	{
-		Vector3 lhs = base.transform.position - Camera.main.transform.position;
-		float num = Vector3.Dot(lhs, Camera.main.transform.forward);
+		float num = Vector3.Dot(base.transform.position - Camera.main.transform.position, Camera.main.transform.forward);
 		if (num > this.from2To1)
 		{
 			if (this.lodLevel != 5)
@@ -32,6 +31,7 @@ public class ImperialFurLOD : MonoBehaviour
 				if (this.physicsScript != null)
 				{
 					this.physicsScript.UpdatePhysics();
+					return;
 				}
 			}
 		}
@@ -44,6 +44,7 @@ public class ImperialFurLOD : MonoBehaviour
 				if (this.physicsScript != null)
 				{
 					this.physicsScript.UpdatePhysics();
+					return;
 				}
 			}
 		}
@@ -56,6 +57,7 @@ public class ImperialFurLOD : MonoBehaviour
 				if (this.physicsScript != null)
 				{
 					this.physicsScript.UpdatePhysics();
+					return;
 				}
 			}
 		}
@@ -68,6 +70,7 @@ public class ImperialFurLOD : MonoBehaviour
 				if (this.physicsScript != null)
 				{
 					this.physicsScript.UpdatePhysics();
+					return;
 				}
 			}
 		}
@@ -80,6 +83,7 @@ public class ImperialFurLOD : MonoBehaviour
 				if (this.physicsScript != null)
 				{
 					this.physicsScript.UpdatePhysics();
+					return;
 				}
 			}
 		}

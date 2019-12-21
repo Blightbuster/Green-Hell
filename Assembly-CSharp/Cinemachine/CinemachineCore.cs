@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Cinemachine
@@ -59,15 +58,12 @@ namespace Cinemachine
 		internal void AddActiveCamera(ICinemachineCamera vcam)
 		{
 			this.RemoveActiveCamera(vcam);
-			int i;
-			for (i = 0; i < this.mActiveCameras.Count; i++)
+			int num = 0;
+			while (num < this.mActiveCameras.Count && vcam.Priority < this.mActiveCameras[num].Priority)
 			{
-				if (vcam.Priority >= this.mActiveCameras[i].Priority)
-				{
-					break;
-				}
+				num++;
 			}
-			this.mActiveCameras.Insert(i, vcam);
+			this.mActiveCameras.Insert(num, vcam);
 		}
 
 		internal void RemoveActiveCamera(ICinemachineCamera vcam)
@@ -145,16 +141,16 @@ namespace Cinemachine
 				}
 				return false;
 			}
-			CinemachineCore.UpdateStatus value;
-			if (!this.mUpdateStatus.TryGetValue(vcam, out value))
+			CinemachineCore.UpdateStatus updateStatus;
+			if (!this.mUpdateStatus.TryGetValue(vcam, out updateStatus))
 			{
-				value = new CinemachineCore.UpdateStatus(frameCount);
-				this.mUpdateStatus.Add(vcam, value);
+				updateStatus = new CinemachineCore.UpdateStatus(frameCount);
+				this.mUpdateStatus.Add(vcam, updateStatus);
 			}
-			int num = (!flag2) ? CinemachineBrain.GetSubframeCount() : 1;
-			if (value.lastUpdateFrame != frameCount)
+			int num = flag2 ? 1 : CinemachineBrain.GetSubframeCount();
+			if (updateStatus.lastUpdateFrame != frameCount)
 			{
-				value.lastUpdateSubframe = 0;
+				updateStatus.lastUpdateSubframe = 0;
 			}
 			bool flag3 = !flag;
 			if (flag)
@@ -166,20 +162,20 @@ namespace Cinemachine
 				}
 				else
 				{
-					flag3 = (value.ChoosePreferredUpdate(frameCount, pos, updateFilter) == updateFilter);
+					flag3 = (updateStatus.ChoosePreferredUpdate(frameCount, pos, updateFilter) == updateFilter);
 				}
 			}
 			if (flag3)
 			{
-				value.preferredUpdate = updateFilter;
-				while (value.lastUpdateSubframe < num)
+				updateStatus.preferredUpdate = updateFilter;
+				while (updateStatus.lastUpdateSubframe < num)
 				{
 					vcam.UpdateCameraState(worldUp, deltaTime);
-					value.lastUpdateSubframe++;
+					updateStatus.lastUpdateSubframe++;
 				}
-				value.lastUpdateFrame = frameCount;
+				updateStatus.lastUpdateFrame = frameCount;
 			}
-			this.mUpdateStatus[vcam] = value;
+			this.mUpdateStatus[vcam] = updateStatus;
 			return true;
 		}
 
@@ -289,16 +285,6 @@ namespace Cinemachine
 			return null;
 		}
 
-		static CinemachineCore()
-		{
-			// Note: this type is marked as 'beforefieldinit'.
-			if (CinemachineCore.<>f__mg$cache0 == null)
-			{
-				CinemachineCore.<>f__mg$cache0 = new CinemachineCore.AxisInputDelegate(Input.GetAxis);
-			}
-			CinemachineCore.GetInputAxis = CinemachineCore.<>f__mg$cache0;
-		}
-
 		public static readonly int kStreamingVersion = 20170927;
 
 		public static readonly string kVersionString = "2.1";
@@ -307,7 +293,7 @@ namespace Cinemachine
 
 		public static bool sShowHiddenObjects = false;
 
-		public static CinemachineCore.AxisInputDelegate GetInputAxis;
+		public static CinemachineCore.AxisInputDelegate GetInputAxis = new CinemachineCore.AxisInputDelegate(Input.GetAxis);
 
 		private List<CinemachineBrain> mActiveBrains = new List<CinemachineBrain>();
 
@@ -316,9 +302,6 @@ namespace Cinemachine
 		private List<List<ICinemachineCamera>> mChildCameras = new List<List<ICinemachineCamera>>();
 
 		private Dictionary<ICinemachineCamera, CinemachineCore.UpdateStatus> mUpdateStatus;
-
-		[CompilerGenerated]
-		private static CinemachineCore.AxisInputDelegate <>f__mg$cache0;
 
 		public enum Stage
 		{

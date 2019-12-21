@@ -5,34 +5,6 @@ namespace Pathfinding.Voxels
 {
 	public class VoxelArea
 	{
-		public VoxelArea(int width, int depth)
-		{
-			this.width = width;
-			this.depth = depth;
-			int num = width * depth;
-			this.compactCells = new CompactVoxelCell[num];
-			this.linkedSpans = new LinkedVoxelSpan[(int)((float)num * 8f) + 15 & -16];
-			this.ResetLinkedVoxelSpans();
-			int[] array = new int[4];
-			array[0] = -1;
-			array[2] = 1;
-			this.DirectionX = array;
-			this.DirectionZ = new int[]
-			{
-				0,
-				width,
-				0,
-				-width
-			};
-			this.VectorDirection = new Vector3[]
-			{
-				Vector3.left,
-				Vector3.forward,
-				Vector3.right,
-				Vector3.back
-			};
-		}
-
 		public void Reset()
 		{
 			this.ResetLinkedVoxelSpans();
@@ -83,6 +55,34 @@ namespace Pathfinding.Voxels
 				this.linkedSpans[i] = linkedVoxelSpan;
 			}
 			this.removedStackCount = 0;
+		}
+
+		public VoxelArea(int width, int depth)
+		{
+			this.width = width;
+			this.depth = depth;
+			int num = width * depth;
+			this.compactCells = new CompactVoxelCell[num];
+			this.linkedSpans = new LinkedVoxelSpan[(int)((float)num * 8f) + 15 & -16];
+			this.ResetLinkedVoxelSpans();
+			int[] array = new int[4];
+			array[0] = -1;
+			array[2] = 1;
+			this.DirectionX = array;
+			this.DirectionZ = new int[]
+			{
+				0,
+				width,
+				0,
+				-width
+			};
+			this.VectorDirection = new Vector3[]
+			{
+				Vector3.left,
+				Vector3.forward,
+				Vector3.right,
+				Vector3.back
+			};
 		}
 
 		public int GetSpanCountAll()
@@ -141,12 +141,8 @@ namespace Pathfinding.Voxels
 			}
 			int num = -1;
 			int num2 = index;
-			while (index != -1)
+			while (index != -1 && this.linkedSpans[index].bottom <= top)
 			{
-				if (this.linkedSpans[index].bottom > top)
-				{
-					break;
-				}
 				if (this.linkedSpans[index].top < bottom)
 				{
 					num = index;
@@ -209,12 +205,10 @@ namespace Pathfinding.Voxels
 			{
 				this.linkedSpans[num5] = new LinkedVoxelSpan(bottom, top, area, this.linkedSpans[num].next);
 				this.linkedSpans[num].next = num5;
+				return;
 			}
-			else
-			{
-				this.linkedSpans[num5] = this.linkedSpans[num2];
-				this.linkedSpans[num2] = new LinkedVoxelSpan(bottom, top, area, num5);
-			}
+			this.linkedSpans[num5] = this.linkedSpans[num2];
+			this.linkedSpans[num2] = new LinkedVoxelSpan(bottom, top, area, num5);
 		}
 
 		public const uint MaxHeight = 65536u;

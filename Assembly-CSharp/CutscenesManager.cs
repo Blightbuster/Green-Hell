@@ -18,7 +18,11 @@ public class CutscenesManager : MonoBehaviour
 		{
 			this.m_Cutscenes.Add(componentsInChildren[i].gameObject.name.ToLower(), componentsInChildren[i]);
 		}
-		this.m_CharacterController = Player.Get().GetComponent<CharacterController>();
+	}
+
+	private void Start()
+	{
+		this.m_CharacterController = Player.Get().GetComponent<CharacterControllerProxy>();
 	}
 
 	public PlayableDirector GetCutscene(string name)
@@ -60,6 +64,7 @@ public class CutscenesManager : MonoBehaviour
 			if (component.m_FollowOffsetHelper)
 			{
 				this.m_StoreStartPosition = true;
+				return;
 			}
 		}
 		else
@@ -97,8 +102,7 @@ public class CutscenesManager : MonoBehaviour
 				num *= -1f;
 			}
 			zero.x = num;
-			FPPController fppcontroller = Player.Get().m_FPPController;
-			fppcontroller.SetLookDev(zero);
+			Player.Get().m_FPPController.SetLookDev(zero);
 		}
 		if (this.m_PlayableDirectorEx && !this.m_PlayableDirectorEx.m_Looped && this.m_CurrentCutscene && (this.m_CurrentCutscene.time >= this.m_CurrentCutscene.duration || this.m_CurrentCutscene.time < (double)this.m_PlayTime))
 		{
@@ -165,5 +169,5 @@ public class CutscenesManager : MonoBehaviour
 
 	private Quaternion m_LastRot = Quaternion.identity;
 
-	private CharacterController m_CharacterController;
+	private CharacterControllerProxy m_CharacterController;
 }

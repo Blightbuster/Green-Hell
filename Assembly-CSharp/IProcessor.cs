@@ -2,5 +2,5 @@
 
 public interface IProcessor
 {
-	float GetProcessProgress(Item item);
+	float GetProcessProgress(Trigger trigger);
 }

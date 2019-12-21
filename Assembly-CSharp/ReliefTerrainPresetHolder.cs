@@ -6,7 +6,7 @@ public class ReliefTerrainPresetHolder : ScriptableObject
 {
 	public void Init(string name)
 	{
-		this.PresetID = string.Empty + UnityEngine.Random.value + Time.realtimeSinceStartup;
+		this.PresetID = UnityEngine.Random.value + Time.realtimeSinceStartup;
 		this.PresetName = name;
 	}
 
@@ -17,6 +17,8 @@ public class ReliefTerrainPresetHolder : ScriptableObject
 	public string type;
 
 	public int numLayers;
+
+	public TerrainLayer[] terrainLayers;
 
 	public Texture2D[] splats;
 
@@ -359,8 +361,6 @@ public class ReliefTerrainPresetHolder : ScriptableObject
 	public Texture2D[] Heights;
 
 	public float[] _snow_strength_per_layer;
-
-	public ProceduralMaterial[] Substances;
 
 	public float[] TERRAIN_LayerWetStrength;
 

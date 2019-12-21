@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Pathfinding
 {
-	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_raycast_modifier.php")]
-	[RequireComponent(typeof(Seeker))]
 	[AddComponentMenu("Pathfinding/Modifiers/Raycast Simplifier")]
+	[RequireComponent(typeof(Seeker))]
+	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_raycast_modifier.php")]
 	[Serializable]
 	public class RaycastModifier : MonoModifier
 	{

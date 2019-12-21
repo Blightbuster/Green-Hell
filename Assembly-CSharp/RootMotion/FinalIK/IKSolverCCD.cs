@@ -44,19 +44,17 @@ namespace RootMotion.FinalIK
 			{
 				this.IKPosition.z = this.bones[0].transform.position.z;
 			}
-			Vector3 vector = (this.maxIterations <= 1) ? Vector3.zero : base.GetSingularityOffset();
-			for (int i = 0; i < this.maxIterations; i++)
+			Vector3 vector = (this.maxIterations > 1) ? base.GetSingularityOffset() : Vector3.zero;
+			int num = 0;
+			while (num < this.maxIterations && (!(vector == Vector3.zero) || num < 1 || this.tolerance <= 0f || base.positionOffset >= this.tolerance * this.tolerance))
 			{
-				if (vector == Vector3.zero && i >= 1 && this.tolerance > 0f && base.positionOffset < this.tolerance * this.tolerance)
-				{
-					break;
-				}
 				this.lastLocalDirection = this.localDirection;
 				if (this.OnPreIteration != null)
 				{
-					this.OnPreIteration(i);
+					this.OnPreIteration(num);
 				}
-				this.Solve(this.IKPosition + ((i != 0) ? Vector3.zero : vector));
+				this.Solve(this.IKPosition + ((num == 0) ? vector : Vector3.zero));
+				num++;
 			}
 			this.lastLocalDirection = this.localDirection;
 		}
@@ -81,30 +79,28 @@ namespace RootMotion.FinalIK
 						this.bones[i].rotationLimit.Apply();
 					}
 				}
+				return;
 			}
-			else
+			for (int j = this.bones.Length - 2; j > -1; j--)
 			{
-				for (int j = this.bones.Length - 2; j > -1; j--)
+				float num2 = this.bones[j].weight * this.IKPositionWeight;
+				if (num2 > 0f)
 				{
-					float num2 = this.bones[j].weight * this.IKPositionWeight;
-					if (num2 > 0f)
+					Vector3 fromDirection = this.bones[this.bones.Length - 1].transform.position - this.bones[j].transform.position;
+					Vector3 toDirection = targetPosition - this.bones[j].transform.position;
+					Quaternion quaternion = Quaternion.FromToRotation(fromDirection, toDirection) * this.bones[j].transform.rotation;
+					if (num2 >= 1f)
 					{
-						Vector3 fromDirection = this.bones[this.bones.Length - 1].transform.position - this.bones[j].transform.position;
-						Vector3 toDirection = targetPosition - this.bones[j].transform.position;
-						Quaternion quaternion = Quaternion.FromToRotation(fromDirection, toDirection) * this.bones[j].transform.rotation;
-						if (num2 >= 1f)
-						{
-							this.bones[j].transform.rotation = quaternion;
-						}
-						else
-						{
-							this.bones[j].transform.rotation = Quaternion.Lerp(this.bones[j].transform.rotation, quaternion, num2);
-						}
+						this.bones[j].transform.rotation = quaternion;
 					}
-					if (this.useRotationLimits && this.bones[j].rotationLimit != null)
+					else
 					{
-						this.bones[j].rotationLimit.Apply();
+						this.bones[j].transform.rotation = Quaternion.Lerp(this.bones[j].transform.rotation, quaternion, num2);
 					}
+				}
+				if (this.useRotationLimits && this.bones[j].rotationLimit != null)
+				{
+					this.bones[j].rotationLimit.Apply();
 				}
 			}
 		}

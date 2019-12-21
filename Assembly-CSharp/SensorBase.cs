@@ -31,7 +31,7 @@ public class SensorBase : MonoBehaviour, ITriggerThrough
 
 	private void OnTriggerEnter(Collider other)
 	{
-		if (other.gameObject == Player.Get().gameObject)
+		if ((this.m_Activator != null) ? (other.gameObject == this.m_Activator) : other.gameObject.IsPlayer())
 		{
 			this.OnEnter();
 			this.m_WasInside = true;
@@ -40,7 +40,7 @@ public class SensorBase : MonoBehaviour, ITriggerThrough
 
 	private void OnTriggerExit(Collider other)
 	{
-		if (other.gameObject == Player.Get().gameObject)
+		if ((this.m_Activator != null) ? (other.gameObject == this.m_Activator) : other.gameObject.IsPlayer())
 		{
 			this.OnExit();
 		}
@@ -81,7 +81,16 @@ public class SensorBase : MonoBehaviour, ITriggerThrough
 			bool wasInside = this.m_WasInside;
 			this.m_WasInside = SaveGame.LoadBVal(base.transform.position.sqrMagnitude.ToString("F10") + base.name);
 			base.gameObject.SetActive(SaveGame.LoadBVal(base.transform.position.sqrMagnitude.ToString("F10") + base.name + "act"));
+			if (!base.gameObject.activeSelf && !this.m_WasInside)
+			{
+				base.gameObject.SetActive(true);
+			}
 		}
+	}
+
+	public void SetWasInside(bool inside)
+	{
+		this.m_WasInside = inside;
 	}
 
 	protected MeshRenderer m_MeshRenderer;
@@ -90,6 +99,8 @@ public class SensorBase : MonoBehaviour, ITriggerThrough
 	public bool m_IsInside;
 
 	private bool m_WasInside;
+
+	public GameObject m_Activator;
 
 	public bool m_OneTimeUse = true;
 }

@@ -22,15 +22,12 @@ namespace AIs
 		{
 			base.Prepare();
 			this.m_AI.m_MoveStyle = AIMoveStyle.Walk;
-			float num = this.m_AI.transform.position.Distance(this.m_HumanAI.m_StartPosition);
-			if (num <= this.m_Range)
+			if (this.m_AI.transform.position.Distance(this.m_HumanAI.m_StartPosition) <= this.m_Range)
 			{
 				base.StartAction(this.m_StartCrouch);
+				return;
 			}
-			else
-			{
-				this.UpdateAction();
-			}
+			this.UpdateAction();
 		}
 
 		public override void OnUpdate()
@@ -41,23 +38,21 @@ namespace AIs
 
 		private void UpdateAction()
 		{
-			float num = this.m_AI.transform.position.Distance(this.m_HumanAI.m_StartPosition);
-			if (num > this.m_Range)
+			if (this.m_AI.transform.position.Distance(this.m_HumanAI.m_StartPosition) > this.m_Range)
 			{
 				if (this.IsAction(typeof(CrouchIdle)))
 				{
 					base.StartAction(this.m_StopCrouch);
+					return;
 				}
-				else if (!this.IsAction(typeof(HumanMoveTo)))
+				if (!this.IsAction(typeof(HumanMoveTo)) && !this.IsAction(typeof(HumanRotateTo)) && !this.IsAction(typeof(Idle)))
 				{
 					if (!this.m_AI.m_PathModule.CalcPath(PathModule.PathType.MoveTo, this.m_HumanAI.m_StartPosition, this.m_Range))
 					{
 						base.StartAction(this.m_Idle);
+						return;
 					}
-					else
-					{
-						base.StartAction(this.m_HumanMoveTo);
-					}
+					base.StartAction(this.m_HumanMoveTo);
 				}
 			}
 		}
@@ -67,24 +62,27 @@ namespace AIs
 			base.OnStopAction(action);
 			if (action.GetType() == typeof(HumanMoveTo) || action.GetType() == typeof(HumanRotateTo))
 			{
-				float num = Vector3.Angle(this.m_HumanAI.m_StartForward.GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D());
-				if (num >= 5f)
+				if (Vector3.Angle(this.m_HumanAI.m_StartForward.GetNormalized2D(), this.m_AI.transform.forward.GetNormalized2D()) >= 5f)
 				{
 					this.m_HumanRotateTo.SetupParams(this.m_HumanAI.transform.position + this.m_HumanAI.m_StartForward.GetNormalized2D(), 5f);
 					base.StartAction(this.m_HumanRotateTo);
+					return;
 				}
-				else
+				base.StartAction(this.m_Idle);
+				return;
+			}
+			else
+			{
+				if (action.GetType() == typeof(Idle))
 				{
-					base.StartAction(this.m_Idle);
+					base.StartAction(this.m_StartCrouch);
+					return;
 				}
-			}
-			else if (action.GetType() == typeof(Idle))
-			{
-				base.StartAction(this.m_StartCrouch);
-			}
-			else if (action.GetType() == typeof(StartCrouch))
-			{
-				base.StartAction(this.m_CrouchIdle);
+				if (action.GetType() == typeof(StartCrouch))
+				{
+					base.StartAction(this.m_CrouchIdle);
+				}
+				return;
 			}
 		}
 

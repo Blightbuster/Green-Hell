@@ -63,8 +63,7 @@ namespace RootMotion
 			float num = 0f;
 			Vector3 zero = Vector3.zero;
 			quaternion.ToAngleAxis(out num, out zero);
-			float num2 = Vector3.Dot(zero, axis);
-			if (num2 < 0f)
+			if (Vector3.Dot(zero, axis) < 0f)
 			{
 				num = -num;
 			}
@@ -133,8 +132,7 @@ namespace RootMotion
 			float num4 = Mathf.Clamp(num2 / clampWeight, 0f, 1f);
 			for (int i = 0; i < clampSmoothing; i++)
 			{
-				float f = num4 * 3.14159274f * 0.5f;
-				num4 = Mathf.Sin(f);
+				num4 = Mathf.Sin(num4 * 3.14159274f * 0.5f);
 			}
 			return Quaternion.Slerp(Quaternion.identity, rotation, num4 * num3);
 		}
@@ -154,8 +152,7 @@ namespace RootMotion
 			float num3 = Mathf.Clamp(num / clampWeight, 0f, 1f);
 			for (int i = 0; i < clampSmoothing; i++)
 			{
-				float f = num3 * 3.14159274f * 0.5f;
-				num3 = Mathf.Sin(f);
+				num3 = Mathf.Sin(num3 * 3.14159274f * 0.5f);
 			}
 			return Mathf.Lerp(0f, angle, num3 * num2);
 		}
@@ -164,8 +161,7 @@ namespace RootMotion
 		{
 			Quaternion rotation = Quaternion.LookRotation(forwardAxis, upAxis);
 			Quaternion rhs = Quaternion.LookRotation(targetforwardAxis, targetUpAxis);
-			Quaternion lhs = targetRotation * rhs;
-			return lhs * Quaternion.Inverse(rotation);
+			return targetRotation * rhs * Quaternion.Inverse(rotation);
 		}
 	}
 }

@@ -10,14 +10,6 @@ namespace Pathfinding
 	[JsonOptIn]
 	public class GridGraph : NavGraph, IUpdatableGraph, ITransformedGraph, IRaycastableGraph
 	{
-		public GridGraph()
-		{
-			this.unclampedSize = new Vector2(10f, 10f);
-			this.nodeSize = 1f;
-			this.collision = new GraphCollision();
-			this.transform = new GraphTransform(Matrix4x4.identity);
-		}
-
 		public override void OnDestroy()
 		{
 			base.OnDestroy();
@@ -83,6 +75,14 @@ namespace Pathfinding
 		public Vector2 size { get; protected set; }
 
 		public GraphTransform transform { get; private set; }
+
+		public GridGraph()
+		{
+			this.unclampedSize = new Vector2(10f, 10f);
+			this.nodeSize = 1f;
+			this.collision = new GraphCollision();
+			this.transform = new GraphTransform(Matrix4x4.identity);
+		}
 
 		public override void RelocateNodes(Matrix4x4 deltaMatrix)
 		{
@@ -253,20 +253,19 @@ namespace Pathfinding
 			Matrix4x4 rhs = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, 45f, 0f), Vector3.one);
 			rhs = Matrix4x4.Scale(new Vector3(Mathf.Cos(0.0174532924f * this.isometricAngle), 1f, 1f)) * rhs;
 			rhs = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, -45f, 0f), Vector3.one) * rhs;
-			Matrix4x4 matrix = Matrix4x4.TRS((Matrix4x4.TRS(this.center, Quaternion.Euler(this.rotation), new Vector3(this.aspectRatio, 1f, 1f)) * rhs).MultiplyPoint3x4(-new Vector3((float)num * num3, 0f, (float)num2 * num3) * 0.5f), Quaternion.Euler(this.rotation), new Vector3(num3 * this.aspectRatio, 1f, num3)) * rhs;
-			return new GraphTransform(matrix);
+			return new GraphTransform(Matrix4x4.TRS((Matrix4x4.TRS(this.center, Quaternion.Euler(this.rotation), new Vector3(this.aspectRatio, 1f, 1f)) * rhs).MultiplyPoint3x4(-new Vector3((float)num * num3, 0f, (float)num2 * num3) * 0.5f), Quaternion.Euler(this.rotation), new Vector3(num3 * this.aspectRatio, 1f, num3)) * rhs);
 		}
 
 		private void CalculateDimensions(out int width, out int depth, out float nodeSize)
 		{
-			Vector2 size = this.unclampedSize;
-			size.x *= Mathf.Sign(size.x);
-			size.y *= Mathf.Sign(size.y);
-			nodeSize = Mathf.Max(this.nodeSize, size.x / 1024f);
-			nodeSize = Mathf.Max(this.nodeSize, size.y / 1024f);
-			size.x = ((size.x >= nodeSize) ? size.x : nodeSize);
-			size.y = ((size.y >= nodeSize) ? size.y : nodeSize);
-			this.size = size;
+			Vector2 vector = this.unclampedSize;
+			vector.x *= Mathf.Sign(vector.x);
+			vector.y *= Mathf.Sign(vector.y);
+			nodeSize = Mathf.Max(this.nodeSize, vector.x / 1024f);
+			nodeSize = Mathf.Max(this.nodeSize, vector.y / 1024f);
+			vector.x = ((vector.x < nodeSize) ? nodeSize : vector.x);
+			vector.y = ((vector.y < nodeSize) ? nodeSize : vector.y);
+			this.size = vector;
 			width = Mathf.FloorToInt(this.size.x / nodeSize);
 			depth = Mathf.FloorToInt(this.size.y / nodeSize);
 			if (Mathf.Approximately(this.size.x / nodeSize, (float)Mathf.CeilToInt(this.size.x / nodeSize)))
@@ -331,7 +330,7 @@ namespace Pathfinding
 				}
 				num6--;
 			}
-			float num7 = (constraint != null && !constraint.constrainDistance) ? float.PositiveInfinity : AstarPath.active.maxNearestNodeDistance;
+			float num7 = (constraint == null || constraint.constrainDistance) ? AstarPath.active.maxNearestNodeDistance : float.PositiveInfinity;
 			float num8 = num7 * num7;
 			int num9 = 1;
 			while (this.nodeSize * (float)num9 <= num7)
@@ -446,7 +445,7 @@ namespace Pathfinding
 			this.neighbourOffsets[6] = this.width - 1;
 			this.neighbourOffsets[7] = -this.width - 1;
 			uint num = (uint)Mathf.RoundToInt(this.nodeSize * 1000f);
-			uint num2 = (uint)((!this.uniformEdgeCosts) ? Mathf.RoundToInt(this.nodeSize * Mathf.Sqrt(2f) * 1000f) : ((int)num));
+			uint num2 = this.uniformEdgeCosts ? num : ((uint)Mathf.RoundToInt(this.nodeSize * Mathf.Sqrt(2f) * 1000f));
 			this.neighbourCosts[0] = num;
 			this.neighbourCosts[1] = num;
 			this.neighbourCosts[2] = num;
@@ -511,7 +510,8 @@ namespace Pathfinding
 			this.collision.Initialize(this.transform, this.nodeSize);
 			this.textureData.Initialize();
 			int progressCounter = 0;
-			for (int z = 0; z < this.depth; z++)
+			int num2;
+			for (int z = 0; z < this.depth; z = num2 + 1)
 			{
 				if (progressCounter >= 1000)
 				{
@@ -524,23 +524,26 @@ namespace Pathfinding
 					this.RecalculateCell(k, z, true, true);
 					this.textureData.Apply(this.nodes[z * this.width + k], k, z);
 				}
+				num2 = z;
 			}
 			progressCounter = 0;
-			for (int z2 = 0; z2 < this.depth; z2++)
+			for (int z = 0; z < this.depth; z = num2 + 1)
 			{
 				if (progressCounter >= 1000)
 				{
 					progressCounter = 0;
-					yield return new Progress(Mathf.Lerp(0.7f, 0.9f, (float)z2 / (float)this.depth), "Calculating connections");
+					yield return new Progress(Mathf.Lerp(0.7f, 0.9f, (float)z / (float)this.depth), "Calculating connections");
 				}
 				progressCounter += this.width;
 				for (int l = 0; l < this.width; l++)
 				{
-					this.CalculateConnections(l, z2);
+					this.CalculateConnections(l, z);
 				}
+				num2 = z;
 			}
 			yield return new Progress(0.95f, "Calculating erosion");
 			this.ErodeWalkableArea();
+			yield break;
 			yield break;
 		}
 
@@ -626,11 +629,9 @@ namespace Pathfinding
 			if (node.Walkable && this.ErosionAnyFalseConnections(node))
 			{
 				node.Tag = (uint)this.erosionFirstTag;
+				return;
 			}
-			else
-			{
-				node.Tag = 0u;
-			}
+			node.Tag = 0u;
 		}
 
 		private void ErodeNodeWithTags(GraphNode node, int iteration)
@@ -652,19 +653,17 @@ namespace Pathfinding
 							}
 						}
 					}
+					return;
 				}
-				else
+				for (int j = 0; j < 4; j++)
 				{
-					for (int j = 0; j < 4; j++)
+					GridNodeBase neighbourAlongDirection2 = gridNodeBase.GetNeighbourAlongDirection(j);
+					if (neighbourAlongDirection2 != null)
 					{
-						GridNodeBase neighbourAlongDirection2 = gridNodeBase.GetNeighbourAlongDirection(j);
-						if (neighbourAlongDirection2 != null)
+						uint tag2 = neighbourAlongDirection2.Tag;
+						if ((ulong)tag2 > (ulong)((long)(this.erosionFirstTag + iteration)) || (ulong)tag2 < (ulong)((long)this.erosionFirstTag))
 						{
-							uint tag2 = neighbourAlongDirection2.Tag;
-							if ((ulong)tag2 > (ulong)((long)(this.erosionFirstTag + iteration)) || (ulong)tag2 < (ulong)((long)this.erosionFirstTag))
-							{
-								neighbourAlongDirection2.Tag = (uint)(this.erosionFirstTag + iteration);
-							}
+							neighbourAlongDirection2.Tag = (uint)(this.erosionFirstTag + iteration);
 						}
 					}
 				}
@@ -849,20 +848,18 @@ namespace Pathfinding
 					}
 				}
 				gridNode.SetAllConnectionInternal(num | num4);
+				return;
 			}
-			else
+			gridNode.ResetConnectionsInternal();
+			for (int l = 0; l < GridGraph.hexagonNeighbourIndices.Length; l++)
 			{
-				gridNode.ResetConnectionsInternal();
-				for (int l = 0; l < GridGraph.hexagonNeighbourIndices.Length; l++)
+				int num8 = GridGraph.hexagonNeighbourIndices[l];
+				int num9 = x + this.neighbourXOffsets[num8];
+				int num10 = z + this.neighbourZOffsets[num8];
+				if (num9 >= 0 & num10 >= 0 & num9 < this.width & num10 < this.depth)
 				{
-					int num8 = GridGraph.hexagonNeighbourIndices[l];
-					int num9 = x + this.neighbourXOffsets[num8];
-					int num10 = z + this.neighbourZOffsets[num8];
-					if (num9 >= 0 & num10 >= 0 & num9 < this.width & num10 < this.depth)
-					{
-						GridNode node4 = this.nodes[nodeInGridIndex + this.neighbourOffsets[num8]];
-						gridNode.SetConnectionInternal(num8, this.IsValidConnection(gridNode, node4));
-					}
+					GridNode node4 = this.nodes[nodeInGridIndex + this.neighbourOffsets[num8]];
+					gridNode.SetConnectionInternal(num8, this.IsValidConnection(gridNode, node4));
 				}
 			}
 		}
@@ -889,10 +886,10 @@ namespace Pathfinding
 				bounds.SetMinMax(Vector3.zero, new Vector3((float)num, 0f, (float)num2));
 				GraphTransform graphTransform = this.CalculateTransform();
 				singleFrameGizmoHelper.builder.DrawWireCube(graphTransform, bounds, Color.white);
-				int num4 = (this.nodes == null) ? -1 : this.nodes.Length;
+				int num4 = (this.nodes != null) ? this.nodes.Length : -1;
 				if (this is LayerGridGraph)
 				{
-					num4 = (((this as LayerGridGraph).nodes == null) ? -1 : (this as LayerGridGraph).nodes.Length);
+					num4 = (((this as LayerGridGraph).nodes != null) ? (this as LayerGridGraph).nodes.Length : -1);
 				}
 				if (drawNodes && this.width * this.depth * this.LayerCount != num4)
 				{
@@ -918,9 +915,9 @@ namespace Pathfinding
 				{
 					int nodesInRegion = this.GetNodesInRegion(new IntRect(k * 32, l * 32, (k + 1) * 32 - 1, (l + 1) * 32 - 1), array);
 					RetainedGizmos.Hasher hasher = new RetainedGizmos.Hasher(this.active);
-					hasher.AddHash((!this.showMeshOutline) ? 0 : 1);
-					hasher.AddHash((!this.showMeshSurface) ? 0 : 1);
-					hasher.AddHash((!this.showNodeConnections) ? 0 : 1);
+					hasher.AddHash(this.showMeshOutline ? 1 : 0);
+					hasher.AddHash(this.showMeshSurface ? 1 : 0);
+					hasher.AddHash(this.showNodeConnections ? 1 : 0);
 					for (int m = 0; m < nodesInRegion; m++)
 					{
 						hasher.HashNode(array[m]);
@@ -965,16 +962,16 @@ namespace Pathfinding
 				}
 			}
 			int[] array;
-			if (this.neighbours == NumNeighbours.Six)
+			if (this.neighbours != NumNeighbours.Six)
 			{
-				array = GridGraph.hexagonNeighbourIndices;
+				RuntimeHelpers.InitializeArray(array = new int[4], fieldof(<PrivateImplementationDetails>.02E4414E7DFA0F3AA2387EE8EA7AB31431CB406A).FieldHandle);
 			}
 			else
 			{
-				RuntimeHelpers.InitializeArray(array = new int[4], fieldof(<PrivateImplementationDetails>.$field-02E4414E7DFA0F3AA2387EE8EA7AB31431CB406A).FieldHandle);
+				array = GridGraph.hexagonNeighbourIndices;
 			}
 			int[] array2 = array;
-			float num2 = (this.neighbours != NumNeighbours.Six) ? 0.5f : 0.333333f;
+			float num2 = (this.neighbours == NumNeighbours.Six) ? 0.333333f : 0.5f;
 			int num3 = array2.Length - 2;
 			int num4 = 3 * num3;
 			Vector3[] array3 = ArrayPool<Vector3>.Claim(num * num4);
@@ -1019,7 +1016,7 @@ namespace Pathfinding
 							{
 								vector.y += this.transform.InverseTransform((Vector3)gridNodeBase2.position).y;
 							}
-							vector.y /= 1f + ((neighbourAlongDirection == null) ? 0f : 1f) + ((neighbourAlongDirection2 == null) ? 0f : 1f) + ((gridNodeBase2 == null) ? 0f : 1f);
+							vector.y /= 1f + ((neighbourAlongDirection != null) ? 1f : 0f) + ((neighbourAlongDirection2 != null) ? 1f : 0f) + ((gridNodeBase2 != null) ? 1f : 0f);
 							vector = this.transform.Transform(vector);
 							array3[num5 + k] = vector;
 						}
@@ -1046,7 +1043,7 @@ namespace Pathfinding
 							GridNodeBase neighbourAlongDirection3 = gridNodeBase.GetNeighbourAlongDirection(array2[(m + 1) % array2.Length]);
 							if (neighbourAlongDirection3 == null || (this.showMeshOutline && gridNodeBase.NodeInGridIndex < neighbourAlongDirection3.NodeInGridIndex))
 							{
-								helper.builder.DrawLine(array3[num5 + m], array3[num5 + (m + 1) % array2.Length], (neighbourAlongDirection3 != null) ? color : Color.black);
+								helper.builder.DrawLine(array3[num5 + m], array3[num5 + (m + 1) % array2.Length], (neighbourAlongDirection3 == null) ? Color.black : color);
 							}
 						}
 						num5 += num4;
@@ -1185,23 +1182,23 @@ namespace Pathfinding
 		protected void CalculateAffectedRegions(GraphUpdateObject o, out IntRect originalRect, out IntRect affectRect, out IntRect physicsRect, out bool willChangeWalkability, out int erosion)
 		{
 			Bounds bounds = this.transform.InverseTransform(o.bounds);
-			Vector3 a = bounds.min;
-			Vector3 a2 = bounds.max;
-			int xmin = Mathf.RoundToInt(a.x - 0.5f);
-			int xmax = Mathf.RoundToInt(a2.x - 0.5f);
-			int ymin = Mathf.RoundToInt(a.z - 0.5f);
-			int ymax = Mathf.RoundToInt(a2.z - 0.5f);
+			Vector3 vector = bounds.min;
+			Vector3 vector2 = bounds.max;
+			int xmin = Mathf.RoundToInt(vector.x - 0.5f);
+			int xmax = Mathf.RoundToInt(vector2.x - 0.5f);
+			int ymin = Mathf.RoundToInt(vector.z - 0.5f);
+			int ymax = Mathf.RoundToInt(vector2.z - 0.5f);
 			originalRect = new IntRect(xmin, ymin, xmax, ymax);
 			affectRect = originalRect;
 			physicsRect = originalRect;
-			erosion = ((!o.updateErosion) ? 0 : this.erodeIterations);
+			erosion = (o.updateErosion ? this.erodeIterations : 0);
 			willChangeWalkability = (o.updatePhysics || o.modifyWalkability);
 			if (o.updatePhysics && !o.modifyWalkability && this.collision.collisionCheck)
 			{
-				Vector3 a3 = new Vector3(this.collision.diameter, 0f, this.collision.diameter) * 0.5f;
-				a -= a3 * 1.02f;
-				a2 += a3 * 1.02f;
-				physicsRect = new IntRect(Mathf.RoundToInt(a.x - 0.5f), Mathf.RoundToInt(a.z - 0.5f), Mathf.RoundToInt(a2.x - 0.5f), Mathf.RoundToInt(a2.z - 0.5f));
+				Vector3 a = new Vector3(this.collision.diameter, 0f, this.collision.diameter) * 0.5f;
+				vector -= a * 1.02f;
+				vector2 += a * 1.02f;
+				physicsRect = new IntRect(Mathf.RoundToInt(vector.x - 0.5f), Mathf.RoundToInt(vector.z - 0.5f), Mathf.RoundToInt(vector2.x - 0.5f), Mathf.RoundToInt(vector2.z - 0.5f));
 				affectRect = IntRect.Union(physicsRect, affectRect);
 			}
 			if (willChangeWalkability || erosion > 0)
@@ -1276,16 +1273,17 @@ namespace Pathfinding
 						this.CalculateConnections(num3, num4);
 					}
 				}
+				return;
 			}
-			else if (flag && num > 0)
+			if (flag && num > 0)
 			{
 				IntRect a3 = IntRect.Union(a, intRect).Expand(num);
-				IntRect a4 = a3.Expand(num);
+				IntRect intRect3 = a3.Expand(num);
 				a3 = IntRect.Intersection(a3, b);
-				a4 = IntRect.Intersection(a4, b);
-				for (int num5 = a4.xmin; num5 <= a4.xmax; num5++)
+				intRect3 = IntRect.Intersection(intRect3, b);
+				for (int num5 = intRect3.xmin; num5 <= intRect3.xmax; num5++)
 				{
-					for (int num6 = a4.ymin; num6 <= a4.ymax; num6++)
+					for (int num6 = intRect3.ymin; num6 <= intRect3.ymax; num6++)
 					{
 						int num7 = num6 * this.width + num5;
 						GridNode gridNode2 = this.nodes[num7];
@@ -1297,17 +1295,17 @@ namespace Pathfinding
 						}
 					}
 				}
-				for (int num8 = a4.xmin; num8 <= a4.xmax; num8++)
+				for (int num8 = intRect3.xmin; num8 <= intRect3.xmax; num8++)
 				{
-					for (int num9 = a4.ymin; num9 <= a4.ymax; num9++)
+					for (int num9 = intRect3.ymin; num9 <= intRect3.ymax; num9++)
 					{
 						this.CalculateConnections(num8, num9);
 					}
 				}
-				this.ErodeWalkableArea(a4.xmin, a4.ymin, a4.xmax + 1, a4.ymax + 1);
-				for (int num10 = a4.xmin; num10 <= a4.xmax; num10++)
+				this.ErodeWalkableArea(intRect3.xmin, intRect3.ymin, intRect3.xmax + 1, intRect3.ymax + 1);
+				for (int num10 = intRect3.xmin; num10 <= intRect3.xmax; num10++)
 				{
-					for (int num11 = a4.ymin; num11 <= a4.ymax; num11++)
+					for (int num11 = intRect3.ymin; num11 <= intRect3.ymax; num11++)
 					{
 						if (!a3.Contains(num10, num11))
 						{
@@ -1317,9 +1315,9 @@ namespace Pathfinding
 						}
 					}
 				}
-				for (int num13 = a4.xmin; num13 <= a4.xmax; num13++)
+				for (int num13 = intRect3.xmin; num13 <= intRect3.xmax; num13++)
 				{
-					for (int num14 = a4.ymin; num14 <= a4.ymax; num14++)
+					for (int num14 = intRect3.ymin; num14 <= intRect3.ymax; num14++)
 					{
 						this.CalculateConnections(num13, num14);
 					}
@@ -1450,10 +1448,10 @@ namespace Pathfinding
 				hit.point = from;
 				return true;
 			}
-			Vector2 a = vector4 - vector3;
-			Vector2 b = new Vector2(Mathf.Sign(a.x), Mathf.Sign(a.y));
-			float num = GridGraph.CrossMagnitude(a, b) * 0.5f;
-			int num2 = ((a.y < 0f) ? 3 : 0) ^ ((a.x < 0f) ? 1 : 0);
+			Vector2 vector5 = vector4 - vector3;
+			Vector2 b = new Vector2(Mathf.Sign(vector5.x), Mathf.Sign(vector5.y));
+			float num = GridGraph.CrossMagnitude(vector5, b) * 0.5f;
+			int num2 = ((vector5.y >= 0f) ? 0 : 3) ^ ((vector5.x >= 0f) ? 0 : 1);
 			int num3 = num2 + 1 & 3;
 			int num4 = num2 + 2 & 3;
 			GridNodeBase gridNodeBase3 = gridNodeBase;
@@ -1463,30 +1461,28 @@ namespace Pathfinding
 				{
 					trace.Add(gridNodeBase3);
 				}
-				Vector2 a2 = new Vector2((float)gridNodeBase3.XCoordinateInGrid, (float)gridNodeBase3.ZCoordinateInGrid);
-				float num5 = GridGraph.CrossMagnitude(a, a2 - vector3);
-				float num6 = num5 + num;
-				int num7 = (num6 >= 0f) ? num3 : num4;
-				GridNodeBase neighbourAlongDirection = gridNodeBase3.GetNeighbourAlongDirection(num7);
+				Vector2 a = new Vector2((float)gridNodeBase3.XCoordinateInGrid, (float)gridNodeBase3.ZCoordinateInGrid);
+				int num5 = (GridGraph.CrossMagnitude(vector5, a - vector3) + num < 0f) ? num4 : num3;
+				GridNodeBase neighbourAlongDirection = gridNodeBase3.GetNeighbourAlongDirection(num5);
 				if (neighbourAlongDirection == null)
 				{
-					Vector2 vector5 = a2 + new Vector2((float)this.neighbourXOffsets[num7], (float)this.neighbourZOffsets[num7]) * 0.5f;
-					Vector2 b2;
-					if (this.neighbourXOffsets[num7] == 0)
+					Vector2 vector6 = a + new Vector2((float)this.neighbourXOffsets[num5], (float)this.neighbourZOffsets[num5]) * 0.5f;
+					Vector2 vector7;
+					if (this.neighbourXOffsets[num5] == 0)
 					{
-						b2 = new Vector2(1f, 0f);
+						vector7 = new Vector2(1f, 0f);
 					}
 					else
 					{
-						b2 = new Vector2(0f, 1f);
+						vector7 = new Vector2(0f, 1f);
 					}
-					Vector2 vector6 = VectorMath.LineIntersectionPoint(vector5, vector5 + b2, vector3, vector4);
-					Vector3 vector7 = this.transform.InverseTransform((Vector3)gridNodeBase3.position);
-					Vector3 p = new Vector3(vector6.x + 0.5f, vector7.y, vector6.y + 0.5f);
-					Vector3 p2 = new Vector3(vector5.x + 0.5f, vector7.y, vector5.y + 0.5f);
+					Vector2 vector8 = VectorMath.LineIntersectionPoint(vector6, vector6 + vector7, vector3, vector4);
+					Vector3 vector9 = this.transform.InverseTransform((Vector3)gridNodeBase3.position);
+					Vector3 p = new Vector3(vector8.x + 0.5f, vector9.y, vector8.y + 0.5f);
+					Vector3 p2 = new Vector3(vector6.x + 0.5f, vector9.y, vector6.y + 0.5f);
 					hit.point = this.transform.Transform(p);
 					hit.tangentOrigin = this.transform.Transform(p2);
-					hit.tangent = this.transform.TransformVector(new Vector3(b2.x, 0f, b2.y));
+					hit.tangent = this.transform.TransformVector(new Vector3(vector7.x, 0f, vector7.y));
 					hit.node = gridNodeBase3;
 					return true;
 				}
@@ -1742,13 +1738,14 @@ namespace Pathfinding
 							try
 							{
 								this.data = this.source.GetPixels32();
+								break;
 							}
 							catch (UnityException ex)
 							{
 								Debug.LogWarning(ex.ToString());
 								this.data = null;
+								break;
 							}
-							break;
 						}
 					}
 				}
@@ -1777,30 +1774,24 @@ namespace Pathfinding
 
 			private void ApplyChannel(GridNode node, int x, int z, int value, GridGraph.TextureData.ChannelUse channelUse, float factor)
 			{
-				if (channelUse != GridGraph.TextureData.ChannelUse.Penalty)
+				switch (channelUse)
 				{
-					if (channelUse != GridGraph.TextureData.ChannelUse.Position)
-					{
-						if (channelUse == GridGraph.TextureData.ChannelUse.WalkablePenalty)
-						{
-							if (value == 0)
-							{
-								node.Walkable = false;
-							}
-							else
-							{
-								node.Penalty += (uint)Mathf.RoundToInt((float)(value - 1) * factor);
-							}
-						}
-					}
-					else
-					{
-						node.position = GridNode.GetGridGraph(node.GraphIndex).GraphPointToWorld(x, z, (float)value);
-					}
-				}
-				else
-				{
+				case GridGraph.TextureData.ChannelUse.Penalty:
 					node.Penalty += (uint)Mathf.RoundToInt((float)value * factor);
+					return;
+				case GridGraph.TextureData.ChannelUse.Position:
+					node.position = GridNode.GetGridGraph(node.GraphIndex).GraphPointToWorld(x, z, (float)value);
+					return;
+				case GridGraph.TextureData.ChannelUse.WalkablePenalty:
+					if (value == 0)
+					{
+						node.Walkable = false;
+						return;
+					}
+					node.Penalty += (uint)Mathf.RoundToInt((float)(value - 1) * factor);
+					return;
+				default:
+					return;
 				}
 			}
 

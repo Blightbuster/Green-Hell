@@ -116,9 +116,7 @@ namespace Pathfinding
 			NNInfo nearest = AstarPath.active.GetNearest(newPosition);
 			float elevation;
 			this.movementPlane.ToPlane(newPosition, out elevation);
-			Vector3 position = this.movementPlane.ToWorld(this.movementPlane.ToPlane((nearest.node == null) ? newPosition : nearest.position), elevation);
-			this.tr.position = position;
-			this.prevPosition = position;
+			this.prevPosition = (this.tr.position = this.movementPlane.ToWorld(this.movementPlane.ToPlane((nearest.node != null) ? nearest.position : newPosition), elevation));
 			this.richPath.Clear();
 			if (this.rvoController != null)
 			{
@@ -157,16 +155,24 @@ namespace Pathfinding
 
 		private IEnumerator SearchPaths()
 		{
-			for (;;)
-			{
-				while (!this.repeatedlySearchPaths || this.waitingForPathCalc || !this.canSearchPath || Time.time - this.lastRepath < this.repathRate)
-				{
-					yield return null;
-				}
-				this.UpdatePath();
-				yield return null;
-			}
-			yield break;
+			/*
+An exception occurred when decompiling this method (06003046)
+
+ICSharpCode.Decompiler.DecompilerException: Error decompiling System.Collections.IEnumerator Pathfinding.RichAI::SearchPaths()
+ ---> System.ArgumentOutOfRangeException: Der Index lag außerhalb des Bereichs. Er darf nicht negativ und kleiner als die Sammlung sein.
+Parametername: index
+   bei System.ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+   bei ICSharpCode.Decompiler.ILAst.StateRangeAnalysis.CreateLabelRangeMapping(List`1 body, Int32 pos, Int32 bodyLength, LabelRangeMapping result, Boolean onlyInitialLabels) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\StateRange.cs:Zeile 326.
+   bei ICSharpCode.Decompiler.ILAst.MicrosoftYieldReturnDecompiler.AnalyzeMoveNext() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\MicrosoftYieldReturnDecompiler.cs:Zeile 347.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run() in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 93.
+   bei ICSharpCode.Decompiler.ILAst.YieldReturnDecompiler.Run(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, List`1 list_ILNode, Func`2 getILInlining, List`1 listExpr, List`1 listBlock, Dictionary`2 labelRefCount) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\YieldReturnDecompiler.cs:Zeile 69.
+   bei ICSharpCode.Decompiler.ILAst.ILAstOptimizer.Optimize(DecompilerContext context, ILBlock method, AutoPropertyProvider autoPropertyProvider, ILAstOptimizationStep abortBeforeStep) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\ILAst\ILAstOptimizer.cs:Zeile 233.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(IEnumerable`1 parameters, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 118.
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 88.
+   --- Ende der internen Ausnahmestapelüberwachung ---
+   bei ICSharpCode.Decompiler.Ast.AstMethodBodyBuilder.CreateMethodBody(MethodDef methodDef, DecompilerContext context, AutoPropertyProvider autoPropertyProvider, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, StringBuilder sb, MethodDebugInfoBuilder& stmtsBuilder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstMethodBodyBuilder.cs:Zeile 92.
+   bei ICSharpCode.Decompiler.Ast.AstBuilder.CreateMethodBody(MethodDef method, IEnumerable`1 parameters, Boolean valueParameterIsKeyword, MethodKind methodKind, MethodDebugInfoBuilder& builder) in C:\projects\dnspy\Extensions\ILSpy.Decompiler\ICSharpCode.Decompiler\ICSharpCode.Decompiler\Ast\AstBuilder.cs:Zeile 1427.
+*/;
 		}
 
 		private void OnPathComplete(Path p)
@@ -259,7 +265,7 @@ namespace Pathfinding
 				base.Move(this.tr.position, Vector3.zero);
 			}
 			Vector3 position = this.tr.position;
-			this.realVelocity = ((deltaTime <= 0f) ? Vector3.zero : ((position - this.prevPosition) / deltaTime));
+			this.realVelocity = ((deltaTime > 0f) ? ((position - this.prevPosition) / deltaTime) : Vector3.zero);
 			this.prevPosition = position;
 		}
 
@@ -274,13 +280,14 @@ namespace Pathfinding
 			}
 			Vector2 vector2 = this.waypoint = this.movementPlane.ToPlane(this.nextCorners[0]);
 			Vector2 vector3 = vector2 - vector;
-			bool flag = this.lastCorner && this.nextCorners.Count == 1;
+			object obj = this.lastCorner && this.nextCorners.Count == 1;
 			Vector2 vector4 = VectorMath.Normalize(vector3, out this.distanceToWaypoint);
 			Vector2 a = this.CalculateWallForce(vector, elevation, vector4);
+			object obj2 = obj;
 			Vector2 targetVelocity;
-			if (flag)
+			if (obj2 != null)
 			{
-				targetVelocity = ((this.slowdownTime <= 0f) ? (vector4 * this.maxSpeed) : Vector2.zero);
+				targetVelocity = ((this.slowdownTime > 0f) ? Vector2.zero : (vector4 * this.maxSpeed));
 				a *= Math.Min(this.distanceToWaypoint / 0.5f, 1f);
 				if (this.distanceToWaypoint <= this.endReachedDistance)
 				{
@@ -289,14 +296,13 @@ namespace Pathfinding
 			}
 			else
 			{
-				Vector2 a2 = (this.nextCorners.Count <= 1) ? (vector + 2f * vector3) : this.movementPlane.ToPlane(this.nextCorners[1]);
-				targetVelocity = (a2 - vector2).normalized * this.maxSpeed;
+				targetVelocity = (((this.nextCorners.Count > 1) ? this.movementPlane.ToPlane(this.nextCorners[1]) : (vector + 2f * vector3)) - vector2).normalized * this.maxSpeed;
 			}
-			Vector2 a3 = MovementUtilities.CalculateAccelerationToReachPoint(vector2 - vector, targetVelocity, this.velocity2D, this.acceleration, this.maxSpeed);
-			this.velocity2D += (a3 + a * this.wallForce) * deltaTime;
+			Vector2 a2 = MovementUtilities.CalculateAccelerationToReachPoint(vector2 - vector, targetVelocity, this.velocity2D, this.acceleration, this.maxSpeed);
+			this.velocity2D += (a2 + a * this.wallForce) * deltaTime;
 			float distanceToEndOfPath = fn.DistanceToEndOfPath;
-			float num = (this.slowdownTime <= 0f) ? 1f : (distanceToEndOfPath / (this.maxSpeed * this.slowdownTime));
-			this.velocity2D = MovementUtilities.ClampVelocity(this.velocity2D, this.maxSpeed, num, this.slowWhenNotFacingTarget, this.movementPlane.ToPlane((!this.rotationIn2D) ? this.tr.forward : this.tr.up));
+			float num = (this.slowdownTime > 0f) ? (distanceToEndOfPath / (this.maxSpeed * this.slowdownTime)) : 1f;
+			this.velocity2D = MovementUtilities.ClampVelocity(this.velocity2D, this.maxSpeed, num, this.slowWhenNotFacingTarget, this.movementPlane.ToPlane(this.rotationIn2D ? this.tr.up : this.tr.forward));
 			base.ApplyGravity(deltaTime);
 			if (this.rvoController != null && this.rvoController.enabled)
 			{
@@ -304,7 +310,7 @@ namespace Pathfinding
 				this.rvoController.SetTarget(pos, this.velocity2D.magnitude, this.maxSpeed);
 			}
 			Vector2 vector5 = base.CalculateDeltaToMoveThisFrame(vector, distanceToEndOfPath, deltaTime);
-			float num2 = (!flag) ? 1f : Mathf.Clamp01(1.1f * num - 0.1f);
+			float num2 = (obj2 != null) ? Mathf.Clamp01(1.1f * num - 0.1f) : 1f;
 			this.RotateTowards(vector5, this.rotationSpeed * num2 * deltaTime);
 			base.Move(this.movementPlane.ToWorld(vector, elevation), this.movementPlane.ToWorld(vector5, this.verticalVelocity * deltaTime));
 		}
@@ -333,8 +339,7 @@ namespace Pathfinding
 			Vector3 vector = this.movementPlane.ToWorld(position, elevation);
 			for (int i = 0; i < this.wallBuffer.Count; i += 2)
 			{
-				Vector3 a = VectorMath.ClosestPointOnSegment(this.wallBuffer[i], this.wallBuffer[i + 1], vector);
-				float sqrMagnitude = (a - vector).sqrMagnitude;
+				float sqrMagnitude = (VectorMath.ClosestPointOnSegment(this.wallBuffer[i], this.wallBuffer[i + 1], vector) - vector).sqrMagnitude;
 				if (sqrMagnitude <= this.wallDist * this.wallDist)
 				{
 					Vector2 normalized = this.movementPlane.ToPlane(this.wallBuffer[i + 1] - this.wallBuffer[i]).normalized;
@@ -350,8 +355,7 @@ namespace Pathfinding
 					}
 				}
 			}
-			Vector2 a2 = new Vector2(directionToTarget.y, -directionToTarget.x);
-			return a2 * (num2 - num);
+			return new Vector2(directionToTarget.y, -directionToTarget.x) * (num2 - num);
 		}
 
 		protected override void OnDrawGizmos()
@@ -379,7 +383,7 @@ namespace Pathfinding
 				Debug.LogError("Unhandled RichSpecial");
 				yield break;
 			}
-			while (Vector2.Angle(this.movementPlane.ToPlane((!this.rotationIn2D) ? this.tr.forward : this.tr.up), this.movementPlane.ToPlane(rs.first.forward)) > 5f)
+			while (Vector2.Angle(this.movementPlane.ToPlane(this.rotationIn2D ? this.tr.up : this.tr.forward), this.movementPlane.ToPlane(rs.first.forward)) > 5f)
 			{
 				this.RotateTowards(this.movementPlane.ToPlane(rs.first.forward), this.rotationSpeed * Time.deltaTime);
 				yield return null;
@@ -410,6 +414,7 @@ namespace Pathfinding
 				this.delayUpdatePath = false;
 				this.UpdatePath();
 			}
+			yield break;
 			yield break;
 		}
 

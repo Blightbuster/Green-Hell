@@ -7,9 +7,9 @@ public class Token
 		this.m_Parser = parser;
 	}
 
-	public virtual bool Check()
+	protected virtual bool Check()
 	{
-		return !this.m_Parser.Equals(null);
+		return !this.m_Parser.Equals(null) && this.m_Parser.Position < this.m_Parser.GetText().Length;
 	}
 
 	public virtual bool TryToGet()

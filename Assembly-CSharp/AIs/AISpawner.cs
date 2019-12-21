@@ -35,8 +35,7 @@ namespace AIs
 
 		private void Start()
 		{
-			BoxCollider component = base.gameObject.GetComponent<BoxCollider>();
-			Vector3 size = component.size;
+			Vector3 size = base.gameObject.GetComponent<BoxCollider>().size;
 			this.m_MinDistance = AIManager.Get().m_AIActivationRange * 0.7f;
 			this.m_MaxDistance = AIManager.Get().m_AIActivationRange * 0.9f;
 			for (int i = 0; i < 99; i++)
@@ -66,7 +65,11 @@ namespace AIs
 
 		private int GetWantedAICount()
 		{
-			return (!MainLevel.Instance.IsNight()) ? (this.m_DayCount - this.m_BlockedCount) : this.m_NightCount;
+			if (!MainLevel.Instance.IsNight())
+			{
+				return this.m_DayCount - this.m_BlockedCount;
+			}
+			return this.m_NightCount;
 		}
 
 		public void UpdateSpawner()
@@ -118,12 +121,17 @@ namespace AIs
 			{
 				return;
 			}
-			for (int i = 0; i < this.m_Positions.Count; i++)
+			for (int i = this.m_PositionIndex; i < this.m_Positions.Count; i++)
 			{
 				float num = Vector3.Distance(Player.Get().transform.position, this.m_Positions[i]);
 				if (num < this.m_MaxDistance && num > this.m_MinDistance)
 				{
 					this.SpawnObject(this.m_Positions[i]);
+					this.m_PositionIndex++;
+					if (this.m_PositionIndex >= this.m_Positions.Count)
+					{
+						this.m_PositionIndex = 0;
+					}
 					return;
 				}
 			}
@@ -131,7 +139,7 @@ namespace AIs
 
 		private bool CanSpawn()
 		{
-			return !(AIManager.Get() == null) && (!AI.IsCat(this.m_ID) || BalanceSystem.Get().CanSpawnJaguar()) && this.m_AICount < this.GetWantedAICount() && (!this.m_SpawnersGroup || this.m_SpawnersGroup.CanSpawnAI());
+			return !(AIManager.Get() == null) && !ScenarioManager.Get().IsDreamOrPreDream() && (!AI.IsCat(this.m_ID) || EnemyAISpawnManager.Get().CanSpawnPredator()) && DifficultySettings.IsAIIDEnabled(this.m_ID) && this.m_AICount < this.GetWantedAICount() && (!this.m_SpawnersGroup || this.m_SpawnersGroup.CanSpawnAI());
 		}
 
 		public Vector3 GetRandomPositionInside()
@@ -149,8 +157,13 @@ namespace AIs
 				randomPositionInside.y = MainLevel.GetTerrainY(randomPositionInside);
 				if (this.m_Bounds.Contains(randomPositionInside))
 				{
+					int num2 = AIManager.s_WalkableAreaMask;
+					if (this.m_ID == AI.AIID.BlackCaiman || this.m_ID == AI.AIID.Crab)
+					{
+						num2 |= AIManager.s_WaterAreaMask;
+					}
 					NavMeshHit navMeshHit;
-					if (NavMesh.SamplePosition(randomPositionInside, out navMeshHit, 2f, AIManager.s_WalkableAreaMask) && this.IsPoisitionAvailable(navMeshHit.position))
+					if (NavMesh.SamplePosition(randomPositionInside, out navMeshHit, 2f, num2) && this.IsPoisitionAvailable(navMeshHit.position))
 					{
 						return navMeshHit.position;
 					}
@@ -165,22 +178,12 @@ namespace AIs
 			{
 				return false;
 			}
-			Vector3 center = pos + Vector3.up * (this.m_AIBounds.size.y / 2f);
-			Collider[] array = Physics.OverlapBox(center, this.m_AIBounds.size, Quaternion.identity);
-			for (int i = 0; i < array.Length; i++)
+			int num = Physics.OverlapBoxNonAlloc(pos + Vector3.up * (this.m_AIBounds.size.y / 2f), this.m_AIBounds.size, AISpawner.s_OverlapCollidersTmp, Quaternion.identity);
+			for (int i = 0; i < num; i++)
 			{
-				if (!array[i].isTrigger)
+				if (!AISpawner.s_OverlapCollidersTmp[i].isTrigger && !AISpawner.s_OverlapCollidersTmp[i].GetComponent<TerrainCollider>() && !(AISpawner.s_OverlapCollidersTmp[i].gameObject == base.gameObject))
 				{
-					if (!(array[i].gameObject.tag == "Sectr_trigger"))
-					{
-						if (!array[i].GetComponent<TerrainCollider>())
-						{
-							if (!(array[i].gameObject == base.gameObject))
-							{
-								return false;
-							}
-						}
-					}
+					return false;
 				}
 			}
 			return true;
@@ -255,5 +258,9 @@ namespace AIs
 		public AISpawnersGroup m_SpawnersGroup;
 
 		private List<AI> m_AIs = new List<AI>();
+
+		private int m_PositionIndex;
+
+		private static Collider[] s_OverlapCollidersTmp = new Collider[20];
 	}
 }

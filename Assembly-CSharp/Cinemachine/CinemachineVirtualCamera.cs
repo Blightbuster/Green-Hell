@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Cinemachine.Utility;
@@ -8,10 +7,10 @@ using UnityEngine.Serialization;
 
 namespace Cinemachine
 {
-	[DisallowMultipleComponent]
-	[AddComponentMenu("Cinemachine/CinemachineVirtualCamera")]
 	[DocumentationSorting(1f, DocumentationSortingAttribute.Level.UserRef)]
 	[ExecuteInEditMode]
+	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineVirtualCamera")]
 	public class CinemachineVirtualCamera : CinemachineVirtualCameraBase
 	{
 		public override CameraState State
@@ -90,25 +89,12 @@ namespace Cinemachine
 
 		protected override void OnDestroy()
 		{
-			IEnumerator enumerator = base.transform.GetEnumerator();
-			try
+			foreach (object obj in base.transform)
 			{
-				while (enumerator.MoveNext())
+				Transform transform = (Transform)obj;
+				if (transform.GetComponent<CinemachinePipeline>() != null)
 				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					if (transform.GetComponent<CinemachinePipeline>() != null)
-					{
-						transform.gameObject.hideFlags &= ~(HideFlags.HideInHierarchy | HideFlags.HideInInspector);
-					}
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
+					transform.gameObject.hideFlags &= ~(HideFlags.HideInHierarchy | HideFlags.HideInInspector);
 				}
 			}
 			base.OnDestroy();
@@ -133,25 +119,12 @@ namespace Cinemachine
 		private void DestroyPipeline()
 		{
 			List<Transform> list = new List<Transform>();
-			IEnumerator enumerator = base.transform.GetEnumerator();
-			try
+			foreach (object obj in base.transform)
 			{
-				while (enumerator.MoveNext())
+				Transform transform = (Transform)obj;
+				if (transform.GetComponent<CinemachinePipeline>() != null)
 				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					if (transform.GetComponent<CinemachinePipeline>() != null)
-					{
-						list.Add(transform);
-					}
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
+					list.Add(transform);
 				}
 			}
 			foreach (Transform transform2 in list)
@@ -246,7 +219,7 @@ namespace Cinemachine
 					}
 				}
 			}
-			return (T)((object)null);
+			return default(T);
 		}
 
 		public T AddCinemachineComponent<T>() where T : CinemachineComponentBase
@@ -305,7 +278,7 @@ namespace Cinemachine
 		{
 			if (this.m_ComponentOwner != null && this.m_ComponentOwner.parent != base.transform)
 			{
-				CinemachineVirtualCamera copyFrom = (!(this.m_ComponentOwner.parent != null)) ? null : this.m_ComponentOwner.parent.gameObject.GetComponent<CinemachineVirtualCamera>();
+				CinemachineVirtualCamera copyFrom = (this.m_ComponentOwner.parent != null) ? this.m_ComponentOwner.parent.gameObject.GetComponent<CinemachineVirtualCamera>() : null;
 				this.DestroyPipeline();
 				this.m_ComponentOwner = this.CreatePipeline(copyFrom);
 			}
@@ -315,30 +288,16 @@ namespace Cinemachine
 			}
 			this.m_ComponentOwner = null;
 			List<CinemachineComponentBase> list = new List<CinemachineComponentBase>();
-			IEnumerator enumerator = base.transform.GetEnumerator();
-			try
+			foreach (object obj in base.transform)
 			{
-				while (enumerator.MoveNext())
+				Transform transform = (Transform)obj;
+				if (transform.GetComponent<CinemachinePipeline>() != null)
 				{
-					object obj = enumerator.Current;
-					Transform transform = (Transform)obj;
-					if (transform.GetComponent<CinemachinePipeline>() != null)
+					this.m_ComponentOwner = transform;
+					foreach (CinemachineComponentBase item in transform.GetComponents<CinemachineComponentBase>())
 					{
-						this.m_ComponentOwner = transform;
-						CinemachineComponentBase[] components = transform.GetComponents<CinemachineComponentBase>();
-						foreach (CinemachineComponentBase item in components)
-						{
-							list.Add(item);
-						}
+						list.Add(item);
 					}
-				}
-			}
-			finally
-			{
-				IDisposable disposable;
-				if ((disposable = (enumerator as IDisposable)) != null)
-				{
-					disposable.Dispose();
 				}
 			}
 			if (this.m_ComponentOwner == null)
@@ -400,7 +359,7 @@ namespace Cinemachine
 			@default.RawOrientation = base.transform.rotation;
 			@default.ReferenceUp = worldUp;
 			CinemachineBrain cinemachineBrain = CinemachineCore.Instance.FindPotentialTargetBrain(this);
-			this.m_Lens.Aspect = ((!(cinemachineBrain != null)) ? 1f : cinemachineBrain.OutputCamera.aspect);
+			this.m_Lens.Aspect = ((cinemachineBrain != null) ? cinemachineBrain.OutputCamera.aspect : 1f);
 			this.m_Lens.Orthographic = (cinemachineBrain != null && cinemachineBrain.OutputCamera.orthographic);
 			@default.Lens = this.m_Lens;
 			return @default;
@@ -419,9 +378,9 @@ namespace Cinemachine
 		[NoSaveDuringPlay]
 		public Transform m_Follow;
 
-		[LensSettingsProperty]
-		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active.")]
 		[FormerlySerializedAs("m_LensAttributes")]
+		[Tooltip("Specifies the lens properties of this Virtual Camera.  This generally mirrors the Unity Camera's lens settings, and will be used to drive the Unity camera when the vcam is active.")]
+		[LensSettingsProperty]
 		public LensSettings m_Lens = LensSettings.Default;
 
 		public const string PipelineName = "cm";
@@ -434,8 +393,8 @@ namespace Cinemachine
 
 		private CinemachineComponentBase[] m_ComponentPipeline;
 
-		[HideInInspector]
 		[SerializeField]
+		[HideInInspector]
 		private Transform m_ComponentOwner;
 
 		public delegate Transform CreatePipelineDelegate(CinemachineVirtualCamera vcam, string name, CinemachineComponentBase[] copyFrom);

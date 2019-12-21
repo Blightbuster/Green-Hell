@@ -43,11 +43,11 @@ namespace Pathfinding
 			{
 				if (a == this.startNode)
 				{
-					return (uint)((double)(this.startIntPoint - ((b != this.endNode) ? b.position : this.hTarget)).costMagnitude * (currentCost * 1.0 / (double)(a.position - b.position).costMagnitude));
+					return (uint)((double)(this.startIntPoint - ((b == this.endNode) ? this.hTarget : b.position)).costMagnitude * (currentCost * 1.0 / (double)(a.position - b.position).costMagnitude));
 				}
 				if (b == this.startNode)
 				{
-					return (uint)((double)(this.startIntPoint - ((a != this.endNode) ? a.position : this.hTarget)).costMagnitude * (currentCost * 1.0 / (double)(a.position - b.position).costMagnitude));
+					return (uint)((double)(this.startIntPoint - ((a == this.endNode) ? this.hTarget : a.position)).costMagnitude * (currentCost * 1.0 / (double)(a.position - b.position).costMagnitude));
 				}
 				if (a == this.endNode)
 				{
@@ -150,7 +150,7 @@ namespace Pathfinding
 		private void SetFlagOnSurroundingGridNodes(GridNode gridNode, int flag, bool flagState)
 		{
 			GridGraph gridGraph = GridNode.GetGridGraph(gridNode.GraphIndex);
-			int num = (gridGraph.neighbours != NumNeighbours.Four) ? ((gridGraph.neighbours != NumNeighbours.Eight) ? 6 : 8) : 4;
+			int num = (gridGraph.neighbours == NumNeighbours.Four) ? 4 : ((gridGraph.neighbours == NumNeighbours.Eight) ? 8 : 6);
 			int num2 = gridNode.NodeInGridIndex % gridGraph.width;
 			int num3 = gridNode.NodeInGridIndex / gridGraph.width;
 			if (flag != 1 && flag != 2)
@@ -383,8 +383,9 @@ namespace Pathfinding
 			if (base.CompleteState == PathCompleteState.Complete)
 			{
 				this.Trace(this.currentR);
+				return;
 			}
-			else if (this.calculatePartial && this.partialBestTarget != null)
+			if (this.calculatePartial && this.partialBestTarget != null)
 			{
 				base.CompleteState = PathCompleteState.Partial;
 				this.Trace(this.partialBestTarget);
@@ -395,12 +396,13 @@ namespace Pathfinding
 		{
 			if (logMode == PathLog.None || (!base.error && logMode == PathLog.OnlyErrors))
 			{
-				return string.Empty;
+				return "";
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			base.DebugStringPrefix(logMode, stringBuilder);
 			if (!base.error && logMode == PathLog.Heavy)
 			{
+				Vector3 vector;
 				if (this.hasEndPoint && this.endNode != null)
 				{
 					PathNode pathNode = this.pathHandler.GetPathNode(this.endNode);
@@ -412,7 +414,7 @@ namespace Pathfinding
 					stringBuilder.Append(pathNode.F);
 					stringBuilder.Append("\n\tPoint: ");
 					StringBuilder stringBuilder2 = stringBuilder;
-					Vector3 vector = this.endPoint;
+					vector = this.endPoint;
 					stringBuilder2.Append(vector.ToString());
 					stringBuilder.Append("\n\tGraph: ");
 					stringBuilder.Append(this.endNode.GraphIndex);
@@ -420,8 +422,8 @@ namespace Pathfinding
 				stringBuilder.Append("\nStart Node");
 				stringBuilder.Append("\n\tPoint: ");
 				StringBuilder stringBuilder3 = stringBuilder;
-				Vector3 vector2 = this.startPoint;
-				stringBuilder3.Append(vector2.ToString());
+				vector = this.startPoint;
+				stringBuilder3.Append(vector.ToString());
 				stringBuilder.Append("\n\tGraph: ");
 				if (this.startNode != null)
 				{
@@ -451,8 +453,7 @@ namespace Pathfinding
 			int num2 = 0;
 			for (int i = 0; i < this.vectorPath.Count - 1; i++)
 			{
-				Vector3 a = VectorMath.ClosestPointOnSegment(this.vectorPath[i], this.vectorPath[i + 1], point);
-				float sqrMagnitude = (a - point).sqrMagnitude;
+				float sqrMagnitude = (VectorMath.ClosestPointOnSegment(this.vectorPath[i], this.vectorPath[i + 1], point) - point).sqrMagnitude;
 				if (sqrMagnitude < num)
 				{
 					num = sqrMagnitude;

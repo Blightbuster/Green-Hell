@@ -5,9 +5,9 @@ namespace AIs
 {
 	public class MoraleModule : AIModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 		}
 
 		public override void OnUpdate()
@@ -38,13 +38,10 @@ namespace AIs
 			}
 			foreach (Firecamp firecamp in Firecamp.s_Firecamps)
 			{
-				if (firecamp.m_Burning)
+				if (firecamp.m_Burning && base.transform.position.Distance(firecamp.transform.position) < 4f)
 				{
-					if (base.transform.position.Distance(firecamp.transform.position) < 4f)
-					{
-						this.m_Morale = 0f;
-						break;
-					}
+					this.m_Morale = 0f;
+					break;
 				}
 			}
 		}

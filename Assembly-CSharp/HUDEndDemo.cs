@@ -42,6 +42,7 @@ public class HUDEndDemo : HUDBase
 		this.m_Logo.color = color;
 		Player.Get().BlockMoves();
 		Player.Get().BlockRotation();
+		ScenarioManager.Get().SetBoolVariable("PlayerMechGameEnding", true);
 	}
 
 	protected override bool ShouldShow()
@@ -53,10 +54,19 @@ public class HUDEndDemo : HUDBase
 	{
 		base.Update();
 		this.UpdateBGAlpha();
-		if (Input.GetKeyDown(KeyCode.Escape))
+		if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Space))
 		{
-			Application.Quit();
+			this.QuitToMainMenu();
 		}
+	}
+
+	private void QuitToMainMenu()
+	{
+		Music.Get().StopAll();
+		MusicJingle.Get().StoppAll();
+		GreenHellGame.Instance.SetSnapshot(AudioMixerSnapshotGame.Default, 0.5f);
+		LoadingScreen.Get().Show(LoadingScreenState.ReturnToMainMenu);
+		GreenHellGame.Instance.ReturnToMainMenu();
 	}
 
 	private void UpdateBGAlpha()
@@ -67,8 +77,9 @@ public class HUDEndDemo : HUDBase
 			color.a = Mathf.Clamp01(CJTools.Math.GetProportionalClamp(0f, 1f, Time.time - this.m_ShowTime, 0f, this.m_FadoutDuration));
 			this.m_BG.color = color;
 			this.m_LastBGFadeTime = Time.time;
+			return;
 		}
-		else if (Time.time - this.m_LastBGFadeTime > 1.5f)
+		if (Time.time - this.m_LastBGFadeTime > 1.5f)
 		{
 			if (this.m_StartFadeLogoTime == 0f)
 			{

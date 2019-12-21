@@ -14,6 +14,12 @@ public class PlantFruit : Trigger
 		this.m_DefaultLayer = LayerMask.NameToLayer("SmallPlant");
 	}
 
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+		BalanceSystem20.Get().OnItemDestroyed(this);
+	}
+
 	public override void GetActions(List<TriggerAction.TYPE> actions)
 	{
 		if (HeavyObjectController.Get().IsActive())
@@ -30,8 +36,9 @@ public class PlantFruit : Trigger
 		if (action == TriggerAction.TYPE.Take)
 		{
 			this.Take();
+			return;
 		}
-		else if (action == TriggerAction.TYPE.Expand)
+		if (action == TriggerAction.TYPE.Expand)
 		{
 			HUDItem.Get().Activate(this);
 		}
@@ -47,6 +54,10 @@ public class PlantFruit : Trigger
 		Item item = ItemsManager.Get().CreateItem(this.m_ItemInfo.m_ID, false, Vector3.zero, Quaternion.identity);
 		item.m_FirstTriggerTime = MainLevel.Instance.m_TODSky.Cycle.GameTime;
 		item.m_WasTriggered = true;
+		if (this.m_Acre)
+		{
+			this.m_Acre.OnTake(this);
+		}
 		if (item.Take())
 		{
 			UnityEngine.Object.Destroy(base.gameObject);
@@ -63,9 +74,12 @@ public class PlantFruit : Trigger
 			base.Disappear(true);
 			return;
 		}
+		if (this.m_Acre)
+		{
+			this.m_Acre.OnEat(this);
+		}
 		ItemID item_id = (ItemID)Enum.Parse(typeof(ItemID), this.m_InfoName);
-		Item item = ItemsManager.Get().CreateItem(item_id, false, Vector3.zero, Quaternion.identity);
-		item.Eat();
+		ItemsManager.Get().CreateItem(item_id, false, Vector3.zero, Quaternion.identity).Eat();
 		UnityEngine.Object.Destroy(base.gameObject);
 	}
 
@@ -78,7 +92,7 @@ public class PlantFruit : Trigger
 	{
 		if (this.m_ItemInfo.m_LockedInfoID != string.Empty && !ItemsManager.Get().m_UnlockedItemInfos.Contains(this.m_ItemInfo.m_ID))
 		{
-			return GreenHellGame.Instance.GetLocalization().Get(this.m_ItemInfo.m_LockedInfoID);
+			return GreenHellGame.Instance.GetLocalization().Get(this.m_ItemInfo.m_LockedInfoID, true);
 		}
 		return base.GetTriggerInfoLocalized();
 	}
@@ -89,5 +103,8 @@ public class PlantFruit : Trigger
 	[HideInInspector]
 	public bool m_Eatable;
 
-	private ItemInfo m_ItemInfo;
+	[HideInInspector]
+	public ItemInfo m_ItemInfo;
+
+	public Acre m_Acre;
 }

@@ -3,23 +3,6 @@ using Enums;
 
 public class ConsumableInfo : ItemInfo
 {
-	public ConsumableInfo()
-	{
-		this.m_Fat = 0f;
-		this.m_Carbohydrates = 0f;
-		this.m_Proteins = 0f;
-		this.m_Water = 0f;
-		this.m_MinPart = 0f;
-		this.m_Capacity = 0f;
-		this.m_ConsumeEffect = ConsumeEffect.None;
-		this.m_ConsumeEffectDelay = 0f;
-		this.m_ConsumeEffectChance = 1f;
-		this.m_ConsumeEffectLevel = 0;
-		this.m_AddEnergy = 0f;
-		this.m_SanityChange = 0;
-		this.m_Disgusting = false;
-	}
-
 	public float m_Fat { get; set; }
 
 	public float m_Carbohydrates { get; set; }
@@ -46,6 +29,23 @@ public class ConsumableInfo : ItemInfo
 
 	public bool m_Disgusting { get; set; }
 
+	public ConsumableInfo()
+	{
+		this.m_Fat = 0f;
+		this.m_Carbohydrates = 0f;
+		this.m_Proteins = 0f;
+		this.m_Water = 0f;
+		this.m_MinPart = 0f;
+		this.m_Capacity = 0f;
+		this.m_ConsumeEffect = ConsumeEffect.None;
+		this.m_ConsumeEffectDelay = 0f;
+		this.m_ConsumeEffectChance = 1f;
+		this.m_ConsumeEffectLevel = 0;
+		this.m_AddEnergy = 0f;
+		this.m_SanityChange = 0;
+		this.m_Disgusting = false;
+	}
+
 	public override bool IsConsumable()
 	{
 		return true;
@@ -56,59 +56,69 @@ public class ConsumableInfo : ItemInfo
 		if (key.GetName() == "Fat")
 		{
 			this.m_Fat = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "Carbohydrates")
+		if (key.GetName() == "Carbohydrates")
 		{
 			this.m_Carbohydrates = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "Proteins")
+		if (key.GetName() == "Proteins")
 		{
 			this.m_Proteins = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "Water")
+		if (key.GetName() == "Water")
 		{
 			this.m_Water = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "MinPart")
+		if (key.GetName() == "MinPart")
 		{
 			this.m_MinPart = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "Capacity")
+		if (key.GetName() == "Capacity")
 		{
 			this.m_Capacity = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "ConsumeEffect")
+		if (key.GetName() == "ConsumeEffect")
 		{
 			this.m_ConsumeEffect = (ConsumeEffect)Enum.Parse(typeof(ConsumeEffect), key.GetVariable(0).SValue);
+			return;
 		}
-		else if (key.GetName() == "ConsumeEffectDelay")
+		if (key.GetName() == "ConsumeEffectDelay")
 		{
 			this.m_ConsumeEffectDelay = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "ConsumeEffectChance")
+		if (key.GetName() == "ConsumeEffectChance")
 		{
 			this.m_ConsumeEffectChance = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "ConsumeEffectLevel")
+		if (key.GetName() == "ConsumeEffectLevel")
 		{
 			this.m_ConsumeEffectLevel = key.GetVariable(0).IValue;
+			return;
 		}
-		else if (key.GetName() == "SanityChange")
+		if (key.GetName() == "SanityChange")
 		{
 			this.m_SanityChange = key.GetVariable(0).IValue;
+			return;
 		}
-		else if (key.GetName() == "AddEnergy")
+		if (key.GetName() == "AddEnergy")
 		{
 			this.m_AddEnergy = key.GetVariable(0).FValue;
+			return;
 		}
-		else if (key.GetName() == "Disgusting")
+		if (key.GetName() == "Disgusting")
 		{
 			this.m_Disgusting = (key.GetVariable(0).IValue != 0);
+			return;
 		}
-		else
-		{
-			base.LoadParams(key);
-		}
+		base.LoadParams(key);
 	}
 
 	public override void GetInfoText(ref string result)

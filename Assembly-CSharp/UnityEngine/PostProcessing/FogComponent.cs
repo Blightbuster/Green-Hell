@@ -33,34 +33,27 @@ namespace UnityEngine.PostProcessing
 			FogModel.Settings settings = base.model.settings;
 			Material material = this.context.materialFactory.Get("Hidden/Post FX/Fog");
 			material.shaderKeywords = null;
-			Color value = (!GraphicsUtils.isLinearColorSpace) ? RenderSettings.fogColor : RenderSettings.fogColor.linear;
+			Color value = GraphicsUtils.isLinearColorSpace ? RenderSettings.fogColor.linear : RenderSettings.fogColor;
 			material.SetColor(FogComponent.Uniforms._FogColor, value);
 			material.SetFloat(FogComponent.Uniforms._Density, RenderSettings.fogDensity);
 			material.SetFloat(FogComponent.Uniforms._Start, RenderSettings.fogStartDistance);
 			material.SetFloat(FogComponent.Uniforms._End, RenderSettings.fogEndDistance);
-			FogMode fogMode = RenderSettings.fogMode;
-			if (fogMode != FogMode.Linear)
+			switch (RenderSettings.fogMode)
 			{
-				if (fogMode != FogMode.Exponential)
-				{
-					if (fogMode == FogMode.ExponentialSquared)
-					{
-						material.EnableKeyword("FOG_EXP2");
-					}
-				}
-				else
-				{
-					material.EnableKeyword("FOG_EXP");
-				}
-			}
-			else
-			{
+			case FogMode.Linear:
 				material.EnableKeyword("FOG_LINEAR");
+				break;
+			case FogMode.Exponential:
+				material.EnableKeyword("FOG_EXP");
+				break;
+			case FogMode.ExponentialSquared:
+				material.EnableKeyword("FOG_EXP2");
+				break;
 			}
-			RenderTextureFormat format = (!this.context.isHdr) ? RenderTextureFormat.Default : RenderTextureFormat.DefaultHDR;
+			RenderTextureFormat format = this.context.isHdr ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default;
 			cb.GetTemporaryRT(FogComponent.Uniforms._TempRT, this.context.width, this.context.height, 24, FilterMode.Bilinear, format);
 			cb.Blit(BuiltinRenderTextureType.CameraTarget, FogComponent.Uniforms._TempRT);
-			cb.Blit(FogComponent.Uniforms._TempRT, BuiltinRenderTextureType.CameraTarget, material, (!settings.excludeSkybox) ? 0 : 1);
+			cb.Blit(FogComponent.Uniforms._TempRT, BuiltinRenderTextureType.CameraTarget, material, settings.excludeSkybox ? 1 : 0);
 			cb.ReleaseTemporaryRT(FogComponent.Uniforms._TempRT);
 		}
 

@@ -33,15 +33,15 @@ namespace AIs
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
-			Vector3 normalized2D = (Player.Get().transform.position - this.m_AI.transform.position).GetNormalized2D();
+			Vector3 normalized2D = (this.m_AI.m_EnemyModule.m_Enemy.transform.position - this.m_AI.transform.position).GetNormalized2D();
 			if (!this.m_Rotation)
 			{
-				float f = Vector3.Angle(this.m_AI.transform.forward.GetNormalized2D(), normalized2D);
-				if (Mathf.Abs(f) > RotateTo.MAX_ANGLE)
+				if (Mathf.Abs(Vector3.Angle(this.m_AI.transform.forward.GetNormalized2D(), normalized2D)) > RotateTo.MAX_ANGLE)
 				{
 					base.StartAction(this.m_RotateTo);
-					this.m_RotateTo.SetupParams(Player.Get().gameObject, false);
+					this.m_RotateTo.SetupParams(this.m_AI.m_EnemyModule.m_Enemy.gameObject, false);
 					this.m_Rotation = true;
+					return;
 				}
 			}
 			else

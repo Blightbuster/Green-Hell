@@ -20,11 +20,11 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (this.flags & 268435456u) != 0u;
+				return (this.flags & 268435456u) > 0u;
 			}
 			set
 			{
-				this.flags = ((this.flags & 4026531839u) | ((!value) ? 0u : 268435456u));
+				this.flags = ((this.flags & 4026531839u) | (value ? 268435456u : 0u));
 			}
 		}
 
@@ -32,11 +32,11 @@ namespace Pathfinding
 		{
 			get
 			{
-				return (this.flags & 536870912u) != 0u;
+				return (this.flags & 536870912u) > 0u;
 			}
 			set
 			{
-				this.flags = ((this.flags & 3758096383u) | ((!value) ? 0u : 536870912u));
+				this.flags = ((this.flags & 3758096383u) | (value ? 536870912u : 0u));
 			}
 		}
 

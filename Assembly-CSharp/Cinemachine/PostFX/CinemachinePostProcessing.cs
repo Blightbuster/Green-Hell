@@ -1,23 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Rendering.PostProcessing;
 
 namespace Cinemachine.PostFX
 {
+	[DocumentationSorting(101f, DocumentationSortingAttribute.Level.UserRef)]
+	[ExecuteInEditMode]
 	[AddComponentMenu("")]
 	[SaveDuringPlay]
-	[ExecuteInEditMode]
-	[DocumentationSorting(101f, DocumentationSortingAttribute.Level.UserRef)]
 	public class CinemachinePostProcessing : CinemachineExtension
 	{
 		public PostProcessProfile Profile
 		{
 			get
 			{
-				return (!(this.mProfileCopy != null)) ? this.m_Profile : this.mProfileCopy;
+				if (!(this.mProfileCopy != null))
+				{
+					return this.m_Profile;
+				}
+				return this.mProfileCopy;
 			}
 		}
 
@@ -72,27 +75,25 @@ namespace Cinemachine.PostFX
 				if (!this.IsValid)
 				{
 					this.DestroyProfileCopy();
+					return;
+				}
+				if (!this.m_FocusTracksTarget || !state.HasLookAt)
+				{
+					this.DestroyProfileCopy();
 				}
 				else
 				{
-					if (!this.m_FocusTracksTarget || !state.HasLookAt)
+					if (this.mProfileCopy == null || this.mCachedProfileIsInvalid)
 					{
-						this.DestroyProfileCopy();
+						this.CreateProfileCopy();
 					}
-					else
+					DepthOfField depthOfField;
+					if (this.mProfileCopy.TryGetSettings<DepthOfField>(out depthOfField))
 					{
-						if (this.mProfileCopy == null || this.mCachedProfileIsInvalid)
-						{
-							this.CreateProfileCopy();
-						}
-						DepthOfField depthOfField;
-						if (this.mProfileCopy.TryGetSettings<DepthOfField>(out depthOfField))
-						{
-							depthOfField.focusDistance.value = (state.FinalPosition - state.ReferenceLookAt).magnitude + this.m_FocusOffset;
-						}
+						depthOfField.focusDistance.value = (state.FinalPosition - state.ReferenceLookAt).magnitude + this.m_FocusOffset;
 					}
-					state.AddCustomBlendable(new CameraState.CustomBlendable(this, 1f));
 				}
+				state.AddCustomBlendable(new CameraState.CustomBlendable(this, 1f));
 			}
 		}
 
@@ -102,11 +103,9 @@ namespace Cinemachine.PostFX
 			if (postProcessLayer == null)
 			{
 				brain.PostProcessingComponent = null;
+				return;
 			}
-			else
-			{
-				postProcessLayer.ResetHistory();
-			}
+			postProcessLayer.ResetHistory();
 		}
 
 		private static void ApplyPostFX(CinemachineBrain brain)
@@ -174,32 +173,25 @@ namespace Cinemachine.PostFX
 					if ((value & 1 << i) != 0)
 					{
 						gameObject.layer = i;
-						break;
+						IL_DE:
+						while (CinemachinePostProcessing.sVolumes.Count < minVolumes)
+						{
+							CinemachinePostProcessing.sVolumes.Add(gameObject.gameObject.AddComponent<PostProcessVolume>());
+						}
+						goto IL_EB;
 					}
 				}
-				while (CinemachinePostProcessing.sVolumes.Count < minVolumes)
-				{
-					CinemachinePostProcessing.sVolumes.Add(gameObject.gameObject.AddComponent<PostProcessVolume>());
-				}
+				goto IL_DE;
 			}
+			IL_EB:
 			return CinemachinePostProcessing.sVolumes;
 		}
 
 		[RuntimeInitializeOnLoadMethod]
 		public static void InitializeModule()
 		{
-			UnityEvent<CinemachineBrain> sPostProcessingHandler = CinemachineBrain.sPostProcessingHandler;
-			if (CinemachinePostProcessing.<>f__mg$cache0 == null)
-			{
-				CinemachinePostProcessing.<>f__mg$cache0 = new UnityAction<CinemachineBrain>(CinemachinePostProcessing.StaticPostFXHandler);
-			}
-			sPostProcessingHandler.RemoveListener(CinemachinePostProcessing.<>f__mg$cache0);
-			UnityEvent<CinemachineBrain> sPostProcessingHandler2 = CinemachineBrain.sPostProcessingHandler;
-			if (CinemachinePostProcessing.<>f__mg$cache1 == null)
-			{
-				CinemachinePostProcessing.<>f__mg$cache1 = new UnityAction<CinemachineBrain>(CinemachinePostProcessing.StaticPostFXHandler);
-			}
-			sPostProcessingHandler2.AddListener(CinemachinePostProcessing.<>f__mg$cache1);
+			CinemachineBrain.sPostProcessingHandler.RemoveListener(new UnityAction<CinemachineBrain>(CinemachinePostProcessing.StaticPostFXHandler));
+			CinemachineBrain.sPostProcessingHandler.AddListener(new UnityAction<CinemachineBrain>(CinemachinePostProcessing.StaticPostFXHandler));
 		}
 
 		private static void StaticPostFXHandler(CinemachineBrain brain)
@@ -211,12 +203,7 @@ namespace Cinemachine.PostFX
 				x = (brain.PostProcessingComponent as PostProcessLayer);
 				if (x != null)
 				{
-					UnityEvent<CinemachineBrain> cameraCutEvent = brain.m_CameraCutEvent;
-					if (CinemachinePostProcessing.<>f__mg$cache2 == null)
-					{
-						CinemachinePostProcessing.<>f__mg$cache2 = new UnityAction<CinemachineBrain>(CinemachinePostProcessing.OnCameraCut);
-					}
-					cameraCutEvent.AddListener(CinemachinePostProcessing.<>f__mg$cache2);
+					brain.m_CameraCutEvent.AddListener(new UnityAction<CinemachineBrain>(CinemachinePostProcessing.OnCameraCut));
 				}
 			}
 			if (x != null)
@@ -241,14 +228,5 @@ namespace Cinemachine.PostFX
 		private static string sVolumeOwnerName = "__CMVolumes";
 
 		private static List<PostProcessVolume> sVolumes = new List<PostProcessVolume>();
-
-		[CompilerGenerated]
-		private static UnityAction<CinemachineBrain> <>f__mg$cache0;
-
-		[CompilerGenerated]
-		private static UnityAction<CinemachineBrain> <>f__mg$cache1;
-
-		[CompilerGenerated]
-		private static UnityAction<CinemachineBrain> <>f__mg$cache2;
 	}
 }

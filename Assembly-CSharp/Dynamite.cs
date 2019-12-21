@@ -14,18 +14,17 @@ public class Dynamite : Construction
 
 	public override bool CanTrigger()
 	{
+		if (this.m_CantTriggerDuringDialog && DialogsManager.Get().IsAnyDialogPlaying())
+		{
+			return false;
+		}
 		Item currentItem = Player.Get().GetCurrentItem(Hand.Right);
 		if (!currentItem)
 		{
 			return false;
 		}
 		ItemID id = currentItem.m_Info.m_ID;
-		if (id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch)
-		{
-			Torch torch = (Torch)currentItem;
-			return torch.m_Burning;
-		}
-		return false;
+		return (id == ItemID.Torch || id == ItemID.Weak_Torch || id == ItemID.Tobacco_Torch) && ((Torch)currentItem).m_Burning;
 	}
 
 	public override void GetActions(List<TriggerAction.TYPE> actions)
@@ -61,8 +60,9 @@ public class Dynamite : Construction
 		if (this.m_State == Dynamite.State.Burning)
 		{
 			this.UpdateBurning();
+			return;
 		}
-		else if (this.m_State == Dynamite.State.Explosion)
+		if (this.m_State == Dynamite.State.Explosion)
 		{
 			this.UpdateExplosion();
 		}

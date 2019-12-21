@@ -1,13 +1,15 @@
 ﻿using System;
+using CJTools;
+using Enums;
 using UnityEngine;
 
 namespace AIs
 {
-	public class HealthModule : AIModule
+	public class HealthModule : AIModule, IReplicatedBehaviour
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
+			base.Initialize(being);
 			this.m_Health = this.m_AI.m_Params.m_Health;
 		}
 
@@ -25,6 +27,10 @@ namespace AIs
 		{
 			this.m_Health -= dec;
 			this.m_Health = Mathf.Clamp(this.m_Health, 0f, this.m_AI.m_Params.m_Health);
+			if (this.m_Health == 0f)
+			{
+				this.Die();
+			}
 		}
 
 		private void IncreaseHealth(float dec)
@@ -39,35 +45,48 @@ namespace AIs
 			{
 				return;
 			}
-			base.OnTakeDamage(info);
-			if (AI.IsTurtle(this.m_AI.m_ID))
+			GameObject damager = info.m_Damager;
+			if (damager != null && damager.IsPlayer())
 			{
-				if (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.Hide)
+				this.ReplRequestOwnership(false);
+			}
+			base.OnTakeDamage(info);
+			if (!AI.IsTurtle(this.m_AI.m_ID))
+			{
+				this.DecreaseHealth(info.m_Damage);
+				if (this.m_Health > 0f)
 				{
-					this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.Hide);
+					if (this.CanPunchBack())
+					{
+						this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.PunchBack);
+					}
+					else if (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.Hide)
+					{
+						this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.ReactOnHit);
+					}
+					if (AI.IsSnake(this.m_AI.m_ID) && info.m_Damager.IsPlayer() && FistFightController.Get().IsActive())
+					{
+						int num = UnityEngine.Random.Range(0, 2);
+						AnimEventID event_id = AnimEventID.GiveDamageLLeg;
+						if (num == 1)
+						{
+							event_id = AnimEventID.GiveDamageRLeg;
+						}
+						Vector3 world_hit_dir = this.m_AI.transform.TransformVector(DamageModule.GetHitDirLocal(event_id));
+						this.m_AI.m_DamageModule.GivePlayerDamage(world_hit_dir);
+						this.m_AI.m_SnakeSoundModule.PlayAttackSound();
+					}
 				}
 				return;
 			}
-			this.DecreaseHealth(info.m_Damage);
-			if (this.m_Health == 0f)
+			if (this.m_AI.m_GoalsModule.m_ActiveGoal == null || this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type != AIGoalType.Hide)
 			{
-				this.Die();
+				this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.Hide);
+				return;
 			}
-			else
+			if (this.m_AI.m_GoalsModule.m_ActiveGoal.m_Type == AIGoalType.Hide)
 			{
-				if (this.CanPunchBack())
-				{
-					this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.PunchBack);
-				}
-				else
-				{
-					this.m_AI.m_GoalsModule.ActivateGoal(AIGoalType.ReactOnHit);
-				}
-				if (AI.IsSnake(this.m_AI.m_ID) && info.m_Damager == Player.Get().gameObject && FistFightController.Get().IsActive())
-				{
-					this.m_AI.m_DamageModule.GivePlayerDamage();
-					this.m_AI.m_SnakeSoundModule.PlayAttackSound();
-				}
+				this.m_AI.m_GoalsModule.m_ActiveGoal.ResetDuration();
 			}
 		}
 
@@ -78,12 +97,7 @@ namespace AIs
 				return false;
 			}
 			float num = UnityEngine.Random.Range(0f, 1f);
-			if (this.m_AI.m_GoalsModule.m_PunchBackGoal.m_Probability <= num)
-			{
-				return false;
-			}
-			float num2 = base.transform.position.Distance(Player.Get().transform.position);
-			return num2 <= this.m_AI.m_Params.m_AttackRange;
+			return this.m_AI.m_GoalsModule.m_PunchBackGoal.m_Probability > num && base.transform.position.Distance(Player.Get().transform.position) <= this.m_AI.m_Params.m_AttackRange;
 		}
 
 		public override void OnUpdate()
@@ -107,9 +121,49 @@ namespace AIs
 			this.m_AI.OnDie();
 		}
 
+		public void ReplOnChangedOwner(bool was_owner)
+		{
+		}
+
+		public void ReplOnSpawned()
+		{
+		}
+
+		public void OnReplicationPrepare()
+		{
+			float health = this.GetHealth();
+			if (!CJTools.Math.FloatsEqual(this.m_ReplHealth, health, 2))
+			{
+				this.m_ReplHealth = health;
+				this.ReplSetDirty();
+			}
+		}
+
+		public void OnReplicationSerialize(P2PNetworkWriter writer, bool initial_state)
+		{
+			writer.Write(this.m_ReplHealth);
+		}
+
+		public void OnReplicationDeserialize(P2PNetworkReader reader, bool initial_state)
+		{
+			this.m_ReplHealth = reader.ReadFloat();
+		}
+
+		public void OnReplicationResolve()
+		{
+			if (this.m_ReplHealth < this.m_Health)
+			{
+				this.DecreaseHealth(this.m_Health - this.m_ReplHealth);
+				return;
+			}
+			this.m_Health = this.m_ReplHealth;
+		}
+
 		private float m_Health;
 
 		[HideInInspector]
 		public bool m_IsDead;
+
+		private float m_ReplHealth = -1f;
 	}
 }

@@ -14,7 +14,7 @@ public class LiquidInHandsController : PlayerController
 	{
 		base.Awake();
 		LiquidInHandsController.s_Instance = this;
-		this.m_ControllerType = PlayerControllerType.LiquidInHands;
+		base.m_ControllerType = PlayerControllerType.LiquidInHands;
 	}
 
 	protected override void OnEnable()
@@ -79,13 +79,14 @@ public class LiquidInHandsController : PlayerController
 		}
 	}
 
-	public override void OnInputAction(InputsManager.InputAction action)
+	public override void OnInputAction(InputActionData action_data)
 	{
-		if (action == InputsManager.InputAction.Quit || action == InputsManager.InputAction.AdditionalQuit)
+		if (action_data.m_Action == InputsManager.InputAction.Quit || action_data.m_Action == InputsManager.InputAction.AdditionalQuit)
 		{
 			this.Spill(-1f);
+			return;
 		}
-		else if (action == InputsManager.InputAction.WaterDrink)
+		if (action_data.m_Action == InputsManager.InputAction.WaterDrink)
 		{
 			this.Drink();
 		}
@@ -119,8 +120,8 @@ public class LiquidInHandsController : PlayerController
 
 	public override void GetInputActions(ref List<int> actions)
 	{
-		actions.Add(67);
-		actions.Add(19);
+		actions.Add(70);
+		actions.Add(21);
 	}
 
 	private void CheckContainer()

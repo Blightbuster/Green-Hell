@@ -13,8 +13,7 @@ namespace Cinemachine.Utility
 		{
 			if (src != null && dst != null)
 			{
-				Type type = src.GetType();
-				FieldInfo[] fields = type.GetFields(bindingAttr);
+				FieldInfo[] fields = src.GetType().GetFields(bindingAttr);
 				for (int i = 0; i < fields.Length; i++)
 				{
 					if (!fields[i].IsStatic)
@@ -58,35 +57,34 @@ namespace Cinemachine.Utility
 			{
 				return obj;
 			}
-			FieldInfo field = obj.GetType().GetField(array[0], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-			obj = field.GetValue(obj);
+			obj = obj.GetType().GetField(array[0], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(obj);
 			return ReflectionHelpers.GetParentObject(string.Join(".", array, 1, array.Length - 1), obj);
 		}
 
 		public static string GetFieldPath<TType, TValue>(Expression<Func<TType, TValue>> expr)
 		{
 			ExpressionType nodeType = expr.Body.NodeType;
-			if (nodeType != ExpressionType.MemberAccess)
+			if (nodeType == ExpressionType.MemberAccess)
 			{
-				throw new InvalidOperationException();
-			}
-			MemberExpression memberExpression = expr.Body as MemberExpression;
-			List<string> list = new List<string>();
-			while (memberExpression != null)
-			{
-				list.Add(memberExpression.Member.Name);
-				memberExpression = (memberExpression.Expression as MemberExpression);
-			}
-			StringBuilder stringBuilder = new StringBuilder();
-			for (int i = list.Count - 1; i >= 0; i--)
-			{
-				stringBuilder.Append(list[i]);
-				if (i > 0)
+				MemberExpression memberExpression = expr.Body as MemberExpression;
+				List<string> list = new List<string>();
+				while (memberExpression != null)
 				{
-					stringBuilder.Append('.');
+					list.Add(memberExpression.Member.Name);
+					memberExpression = (memberExpression.Expression as MemberExpression);
 				}
+				StringBuilder stringBuilder = new StringBuilder();
+				for (int i = list.Count - 1; i >= 0; i--)
+				{
+					stringBuilder.Append(list[i]);
+					if (i > 0)
+					{
+						stringBuilder.Append('.');
+					}
+				}
+				return stringBuilder.ToString();
 			}
-			return stringBuilder.ToString();
+			throw new InvalidOperationException();
 		}
 	}
 }

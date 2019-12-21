@@ -18,30 +18,28 @@ namespace UnityEngine.PostProcessing
 		{
 			BuiltinDebugViewsModel.Mode mode = base.model.settings.mode;
 			DepthTextureMode depthTextureMode = DepthTextureMode.None;
-			if (mode != BuiltinDebugViewsModel.Mode.Normals)
+			switch (mode)
 			{
-				if (mode != BuiltinDebugViewsModel.Mode.MotionVectors)
-				{
-					if (mode == BuiltinDebugViewsModel.Mode.Depth)
-					{
-						depthTextureMode |= DepthTextureMode.Depth;
-					}
-				}
-				else
-				{
-					depthTextureMode |= (DepthTextureMode.Depth | DepthTextureMode.MotionVectors);
-				}
-			}
-			else
-			{
+			case BuiltinDebugViewsModel.Mode.Depth:
+				depthTextureMode |= DepthTextureMode.Depth;
+				break;
+			case BuiltinDebugViewsModel.Mode.Normals:
 				depthTextureMode |= DepthTextureMode.DepthNormals;
+				break;
+			case BuiltinDebugViewsModel.Mode.MotionVectors:
+				depthTextureMode |= (DepthTextureMode.Depth | DepthTextureMode.MotionVectors);
+				break;
 			}
 			return depthTextureMode;
 		}
 
 		public override CameraEvent GetCameraEvent()
 		{
-			return (base.model.settings.mode != BuiltinDebugViewsModel.Mode.MotionVectors) ? CameraEvent.BeforeImageEffectsOpaque : CameraEvent.BeforeImageEffects;
+			if (base.model.settings.mode != BuiltinDebugViewsModel.Mode.MotionVectors)
+			{
+				return CameraEvent.BeforeImageEffectsOpaque;
+			}
+			return CameraEvent.BeforeImageEffects;
 		}
 
 		public override string GetName()
@@ -49,33 +47,26 @@ namespace UnityEngine.PostProcessing
 			return "Builtin Debug Views";
 		}
 
-		public override void PopulateCommandBuffer(CommandBuffer cb)
+		public unsafe override void PopulateCommandBuffer(CommandBuffer cb)
 		{
-			BuiltinDebugViewsModel.Settings settings = base.model.settings;
+			BuiltinDebugViewsModel.Settings* settings = base.model.settings;
 			Material material = this.context.materialFactory.Get("Hidden/Post FX/Builtin Debug Views");
 			material.shaderKeywords = null;
 			if (this.context.isGBufferAvailable)
 			{
 				material.EnableKeyword("SOURCE_GBUFFER");
 			}
-			BuiltinDebugViewsModel.Mode mode = settings.mode;
-			if (mode != BuiltinDebugViewsModel.Mode.Depth)
+			switch (settings.mode)
 			{
-				if (mode != BuiltinDebugViewsModel.Mode.Normals)
-				{
-					if (mode == BuiltinDebugViewsModel.Mode.MotionVectors)
-					{
-						this.MotionVectorsPass(cb);
-					}
-				}
-				else
-				{
-					this.DepthNormalsPass(cb);
-				}
-			}
-			else
-			{
+			case BuiltinDebugViewsModel.Mode.Depth:
 				this.DepthPass(cb);
+				break;
+			case BuiltinDebugViewsModel.Mode.Normals:
+				this.DepthNormalsPass(cb);
+				break;
+			case BuiltinDebugViewsModel.Mode.MotionVectors:
+				this.MotionVectorsPass(cb);
+				break;
 			}
 			this.context.Interrupt();
 		}

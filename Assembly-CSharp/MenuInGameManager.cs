@@ -14,6 +14,11 @@ public class MenuInGameManager : MonoBehaviour
 		MenuInGameManager.s_Instance = this;
 	}
 
+	private void OnDestroy()
+	{
+		MenuInGameManager.s_Instance = null;
+	}
+
 	private void Start()
 	{
 		this.Init();
@@ -25,15 +30,16 @@ public class MenuInGameManager : MonoBehaviour
 		DebugUtils.Assert(gameObject, true);
 		for (int i = 0; i < gameObject.transform.childCount; i++)
 		{
-			GameObject gameObject2 = gameObject.transform.GetChild(i).gameObject;
-			MenuScreen component = gameObject2.GetComponent<MenuScreen>();
+			MenuScreen component = gameObject.transform.GetChild(i).gameObject.GetComponent<MenuScreen>();
 			if (component)
 			{
 				component.m_MenuInGameManager = this;
+				component.m_IsIngame = true;
 				component.Hide();
 				this.m_Screens[component.GetType()] = component;
 			}
 		}
+		this.m_CanvasGroup = gameObject.GetComponent<CanvasGroup>();
 		this.m_OutlineCamera = GameObject.Find("OutlineCamera").GetComponent<Camera>();
 		this.m_Initialized = true;
 	}
@@ -43,6 +49,16 @@ public class MenuInGameManager : MonoBehaviour
 		MenuScreen result = null;
 		this.m_Screens.TryGetValue(screen_type, out result);
 		return result;
+	}
+
+	public bool IsCursorVisible()
+	{
+		return this.m_CursorVisible;
+	}
+
+	public void SetCursorVisible(bool visible)
+	{
+		this.m_CursorVisible = visible;
 	}
 
 	private void Update()
@@ -61,13 +77,14 @@ public class MenuInGameManager : MonoBehaviour
 		{
 			return;
 		}
-		if (Input.GetKeyDown(KeyCode.Escape) && this.CanShowMenuInGame())
+		bool flag = Input.GetKeyDown(KeyCode.Escape) || (GreenHellGame.IsPadControllerActive() && Input.GetKeyDown(InputHelpers.PadButton.Start.KeyFromPad()));
+		if (flag && this.CanShowMenuInGame())
 		{
 			this.ShowScreen(typeof(MenuInGame));
 		}
 		else if (this.m_CurrentScreen)
 		{
-			if (Input.GetKeyDown(KeyCode.Escape))
+			if (flag)
 			{
 				if (this.m_CurrentScreen.GetType() == typeof(MenuInGame))
 				{
@@ -78,7 +95,7 @@ public class MenuInGameManager : MonoBehaviour
 					this.m_CurrentScreen.OnBack();
 				}
 			}
-			else if (Input.GetKeyDown(KeyCode.Tab))
+			else if (Input.GetKeyDown(KeyCode.Tab) && this.m_CurrentScreen.GetType() == typeof(MenuInGame))
 			{
 				this.HideMenu();
 			}
@@ -99,35 +116,60 @@ public class MenuInGameManager : MonoBehaviour
 		{
 			if (Input.GetKeyDown(KeyCode.F1))
 			{
-				this.ShowScreen(typeof(MenuDebugItem));
+				if (!Input.GetKey(KeyCode.RightControl))
+				{
+					this.ShowScreen(typeof(MenuDebugItem));
+					return;
+				}
+				this.ShowScreen(typeof(MenuDebugSounds));
+				return;
 			}
 			else if (Input.GetKeyDown(KeyCode.F2))
 			{
-				this.ShowScreen(typeof(MenuDebugScenario));
+				if (!Input.GetKey(KeyCode.RightControl))
+				{
+					this.ShowScreen(typeof(MenuDebugScenario));
+					return;
+				}
+				this.ShowScreen(typeof(MenuDebugCamera));
+				return;
 			}
-			else if (Input.GetKeyDown(KeyCode.F3))
+			else
 			{
-				this.ShowScreen(typeof(MenuDebugSpawners));
-			}
-			else if (Input.GetKeyDown(KeyCode.F4))
-			{
-				this.ShowScreen(typeof(MenuDebugSkills));
-			}
-			else if (Input.GetKeyDown(KeyCode.F5))
-			{
-				this.ShowScreen(typeof(MenuDebugAI));
-			}
-			else if (Input.GetKeyDown(KeyCode.F6))
-			{
-				this.ShowScreen(typeof(MenuDebugWounds));
-			}
-			else if (Input.GetKeyDown(KeyCode.F7))
-			{
-				this.ShowScreen(typeof(MenuDebugDialogs));
-			}
-			else if (Input.GetKeyDown(KeyCode.F9))
-			{
-				this.ShowScreen(typeof(MenuDebugLog));
+				if (Input.GetKeyDown(KeyCode.F3))
+				{
+					this.ShowScreen(typeof(MenuDebugSpawners));
+					return;
+				}
+				if (Input.GetKeyDown(KeyCode.F4))
+				{
+					this.ShowScreen(typeof(MenuDebugSkills));
+					return;
+				}
+				if (Input.GetKeyDown(KeyCode.F5))
+				{
+					this.ShowScreen(typeof(MenuDebugAI));
+					return;
+				}
+				if (Input.GetKeyDown(KeyCode.F6))
+				{
+					this.ShowScreen(typeof(MenuDebugWounds));
+					return;
+				}
+				if (Input.GetKeyDown(KeyCode.F7))
+				{
+					this.ShowScreen(typeof(MenuDebugDialogs));
+					return;
+				}
+				if (Input.GetKeyDown(KeyCode.F9))
+				{
+					this.ShowScreen(typeof(MenuDebugLog));
+					return;
+				}
+				if (Input.GetKeyDown(KeyCode.F11))
+				{
+					this.ShowScreen(typeof(MenuDebugScenarioDialogs));
+				}
 			}
 		}
 	}
@@ -136,14 +178,16 @@ public class MenuInGameManager : MonoBehaviour
 	{
 		if (this.m_CurrentScreen)
 		{
-			if (this.m_PrevoiusScreen)
+			while (this.m_PreviousScreens.Count > 0)
 			{
-				this.ShowScreen(this.m_PrevoiusScreen.GetType());
+				Type type = this.m_PreviousScreens.Pop();
+				if (type != this.m_CurrentScreen.GetType())
+				{
+					this.ShowScreen(type);
+					return;
+				}
 			}
-			else
-			{
-				this.HideMenu();
-			}
+			this.HideMenu();
 		}
 	}
 
@@ -170,7 +214,17 @@ public class MenuInGameManager : MonoBehaviour
 		}
 		PostProcessManager.Get().SetWeight(PostProcessManager.Effect.InGameMenu, 1f);
 		this.m_OutlineCamera.enabled = false;
-		this.m_PrevoiusScreen = this.m_CurrentScreen;
+		if (this.m_PreviousScreens.Contains(screen_type))
+		{
+			while (this.m_PreviousScreens.Peek() != screen_type)
+			{
+				this.m_PreviousScreens.Pop();
+			}
+		}
+		else
+		{
+			this.m_PreviousScreens.Push(screen_type);
+		}
 		if (this.m_CurrentScreen)
 		{
 			this.m_CurrentScreen.Hide();
@@ -179,7 +233,11 @@ public class MenuInGameManager : MonoBehaviour
 		{
 			Player.Get().BlockMoves();
 			Player.Get().BlockRotation();
-			CursorManager.Get().ShowCursor(true);
+			if (GreenHellGame.IsPCControllerActive() || menuScreen.IsDebugScreen())
+			{
+				CursorManager.Get().ShowCursor(true, false);
+				this.m_CursorVisible = true;
+			}
 			if (menuScreen.ShouldPauseGame())
 			{
 				MainLevel.Instance.Pause(true);
@@ -187,6 +245,16 @@ public class MenuInGameManager : MonoBehaviour
 		}
 		menuScreen.Show();
 		this.m_CurrentScreen = menuScreen;
+		if (GreenHellGame.IsPadControllerActive() && screen_type == typeof(MenuInGame))
+		{
+			foreach (Type type in this.m_Screens.Keys)
+			{
+				if (screen_type != type)
+				{
+					this.m_Screens[type].m_ActiveMenuOption = null;
+				}
+			}
+		}
 	}
 
 	public void HideMenu()
@@ -199,14 +267,23 @@ public class MenuInGameManager : MonoBehaviour
 				MainLevel.Instance.Pause(false);
 			}
 		}
+		foreach (Type key in this.m_Screens.Keys)
+		{
+			this.m_Screens[key].m_ActiveMenuOption = null;
+		}
 		this.m_CurrentScreen = null;
-		this.m_PrevoiusScreen = null;
+		this.m_PreviousScreens.Clear();
 		Player.Get().UnblockMoves();
 		Player.Get().UnblockRotation();
 		CursorManager.Get().SetCursor(CursorManager.TYPE.Normal);
-		CursorManager.Get().ShowCursor(false);
+		if (this.m_CursorVisible)
+		{
+			CursorManager.Get().ShowCursor(false, false);
+			this.m_CursorVisible = false;
+		}
 		this.m_OutlineCamera.enabled = true;
 		PostProcessManager.Get().SetWeight(PostProcessManager.Effect.InGameMenu, 0f);
+		InputsManager.Get().m_OmitMouseUp = true;
 	}
 
 	public bool IsAnyScreenVisible()
@@ -214,15 +291,40 @@ public class MenuInGameManager : MonoBehaviour
 		return this.m_CurrentScreen != null;
 	}
 
+	public bool IsScreenVisible(Type type)
+	{
+		return this.m_CurrentScreen != null && this.m_CurrentScreen.GetType() == type;
+	}
+
+	public void ScenarioShowScreen(string menu_name)
+	{
+		Type type = Type.GetType(menu_name);
+		this.ShowScreen(type);
+	}
+
+	public void SetupController()
+	{
+		foreach (MenuScreen menuScreen in this.m_Screens.Values)
+		{
+			menuScreen.SetupController();
+		}
+	}
+
 	private Dictionary<Type, MenuScreen> m_Screens = new Dictionary<Type, MenuScreen>();
 
 	private MenuScreen m_CurrentScreen;
 
-	private MenuScreen m_PrevoiusScreen;
+	private Stack<Type> m_PreviousScreens = new Stack<Type>();
 
 	private Camera m_OutlineCamera;
 
 	private static MenuInGameManager s_Instance;
+
+	[HideInInspector]
+	public CanvasGroup m_CanvasGroup;
+
+	[HideInInspector]
+	private bool m_CursorVisible;
 
 	private bool m_Initialized;
 }

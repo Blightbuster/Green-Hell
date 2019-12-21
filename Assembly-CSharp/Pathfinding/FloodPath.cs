@@ -129,7 +129,7 @@ namespace Pathfinding
 				if (this.pathHandler.heap.isEmpty)
 				{
 					base.CompleteState = PathCompleteState.Complete;
-					break;
+					return;
 				}
 				this.currentR = this.pathHandler.heap.Remove();
 				if (num > 500)

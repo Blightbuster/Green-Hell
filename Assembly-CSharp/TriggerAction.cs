@@ -1,10 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 
 public class TriggerAction
 {
 	public static string GetText(TriggerAction.TYPE action)
 	{
-		return "HUD_Trigger_" + action.ToString();
+		string text;
+		if (!TriggerAction.s_CachedText.TryGetValue((int)action, out text))
+		{
+			text = "HUD_Trigger_" + action.ToString();
+			TriggerAction.s_CachedText[(int)action] = text;
+		}
+		return text;
 	}
 
 	public static string GetTextPerfect(TriggerAction.TYPE action)
@@ -13,16 +20,16 @@ public class TriggerAction
 		{
 		case TriggerAction.TYPE.Take:
 			return "HUD_Trigger_Taken";
-		default:
-			if (action == TriggerAction.TYPE.CloseContextMenu)
-			{
-				return "HUD_Trigger_CloseContextMenu";
-			}
-			if (action != TriggerAction.TYPE.InsertToStand)
-			{
-				return string.Empty;
-			}
-			break;
+		case TriggerAction.TYPE.Expand:
+		case TriggerAction.TYPE.CantSleep:
+		case TriggerAction.TYPE.Climb:
+		case TriggerAction.TYPE.Deconstruct:
+		case TriggerAction.TYPE.Exit:
+		case TriggerAction.TYPE.Look:
+		case TriggerAction.TYPE.Open:
+		case TriggerAction.TYPE.TakeHold:
+		case TriggerAction.TYPE.Close:
+			goto IL_EB;
 		case TriggerAction.TYPE.Harvest:
 			return "HUD_Trigger_Harvested";
 		case TriggerAction.TYPE.Eat:
@@ -44,9 +51,36 @@ public class TriggerAction
 			return "HUD_Trigger_Pour";
 		case TriggerAction.TYPE.Read:
 			return "HUD_Trigger_ReadPast";
+		default:
+			switch (action)
+			{
+			case TriggerAction.TYPE.CloseContextMenu:
+				return "HUD_Trigger_CloseContextMenu";
+			case TriggerAction.TYPE.InsertToStand:
+				break;
+			case TriggerAction.TYPE.TakeHoldLong:
+				goto IL_EB;
+			case TriggerAction.TYPE.TurnOn:
+				return "HUD_Trigger_TurnedOn";
+			case TriggerAction.TYPE.TurnOff:
+				return "HUD_Trigger_TurnedOff";
+			case TriggerAction.TYPE.Touch:
+				return "HUD_Trigger_Touched";
+			case TriggerAction.TYPE.Talk:
+				return "HUD_Trigger_Talked";
+			case TriggerAction.TYPE.Play:
+				return "HUD_Trigger_Played";
+			default:
+				goto IL_EB;
+			}
+			break;
 		}
 		return "HUD_Trigger_Inserted";
+		IL_EB:
+		return string.Empty;
 	}
+
+	private static Dictionary<int, string> s_CachedText = new Dictionary<int, string>();
 
 	public enum TYPE
 	{
@@ -82,6 +116,15 @@ public class TriggerAction
 		SaveGame,
 		Remove,
 		CloseContextMenu,
-		InsertToStand
+		InsertToStand,
+		TakeHoldLong,
+		TurnOn,
+		TurnOff,
+		Touch,
+		Talk,
+		Play,
+		Plow,
+		Pick,
+		_Count
 	}
 }

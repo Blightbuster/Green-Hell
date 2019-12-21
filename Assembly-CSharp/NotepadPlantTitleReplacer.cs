@@ -11,12 +11,10 @@ public class NotepadPlantTitleReplacer : MonoBehaviour
 		ItemInfo info = ItemsManager.Get().GetInfo(this.m_ItemID);
 		if (ItemsManager.Get().m_UnlockedItemInfos.Contains(item) || info.m_LockedInfoID.Length == 0)
 		{
-			base.GetComponent<Text>().text = GreenHellGame.Instance.GetLocalization().Get(base.gameObject.name);
+			base.GetComponent<Text>().text = GreenHellGame.Instance.GetLocalization().Get(base.gameObject.name, true);
+			return;
 		}
-		else
-		{
-			base.GetComponent<Text>().text = GreenHellGame.Instance.GetLocalization().Get(info.m_LockedInfoID);
-		}
+		base.GetComponent<Text>().text = GreenHellGame.Instance.GetLocalization().Get(info.m_LockedInfoID, true);
 	}
 
 	public string m_ItemID = string.Empty;

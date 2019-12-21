@@ -10,11 +10,9 @@ public class SyncCausticsWaterLevel : MonoBehaviour
 		if (this.refGameObject && this.refGameObject.GetComponent<Renderer>())
 		{
 			this.refGameObject.GetComponent<Renderer>().sharedMaterial.SetFloat("TERRAIN_CausticsWaterLevel", base.transform.position.y + this.yOffset);
+			return;
 		}
-		else
-		{
-			Shader.SetGlobalFloat("TERRAIN_CausticsWaterLevel", base.transform.position.y + this.yOffset);
-		}
+		Shader.SetGlobalFloat("TERRAIN_CausticsWaterLevel", base.transform.position.y + this.yOffset);
 	}
 
 	public GameObject refGameObject;

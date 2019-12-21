@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace Cinemachine
 {
-	[ExecuteInEditMode]
 	[DocumentationSorting(12f, DocumentationSortingAttribute.Level.UserRef)]
-	[AddComponentMenu("Cinemachine/CinemachineClearShot")]
+	[ExecuteInEditMode]
 	[DisallowMultipleComponent]
+	[AddComponentMenu("Cinemachine/CinemachineClearShot")]
 	public class CinemachineClearShot : CinemachineVirtualCameraBase
 	{
 		public override string Description
@@ -15,11 +15,15 @@ namespace Cinemachine
 			get
 			{
 				ICinemachineCamera liveChild = this.LiveChild;
-				if (this.mActiveBlend == null)
+				if (this.mActiveBlend != null)
 				{
-					return (liveChild == null) ? "(none)" : ("[" + liveChild.Name + "]");
+					return this.mActiveBlend.Description;
 				}
-				return this.mActiveBlend.Description;
+				if (liveChild == null)
+				{
+					return "(none)";
+				}
+				return "[" + liveChild.Name + "]";
 			}
 		}
 
@@ -74,9 +78,10 @@ namespace Cinemachine
 		{
 			base.RemovePostPipelineStageHook(d);
 			this.UpdateListOfChildren();
-			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in this.m_ChildCameras)
+			CinemachineVirtualCameraBase[] childCameras = this.m_ChildCameras;
+			for (int i = 0; i < childCameras.Length; i++)
 			{
-				cinemachineVirtualCameraBase.RemovePostPipelineStageHook(d);
+				childCameras[i].RemovePostPipelineStageHook(d);
 			}
 		}
 
@@ -103,7 +108,7 @@ namespace Cinemachine
 			}
 			if (this.mActiveBlend != null)
 			{
-				this.mActiveBlend.TimeInBlend += ((deltaTime < 0f) ? this.mActiveBlend.Duration : deltaTime);
+				this.mActiveBlend.TimeInBlend += ((deltaTime >= 0f) ? deltaTime : this.mActiveBlend.Duration);
 				if (this.mActiveBlend.IsComplete)
 				{
 					this.mActiveBlend = null;
@@ -170,8 +175,7 @@ namespace Cinemachine
 				return;
 			}
 			List<CinemachineVirtualCameraBase> list = new List<CinemachineVirtualCameraBase>();
-			CinemachineVirtualCameraBase[] componentsInChildren = base.GetComponentsInChildren<CinemachineVirtualCameraBase>(true);
-			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in componentsInChildren)
+			foreach (CinemachineVirtualCameraBase cinemachineVirtualCameraBase in base.GetComponentsInChildren<CinemachineVirtualCameraBase>(true))
 			{
 				if (cinemachineVirtualCameraBase.transform.parent == base.transform)
 				{
@@ -279,12 +283,12 @@ namespace Cinemachine
 			AnimationCurve animationCurve = this.m_DefaultBlend.BlendCurve;
 			if (this.m_CustomBlends != null)
 			{
-				string fromCameraName = (fromKey == null) ? string.Empty : fromKey.Name;
-				string toCameraName = (toKey == null) ? string.Empty : toKey.Name;
+				string fromCameraName = (fromKey != null) ? fromKey.Name : string.Empty;
+				string toCameraName = (toKey != null) ? toKey.Name : string.Empty;
 				animationCurve = this.m_CustomBlends.GetBlendCurveForVirtualCameras(fromCameraName, toCameraName, animationCurve);
 			}
 			Keyframe[] keys = animationCurve.keys;
-			duration = ((keys != null && keys.Length != 0) ? keys[keys.Length - 1].time : 0f);
+			duration = ((keys == null || keys.Length == 0) ? 0f : keys[keys.Length - 1].time);
 			return animationCurve;
 		}
 
@@ -296,8 +300,7 @@ namespace Cinemachine
 			}
 			if (camA == null || activeBlend != null)
 			{
-				CameraState state = (activeBlend == null) ? this.State : activeBlend.State;
-				camA = new StaticPointVirtualCamera(state, (activeBlend == null) ? "(none)" : "Mid-blend");
+				camA = new StaticPointVirtualCamera((activeBlend != null) ? activeBlend.State : this.State, (activeBlend != null) ? "Mid-blend" : "(none)");
 			}
 			return new CinemachineBlend(camA, camB, blendCurve, duration, 0f);
 		}
@@ -317,17 +320,17 @@ namespace Cinemachine
 		[NoSaveDuringPlay]
 		public Transform m_LookAt;
 
-		[NoSaveDuringPlay]
 		[Tooltip("Default object for the camera children wants to move with (the body target), if not specified in a child camera.  May be empty if all children specify targets of their own.")]
+		[NoSaveDuringPlay]
 		public Transform m_Follow;
 
-		[NoSaveDuringPlay]
 		[Tooltip("When enabled, the current child camera and blend will be indicated in the game window, for debugging")]
+		[NoSaveDuringPlay]
 		public bool m_ShowDebugText;
 
-		[NoSaveDuringPlay]
 		[SerializeField]
 		[HideInInspector]
+		[NoSaveDuringPlay]
 		public CinemachineVirtualCameraBase[] m_ChildCameras;
 
 		[Tooltip("Wait this many seconds before activating a new child camera")]
@@ -339,8 +342,8 @@ namespace Cinemachine
 		[Tooltip("If checked, camera choice will be randomized if multiple cameras are equally desirable.  Otherwise, child list order and child camera priority will be used.")]
 		public bool m_RandomizeChoice;
 
-		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
 		[CinemachineBlendDefinitionProperty]
+		[Tooltip("The blend which is used if you don't explicitly define a blend between two Virtual Cameras")]
 		public CinemachineBlendDefinition m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
 
 		[HideInInspector]

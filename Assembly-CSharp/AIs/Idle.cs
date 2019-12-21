@@ -28,7 +28,7 @@ namespace AIs
 		public override void Start()
 		{
 			base.Start();
-			this.m_Animation = ((this.m_ForceVersion < 0) ? this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)] : this.m_Anims[this.m_ForceVersion]);
+			this.m_Animation = ((this.m_ForceVersion >= 0) ? this.m_Anims[this.m_ForceVersion] : this.m_Anims[UnityEngine.Random.Range(0, this.m_Anims.Count)]);
 		}
 
 		public void SetupParams(float length)

@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Cinemachine
 {
 	[DocumentationSorting(18.5f, DocumentationSortingAttribute.Level.UserRef)]
-	[SaveDuringPlay]
 	[AddComponentMenu("Cinemachine/CinemachineSmoothPath")]
+	[SaveDuringPlay]
 	public class CinemachineSmoothPath : CinemachinePathBase
 	{
 		public override float MinPos
@@ -26,7 +26,7 @@ namespace Cinemachine
 				{
 					return 0f;
 				}
-				return (float)((!this.m_Looped) ? num : (num + 1));
+				return (float)(this.m_Looped ? (num + 1) : num);
 			}
 		}
 
@@ -60,7 +60,7 @@ namespace Cinemachine
 
 		private void UpdateControlPoints()
 		{
-			int num = (this.m_Waypoints != null) ? this.m_Waypoints.Length : 0;
+			int num = (this.m_Waypoints == null) ? 0 : this.m_Waypoints.Length;
 			if (num > 1 && (this.Looped != this.m_IsLoopedCache || this.m_ControlPoints1 == null || this.m_ControlPoints1.Length != num || this.m_ControlPoints2 == null || this.m_ControlPoints2.Length != num))
 			{
 				Vector4[] array = new Vector4[num];
@@ -125,7 +125,7 @@ namespace Cinemachine
 		public override Vector3 EvaluatePosition(float pos)
 		{
 			Vector3 position = Vector3.zero;
-			if (this.m_Waypoints.Length > 0)
+			if (this.m_Waypoints.Length != 0)
 			{
 				this.UpdateControlPoints();
 				int num;
@@ -164,7 +164,7 @@ namespace Cinemachine
 		public override Quaternion EvaluateOrientation(float pos)
 		{
 			Quaternion result = base.transform.rotation;
-			if (this.m_Waypoints.Length > 0)
+			if (this.m_Waypoints.Length != 0)
 			{
 				int num;
 				int num2;
@@ -183,8 +183,7 @@ namespace Cinemachine
 				if (!vector.AlmostZero())
 				{
 					Vector3 upwards = base.transform.rotation * Vector3.up;
-					Quaternion lhs = Quaternion.LookRotation(vector, upwards);
-					result = lhs * Quaternion.AngleAxis(angle, Vector3.forward);
+					result = Quaternion.LookRotation(vector, upwards) * Quaternion.AngleAxis(angle, Vector3.forward);
 				}
 			}
 			return result;

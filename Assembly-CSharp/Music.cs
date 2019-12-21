@@ -1,106 +1,229 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Music : MonoBehaviour, ISaveLoad
 {
-	private void Awake()
-	{
-		Music.s_Instance = this;
-	}
-
 	public static Music Get()
 	{
 		return Music.s_Instance;
 	}
 
-	private void InitSource()
+	private void Awake()
+	{
+		Music.s_Instance = this;
+		ScriptParser scriptParser = new ScriptParser();
+		scriptParser.Parse("MusicsMap.txt", true);
+		for (int i = 0; i < scriptParser.GetKeysCount(); i++)
+		{
+			Key key = scriptParser.GetKey(i);
+			this.m_MusicsMap[key.GetVariable(0).SValue] = key.GetVariable(1).SValue;
+		}
+	}
+
+	private void InitSources()
 	{
 		if (this.m_Initialized)
 		{
 			return;
 		}
-		this.m_Source = base.gameObject.AddComponent<AudioSource>();
-		this.m_Source.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Music);
-		this.m_Source.spatialBlend = 0f;
+		for (int i = 0; i < 2; i++)
+		{
+			this.m_Source[i] = base.gameObject.AddComponent<AudioSource>();
+			this.m_Source[i].outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.Music);
+			this.m_Source[i].spatialBlend = 0f;
+		}
 		this.m_Initialized = true;
 	}
 
-	public void Play(AudioClip clip)
+	public void Play(AudioClip clip, float volume = 1f, bool looped = false, int track = 0)
 	{
-		if (!this.m_Source)
+		if (!this.m_Source[track])
 		{
-			this.InitSource();
+			this.InitSources();
 		}
-		this.m_Source.clip = clip;
-		this.m_Source.volume = this.m_Volume;
-		this.m_Source.Play();
+		this.m_Source[track].clip = clip;
+		this.m_Source[track].volume = volume;
+		this.m_Source[track].loop = looped;
+		this.m_Source[track].Play();
 	}
 
-	public void PlayByName(string name, bool looped = false)
+	public string GetPath(string name)
 	{
-		string text = "Music/Jingle/" + name;
-		AudioClip audioClip = Resources.Load(text) as AudioClip;
+		if (!this.m_MusicsMap.ContainsKey(name.ToLower()))
+		{
+			return string.Empty;
+		}
+		string text = this.m_MusicsMap[name.ToLower()];
+		return text.Remove(text.LastIndexOf('.')).Remove(0, 17);
+	}
+
+	public void PlayByName(string name, bool looped = false, float volume = 1f, int track = 0)
+	{
+		string path = this.GetPath(name);
+		AudioClip audioClip = Resources.Load(path) as AudioClip;
 		if (!audioClip)
 		{
-			DebugUtils.Assert("[Music:PlayByName] Can't find music " + text, true, DebugUtils.AssertType.Info);
+			DebugUtils.Assert("[Music:PlayByName] Can't find music " + path, true, DebugUtils.AssertType.Info);
 			return;
 		}
-		if (!this.m_Source)
+		if (!this.m_Source[track])
 		{
-			this.InitSource();
+			this.InitSources();
 		}
-		this.m_Source.clip = audioClip;
-		this.m_Source.loop = looped;
-		this.m_Source.volume = this.m_Volume;
-		this.m_Source.Play();
+		this.m_Source[track].clip = audioClip;
+		this.m_Source[track].loop = looped;
+		this.m_Source[track].volume = volume;
+		this.m_Source[track].Play();
 	}
 
-	public void Stop(float fadeout = 0f)
+	public void Stop(float fadeout = 0f, int track = 0)
 	{
-		base.StartCoroutine(AudioFadeOut.FadeOut(this.m_Source, fadeout));
+		AudioSource audio_source = this.m_Source[track];
+		base.StartCoroutine(AudioFadeOut.FadeOut(audio_source, fadeout, 0f, null));
+	}
+
+	public bool IsMusicPlaying(int track = 0)
+	{
+		return this.m_Source[track].isPlaying && this.m_Source[track].volume > 0f;
+	}
+
+	public bool IsMusicPlayingAndIsNoPause(int track = 0)
+	{
+		return this.IsMusicPlaying(track) || MainLevel.Instance.IsPause();
 	}
 
 	public void Save()
 	{
-		if (this.m_Source)
+		for (int i = 0; i < 2; i++)
 		{
-			SaveGame.SaveVal("MusicPlaying", this.m_Source.isPlaying);
-			if (this.m_Source.isPlaying)
+			if (this.m_Source[i])
 			{
-				SaveGame.SaveVal("Music", this.m_Source.clip.name);
+				SaveGame.SaveVal("MusicPlaying" + i.ToString(), this.m_Source[i].isPlaying);
+				if (this.m_Source[i].isPlaying)
+				{
+					SaveGame.SaveVal("Music" + i.ToString(), this.m_Source[i].clip.name);
+				}
 			}
-		}
-		else
-		{
-			SaveGame.SaveVal("MusicPlaying", false);
+			else
+			{
+				SaveGame.SaveVal("MusicPlaying" + i.ToString(), false);
+			}
 		}
 	}
 
 	public void Load()
 	{
-		bool flag = SaveGame.LoadBVal("MusicPlaying");
-		if (flag)
+		for (int i = 0; i < 2; i++)
 		{
-			this.PlayByName(SaveGame.LoadSVal("Music"), false);
+			if (SaveGame.LoadBVal("MusicPlaying" + i.ToString()))
+			{
+				this.PlayByName(SaveGame.LoadSVal("Music" + i.ToString()), false, 1f, i);
+			}
 		}
 	}
 
-	public void SetVolume(float volume)
+	public void FadeOut(float target_volume, float time, int track)
 	{
-		if (!this.m_Source)
-		{
-			this.InitSource();
-		}
-		this.m_Volume = volume;
-		this.m_Source.volume = volume;
+		AudioSource audio_source = this.m_Source[track];
+		base.StartCoroutine(AudioFadeOut.FadeOut(audio_source, time, target_volume, null));
 	}
+
+	public void FadeIn(float target_volume, float time, int track)
+	{
+		AudioSource audio_source = this.m_Source[track];
+		base.StartCoroutine(AudioFadeOut.FadeIn(audio_source, time, target_volume, null));
+	}
+
+	public void Schedule(string clip_name, int track = 0, bool loop = false)
+	{
+		if (this.m_Scheduled.ContainsKey(track))
+		{
+			if (this.m_Scheduled[track] == null)
+			{
+				this.m_Scheduled[track] = new MusicScheduleData();
+			}
+			this.m_Scheduled[track].m_ClipName = clip_name;
+		}
+		else
+		{
+			MusicScheduleData musicScheduleData = new MusicScheduleData();
+			musicScheduleData.m_ClipName = clip_name;
+			this.m_Scheduled.Add(track, musicScheduleData);
+		}
+		if (this.m_Source[track].clip != null)
+		{
+			this.m_Scheduled[track].m_PlayTime = Time.time + (this.m_Source[track].clip.length - this.m_Source[track].time);
+		}
+		else
+		{
+			this.m_Scheduled[track].m_PlayTime = Time.time;
+		}
+		this.m_Scheduled[track].m_Loop = loop;
+	}
+
+	private void Update()
+	{
+		int key = -1;
+		for (int i = 0; i < 2; i++)
+		{
+			foreach (KeyValuePair<int, MusicScheduleData> keyValuePair in this.m_Scheduled)
+			{
+				int key2 = keyValuePair.Key;
+				Dictionary<int, MusicScheduleData>.Enumerator enumerator;
+				keyValuePair = enumerator.Current;
+				string clipName = keyValuePair.Value.m_ClipName;
+				keyValuePair = enumerator.Current;
+				bool loop = keyValuePair.Value.m_Loop;
+				if (clipName.Length > 0)
+				{
+					float time = Time.time;
+					keyValuePair = enumerator.Current;
+					if (time >= keyValuePair.Value.m_PlayTime)
+					{
+						this.PlayByName(clipName, loop, 1f, key2);
+						key = key2;
+						break;
+					}
+				}
+			}
+			this.m_Scheduled.Remove(key);
+		}
+	}
+
+	public void StopAll()
+	{
+		this.m_Scheduled.Clear();
+		for (int i = 0; i < this.m_Source.Count<AudioSource>(); i++)
+		{
+			AudioSource audioSource = this.m_Source[i];
+			if (audioSource != null)
+			{
+				audioSource.Stop();
+			}
+		}
+	}
+
+	public void StopAllOnTrack(int track, float time)
+	{
+		if (this.m_Scheduled.ContainsKey(track))
+		{
+			this.m_Scheduled.Remove(track);
+		}
+		this.FadeOut(0f, time, track);
+	}
+
+	private const int m_NumMusicTracks = 2;
 
 	[HideInInspector]
-	public AudioSource m_Source;
+	public AudioSource[] m_Source = new AudioSource[2];
 
 	private static Music s_Instance;
 
 	private bool m_Initialized;
 
-	private float m_Volume = 1f;
+	private Dictionary<string, string> m_MusicsMap = new Dictionary<string, string>();
+
+	private Dictionary<int, MusicScheduleData> m_Scheduled = new Dictionary<int, MusicScheduleData>();
 }

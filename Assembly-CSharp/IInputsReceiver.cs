@@ -2,7 +2,9 @@
 
 public interface IInputsReceiver
 {
-	void OnInputAction(InputsManager.InputAction action);
+	void OnInputAction(InputActionData action_data);
 
 	bool CanReceiveAction();
+
+	bool CanReceiveActionPaused();
 }

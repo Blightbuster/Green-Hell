@@ -13,7 +13,7 @@ public class HiddenAIHarvestTrigger : Trigger
 
 	public override bool CanTrigger()
 	{
-		return this.m_AI && this.m_AI.m_GoalsModule && this.m_AI.m_GoalsModule.m_CurrentAction != null && this.m_AI.m_GoalsModule.m_CurrentAction.GetType() == typeof(Hide);
+		return (!this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying()) && (this.m_AI && this.m_AI.m_GoalsModule && this.m_AI.m_GoalsModule.m_CurrentAction != null) && this.m_AI.m_GoalsModule.m_CurrentAction.GetType() == typeof(Hide);
 	}
 
 	public override void GetActions(List<TriggerAction.TYPE> actions)
@@ -30,8 +30,7 @@ public class HiddenAIHarvestTrigger : Trigger
 		if (action == TriggerAction.TYPE.Harvest)
 		{
 			this.m_AI.m_HealthModule.Die();
-			DeadBody component = base.gameObject.GetComponent<DeadBody>();
-			component.OnExecute(action);
+			base.gameObject.GetComponent<DeadBody>().OnExecute(action);
 		}
 	}
 
@@ -47,7 +46,7 @@ public class HiddenAIHarvestTrigger : Trigger
 
 	public override string GetAdditionalInfoLocalized()
 	{
-		return GreenHellGame.Instance.GetLocalization().Get("HUDAddInfo_BladeRequired");
+		return GreenHellGame.Instance.GetLocalization().Get("HUDAddInfo_BladeRequired", true);
 	}
 
 	public override bool RequiresToolToHarvest()

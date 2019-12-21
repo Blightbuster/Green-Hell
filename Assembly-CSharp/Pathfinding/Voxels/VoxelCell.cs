@@ -14,12 +14,8 @@ namespace Pathfinding.Voxels
 			}
 			VoxelSpan voxelSpan2 = null;
 			VoxelSpan voxelSpan3 = this.firstSpan;
-			while (voxelSpan3 != null)
+			while (voxelSpan3 != null && voxelSpan3.bottom <= voxelSpan.top)
 			{
-				if (voxelSpan3.bottom > voxelSpan.top)
-				{
-					break;
-				}
 				if (voxelSpan3.top < voxelSpan.bottom)
 				{
 					voxelSpan2 = voxelSpan3;
@@ -55,12 +51,10 @@ namespace Pathfinding.Voxels
 			{
 				voxelSpan.next = voxelSpan2.next;
 				voxelSpan2.next = voxelSpan;
+				return;
 			}
-			else
-			{
-				voxelSpan.next = this.firstSpan;
-				this.firstSpan = voxelSpan;
-			}
+			voxelSpan.next = this.firstSpan;
+			this.firstSpan = voxelSpan;
 		}
 
 		public VoxelSpan firstSpan;

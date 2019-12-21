@@ -7,18 +7,6 @@ namespace Cinemachine
 	[Serializable]
 	public struct LensSettings
 	{
-		public LensSettings(float fov, float orthographicSize, float nearClip, float farClip, float dutch, bool ortho, float aspect)
-		{
-			this = default(LensSettings);
-			this.FieldOfView = fov;
-			this.OrthographicSize = orthographicSize;
-			this.NearClipPlane = nearClip;
-			this.FarClipPlane = farClip;
-			this.Dutch = dutch;
-			this.Orthographic = ortho;
-			this.Aspect = aspect;
-		}
-
 		internal bool Orthographic { get; set; }
 
 		internal float Aspect { get; set; }
@@ -36,6 +24,18 @@ namespace Cinemachine
 				@default.Aspect = fromCamera.aspect;
 			}
 			return @default;
+		}
+
+		public LensSettings(float fov, float orthographicSize, float nearClip, float farClip, float dutch, bool ortho, float aspect)
+		{
+			this = default(LensSettings);
+			this.FieldOfView = fov;
+			this.OrthographicSize = orthographicSize;
+			this.NearClipPlane = nearClip;
+			this.FarClipPlane = farClip;
+			this.Dutch = dutch;
+			this.Orthographic = ortho;
+			this.Aspect = aspect;
 		}
 
 		public static LensSettings Lerp(LensSettings lensA, LensSettings lensB, float t)
@@ -74,8 +74,8 @@ namespace Cinemachine
 		[Tooltip("This defines the far region of the renderable range of the camera frustum. Typically you want to set this value as low as possible without cutting off desired distant objects")]
 		public float FarClipPlane;
 
-		[Tooltip("Camera Z roll, or tilt, in degrees.")]
 		[Range(-180f, 180f)]
+		[Tooltip("Camera Z roll, or tilt, in degrees.")]
 		public float Dutch;
 	}
 }

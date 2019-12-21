@@ -11,7 +11,7 @@ public class TOD_AmbientParameters
 	[TOD_Min(0f)]
 	public float Saturation = 1f;
 
-	[TOD_Min(0f)]
 	[Tooltip("Refresh interval of the ambient light probe in seconds.")]
+	[TOD_Min(0f)]
 	public float UpdateInterval = 1f;
 }

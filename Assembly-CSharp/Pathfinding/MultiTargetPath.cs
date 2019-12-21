@@ -106,7 +106,7 @@ namespace Pathfinding
 					List<GraphNode> list = this.nodePaths[i];
 					if (list != null)
 					{
-						uint g = this.pathHandler.GetPathNode(list[(!this.inverted) ? (list.Count - 1) : 0]).G;
+						uint g = this.pathHandler.GetPathNode(list[this.inverted ? 0 : (list.Count - 1)]).G;
 						if (this.chosenTarget == -1 || g < num)
 						{
 							this.chosenTarget = i;
@@ -126,13 +126,11 @@ namespace Pathfinding
 				this.startNode = this.targetNodes[target];
 				this.startPoint = this.targetPoints[target];
 				this.originalStartPoint = this.originalTargetPoints[target];
+				return;
 			}
-			else
-			{
-				this.endNode = this.targetNodes[target];
-				this.endPoint = this.targetPoints[target];
-				this.originalEndPoint = this.originalTargetPoints[target];
-			}
+			this.endNode = this.targetNodes[target];
+			this.endPoint = this.targetPoints[target];
+			this.originalEndPoint = this.originalTargetPoints[target];
 		}
 
 		protected override void ReturnPath()
@@ -301,9 +299,9 @@ namespace Pathfinding
 				base.LogError(string.Concat(new string[]
 				{
 					"Couldn't find close nodes to either the start or the end (start = ",
-					(this.startNode == null) ? "not found" : "found",
+					(this.startNode != null) ? "found" : "not found",
 					" end = ",
-					(!flag3) ? "none found" : "at least one found",
+					flag3 ? "at least one found" : "none found",
 					")"
 				}));
 				base.Error();
@@ -343,7 +341,7 @@ namespace Pathfinding
 			case MultiTargetPath.HeuristicMode.None:
 				this.heuristic = Heuristic.None;
 				this.heuristicScale = 0f;
-				goto IL_26C;
+				goto IL_226;
 			case MultiTargetPath.HeuristicMode.Average:
 				if (!firstTime)
 				{
@@ -357,9 +355,9 @@ namespace Pathfinding
 				{
 					return;
 				}
-				goto IL_ED;
+				goto IL_D4;
 			case MultiTargetPath.HeuristicMode.MovingMidpoint:
-				goto IL_ED;
+				goto IL_D4;
 			case MultiTargetPath.HeuristicMode.Sequential:
 			{
 				if (!firstTime && !this.targetsFound[this.sequentialTarget])
@@ -380,10 +378,10 @@ namespace Pathfinding
 						}
 					}
 				}
-				goto IL_26C;
+				goto IL_226;
 			}
 			default:
-				goto IL_26C;
+				goto IL_226;
 			}
 			Vector3 vector = Vector3.zero;
 			int num2 = 0;
@@ -401,8 +399,8 @@ namespace Pathfinding
 			}
 			vector /= (float)num2;
 			this.hTarget = (Int3)vector;
-			goto IL_26C;
-			IL_ED:
+			goto IL_226;
+			IL_D4:
 			Vector3 vector2 = Vector3.zero;
 			Vector3 vector3 = Vector3.zero;
 			bool flag = false;
@@ -425,7 +423,7 @@ namespace Pathfinding
 			}
 			Int3 hTarget = (Int3)((vector2 + vector3) * 0.5f);
 			this.hTarget = hTarget;
-			IL_26C:
+			IL_226:
 			if (!firstTime)
 			{
 				this.RebuildOpenList();
@@ -510,14 +508,14 @@ namespace Pathfinding
 					if (this.targetNodeCount <= 0)
 					{
 						base.CompleteState = PathCompleteState.Complete;
-						break;
+						return;
 					}
 				}
 				this.currentR.node.Open(this, this.currentR, this.pathHandler);
 				if (this.pathHandler.heap.isEmpty)
 				{
 					base.CompleteState = PathCompleteState.Complete;
-					break;
+					return;
 				}
 				this.currentR = this.pathHandler.heap.Remove();
 				if (num > 500)
@@ -557,7 +555,7 @@ namespace Pathfinding
 		{
 			if (logMode == PathLog.None || (!base.error && logMode == PathLog.OnlyErrors))
 			{
-				return string.Empty;
+				return "";
 			}
 			StringBuilder debugStringBuilder = this.pathHandler.DebugStringBuilder;
 			debugStringBuilder.Length = 0;
@@ -565,11 +563,12 @@ namespace Pathfinding
 			if (!base.error)
 			{
 				debugStringBuilder.Append("\nShortest path was ");
-				debugStringBuilder.Append((this.chosenTarget != -1) ? this.nodePaths[this.chosenTarget].Count.ToString() : "undefined");
+				debugStringBuilder.Append((this.chosenTarget == -1) ? "undefined" : this.nodePaths[this.chosenTarget].Count.ToString());
 				debugStringBuilder.Append(" nodes long");
 				if (logMode == PathLog.Heavy)
 				{
 					debugStringBuilder.Append("\nPaths (").Append(this.targetsFound.Length).Append("):");
+					Vector3 endPoint;
 					for (int i = 0; i < this.targetsFound.Length; i++)
 					{
 						debugStringBuilder.Append("\n\n\tPath ").Append(i).Append(" Found: ").Append(this.targetsFound[i]);
@@ -577,8 +576,7 @@ namespace Pathfinding
 						{
 							debugStringBuilder.Append("\n\t\tLength: ");
 							debugStringBuilder.Append(this.nodePaths[i].Count);
-							GraphNode graphNode = this.nodePaths[i][this.nodePaths[i].Count - 1];
-							if (graphNode != null)
+							if (this.nodePaths[i][this.nodePaths[i].Count - 1] != null)
 							{
 								PathNode pathNode = this.pathHandler.GetPathNode(this.endNode);
 								if (pathNode != null)
@@ -592,7 +590,7 @@ namespace Pathfinding
 									debugStringBuilder.Append(pathNode.F);
 									debugStringBuilder.Append("\n\t\t\tPoint: ");
 									StringBuilder stringBuilder = debugStringBuilder;
-									Vector3 endPoint = this.endPoint;
+									endPoint = this.endPoint;
 									stringBuilder.Append(endPoint.ToString());
 									debugStringBuilder.Append("\n\t\t\tGraph: ");
 									debugStringBuilder.Append(this.endNode.GraphIndex);
@@ -607,12 +605,12 @@ namespace Pathfinding
 					debugStringBuilder.Append("\nStart Node");
 					debugStringBuilder.Append("\n\tPoint: ");
 					StringBuilder stringBuilder2 = debugStringBuilder;
-					Vector3 endPoint2 = this.endPoint;
-					stringBuilder2.Append(endPoint2.ToString());
+					endPoint = this.endPoint;
+					stringBuilder2.Append(endPoint.ToString());
 					debugStringBuilder.Append("\n\tGraph: ");
 					debugStringBuilder.Append(this.startNode.GraphIndex);
 					debugStringBuilder.Append("\nBinary Heap size at completion: ");
-					debugStringBuilder.AppendLine((this.pathHandler.heap != null) ? (this.pathHandler.heap.numberOfItems - 2).ToString() : "Null");
+					debugStringBuilder.AppendLine((this.pathHandler.heap == null) ? "Null" : (this.pathHandler.heap.numberOfItems - 2).ToString());
 				}
 			}
 			base.DebugStringSuffix(logMode, debugStringBuilder);

@@ -6,16 +6,6 @@ namespace RootMotion.FinalIK
 	[Serializable]
 	public class IKEffector
 	{
-		public IKEffector()
-		{
-		}
-
-		public IKEffector(Transform bone, Transform[] childBones)
-		{
-			this.bone = bone;
-			this.childBones = childBones;
-		}
-
 		public IKSolver.Node GetNode(IKSolverFullBody solver)
 		{
 			return solver.chain[this.chainIndex].nodes[this.nodeIndex];
@@ -31,6 +21,16 @@ namespace RootMotion.FinalIK
 			this.rotationWeight = Mathf.Clamp(rotationWeight, 0f, 1f);
 		}
 
+		public IKEffector()
+		{
+		}
+
+		public IKEffector(Transform bone, Transform[] childBones)
+		{
+			this.bone = bone;
+			this.childBones = childBones;
+		}
+
 		public bool IsValid(IKSolver solver, ref string message)
 		{
 			if (this.bone == null)
@@ -43,9 +43,10 @@ namespace RootMotion.FinalIK
 				message = "IK Effector is referencing to a bone '" + this.bone.name + "' that does not excist in the Node Chain.";
 				return false;
 			}
-			foreach (Transform x in this.childBones)
+			Transform[] array = this.childBones;
+			for (int i = 0; i < array.Length; i++)
 			{
-				if (x == null)
+				if (array[i] == null)
 				{
 					message = "IK Effector contains a null reference.";
 					return false;
@@ -104,11 +105,9 @@ namespace RootMotion.FinalIK
 					}
 				}
 				this.isEndEffector = true;
+				return;
 			}
-			else
-			{
-				this.isEndEffector = false;
-			}
+			this.isEndEffector = false;
 		}
 
 		public void ResetOffset(IKSolverFullBody solver)

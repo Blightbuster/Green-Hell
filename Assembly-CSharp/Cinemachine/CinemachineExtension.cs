@@ -56,9 +56,7 @@ namespace Cinemachine
 			object obj = null;
 			if (!this.mExtraState.TryGetValue(vcam, out obj))
 			{
-				object obj2 = Activator.CreateInstance<T>();
-				this.mExtraState[vcam] = obj2;
-				obj = obj2;
+				obj = (this.mExtraState[vcam] = Activator.CreateInstance<T>());
 			}
 			return obj as T;
 		}

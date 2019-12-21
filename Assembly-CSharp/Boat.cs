@@ -43,8 +43,7 @@ public class Boat : Trigger
 	public override void OnExecute(TriggerAction.TYPE action)
 	{
 		base.OnExecute(action);
-		BoatController component = Player.Get().GetComponent<BoatController>();
-		component.SetBoat(this);
+		Player.Get().GetComponent<BoatController>().SetBoat(this);
 		Player.Get().StartController(PlayerControllerType.Boat);
 	}
 
@@ -57,11 +56,9 @@ public class Boat : Trigger
 		if (this.m_Occupied)
 		{
 			actions.Add(TriggerAction.TYPE.Exit);
+			return;
 		}
-		else
-		{
-			actions.Add(TriggerAction.TYPE.Use);
-		}
+		actions.Add(TriggerAction.TYPE.Use);
 	}
 
 	private void FixedUpdate()
@@ -80,11 +77,10 @@ public class Boat : Trigger
 				a2.Normalize();
 				a2.y = 0f;
 				this.m_RigidBody.AddForce(a2 * drivingForce);
-				Vector3 a3 = this.m_RigidBody.transform.InverseTransformVector(this.m_RigidBody.angularVelocity);
-				Vector3 a4 = a3 - this.m_WantedAngVel;
-				a4.x = (a4.z = 0f);
-				a4 = this.m_RigidBody.transform.TransformVector(-a4);
-				this.m_RigidBody.AddTorque(a4 * turningTorque);
+				Vector3 a3 = this.m_RigidBody.transform.InverseTransformVector(this.m_RigidBody.angularVelocity) - this.m_WantedAngVel;
+				a3.x = (a3.z = 0f);
+				a3 = this.m_RigidBody.transform.TransformVector(-a3);
+				this.m_RigidBody.AddTorque(a3 * turningTorque);
 			}
 		}
 	}
@@ -95,7 +91,7 @@ public class Boat : Trigger
 
 	public override bool CanTrigger()
 	{
-		return true;
+		return !this.m_CantTriggerDuringDialog || !DialogsManager.Get().IsAnyDialogPlaying();
 	}
 
 	private bool m_Occupied;

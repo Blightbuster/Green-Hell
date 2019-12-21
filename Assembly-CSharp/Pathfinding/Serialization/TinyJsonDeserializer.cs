@@ -240,12 +240,12 @@ namespace Pathfinding.Serialization
 				char c = (char)this.reader.Read();
 				if (c != s[i])
 				{
-					throw new Exception(string.Concat(new object[]
+					throw new Exception(string.Concat(new string[]
 					{
 						"Expected '",
-						s[i],
+						s[i].ToString(),
 						"' found '",
-						c,
+						c.ToString(),
 						"'\n\n...",
 						this.reader.ReadLine()
 					}));
@@ -278,7 +278,7 @@ namespace Pathfinding.Serialization
 				{
 					if (!inString && c.IndexOf(c2) != -1)
 					{
-						goto Block_7;
+						goto IL_7D;
 					}
 					this.builder.Append(c2);
 					this.reader.Read();
@@ -286,7 +286,7 @@ namespace Pathfinding.Serialization
 				}
 			}
 			throw new Exception("Unexpected EOF");
-			Block_7:
+			IL_7D:
 			return this.builder.ToString();
 		}
 
@@ -317,50 +317,53 @@ namespace Pathfinding.Serialization
 			{
 				this.EatUntil(",{}[]", false);
 				char c = (char)this.reader.Peek();
-				switch (c)
+				if (c <= '[')
 				{
-				case '[':
-					goto IL_53;
-				default:
-					switch (c)
+					if (c != ',')
 					{
-					case '{':
-						goto IL_53;
-					default:
-						if (c != ',')
+						if (c != '[')
 						{
-							goto Block_1;
+							break;
 						}
-						if (num == 0)
-						{
-							goto Block_3;
-						}
-						break;
-					case '}':
-						goto IL_5C;
+						goto IL_3E;
 					}
-					break;
-				case ']':
-					goto IL_5C;
+					else if (num == 0)
+					{
+						goto Block_8;
+					}
 				}
-				IL_90:
+				else
+				{
+					if (c != ']')
+					{
+						if (c == '{')
+						{
+							goto IL_3E;
+						}
+						if (c != '}')
+						{
+							break;
+						}
+					}
+					num--;
+					if (num < 0)
+					{
+						return;
+					}
+				}
+				IL_68:
 				this.reader.Read();
 				continue;
-				IL_53:
+				IL_3E:
 				num++;
-				goto IL_90;
-				IL_5C:
-				num--;
-				if (num < 0)
-				{
-					return;
-				}
-				goto IL_90;
+				goto IL_68;
 			}
-			Block_1:
-			throw new Exception("Should not reach this part");
-			Block_3:
+			goto IL_5D;
+			Block_8:
 			this.reader.Read();
+			return;
+			IL_5D:
+			throw new Exception("Should not reach this part");
 		}
 
 		private TextReader reader;

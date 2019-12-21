@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace AmplifyBloom
 {
-	[AddComponentMenu("Image Effects/Amplify Bloom")]
 	[ExecuteInEditMode]
 	[RequireComponent(typeof(Camera))]
+	[AddComponentMenu("Image Effects/Amplify Bloom")]
 	[Serializable]
 	public sealed class AmplifyBloomEffect : AmplifyBloomBase
 	{

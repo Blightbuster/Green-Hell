@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MenuDebugDialogs : MenuScreen
+public class MenuDebugDialogs : MenuDebugScreen
 {
-	protected override void OnShow()
+	public override void OnShow()
 	{
 		base.OnShow();
 		this.m_List.SetFocus(true);
@@ -34,7 +34,7 @@ public class MenuDebugDialogs : MenuScreen
 		this.m_List.SetSelectionIndex(0);
 	}
 
-	protected override void OnHide()
+	public override void OnHide()
 	{
 		base.OnHide();
 		if (!DialogsManager.Get())
@@ -44,14 +44,12 @@ public class MenuDebugDialogs : MenuScreen
 		if (this.m_List.GetSelectionIndex() < 0 || this.m_List.GetSelectionIndex() >= DialogsManager.Get().m_Dialogs.Count)
 		{
 			DialogsManager.Get().m_DebugDialogName = string.Empty;
+			return;
 		}
-		else
+		string selectedElementText = this.m_List.GetSelectedElementText();
+		if (selectedElementText != string.Empty)
 		{
-			string selectedElementText = this.m_List.GetSelectedElementText();
-			if (selectedElementText != string.Empty)
-			{
-				DialogsManager.Get().m_DebugDialogName = selectedElementText;
-			}
+			DialogsManager.Get().m_DebugDialogName = selectedElementText;
 		}
 	}
 

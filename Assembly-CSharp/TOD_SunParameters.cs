@@ -12,7 +12,7 @@ public class TOD_SunParameters
 	[TOD_Min(0f)]
 	public float MeshBrightness = 2f;
 
-	[TOD_Min(0f)]
 	[Tooltip("Contrast of the sun.")]
+	[TOD_Min(0f)]
 	public float MeshContrast = 1f;
 }

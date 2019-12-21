@@ -6,42 +6,51 @@ namespace AIs
 {
 	public class BigAnimalSoundModule : AISoundModule
 	{
-		public override void Initialize()
+		public override void Initialize(Being being)
 		{
-			base.Initialize();
-			this.m_AudioSourceSteps = base.gameObject.AddComponent<AudioSource>();
-			this.m_AudioSourceSteps.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.AI);
-			this.m_AudioSourceSteps.spatialBlend = 1f;
-			this.m_AudioSourceSteps.rolloffMode = AudioRolloffMode.Linear;
-			this.m_AudioSourceSteps.maxDistance = 12f;
-			this.m_AudioSourceSteps.spatialize = true;
-			this.m_Clips.Add(Resources.Load<AudioClip>("Sounds/TempSounds/Player/Footstep01"));
-			this.m_Clips.Add(Resources.Load<AudioClip>("Sounds/TempSounds/Player/Footstep02"));
-			this.m_Clips.Add(Resources.Load<AudioClip>("Sounds/TempSounds/Player/Footstep03"));
-			this.m_Clips.Add(Resources.Load<AudioClip>("Sounds/TempSounds/Player/Footstep04"));
+			base.Initialize(being);
+			this.m_IdleAudioSource = base.gameObject.AddComponent<AudioSource>();
+			this.m_IdleAudioSource.outputAudioMixerGroup = GreenHellGame.Instance.GetAudioMixerGroup(AudioMixerGroupGame.AI);
+			this.m_IdleAudioSource.spatialBlend = 1f;
+			this.m_IdleAudioSource.rolloffMode = AudioRolloffMode.Linear;
+			this.m_IdleAudioSource.minDistance = 2f;
+			this.m_IdleAudioSource.maxDistance = 25f;
+			this.m_IdleAudioSource.spatialize = true;
+			this.m_IdleAudioSource.priority = 50;
 		}
 
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
-			if (!this.m_AudioSourceSteps.isPlaying && this.m_AI.m_Animator.velocity.magnitude >= 0.5f)
+			AIGoal activeGoal = this.m_AI.m_GoalsModule.m_ActiveGoal;
+			bool flag = false;
+			if (!MainLevel.Instance.IsPause() && activeGoal != null && activeGoal.m_Type == AIGoalType.MoveToEnemy && this.m_AI.m_HostileStateModule && this.m_AI.m_HostileStateModule.m_State == HostileStateModule.State.Upset)
 			{
-				this.m_AudioSourceSteps.clip = this.m_Clips[UnityEngine.Random.Range(0, this.m_Clips.Count)];
-				this.m_AudioSourceSteps.Play();
+				flag = true;
+			}
+			if (flag)
+			{
+				if (!this.m_IdleAudioSource.isPlaying)
+				{
+					AudioClip clip = AISoundModule.s_IdleClips[(int)this.m_AI.m_ID][UnityEngine.Random.Range(0, AISoundModule.s_IdleClips[(int)this.m_AI.m_ID].Count)];
+					this.m_IdleAudioSource.PlayOneShot(clip);
+					return;
+				}
+			}
+			else if (this.m_IdleAudioSource.isPlaying)
+			{
+				this.m_IdleAudioSource.Stop();
 			}
 		}
 
 		public override void OnDie()
 		{
 			base.OnDie();
-			if (this.m_AudioSourceSteps)
-			{
-				this.m_AudioSourceSteps.Stop();
-			}
+			this.m_IdleAudioSource.Stop();
 		}
 
 		private List<AudioClip> m_Clips = new List<AudioClip>();
 
-		private AudioSource m_AudioSourceSteps;
+		private AudioSource m_IdleAudioSource;
 	}
 }

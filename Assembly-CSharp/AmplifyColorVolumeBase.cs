@@ -2,8 +2,8 @@
 using AmplifyColor;
 using UnityEngine;
 
-[AddComponentMenu("")]
 [ExecuteInEditMode]
+[AddComponentMenu("")]
 public class AmplifyColorVolumeBase : MonoBehaviour
 {
 	private void OnDrawGizmos()

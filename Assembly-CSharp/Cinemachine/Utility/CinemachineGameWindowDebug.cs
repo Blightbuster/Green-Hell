@@ -25,19 +25,22 @@ namespace Cinemachine.Utility
 				CinemachineGameWindowDebug.mClients.Add(client);
 			}
 			Vector2 position = new Vector2(0f, 0f);
-			Vector2 size = style.CalcSize(new GUIContent(text));
+			Vector2 vector = style.CalcSize(new GUIContent(text));
 			if (CinemachineGameWindowDebug.mClients != null)
 			{
-				foreach (UnityEngine.Object x in CinemachineGameWindowDebug.mClients)
+				using (HashSet<UnityEngine.Object>.Enumerator enumerator = CinemachineGameWindowDebug.mClients.GetEnumerator())
 				{
-					if (x == client)
+					while (enumerator.MoveNext())
 					{
-						break;
+						if (enumerator.Current == client)
+						{
+							break;
+						}
+						position.y += vector.y;
 					}
-					position.y += size.y;
 				}
 			}
-			return new Rect(position, size);
+			return new Rect(position, vector);
 		}
 
 		private static HashSet<UnityEngine.Object> mClients;

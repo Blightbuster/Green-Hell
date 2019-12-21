@@ -78,7 +78,7 @@ namespace UnityEngine.PostProcessing
 			Material material = this.context.materialFactory.Get("Hidden/Post FX/Motion Blur");
 			Material mat = this.context.materialFactory.Get("Hidden/Post FX/Blit");
 			MotionBlurModel.Settings settings = base.model.settings;
-			RenderTextureFormat format = (!this.context.isHdr) ? RenderTextureFormat.Default : RenderTextureFormat.DefaultHDR;
+			RenderTextureFormat format = this.context.isHdr ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default;
 			int tempRT = MotionBlurComponent.Uniforms._TempRT;
 			cb.GetTemporaryRT(tempRT, this.context.width, this.context.height, 0, FilterMode.Point, format);
 			if (settings.shutterAngle > 0f && settings.frameBlending > 0f)
@@ -313,7 +313,7 @@ namespace UnityEngine.PostProcessing
 				cb.SetGlobalFloat(MotionBlurComponent.Uniforms._History3Weight, frameRelative3.CalculateWeight(strength, time));
 				cb.SetGlobalFloat(MotionBlurComponent.Uniforms._History4Weight, frameRelative4.CalculateWeight(strength, time));
 				cb.SetGlobalTexture(MotionBlurComponent.Uniforms._MainTex, source);
-				cb.Blit(source, destination, material, (!this.m_UseCompression) ? 8 : 7);
+				cb.Blit(source, destination, material, this.m_UseCompression ? 7 : 8);
 			}
 
 			private static bool CheckSupportCompression()
@@ -324,9 +324,8 @@ namespace UnityEngine.PostProcessing
 			private static RenderTextureFormat GetPreferredRenderTextureFormat()
 			{
 				RenderTextureFormat[] array = new RenderTextureFormat[3];
-				RuntimeHelpers.InitializeArray(array, fieldof(<PrivateImplementationDetails>.$field-51A7A390CD6DE245186881400B18C9D822EFE240).FieldHandle);
-				RenderTextureFormat[] array2 = array;
-				foreach (RenderTextureFormat renderTextureFormat in array2)
+				RuntimeHelpers.InitializeArray(array, fieldof(<PrivateImplementationDetails>.51A7A390CD6DE245186881400B18C9D822EFE240).FieldHandle);
+				foreach (RenderTextureFormat renderTextureFormat in array)
 				{
 					if (SystemInfo.SupportsRenderTextureFormat(renderTextureFormat))
 					{

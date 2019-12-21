@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class StaticObjectsManager : MonoBehaviour, ISaveLoad
+public class StaticObjectsManager : ReplicatedBehaviour, ISaveLoad
 {
 	public static StaticObjectsManager Get()
 	{
@@ -60,9 +60,7 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 			Terrain terrain = array[i];
 			if (i == 0)
 			{
-				Vector3 position = terrain.GetPosition();
-				bounds.max = position;
-				bounds.min = position;
+				bounds.min = (bounds.max = terrain.GetPosition());
 			}
 			else
 			{
@@ -97,11 +95,11 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 
 	public void Save()
 	{
-		List<Vector3> pointsInRadius = this.m_DestroyedObjects.GetPointsInRadius(Vector3.zero, float.MaxValue, false);
-		SaveGame.SaveVal("SOMDestroyedCount", pointsInRadius.Count);
-		for (int i = 0; i < pointsInRadius.Count; i++)
+		List<Vector3> allPoints = this.m_DestroyedObjects.GetAllPoints();
+		SaveGame.SaveVal("SOMDestroyedCount", allPoints.Count);
+		for (int i = 0; i < allPoints.Count; i++)
 		{
-			SaveGame.SaveVal("SOMPos" + i, pointsInRadius[i]);
+			SaveGame.SaveVal("SOMPos" + i, allPoints[i]);
 		}
 		ObjectWithTrunk.OnSave();
 	}
@@ -115,10 +113,10 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 		this.m_ReplacedMap.Clear();
 		this.m_ObjectsRemovedFromStatic.Clear();
 		this.EnableObjectsInQuadTree();
-		List<Vector3> pointsInRadius = this.m_DestroyedObjects.GetPointsInRadius(Vector3.zero, float.MaxValue, false);
-		for (int i = 0; i < pointsInRadius.Count; i++)
+		List<Vector3> allPoints = this.m_DestroyedObjects.GetAllPoints();
+		for (int i = 0; i < allPoints.Count; i++)
 		{
-			StaticObjectClass objectsInPos = this.m_QuadTree.GetObjectsInPos(pointsInRadius[i]);
+			StaticObjectClass objectsInPos = this.m_QuadTree.GetObjectsInPos(allPoints[i]);
 			if (objectsInPos != null && objectsInPos.m_GameObject != null)
 			{
 				objectsInPos.m_GameObject.SetActive(true);
@@ -137,16 +135,18 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 		{
 			SaveGame.LoadVal("SOMPos" + j, out zero, false);
 			StaticObjectClass objectsInPos2 = this.m_QuadTree.GetObjectsInPos(zero);
-			DebugUtils.Assert(objectsInPos2 != null, true);
-			DebugUtils.Assert(objectsInPos2.m_GameObject != null, true);
-			objectsInPos2.m_GameObject.SetActive(false);
-			if (objectsInPos2.m_GameObject.transform.parent != null)
+			if (objectsInPos2 != null && objectsInPos2.m_GameObject != null)
 			{
-				objectsInPos2.m_GameObject.transform.parent.gameObject.SetActive(false);
+				objectsInPos2.m_GameObject.SetActive(false);
+				if (objectsInPos2.m_GameObject.transform.parent != null)
+				{
+					objectsInPos2.m_GameObject.transform.parent.gameObject.SetActive(false);
+				}
 			}
 			this.m_DestroyedObjects.InsertPoint(zero, false);
 		}
 		ObjectWithTrunk.OnLoad();
+		this.OnLoaded();
 	}
 
 	private void Update()
@@ -181,8 +181,7 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 							gameObject.GetComponents<Item>(this.m_TempItemList);
 							if (this.m_TempItemList.Count > 0)
 							{
-								Item item = this.m_TempItemList[0];
-								item.m_CanSave = false;
+								this.m_TempItemList[0].m_CanSaveNotTriggered = false;
 							}
 						}
 						gameObject.SetActive(true);
@@ -194,8 +193,7 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 						gameObject.GetComponents<Item>(this.m_TempItemList);
 						if (this.m_TempItemList.Count > 0)
 						{
-							Item item2 = this.m_TempItemList[0];
-							item2.m_CanSave = false;
+							this.m_TempItemList[0].m_CanSaveNotTriggered = false;
 						}
 					}
 					this.m_ReplacedMap.Add(staticObjectClass, gameObject);
@@ -265,9 +263,20 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 				j++;
 			}
 		}
-		if (this.m_ReplacedMap.Count > 0 && this.m_ReplacedMap.ElementAt(0).Key.m_GameObject == null)
+		if (this.m_ReplacedMap.Count > 0)
 		{
-			this.m_ReplacedMap.Remove(this.m_ReplacedMap.ElementAt(0).Key);
+			Dictionary<StaticObjectClass, GameObject>.Enumerator enumerator = this.m_ReplacedMap.GetEnumerator();
+			if (enumerator.MoveNext())
+			{
+				KeyValuePair<StaticObjectClass, GameObject> keyValuePair = enumerator.Current;
+				if (keyValuePair.Key.m_GameObject == null)
+				{
+					Dictionary<StaticObjectClass, GameObject> replacedMap = this.m_ReplacedMap;
+					keyValuePair = enumerator.Current;
+					replacedMap.Remove(keyValuePair.Key);
+				}
+			}
+			enumerator.Dispose();
 		}
 	}
 
@@ -287,10 +296,30 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 				if (staticObjectClass.m_GameObject.transform.parent != null)
 				{
 					staticObjectClass.m_GameObject.transform.parent.gameObject.SetActive(false);
+					break;
 				}
 				break;
 			}
 		}
+	}
+
+	public void ObjectDestroyed(Vector3 pos)
+	{
+		StaticObjectClass objectsInPos = this.m_QuadTree.GetObjectsInPos(pos);
+		if (objectsInPos != null && objectsInPos.m_GameObject != null)
+		{
+			objectsInPos.m_GameObject.SetActive(false);
+			if (objectsInPos.m_GameObject.transform.parent != null)
+			{
+				objectsInPos.m_GameObject.transform.parent.gameObject.SetActive(false);
+			}
+			GameObject obj = null;
+			if (this.m_ReplacedMap.TryGetValue(objectsInPos, out obj))
+			{
+				UnityEngine.Object.Destroy(obj);
+			}
+		}
+		this.m_DestroyedObjects.InsertPoint(pos, false);
 	}
 
 	public void ScheduleReinit()
@@ -313,6 +342,31 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 	public void OnStaticObjectRemoved(GameObject go)
 	{
 		this.m_QuadTree.RemoveObject(go);
+	}
+
+	private void OnLoaded()
+	{
+		List<Vector3> allPoints = this.m_DestroyedObjects.GetAllPoints();
+		for (int i = 0; i < allPoints.Count; i++)
+		{
+			StaticObjectClass objectsInPos = this.m_QuadTree.GetObjectsInPos(allPoints[i]);
+			if (objectsInPos != null && objectsInPos.m_GameObject != null)
+			{
+				GameObject gameObject = objectsInPos.m_GameObject;
+				if (gameObject.transform.parent != null)
+				{
+					gameObject.transform.parent.gameObject.SetActive(false);
+					StaticObjectClass staticObjectClass = objectsInPos;
+					staticObjectClass.m_State |= 1;
+					GameObject gameObject2 = null;
+					if (this.m_ReplacedMap.TryGetValue(objectsInPos, out gameObject2))
+					{
+						this.m_ReplacedMap.Remove(objectsInPos);
+						this.m_ObjectsRemovedFromStatic.Remove(objectsInPos);
+					}
+				}
+			}
+		}
 	}
 
 	private void EnableObjectsInQuadTree()
@@ -341,6 +395,65 @@ public class StaticObjectsManager : MonoBehaviour, ISaveLoad
 					}
 				}
 			}
+		}
+	}
+
+	public override void OnReplicationSerialize(P2PNetworkWriter writer, bool initial_state)
+	{
+		if (initial_state)
+		{
+			List<Vector3> allPoints = this.m_DestroyedObjects.GetAllPoints();
+			writer.Write((ushort)allPoints.Count);
+			for (int i = 0; i < allPoints.Count; i++)
+			{
+				writer.Write(allPoints[i]);
+			}
+		}
+	}
+
+	public override void OnReplicationDeserialize(P2PNetworkReader reader, bool initial_state)
+	{
+		if (initial_state)
+		{
+			foreach (GameObject obj in this.m_ReplacedMap.Values)
+			{
+				UnityEngine.Object.Destroy(obj);
+			}
+			this.m_ReplacedMap.Clear();
+			this.m_ObjectsRemovedFromStatic.Clear();
+			this.EnableObjectsInQuadTree();
+			List<Vector3> allPoints = this.m_DestroyedObjects.GetAllPoints();
+			for (int i = 0; i < allPoints.Count; i++)
+			{
+				StaticObjectClass objectsInPos = this.m_QuadTree.GetObjectsInPos(allPoints[i]);
+				if (objectsInPos != null && objectsInPos.m_GameObject != null)
+				{
+					objectsInPos.m_GameObject.SetActive(true);
+					if (objectsInPos.m_GameObject.transform.parent != null)
+					{
+						objectsInPos.m_GameObject.transform.parent.gameObject.SetActive(true);
+					}
+					objectsInPos.m_State = 0;
+				}
+			}
+			this.m_DestroyedObjects.Clear();
+			ushort num = reader.ReadUInt16();
+			for (int j = 0; j < (int)num; j++)
+			{
+				Vector3 vector = reader.ReadVector3();
+				StaticObjectClass objectsInPos2 = this.m_QuadTree.GetObjectsInPos(vector);
+				if (objectsInPos2 != null && objectsInPos2.m_GameObject != null)
+				{
+					objectsInPos2.m_GameObject.SetActive(false);
+					if (objectsInPos2.m_GameObject.transform.parent != null)
+					{
+						objectsInPos2.m_GameObject.transform.parent.gameObject.SetActive(false);
+					}
+				}
+				this.m_DestroyedObjects.InsertPoint(vector, false);
+			}
+			ObjectWithTrunk.OnLoad();
+			this.OnLoaded();
 		}
 	}
 

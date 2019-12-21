@@ -23,9 +23,9 @@ namespace AIs
 			Item item = ItemsManager.Get().CreateItem(id.ToString() + "_Body", false);
 			if (id == AI.AIID.PoisonDartFrog)
 			{
-				List<Renderer> componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
+				Renderer[] componentsDeepChild = General.GetComponentsDeepChild<Renderer>(base.gameObject);
 				Material material = null;
-				for (int i = 0; i < componentsDeepChild.Count; i++)
+				for (int i = 0; i < componentsDeepChild.Length; i++)
 				{
 					material = componentsDeepChild[i].material;
 				}
@@ -41,7 +41,20 @@ namespace AIs
 
 		public override string GetName()
 		{
-			return (!this.m_AI) ? string.Empty : this.m_AI.GetName();
+			if (!this.m_AI)
+			{
+				return string.Empty;
+			}
+			return this.m_AI.GetName();
+		}
+
+		public override string GetIconName()
+		{
+			if (!this.m_AI)
+			{
+				return string.Empty;
+			}
+			return this.m_AI.GetName() + "_Body";
 		}
 
 		[HideInInspector]

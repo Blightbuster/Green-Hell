@@ -39,7 +39,7 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	public void ActivateObjective(string obj_name)
+	public void ActivateObjective(string obj_name, bool show_obj)
 	{
 		Objective objective = this.FindObjectiveByName(obj_name);
 		if (objective == null)
@@ -47,10 +47,10 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 			DebugUtils.Assert("[ObjectivesManager:ActivateObjective] Can't find objective - " + obj_name, true, DebugUtils.AssertType.Info);
 			return;
 		}
-		this.ActivateObjective(objective);
+		this.ActivateObjective(objective, show_obj);
 	}
 
-	private void ActivateObjective(Objective obj)
+	private void ActivateObjective(Objective obj, bool show_obj)
 	{
 		if (obj == null)
 		{
@@ -58,7 +58,7 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 			return;
 		}
 		obj.SetState(ObjectiveState.Active);
-		this.OnObjectiveActivated(obj);
+		this.OnObjectiveActivated(obj, show_obj);
 	}
 
 	public void DeactivateAllActiveObjectives()
@@ -75,7 +75,7 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 		this.DeactivateObjective(obj);
 	}
 
-	private void DeactivateObjective(Objective obj)
+	protected virtual void DeactivateObjective(Objective obj)
 	{
 		if (obj == null)
 		{
@@ -96,16 +96,23 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 		this.m_Observers.Remove(obs);
 	}
 
-	private void OnObjectiveActivated(Objective obj)
+	private void OnObjectiveActivated(Objective obj, bool show_obj)
 	{
-		for (int i = 0; i < this.m_Observers.Count; i++)
+		if (this.m_ActiveObjectives.Contains(obj))
 		{
-			this.m_Observers[i].OnObjectiveActivated(obj);
+			return;
+		}
+		if (show_obj && SaveGame.m_State == SaveGame.State.None)
+		{
+			for (int i = 0; i < this.m_Observers.Count; i++)
+			{
+				this.m_Observers[i].OnObjectiveActivated(obj);
+			}
 		}
 		this.m_ActiveObjectives.Add(obj);
 	}
 
-	private void OnObjectiveCompleted(Objective obj)
+	protected void OnObjectiveCompleted(Objective obj)
 	{
 		for (int i = 0; i < this.m_Observers.Count; i++)
 		{
@@ -150,7 +157,7 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 		return false;
 	}
 
-	public void Save()
+	public virtual void Save()
 	{
 		SaveGame.SaveVal("ActiveObjectivesCount", this.m_ActiveObjectives.Count);
 		for (int i = 0; i < this.m_ActiveObjectives.Count; i++)
@@ -164,13 +171,13 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	public void Load()
+	public virtual void Load()
 	{
 		this.m_ActiveObjectives.Clear();
 		int num = SaveGame.LoadIVal("ActiveObjectivesCount");
 		for (int i = 0; i < num; i++)
 		{
-			this.ActivateObjective(SaveGame.LoadSVal("ActiveObjective" + i.ToString()));
+			this.ActivateObjective(SaveGame.LoadSVal("ActiveObjective" + i.ToString()), true);
 		}
 		this.m_CompletedObjectives.Clear();
 		int num2 = SaveGame.LoadIVal("CompletedObjectivesCount");
@@ -180,7 +187,7 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 		}
 	}
 
-	private List<Objective> m_Objectives = new List<Objective>();
+	protected List<Objective> m_Objectives = new List<Objective>();
 
 	public List<Objective> m_ActiveObjectives = new List<Objective>();
 
@@ -190,5 +197,5 @@ public class ObjectivesManager : MonoBehaviour, ISaveLoad
 
 	private static string m_ScriptName = "Objectives/Objectives.txt";
 
-	private static ObjectivesManager s_Instance;
+	private static ObjectivesManager s_Instance = null;
 }

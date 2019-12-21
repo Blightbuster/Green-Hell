@@ -172,7 +172,7 @@ namespace Pathfinding
 			int num;
 			base.CalculateAffectedRegions(o, out a, out a2, out intRect, out flag, out num);
 			bool flag2 = o is LayerGridGraphUpdate && ((LayerGridGraphUpdate)o).recalculateNodes;
-			bool flag3 = (!(o is LayerGridGraphUpdate)) ? (!o.resetPenaltyOnPhysics) : ((LayerGridGraphUpdate)o).preserveExistingNodes;
+			bool flag3 = (o is LayerGridGraphUpdate) ? ((LayerGridGraphUpdate)o).preserveExistingNodes : (!o.resetPenaltyOnPhysics);
 			if (o.trackChangedNodes && flag2)
 			{
 				Debug.LogError("Cannot track changed nodes when creating or deleting nodes.\nWill not update LayerGridGraph");
@@ -250,16 +250,17 @@ namespace Pathfinding
 						this.CalculateConnections(num7, num8);
 					}
 				}
+				return;
 			}
-			else if (flag && num > 0)
+			if (flag && num > 0)
 			{
 				IntRect a3 = IntRect.Union(a, intRect).Expand(num);
-				IntRect a4 = a3.Expand(num);
+				IntRect intRect3 = a3.Expand(num);
 				a3 = IntRect.Intersection(a3, b);
-				a4 = IntRect.Intersection(a4, b);
-				for (int num9 = a4.xmin; num9 <= a4.xmax; num9++)
+				intRect3 = IntRect.Intersection(intRect3, b);
+				for (int num9 = intRect3.xmin; num9 <= intRect3.xmax; num9++)
 				{
-					for (int num10 = a4.ymin; num10 <= a4.ymax; num10++)
+					for (int num10 = intRect3.ymin; num10 <= intRect3.ymax; num10++)
 					{
 						for (int num11 = 0; num11 < this.layerCount; num11++)
 						{
@@ -277,17 +278,17 @@ namespace Pathfinding
 						}
 					}
 				}
-				for (int num13 = a4.xmin; num13 <= a4.xmax; num13++)
+				for (int num13 = intRect3.xmin; num13 <= intRect3.xmax; num13++)
 				{
-					for (int num14 = a4.ymin; num14 <= a4.ymax; num14++)
+					for (int num14 = intRect3.ymin; num14 <= intRect3.ymax; num14++)
 					{
 						this.CalculateConnections(num13, num14);
 					}
 				}
-				base.ErodeWalkableArea(a4.xmin, a4.ymin, a4.xmax + 1, a4.ymax + 1);
-				for (int num15 = a4.xmin; num15 <= a4.xmax; num15++)
+				base.ErodeWalkableArea(intRect3.xmin, intRect3.ymin, intRect3.xmax + 1, intRect3.ymax + 1);
+				for (int num15 = intRect3.xmin; num15 <= intRect3.xmax; num15++)
 				{
-					for (int num16 = a4.ymin; num16 <= a4.ymax; num16++)
+					for (int num16 = intRect3.ymin; num16 <= intRect3.ymax; num16++)
 					{
 						if (!a3.Contains(num15, num16))
 						{
@@ -303,9 +304,9 @@ namespace Pathfinding
 						}
 					}
 				}
-				for (int num19 = a4.xmin; num19 <= a4.xmax; num19++)
+				for (int num19 = intRect3.xmin; num19 <= intRect3.xmax; num19++)
 				{
-					for (int num20 = a4.ymin; num20 <= a4.ymax; num20++)
+					for (int num20 = intRect3.ymin; num20 <= intRect3.ymax; num20++)
 					{
 						this.CalculateConnections(num19, num20);
 					}
@@ -334,7 +335,8 @@ namespace Pathfinding
 			this.collision = (this.collision ?? new GraphCollision());
 			this.collision.Initialize(base.transform, this.nodeSize);
 			int progressCounter = 0;
-			for (int z = 0; z < this.depth; z++)
+			int num;
+			for (int z = 0; z < this.depth; z = num + 1)
 			{
 				if (progressCounter >= 1000)
 				{
@@ -346,16 +348,17 @@ namespace Pathfinding
 				{
 					linkedCells[z * this.width + i] = this.SampleCell(i, z);
 				}
+				num = z;
 			}
 			this.layerCount = 0;
 			for (int j = 0; j < linkedCells.Length; j++)
 			{
-				int num = 0;
+				int num2 = 0;
 				for (LinkedLevelNode linkedLevelNode = linkedCells[j]; linkedLevelNode != null; linkedLevelNode = linkedLevelNode.next)
 				{
-					num++;
+					num2++;
 				}
-				this.layerCount = Math.Max(this.layerCount, num);
+				this.layerCount = Math.Max(this.layerCount, num2);
 			}
 			if (this.layerCount > 255)
 			{
@@ -370,46 +373,46 @@ namespace Pathfinding
 				yield break;
 			}
 			this.nodes = new LevelGridNode[this.width * this.depth * this.layerCount];
-			for (int z2 = 0; z2 < this.depth; z2++)
+			for (int z = 0; z < this.depth; z = num + 1)
 			{
 				if (progressCounter >= 1000)
 				{
 					progressCounter = 0;
-					yield return new Progress(Mathf.Lerp(0.5f, 0.8f, (float)z2 / (float)this.depth), "Creating nodes");
+					yield return new Progress(Mathf.Lerp(0.5f, 0.8f, (float)z / (float)this.depth), "Creating nodes");
 				}
 				progressCounter += this.width;
 				for (int k = 0; k < this.width; k++)
 				{
-					this.RecalculateCell(k, z2, true, true);
+					this.RecalculateCell(k, z, true, true);
 				}
+				num = z;
 			}
-			for (int z3 = 0; z3 < this.depth; z3++)
+			for (int z = 0; z < this.depth; z = num + 1)
 			{
 				if (progressCounter >= 1000)
 				{
 					progressCounter = 0;
-					yield return new Progress(Mathf.Lerp(0.8f, 0.9f, (float)z3 / (float)this.depth), "Calculating connections");
+					yield return new Progress(Mathf.Lerp(0.8f, 0.9f, (float)z / (float)this.depth), "Calculating connections");
 				}
 				progressCounter += this.width;
 				for (int l = 0; l < this.width; l++)
 				{
-					this.CalculateConnections(l, z3);
+					this.CalculateConnections(l, z);
 				}
+				num = z;
 			}
 			yield return new Progress(0.95f, "Calculating Erosion");
 			for (int m = 0; m < this.nodes.Length; m++)
 			{
 				LevelGridNode levelGridNode = this.nodes[m];
-				if (levelGridNode != null)
+				if (levelGridNode != null && !levelGridNode.HasAnyGridConnections())
 				{
-					if (!levelGridNode.HasAnyGridConnections())
-					{
-						levelGridNode.Walkable = false;
-						levelGridNode.WalkableErosion = levelGridNode.Walkable;
-					}
+					levelGridNode.Walkable = false;
+					levelGridNode.WalkableErosion = levelGridNode.Walkable;
 				}
 			}
 			this.ErodeWalkableArea();
+			yield break;
 			yield break;
 		}
 
@@ -425,7 +428,7 @@ namespace Pathfinding
 				array[i] = array[array.Length - 1 - i];
 				array[array.Length - 1 - i] = raycastHit;
 			}
-			if (array.Length > 0)
+			if (array.Length != 0)
 			{
 				LinkedLevelNode linkedLevelNode2 = null;
 				for (int j = 0; j < array.Length; j++)
@@ -677,9 +680,7 @@ namespace Pathfinding
 								num7 = Math.Abs(num6 - Vector3.Dot((Vector3)this.nodes[num5 + this.width * this.depth * (j + 1)].position, rhs));
 							}
 							float num8 = Mathf.Max(num6, num);
-							float num9 = Mathf.Min(num6 + num7, num + num2);
-							float num10 = num9 - num8;
-							if (num10 >= this.characterHeight && Mathf.Abs(num6 - num) <= this.maxClimb)
+							if (Mathf.Min(num6 + num7, num + num2) - num8 >= this.characterHeight && Mathf.Abs(num6 - num) <= this.maxClimb)
 							{
 								value = j;
 							}
@@ -699,8 +700,7 @@ namespace Pathfinding
 			Vector3 vector = base.transform.InverseTransform(position);
 			int x = Mathf.Clamp(Mathf.RoundToInt(vector.x - 0.5f), 0, this.width - 1);
 			int z = Mathf.Clamp(Mathf.RoundToInt(vector.z - 0.5f), 0, this.depth - 1);
-			LevelGridNode nearestNode = this.GetNearestNode(position, x, z, null);
-			return new NNInfoInternal(nearestNode);
+			return new NNInfoInternal(this.GetNearestNode(position, x, z, null));
 		}
 
 		private LevelGridNode GetNearestNode(Vector3 position, int x, int z, NNConstraint constraint)
@@ -749,7 +749,7 @@ namespace Pathfinding
 				}
 				num4--;
 			}
-			float num5 = (!constraint.constrainDistance) ? float.PositiveInfinity : AstarPath.active.maxNearestNodeDistance;
+			float num5 = constraint.constrainDistance ? AstarPath.active.maxNearestNodeDistance : float.PositiveInfinity;
 			float num6 = num5 * num5;
 			int num7 = 1;
 			for (;;)
@@ -831,14 +831,14 @@ namespace Pathfinding
 				{
 					if (num4 == 0)
 					{
-						goto Block_37;
+						goto Block_41;
 					}
 					num4--;
 				}
 				num7++;
 			}
 			return new NNInfoInternal(levelGridNode);
-			Block_37:
+			Block_41:
 			return new NNInfoInternal(levelGridNode);
 		}
 

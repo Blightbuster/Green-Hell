@@ -24,6 +24,10 @@ namespace Enums
 		Dynamite,
 		Parasite,
 		ReadableItem,
-		Stand
+		Stand,
+		Armor,
+		Form,
+		FormBaked,
+		Seed
 	}
 }

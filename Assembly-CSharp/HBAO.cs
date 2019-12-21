@@ -127,15 +127,14 @@ public class HBAO : MonoBehaviour
 		if (this.generalSettings.deinterleaving == HBAO.Deinterleaving._2x)
 		{
 			this.RenderHBAODeinterleaved2x(source, destination);
+			return;
 		}
-		else if (this.generalSettings.deinterleaving == HBAO.Deinterleaving._4x)
+		if (this.generalSettings.deinterleaving == HBAO.Deinterleaving._4x)
 		{
 			this.RenderHBAODeinterleaved4x(source, destination);
+			return;
 		}
-		else
-		{
-			this.RenderHBAO(source, destination);
-		}
+		this.RenderHBAO(source, destination);
 	}
 
 	private void RenderHBAO(RenderTexture source, RenderTexture destination)
@@ -348,12 +347,12 @@ public class HBAO : MonoBehaviour
 	private void UpdateShaderProperties()
 	{
 		this._renderTarget.orthographic = this._hbaoCamera.orthographic;
-		this._renderTarget.hdr = this._hbaoCamera.hdr;
+		this._renderTarget.hdr = this._hbaoCamera.allowHDR;
 		this._renderTarget.width = this._hbaoCamera.pixelWidth;
 		this._renderTarget.height = this._hbaoCamera.pixelHeight;
-		this._renderTarget.downsamplingFactor = ((this.generalSettings.resolution != HBAO.Resolution.Full) ? ((this.generalSettings.resolution != HBAO.Resolution.Half) ? 4 : 2) : 1);
+		this._renderTarget.downsamplingFactor = ((this.generalSettings.resolution == HBAO.Resolution.Full) ? 1 : ((this.generalSettings.resolution == HBAO.Resolution.Half) ? 2 : 4));
 		this._renderTarget.deinterleavingFactor = this.GetDeinterleavingFactor();
-		this._renderTarget.blurDownsamplingFactor = ((!this.blurSettings.downsample) ? 1 : 2);
+		this._renderTarget.blurDownsamplingFactor = (this.blurSettings.downsample ? 2 : 1);
 		float num = Mathf.Tan(0.5f * this._hbaoCamera.fieldOfView * 0.0174532924f);
 		float num2 = 1f / (1f / num * ((float)this._renderTarget.height / (float)this._renderTarget.width));
 		float num3 = 1f / (1f / num);
@@ -361,8 +360,8 @@ public class HBAO : MonoBehaviour
 		this._hbaoMaterial.SetMatrix("_WorldToCameraMatrix", this._hbaoCamera.worldToCameraMatrix);
 		if (this.generalSettings.deinterleaving != HBAO.Deinterleaving.Disabled)
 		{
-			this._renderTarget.fullWidth = this._renderTarget.width + ((this._renderTarget.width % this._renderTarget.deinterleavingFactor != 0) ? (this._renderTarget.deinterleavingFactor - this._renderTarget.width % this._renderTarget.deinterleavingFactor) : 0);
-			this._renderTarget.fullHeight = this._renderTarget.height + ((this._renderTarget.height % this._renderTarget.deinterleavingFactor != 0) ? (this._renderTarget.deinterleavingFactor - this._renderTarget.height % this._renderTarget.deinterleavingFactor) : 0);
+			this._renderTarget.fullWidth = this._renderTarget.width + ((this._renderTarget.width % this._renderTarget.deinterleavingFactor == 0) ? 0 : (this._renderTarget.deinterleavingFactor - this._renderTarget.width % this._renderTarget.deinterleavingFactor));
+			this._renderTarget.fullHeight = this._renderTarget.height + ((this._renderTarget.height % this._renderTarget.deinterleavingFactor == 0) ? 0 : (this._renderTarget.deinterleavingFactor - this._renderTarget.height % this._renderTarget.deinterleavingFactor));
 			this._renderTarget.layerWidth = this._renderTarget.fullWidth / this._renderTarget.deinterleavingFactor;
 			this._renderTarget.layerHeight = this._renderTarget.fullHeight / this._renderTarget.deinterleavingFactor;
 			this._hbaoMaterial.SetVector("_FullRes_TexelSize", new Vector4(1f / (float)this._renderTarget.fullWidth, 1f / (float)this._renderTarget.fullHeight, (float)this._renderTarget.fullWidth, (float)this._renderTarget.fullHeight));
@@ -388,13 +387,13 @@ public class HBAO : MonoBehaviour
 			{
 				UnityEngine.Object.DestroyImmediate(this.noiseTex);
 			}
-			float num4 = (float)((this.generalSettings.noiseType != HBAO.NoiseType.Dither) ? 64 : 4);
+			float num4 = (float)((this.generalSettings.noiseType == HBAO.NoiseType.Dither) ? 4 : 64);
 			this.CreateRandomTexture((int)num4);
 		}
 		this._quality = this.generalSettings.quality;
 		this._noiseType = this.generalSettings.noiseType;
 		this._hbaoMaterial.SetTexture("_NoiseTex", this.noiseTex);
-		this._hbaoMaterial.SetFloat("_NoiseTexSize", (float)((this._noiseType != HBAO.NoiseType.Dither) ? 64 : 4));
+		this._hbaoMaterial.SetFloat("_NoiseTexSize", (float)((this._noiseType == HBAO.NoiseType.Dither) ? 4 : 64));
 		this._hbaoMaterial.SetFloat("_Radius", this.aoSettings.radius * 0.5f * ((float)this._renderTarget.height / (num * 2f)) / (float)this._renderTarget.deinterleavingFactor);
 		this._hbaoMaterial.SetFloat("_MaxRadiusPixels", this.aoSettings.maxRadiusPixels / (float)this._renderTarget.deinterleavingFactor);
 		this._hbaoMaterial.SetFloat("_NegInvRadius2", -1f / (this.aoSettings.radius * this.aoSettings.radius));
@@ -412,16 +411,16 @@ public class HBAO : MonoBehaviour
 
 	private void UpdateShaderKeywords()
 	{
-		this._hbaoShaderKeywords[0] = ((!this.colorBleedingSettings.enabled) ? "__" : "COLOR_BLEEDING_ON");
+		this._hbaoShaderKeywords[0] = (this.colorBleedingSettings.enabled ? "COLOR_BLEEDING_ON" : "__");
 		if (this._renderTarget.orthographic)
 		{
 			this._hbaoShaderKeywords[1] = "ORTHOGRAPHIC_PROJECTION_ON";
 		}
 		else
 		{
-			this._hbaoShaderKeywords[1] = ((!this.IsDeferredShading()) ? "__" : "DEFERRED_SHADING_ON");
+			this._hbaoShaderKeywords[1] = (this.IsDeferredShading() ? "DEFERRED_SHADING_ON" : "__");
 		}
-		this._hbaoShaderKeywords[2] = ((this.aoSettings.perPixelNormals != HBAO.PerPixelNormals.Camera) ? ((this.aoSettings.perPixelNormals != HBAO.PerPixelNormals.Reconstruct) ? "__" : "NORMALS_RECONSTRUCT") : "NORMALS_CAMERA");
+		this._hbaoShaderKeywords[2] = ((this.aoSettings.perPixelNormals == HBAO.PerPixelNormals.Camera) ? "NORMALS_CAMERA" : ((this.aoSettings.perPixelNormals == HBAO.PerPixelNormals.Reconstruct) ? "NORMALS_RECONSTRUCT" : "__"));
 		this._hbaoMaterial.shaderKeywords = this._hbaoShaderKeywords;
 	}
 
@@ -557,8 +556,8 @@ public class HBAO : MonoBehaviour
 		{
 			for (int j = 0; j < size; j++)
 			{
-				float num2 = (this.generalSettings.noiseType != HBAO.NoiseType.Dither) ? UnityEngine.Random.Range(0f, 1f) : HBAO.MersenneTwister.Numbers[num++];
-				float b = (this.generalSettings.noiseType != HBAO.NoiseType.Dither) ? UnityEngine.Random.Range(0f, 1f) : HBAO.MersenneTwister.Numbers[num++];
+				float num2 = (this.generalSettings.noiseType == HBAO.NoiseType.Dither) ? HBAO.MersenneTwister.Numbers[num++] : UnityEngine.Random.Range(0f, 1f);
+				float b = (this.generalSettings.noiseType == HBAO.NoiseType.Dither) ? HBAO.MersenneTwister.Numbers[num++] : UnityEngine.Random.Range(0f, 1f);
 				float f = 6.28318548f * num2 / (float)this._numSampleDirections[this.GetAoPass()];
 				Color color = new Color(Mathf.Cos(f), Mathf.Sin(f), b);
 				this.noiseTex.SetPixel(i, j, color);
@@ -626,12 +625,12 @@ public class HBAO : MonoBehaviour
 
 	public Shader hbaoShader;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.Presets m_Presets = HBAO.Presets.defaultPresets;
 
-	[HBAO.SettingsGroup]
 	[SerializeField]
+	[HBAO.SettingsGroup]
 	private HBAO.GeneralSettings m_GeneralSettings = HBAO.GeneralSettings.defaultSettings;
 
 	[SerializeField]
@@ -805,12 +804,12 @@ public class HBAO : MonoBehaviour
 		[Tooltip("The resolution at which the AO is calculated.")]
 		public HBAO.Resolution resolution;
 
-		[Space(10f)]
 		[Tooltip("The type of noise to use.")]
+		[Space(10f)]
 		public HBAO.NoiseType noiseType;
 
-		[Space(10f)]
 		[Tooltip("The way the AO is displayed on screen.")]
+		[Space(10f)]
 		public HBAO.DisplayMode displayMode;
 	}
 
@@ -837,25 +836,25 @@ public class HBAO : MonoBehaviour
 			}
 		}
 
-		[Range(0f, 2f)]
 		[Tooltip("AO radius: this is the distance outside which occluders are ignored.")]
 		[Space(6f)]
+		[Range(0f, 2f)]
 		public float radius;
 
-		[Range(32f, 256f)]
 		[Tooltip("Maximum radius in pixels: this prevents the radius to grow too much with close-up object and impact on performances.")]
+		[Range(32f, 256f)]
 		public float maxRadiusPixels;
 
-		[Range(0f, 0.5f)]
 		[Tooltip("For low-tessellated geometry, occlusion variations tend to appear at creases and ridges, which betray the underlying tessellation. To remove these artifacts, we use an angle bias parameter which restricts the hemisphere.")]
+		[Range(0f, 0.5f)]
 		public float bias;
 
-		[Range(0f, 10f)]
 		[Tooltip("This value allows to scale up the ambient occlusion values.")]
+		[Range(0f, 10f)]
 		public float intensity;
 
-		[Range(0f, 1f)]
 		[Tooltip("This value allows to attenuate ambient occlusion depending on final color luminance.")]
+		[Range(0f, 1f)]
 		public float luminanceInfluence;
 
 		[Tooltip("The max distance to display AO.")]
@@ -893,13 +892,13 @@ public class HBAO : MonoBehaviour
 		[Space(6f)]
 		public bool enabled;
 
-		[Space(10f)]
 		[Tooltip("This value allows to control the saturation of the color bleeding.")]
+		[Space(10f)]
 		[Range(0f, 4f)]
 		public float saturation;
 
-		[Range(0f, 32f)]
 		[Tooltip("This value allows to scale the contribution of the color bleeding samples.")]
+		[Range(0f, 32f)]
 		public float albedoMultiplier;
 	}
 
@@ -920,13 +919,13 @@ public class HBAO : MonoBehaviour
 			}
 		}
 
-		[Space(6f)]
 		[Tooltip("The type of blur to use.")]
+		[Space(6f)]
 		public HBAO.Blur amount;
 
-		[Range(0f, 16f)]
-		[Space(10f)]
 		[Tooltip("This parameter controls the depth-dependent weight of the bilateral filter, to avoid bleeding across edges. A zero sharpness is a pure Gaussian blur. Increasing the blur sharpness removes bleeding by using lower weights for samples with large depth delta from the current pixel.")]
+		[Space(10f)]
+		[Range(0f, 16f)]
 		public float sharpness;
 
 		[Tooltip("Is the blur downsampled.")]
